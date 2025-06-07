@@ -401,6 +401,40 @@ local function DecryptBlock(RoundKeys: buffer, MaterialLength: number, Ciphertex
 end
 
 
+
+export type KeyLength = { ExpandedLength: number, MaterialLength: number }
+
+export type Struct = {
+	Key: string,
+	RoundKeys: string,
+	Length: number,
+	Mode: CipherModes.SimpleModeStruct,
+	Padding: PaddingSchemes.Struct,
+	RoundKeysBuffer: buffer,
+	KeyMaterialLength: number,
+	SegmentSize: number
+}
+
+export type Impl = {
+	__index: Impl,
+	
+	New: (MasterKey: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct) -> AesCipher,
+	FromKey: (RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct) -> AesCipher,
+	ValidateKeySize: (self: any, KeyLength: number) -> KeyLength,
+	CreateBufferFromInput: (self: any, Input: buffer | string) -> buffer,
+	
+	ExpandMasterKey: (self: AesCipher, MasterKey: buffer | string, OutputBuffer: buffer?) -> buffer,
+	Encrypt: (self: AesCipher, Plaintext: buffer, Output: buffer?, InitVector: buffer?, ...any) -> buffer,
+	Decrypt: (self: AesCipher, Plaintext: buffer, Output: buffer?, InitVector: buffer?, ...any) -> buffer,
+	EncryptBlock: (self: AesCipher, Plaintext: buffer, Offset: number, Output: buffer?, OutputOffset: number?) -> (),
+	DecryptBlock: (self: AesCipher, Ciphertext: buffer, Offset: number, Output: buffer?, OutputOffset: number?) -> (),
+	ExpandKey: (self: AesCipher, MasterKey: buffer, OutputBuffer: buffer?) -> buffer,
+	
+	Destroy: (self: AesCipher) -> ()
+}
+
+export type AesCipher = typeof(setmetatable({} :: Struct, {} :: Impl))
+
 local AesCipher = {}
 AesCipher.__index = AesCipher
 
@@ -424,23 +458,23 @@ function AesCipher:ValidateRoundKeySize(RoundKeysLength)
 	return RoundKeyConfigurations[RoundKeysLength]
 end
 
-function AesCipher:CreateBufferFromInput(Input: buffer | string): buffer?
+function AesCipher:CreateBufferFromInput(Input: buffer | string): buffer
 	if typeof(Input) == "buffer" then
 		return Input
 	elseif typeof(Input) == "string" then
 		return buffer.fromstring(Input)
 	end
 	
-	return nil
+	return buffer.create(0)
 end
 
-function AesCipher:ExpandMasterKey(MasterKey: buffer | string, OutputBuffer: buffer?)
+function AesCipher:ExpandMasterKey(MasterKey: buffer | string, OutputBuffer: buffer?): buffer
 	local KeyLength = if typeof(MasterKey) == "buffer" then buffer.len(MasterKey) else #MasterKey
 	local KeyConfig = self:ValidateKeySize(KeyLength)
 	return ExpandKeySchedule(MasterKey, KeyLength, OutputBuffer or buffer.create(KeyConfig.ExpandedLength), typeof(MasterKey) == "buffer")
 end
 
-function AesCipher.New(MasterKey, OperationMode, PaddingScheme)
+function AesCipher.New(MasterKey: buffer | string, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
 	local self = setmetatable({}, AesCipher)
 
 	local RoundKeysBuffer = self:ExpandMasterKey(MasterKey)
@@ -454,12 +488,12 @@ function AesCipher.New(MasterKey, OperationMode, PaddingScheme)
 	self.Padding = PaddingScheme or PaddingSchemes.Pkcs7
 	self.RoundKeysBuffer = RoundKeysBuffer
 	self.KeyMaterialLength = KeyConfig.MaterialLength
-	self.SegmentSize = self.Mode.SegmentSize or 16
+	self.SegmentSize = (self.Mode :: CipherModes.SimpleModeStruct2).SegmentSize or 16
 
-	return self
+	return (self :: any) :: AesCipher
 end
 
-function AesCipher:FromKey(RoundKeysBuffer, OperationMode, PaddingScheme)
+function AesCipher:FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
 	local self = setmetatable({}, AesCipher)
 
 	local RoundKeysLength = buffer.len(RoundKeysBuffer)
@@ -472,12 +506,12 @@ function AesCipher:FromKey(RoundKeysBuffer, OperationMode, PaddingScheme)
 	self.Padding = PaddingScheme or PaddingSchemes.Pkcs7
 	self.RoundKeysBuffer = RoundKeysBuffer
 	self.KeyMaterialLength = KeyConfig.MaterialLength
-	self.SegmentSize = self.Mode.SegmentSize or 16
+	self.SegmentSize = (self.Mode :: CipherModes.SimpleModeStruct2).SegmentSize or 16
 
-	return self
+	return (self :: any) :: AesCipher
 end
 
-function AesCipher:Encrypt(Plaintext, Output, ...)
+function AesCipher:Encrypt(Plaintext: buffer, Output: buffer?, ...): buffer
 	local InputBuffer = self:CreateBufferFromInput(Plaintext)
 	local ValidOutput = typeof(Output) == "buffer" and Output or nil
 	local Padded = self.Padding.Pad(InputBuffer, ValidOutput, self.SegmentSize)
@@ -491,7 +525,7 @@ function AesCipher:Encrypt(Plaintext, Output, ...)
 	return Padded
 end
 
-function AesCipher:Decrypt(Ciphertext, Output, ...)
+function AesCipher:Decrypt(Ciphertext: buffer, Output: buffer?, ...): buffer
 	local CipherBuffer = self:CreateBufferFromInput(Ciphertext)
 	local ValidOutput = typeof(Output) == "buffer" and Output or nil
 	local Overwrite = self.Padding.Overwrite
@@ -508,15 +542,15 @@ function AesCipher:Decrypt(Ciphertext, Output, ...)
 	return self.Padding.Unpad(OutputBuffer, ValidOutput, self.SegmentSize)
 end
 
-function AesCipher:EncryptBlock(Plaintext, Offset, Output, OutputOffset)
+function AesCipher:EncryptBlock(Plaintext: buffer, Offset: number, Output: buffer?, OutputOffset: number)
 	EncryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Plaintext, Offset, Output or Plaintext, OutputOffset or Offset)
 end
 
-function AesCipher:DecryptBlock(Ciphertext, Offset, Output, OutputOffset)
+function AesCipher:DecryptBlock(Ciphertext: buffer, Offset: number, Output: buffer?, OutputOffset: number)
 	DecryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Ciphertext, Offset, Output or Ciphertext, OutputOffset or Offset)
 end
 
-function AesCipher:ExpandKey(MasterKey, OutputBuffer)
+function AesCipher:ExpandKey(MasterKey: buffer, OutputBuffer: buffer?): buffer
 	return self:ExpandMasterKey(MasterKey, OutputBuffer)
 end
 
