@@ -1,37 +1,49 @@
+--!strict
 --!native
 --!optimize 2
+
+type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number) -> ()
+export type SimpleModeStruct = {
+	ForwardMode: (EncryptionProcessor: Processor, DecryptionProcessor: Processor, InputBuffer: buffer, OutputBuffer: buffer, ...any) -> (),
+	InverseMode: (EncryptionProcessor: Processor, DecryptionProcessor: Processor, InputBuffer: buffer, OutputBuffer: buffer, ...any) -> (),
+}
+export type SimpleModeStruct2 = {
+	ForwardMode: (EncryptionProcessor: Processor, DecryptionProcessor: Processor, InputBuffer: buffer, OutputBuffer: buffer, ...any) -> (),
+	InverseMode: (EncryptionProcessor: Processor, DecryptionProcessor: Processor, InputBuffer: buffer, OutputBuffer: buffer, ...any) -> (),
+	SegmentSize: number?
+}
 
 local ZeroesInitializationVector = buffer.create(16)
 
 local CipherModes = {}
 
-local function ValidateBlockData(DataBuffer, BlockSize)
+local function ValidateBlockData(DataBuffer: buffer, BlockSize: number): number
 	return buffer.len(DataBuffer) - BlockSize
 end
 
-local function ValidateInitializationVector(InitializationVector)
+local function ValidateInitializationVector(InitializationVector: buffer): buffer
 	return InitializationVector or ZeroesInitializationVector
 end
 
-local function XorWords(Buffer1, Offset1, Buffer2, Offset2, OutputBuffer, OutputOffset)
+local function XorWords(Buffer1: buffer, Offset1: number, Buffer2: buffer, Offset2: number, OutputBuffer: buffer, OutputOffset: number)
 	buffer.writeu32(OutputBuffer, OutputOffset, bit32.bxor(buffer.readu32(Buffer1, Offset1), buffer.readu32(Buffer2, Offset2)))
 	buffer.writeu32(OutputBuffer, OutputOffset + 4, bit32.bxor(buffer.readu32(Buffer1, Offset1 + 4), buffer.readu32(Buffer2, Offset2 + 4)))
 	buffer.writeu32(OutputBuffer, OutputOffset + 8, bit32.bxor(buffer.readu32(Buffer1, Offset1 + 8), buffer.readu32(Buffer2, Offset2 + 8)))
 	buffer.writeu32(OutputBuffer, OutputOffset + 12, bit32.bxor(buffer.readu32(Buffer1, Offset1 + 12), buffer.readu32(Buffer2, Offset2 + 12)))
 end
 
-local function ReadWords(Buffer, Offset)
+local function ReadWords(Buffer: buffer, Offset: number): (number, number, number, number)
 	return buffer.readu32(Buffer, Offset), buffer.readu32(Buffer, Offset + 4), buffer.readu32(Buffer, Offset + 8), buffer.readu32(Buffer, Offset + 12)
 end
 
-local function WriteWords(Buffer, Offset, Word0, Word1, Word2, Word3)
+local function WriteWords(Buffer: buffer, Offset: number, Word0: number, Word1: number, Word2: number, Word3: number)
 	buffer.writeu32(Buffer, Offset, Word0)
 	buffer.writeu32(Buffer, Offset + 4, Word1)
 	buffer.writeu32(Buffer, Offset + 8, Word2)
 	buffer.writeu32(Buffer, Offset + 12, Word3)
 end
 
-local function AddByteCounter(CounterBuffer, StepSize, StartOffset, EndOffset, IsLittleEndian)
+local function AddByteCounter(CounterBuffer: buffer, StepSize: number, StartOffset: number, EndOffset: number, IsLittleEndian: boolean)
 	local ByteValue
 	if IsLittleEndian then
 		ByteValue = buffer.readu8(CounterBuffer, StartOffset) + StepSize
@@ -61,14 +73,14 @@ local function AddByteCounter(CounterBuffer, StepSize, StartOffset, EndOffset, I
 end
 
 CipherModes.ECB = table.freeze({
-	ForwardMode = function(EncryptionProcessor, _, PlaintextBuffer, OutputBuffer)
+	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer)
 		local DataLength = ValidateBlockData(PlaintextBuffer, 16)
 		for BlockOffset = 0, DataLength, 16 do
 			EncryptionProcessor(PlaintextBuffer, BlockOffset, OutputBuffer, BlockOffset)
 		end
 	end,
 
-	InverseMode = function(_, DecryptionProcessor, CiphertextBuffer, OutputBuffer)
+	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer)
 		local DataLength = ValidateBlockData(CiphertextBuffer, 16)
 		for BlockOffset = 0, DataLength, 16 do
 			DecryptionProcessor(CiphertextBuffer, BlockOffset, OutputBuffer, BlockOffset)
@@ -77,7 +89,7 @@ CipherModes.ECB = table.freeze({
 })
 
 CipherModes.CBC = table.freeze({
-	ForwardMode = function(EncryptionProcessor, _, PlaintextBuffer, OutputBuffer, _, InitializationVector)
+	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
 		local DataLength = ValidateBlockData(PlaintextBuffer, 16)
 		local InitializationVector = ValidateInitializationVector(InitializationVector)
 
@@ -90,7 +102,7 @@ CipherModes.CBC = table.freeze({
 		end
 	end,
 
-	InverseMode = function(_, DecryptionProcessor, CiphertextBuffer, OutputBuffer, _, InitializationVector)
+	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
 		local DataLength = ValidateBlockData(CiphertextBuffer, 16)
 		local InitializationVector = ValidateInitializationVector(InitializationVector)
 
@@ -112,7 +124,7 @@ CipherModes.CBC = table.freeze({
 })
 
 CipherModes.PCBC = table.freeze({
-	ForwardMode = function(EncryptionProcessor, _, PlaintextBuffer, OutputBuffer, _, InitializationVector)
+	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
 		local DataLength = ValidateBlockData(PlaintextBuffer, 16)
 		local InitializationVector = ValidateInitializationVector(InitializationVector)
 
@@ -136,7 +148,7 @@ CipherModes.PCBC = table.freeze({
 		end
 	end,
 
-	InverseMode = function(_, DecryptionProcessor, CiphertextBuffer, OutputBuffer, _, InitializationVector)
+	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
 		local DataLength = ValidateBlockData(CiphertextBuffer, 16)
 		local InitializationVector = ValidateInitializationVector(InitializationVector)
 
@@ -161,8 +173,11 @@ CipherModes.PCBC = table.freeze({
 	end
 })
 
-local function CipherFeedbackMode(EncryptionProcessor, _, InputBuffer, OutputBuffer, ModeOptions, InitializationVector, IsDecryption)
-	local SegmentSize = ModeOptions.SegmentSize
+local function CipherFeedbackMode(EncryptionProcessor: Processor, _: Processor, InputBuffer: buffer, OutputBuffer: buffer, ModeOptions: {
+	CommonTemp: buffer?,
+	SegmentSize: number
+}, InitializationVector: buffer, IsDecryption: boolean)
+	local SegmentSize: number = ModeOptions.SegmentSize
 	local DataLength = buffer.len(InputBuffer)
 
 	local InitializationVector = ValidateInitializationVector(InitializationVector)
@@ -205,7 +220,7 @@ local function CipherFeedbackMode(EncryptionProcessor, _, InputBuffer, OutputBuf
 	end
 end
 
-local function OutputFeedbackMode(EncryptionProcessor, _, InputBuffer, OutputBuffer, _, InitializationVector)
+local function OutputFeedbackMode(EncryptionProcessor: Processor, _: Processor, InputBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
 	local DataLength = ValidateBlockData(InputBuffer, 16)
 	local InitializationVector = ValidateInitializationVector(InitializationVector)
 
@@ -229,7 +244,15 @@ local function OutputFeedbackMode(EncryptionProcessor, _, InputBuffer, OutputBuf
 	WriteWords(OutputBuffer, DataLength, Word0, Word1, Word2, Word3)
 end
 
-local function CounterMode(EncryptionProcessor, _, InputBuffer, OutputBuffer, ModeOptions)
+local function CounterMode(EncryptionProcessor: Processor, _: Processor, InputBuffer: buffer, OutputBuffer: buffer, ModeOptions: {
+	CommonTemp: buffer,
+	InitValue: string,
+	Prefix: string,
+	Suffix: string,
+	Step: number,
+	LittleEndian: boolean,
+	SegmentSize: number
+})
 	local DataLength = ValidateBlockData(InputBuffer, 16)
 	local TemporaryBuffer = ModeOptions.CommonTemp
 	local InitialValue = ModeOptions.InitValue
@@ -269,27 +292,65 @@ CipherModes.OFB = table.freeze({
 	InverseMode = OutputFeedbackMode
 })
 
-CipherModes.CFB = {
-	ForwardMode = function(...)
-		CipherFeedbackMode(..., false)
-	end,
-	InverseMode = function(...)
-		CipherFeedbackMode(..., true)
-	end,
-	SegmentSize = 16,
-	CommonTemp = buffer.create(31)
-}
-
-CipherModes.CTR = {
-	ForwardMode = CounterMode, 
-	InverseMode = CounterMode,
-	InitValue = string.pack("I2I2I2I2I2I2I2I2", math.random(0, 65535), math.random(0, 65535), math.random(0, 65535),
-		math.random(0, 65535), math.random(0, 65535), math.random(0, 65535), math.random(0, 65535), math.random(0, 65535)),
-	Prefix = "", 
-	Suffix = "", 
-	Step = 1, 
-	LittleEndian = false,
-	CommonTemp = buffer.create(16)
-}
+do
+	type CFBOptions = {
+		CommonTemp: buffer?,
+		SegmentSize: number
+	}
+	
+	local CFB_Forward = function(EncryptionProcessor: Processor, DecryptionProcessor: Processor, InputBuffer: buffer, OutputBuffer: buffer, ModeOptions: CFBOptions, InitializationVector: buffer, IsDecryption: boolean)
+		CipherFeedbackMode(EncryptionProcessor, DecryptionProcessor, InputBuffer, OutputBuffer, ModeOptions, InitializationVector, false)
+	end
+	
+	local CFB_Inverse = function(EncryptionProcessor: Processor, DecryptionProcessor: Processor, InputBuffer: buffer, OutputBuffer: buffer, ModeOptions: CFBOptions, InitializationVector: buffer, IsDecryption: boolean)
+		CipherFeedbackMode(EncryptionProcessor, DecryptionProcessor, InputBuffer, OutputBuffer, ModeOptions, InitializationVector, true)
+	end
+	
+	local Index = function(_, index: "CFB" | "CTR"): {}?
+		if index == "CFB" then
+			return {
+				ForwardMode = CFB_Forward,
+				InverseMode = CFB_Inverse,
+				SegmentSize = 16,
+				CommonTemp = buffer.create(31)
+			}
+		elseif index == "CTR" then
+			return {
+				ForwardMode = CounterMode,
+				InverseMode = CounterMode,
+				InitValue = string.pack("I2I2I2I2I2I2I2I2", math.random(0, 65535), math.random(0, 65535), math.random(0, 65535),
+					math.random(0, 65535), math.random(0, 65535), math.random(0, 65535), math.random(0, 65535), math.random(0, 65535)),
+				Prefix = "", 
+				Suffix = "", 
+				Step = 1, 
+				LittleEndian = false,
+				CommonTemp = buffer.create(16)
+			}
+		else
+			return nil
+		end
+	end
+	
+	local Metatable = { __index = Index, __newindex = function() end }
+	setmetatable(CipherModes, Metatable)
+	
+	CipherModes.CFB = {} :: {
+		ForwardMode: typeof(CFB_Forward),
+		InverseMode: typeof(CFB_Inverse),
+		CommonTemp: buffer,
+		SegmentSize: number
+	}
+	
+	CipherModes.CTR = {} :: {
+		ForwardMode: typeof(CounterMode),
+		InverseMode: typeof(CounterMode),
+		CommonTemp: buffer,
+		InitValue: string,
+		Prefix: string,
+		Suffix: string,
+		Step: number,
+		LittleEndian: boolean
+	}
+end
 
 return table.freeze(CipherModes)
