@@ -1,8 +1,8 @@
-# rbx cryptography
+# rbx cryptography by daily3014 and xoifail
 Devforum link: https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271 \
 Wally link: https://wally.run/package/daily3014/cryptography \
 Pesde link: *soon*
-## why?
-mainly for fun and because other cryptography libraries on the devforum aren't as fast
+## why use this one?
+through extensive optimizations, our implementations are 2x-4x faster than alternatives while also trying to stay somewhat readable
 ## will you add other algorithms?
 maybe
