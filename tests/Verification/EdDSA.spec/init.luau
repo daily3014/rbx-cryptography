@@ -11,7 +11,7 @@ local expect = JestGlobals.expect
 local Cryptography = require(Packages.Cryptography)
 local EdDSA = Cryptography.Verification.EdDSA
 
-local TestVectors = require(script.Parent.data:WaitForChild("RFC8032.vectors"))
+local TestVectors = require(script:WaitForChild("RFC8032.vectors"))
 -- Convert hex vectors to bytes for easy comparison in tests
 for _, ref in TestVectors do
 	ref.secretKey = Cryptography.Utilities.Conversions.HexToBytesStr(ref.secretKey)
