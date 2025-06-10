@@ -1,3 +1,5 @@
+> [!WARNING]
+> This is the beta branch, some algorithms haven't been fully tested and may produce incorrect results
 # rbx cryptography by daily3014 and xoifail
 Devforum link: https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271 \
 Wally link: https://wally.run/package/daily3014/cryptography \
