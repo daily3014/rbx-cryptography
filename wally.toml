@@ -1,0 +1,11 @@
+[package]
+name = "daily3014/cryptography"
+description = "Luau implementations of popular hashing/encryption algorithms"
+version = "0.1.1"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+license = "MPL2"
+
+include = ["src", "src/**", "wally.toml", "default.project.json"]
+exclude = ["**"]
+[dependencies]
