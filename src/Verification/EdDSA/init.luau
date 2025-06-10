@@ -1,6 +1,6 @@
 --[=[
    Cryptography library: EdDSA (Ed25519)
-   
+
    Return type: varies by function
    Example usage:
 		local SecretKey = GenerateRandomString(32) -- use your random module or our randomstring function
@@ -18,15 +18,25 @@
 local FieldQuadratic = require(script.FieldQuadratic)
 local SHA512 = require(script.SHA512)
 local Edwards25519 = require(script.Edwards25519)
-local RandomBytes = require(script.Random)
 
 local function PublicKey(SecretKey: string): string
+	if #SecretKey ~= 32 then
+		error("SecretKey must be 32 bytes long", 2)
+	end
+
 	local Hash = SHA512.Digest(SecretKey)
 	local ScalarX = FieldQuadratic.DecodeClamped(Hash:sub(1, 32))
 	return Edwards25519.Encode(Edwards25519.MulG(FieldQuadratic.Bits(ScalarX)))
 end
 
 local function Sign(SecretKey: string, PublicKey: string, Message: string): string
+	if #SecretKey ~= 32 then
+		error("SecretKey must be 32 bytes long", 2)
+	end
+	if #PublicKey ~= 32 then
+		error("PublicKey must be 32 bytes long", 2)
+	end
+
 	local Hash = SHA512.Digest(SecretKey)
 	local ScalarX = FieldQuadratic.DecodeClamped(Hash:sub(1, 32))
 
@@ -46,6 +56,10 @@ local function Sign(SecretKey: string, PublicKey: string, Message: string): stri
 end
 
 local function Verify(PublicKey: string, Message: string, Signature: string): boolean
+	if #PublicKey ~= 32 then
+		return false
+	end
+
 	local PublicPoint = Edwards25519.Decode(PublicKey)
 	if not PublicPoint then
 		return false
