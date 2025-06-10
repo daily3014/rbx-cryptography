@@ -1,0 +1,25 @@
+{
+  "name": "Cryptography",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "DevPackages": {
+        "$path": "DevPackages"
+      },
+      "Packages": {
+        "$className": "Folder",
+        "Cryptography": {
+          "$path": "src"
+        }
+      },
+      "Tests": {
+        "$path": "tests"
+      }
+    },
+    "ServerScriptService": {
+      "run-tests": {
+        "$path": "scripts/run-tests.server.luau"
+      }
+    }
+  }
+}
