@@ -1,0 +1,14 @@
+[package]
+name = "daily3014/cryptography"
+description = "Luau implementations of popular hashing/encryption algorithms"
+version = "0.1.1"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+license = "MIT"
+
+include = ["src", "src/**", "wally.toml", "default.project.json"]
+exclude = ["**"]
+
+[dev-dependencies]
+Jest = "jsdotlua/jest@3.10.0"
+JestGlobals = "jsdotlua/jest-globals@3.10.0"
