@@ -223,6 +223,7 @@ describe("EdDSA", function()
 			{ start = 769, stop = 896 },
 			{ start = 897, stop = 1024 },
 		})("should handle test vectors $start through $stop", function(testRange)
+			task.wait() -- Avoids script timeout
 			for i = testRange.start, testRange.stop do
 				local ref = TestVectors[i]
 				local secretKey = ref.secretKey
