@@ -160,13 +160,13 @@ describe("HMAC", function()
 			local hashFunction = function(message: buffer): string
 				return MD5(message)
 			end
-			
+
 			local result = HMAC.HMAC(messageBuffer, keyBuffer, hashFunction, 64)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("HMAC-SHA256 (RFC 4231)", function()
 		it.each(hmacSHA256TestCases)("should compute $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.message)
@@ -174,17 +174,17 @@ describe("HMAC", function()
 			local hashFunction = function(message: buffer): string
 				return SHA256(message)
 			end
-			
+
 			local result = HMAC.HMAC(messageBuffer, keyBuffer, hashFunction, 64)
-			
+
 			if testCase.truncate then
 				result = string.sub(result, 1, 32)
 			end
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("HMAC-SHA512 (RFC 4231)", function()
 		it.each(hmacSHA512TestCases)("should compute $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.message)
@@ -192,31 +192,31 @@ describe("HMAC", function()
 			local hashFunction = function(message: buffer): string
 				return SHA512(message)
 			end
-			
+
 			local result = HMAC.HMAC(messageBuffer, keyBuffer, hashFunction, 128)
-			
+
 			if testCase.truncate then
 				result = string.sub(result, 1, 32)
 			end
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("PresetHMAC", function()
 		it("should create a preset HMAC function that works correctly", function()
 			local hashFunction = function(message: buffer): string
 				return MD5(message)
 			end
 			local presetHMAC = HMAC.PresetHMAC(hashFunction, 64)
-			
+
 			local testMessage = buffer.fromstring("Test message")
 			local testKey = buffer.fromstring("test key")
 			local result = presetHMAC(testMessage, testKey)
-			
+
 			-- Verify it returns a string
 			expect(type(result)).toBe("string")
-			
+
 			-- Verify it produces the same result as the regular HMAC function
 			local expectedResult = HMAC.HMAC(testMessage, testKey, hashFunction, 64)
 			expect(result).toBe(expectedResult)

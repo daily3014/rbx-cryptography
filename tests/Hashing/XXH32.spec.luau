@@ -133,16 +133,16 @@ describe("XXH32", function()
 		it.each(unseededTestCases)("should hash $description correctly", function(testCase)
 			local inputBuffer = buffer.fromstring(testCase.input)
 			local result = XXH32(inputBuffer)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Seeded Hash", function()
 		it.each(seededTestCases)("should hash $description correctly", function(testCase)
 			local inputBuffer = buffer.fromstring(testCase.input)
 			local result = XXH32(inputBuffer, testCase.seed)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
