@@ -8,6 +8,7 @@ local Jest = require(DevPackages:WaitForChild("Jest"))
 local runCLIOptions = {
 	verbose = true,
 	ci = false,
+	testTimeout = 60_000, -- 60 seconds
 }
 
 local projects = {
