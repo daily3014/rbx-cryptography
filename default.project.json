@@ -1,6 +1,6 @@
 {
-	"name": "cryptography",
-	"tree": {
-		"$path": "src"
-	}
+  "name": "Cryptography",
+  "tree": {
+    "$path": "src"
+  }
 }
