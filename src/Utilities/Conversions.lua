@@ -5,12 +5,12 @@
 local Conversions = {}
 
 function Conversions.ToHex(Buffer: buffer): string
-	local Hex = ""
+	local Hex = table.create(buffer.len(Buffer))
 	for Index = 0, buffer.len(Buffer) - 1 do
-		Hex ..= string.format("%02x", buffer.readu8(Buffer, Index))
+		table.insert(Hex, string.format("%02x", buffer.readu8(Buffer, Index)))
 	end
 
-	return Hex
+	return table.concat(Hex)
 end
 
 function Conversions.FromHex(Hex: string): buffer
@@ -21,6 +21,30 @@ function Conversions.FromHex(Hex: string): buffer
 	end
 
 	return Buffer
+end
+
+function Conversions.BytesStrToHex(BytesStr: string): string
+	local hex = table.create(#BytesStr)
+	for i = 1, #BytesStr do
+		hex[i] = string.format("%02x", string.byte(BytesStr, i))
+	end
+	return table.concat(hex)
+end
+
+function Conversions.HexToBytesStr(Hex: string): string
+	Hex = string.gsub(Hex, "^0x", "")
+	Hex = string.gsub(Hex, " ", "")
+
+	assert(#Hex % 2 == 0, "Hex string must have even length")
+
+	local BytesStr = table.create(#Hex / 2)
+	for i = 1, #Hex, 2 do
+		local byte = tonumber(string.sub(Hex, i, i + 1), 16)
+		assert(byte, "Invalid hex string")
+		table.insert(BytesStr, string.char(byte))
+	end
+
+	return table.concat(BytesStr)
 end
 
 return Conversions
