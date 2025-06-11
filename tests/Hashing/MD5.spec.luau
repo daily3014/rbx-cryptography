@@ -84,7 +84,7 @@ describe("MD5", function()
 	it.each(testCases)("should hash $description correctly", function(testCase)
 		local inputBuffer = buffer.fromstring(testCase.input)
 		local result = MD5(inputBuffer)
-		
+
 		expect(result).toBe(testCase.expected)
 	end)
 end)

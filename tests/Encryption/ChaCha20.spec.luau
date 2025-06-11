@@ -92,17 +92,17 @@ describe("ChaCha20", function()
 			local inputBuf = buffer.fromstring(testCase.input)
 			local result = ChaCha20(inputBuf, testCase.key, testCase.nonce, testCase.counter)
 			local resultHex = toHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Decryption", function()
 		it.each(decryptionTestCases)("should decrypt $description correctly", function(testCase)
 			local inputBuf = fromHex(testCase.input)
 			local result = ChaCha20(inputBuf, testCase.key, testCase.nonce, testCase.counter)
 			local resultStr = buffer.tostring(result)
-			
+
 			expect(resultStr).toBe(testCase.expected)
 		end)
 	end)

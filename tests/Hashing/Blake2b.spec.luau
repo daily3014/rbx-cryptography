@@ -216,44 +216,44 @@ describe("Blake2b", function()
 		it.each(basicTestCases)("should hash $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.input)
 			local result = Blake2b(messageBuffer, testCase.outLen)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Variable Length Output", function()
 		it.each(variableLengthTestCases)("should hash $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.input)
 			local result = Blake2b(messageBuffer, testCase.outLen)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Keyed Hash", function()
 		it.each(keyedTestCases)("should hash $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.input)
 			local keyBuffer = buffer.fromstring(testCase.key)
 			local result = Blake2b(messageBuffer, testCase.outLen, keyBuffer)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Alphabet Tests", function()
 		it.each(alphabetTestCases)("should hash $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.input)
 			local result = Blake2b(messageBuffer, testCase.outLen)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Large Input Tests", function()
 		it.each(largeInputTestCases)("should hash $description correctly", function(testCase)
 			local messageBuffer = buffer.fromstring(testCase.input)
 			local result = Blake2b(messageBuffer, testCase.outLen)
-			
+
 			expect(result).toBe(testCase.expected)
 		end)
 	end)
