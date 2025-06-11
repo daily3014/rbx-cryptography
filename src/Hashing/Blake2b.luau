@@ -1,16 +1,16 @@
 --[=[
 	Cryptography library: BLAKE2b
-	
+
 	Return type: string
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		
+
 		--------Usage Case 1--------
 		local Result = BLAKE2b(Message)
-		
+
 		--------Usage Case 2--------
 		local Result = BLAKE2b(Message, 32) -- 32 byte output
-		
+
 		--------Usage Case 3--------
 		local OptionalKey = buffer.fromstring("MyKey")
 		local Result = BLAKE2b(Message, 64, OptionalKey)
@@ -888,7 +888,7 @@ local function ProcessCompressionRound(
 end
 
 local OutputFormat = string.rep("%08x", 16)
-local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer): string
+local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): string
 	local KeyLength = KeyData and buffer.len(KeyData) or 0
 	local DataLength = buffer.len(InputData)
 
@@ -901,7 +901,7 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	local BlockLow = table.create(16)
 	local ProcessedBytes = KeyLength > 0 and 128 or 0
 
-	if KeyLength > 0 then
+	if KeyLength > 0 and KeyData then
 		local KeyPadding = buffer.create(BLOCK_SIZE_BYTES)
 		buffer.copy(KeyPadding, 0, KeyData)
 		ExtractWordsFromBlock(KeyPadding, 0, BlockHigh, BlockLow)
@@ -951,9 +951,8 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	return string.sub(FinalDigest, 1, OutputLength * 2)
 end
 
-local function BLAKE2b(InputData: buffer, OutputLength: number, KeyData: buffer): string
-	OutputLength = OutputLength or DEFAULT_OUTPUT_BYTES
-	return HashDigest(InputData, OutputLength, KeyData)
+local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer?): string
+	return HashDigest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
 end
 
 return BLAKE2b
