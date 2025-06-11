@@ -115,125 +115,125 @@ describe("AES", function()
 			local testKey = hexToBuf("b2e231d5c056db0f58f1d87a7da1610d")
 			local cipher = AES.New(testKey, AES.Modes.ECB, AES.Pads.None)
 			local expandedKey = cipher:ExpandKey(testKey)
-			
+
 			expect(cipher.RoundKeys).toBe(buffer.tostring(expandedKey))
 		end)
-		
+
 		it("should maintain key expansion consistency", function()
 			local testKey = hexToBuf("b2e231d5c056db0f58f1d87a7da1610d")
 			local cipher1 = AES.New(testKey, AES.Modes.ECB, AES.Pads.None)
 			local expandedKey = cipher1:ExpandKey(testKey)
-			
+
 			expect(cipher1.RoundKeys).toBe(buffer.tostring(expandedKey))
 		end)
 	end)
-	
+
 	describe("Block Encryption", function()
 		it.each(testCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
 			local cipher = AES.New(keyBuf, AES.Modes[testCase.mode], AES.Pads[testCase.padding])
-			
+
 			cipher:EncryptBlock(inputBuf, 0)
 			local resultHex = bufToHex(inputBuf)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("ECB Mode", function()
 		it.each(ecbTestCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
 			local cipher = AES.New(keyBuf, AES.Modes[testCase.mode], AES.Pads[testCase.padding])
-			
+
 			local result = cipher:Encrypt(inputBuf)
 			local resultHex = bufToHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("CBC Mode", function()
 		it.each(cbcTestCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
 			local cipher = AES.New(keyBuf, AES.Modes[testCase.mode], AES.Pads[testCase.padding])
-			
+
 			local result = cipher:Encrypt(inputBuf)
 			local resultHex = bufToHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("PCBC Mode", function()
 		it.each(pcbcTestCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
 			local ivBuf = hexToBuf(testCase.iv)
 			local cipher = AES.New(keyBuf, AES.Modes[testCase.mode], AES.Pads[testCase.padding])
-			
+
 			local result = cipher:Encrypt(inputBuf, nil, ivBuf)
 			local resultHex = bufToHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("CFB Mode", function()
 		it.each(cfbTestCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
 			local cipher = AES.New(keyBuf, AES.Modes[testCase.mode], AES.Pads[testCase.padding])
-			
+
 			local result = cipher:Encrypt(inputBuf)
 			local resultHex = bufToHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("OFB Mode", function()
 		it.each(ofbTestCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
 			local cipher = AES.New(keyBuf, AES.Modes[testCase.mode], AES.Pads[testCase.padding])
-			
+
 			local result = cipher:Encrypt(inputBuf)
 			local resultHex = bufToHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("CTR Mode", function()
 		it.each(ctrTestCases)("should encrypt $description correctly", function(testCase)
 			local keyBuf = hexToBuf(testCase.key)
 			local inputBuf = hexToBuf(testCase.input)
-			
+
 			local mode = AES.Modes.CTR
 			mode.InitValue = string.rep("\36", 16)
 			mode.LittleEndian = true
-			
+
 			local cipher = AES.New(keyBuf, mode, AES.Pads[testCase.padding])
-			
+
 			local result = cipher:Encrypt(inputBuf)
 			local resultHex = bufToHex(result)
-			
+
 			expect(resultHex).toBe(testCase.expected)
 		end)
 	end)
-	
+
 	describe("Block Decryption", function()
 		it("should decrypt blocks correctly", function()
 			local testKey = hexToBuf("b2e231d5c056db0f58f1d87a7da1610d")
 			local testBlock = hexToBuf("898df1706c354123f7e08762290e4e42")
 			local cipher = AES.New(testKey, AES.Modes.ECB, AES.Pads.None)
-			
+
 			cipher:DecryptBlock(testBlock, 0)
 			local resultHex = bufToHex(testBlock)
-			
+
 			expect(resultHex).toBe("a4e25a670d18a86fed98b8f1c0d2da5b")
 		end)
 	end)

@@ -25,7 +25,11 @@ local testCases = {
 		description = "UTF-8 Example",
 		expected = "941fd4cfe921e7a8ea1e1c6dd255b3c06d948fe7546bcd1d8deda161",
 	},
-	{ input = "\0", description = "Null Terminator", expected = "fff9292b4201617bdc4d3053fce02734166a683d7d858a7f5f59b073" },
+	{
+		input = "\0",
+		description = "Null Terminator",
+		expected = "fff9292b4201617bdc4d3053fce02734166a683d7d858a7f5f59b073",
+	},
 	{
 		input = string.rep("a", 55),
 		description = "Block of Characters",

@@ -84,7 +84,7 @@ describe("SHA1", function()
 	it.each(testCases)("should hash $description correctly", function(testCase)
 		local inputBuffer = buffer.fromstring(testCase.input)
 		local result = SHA1(inputBuffer)
-		
+
 		expect(result).toBe(testCase.expected)
 	end)
 end)
