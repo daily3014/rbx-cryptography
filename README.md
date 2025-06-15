@@ -49,17 +49,17 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 Table would be too large if everything was benched.
 Every implementations is faster than all alternatives:
 
-| Algorithm | Data Size | This Library | HashLib | DevForum Alternative | Other Libraries | Improvement |
-|-----------|-----------|--------------|---------|---------------------|-----------------|-------------|
-| **SHA512**  | 10k      | **512 μs**   | 2232 μs | -                   | 641 μs         | **4.4x faster** than HashLib |
-| **SHA256**  | 20k      | **390 μs**   | 2058 μs | 493 μs (old version)| 596 μs         | **5.3x faster** than HashLib |
-| **Keccak/SHA3-512** | 20k | **6.28 ms** | 10.60 ms | -              | -               | **1.7x faster** than HashLib |
-| **ChaCha20** | 20k     | **0.91 ms**  | -       | 7.87 ms (EncryptedNet)| -              | **8.6x faster** |
-| **AES**     | 20k      | **1.16 ms**  | -       | 5.34 ms (RobloxGamerPro200007)| -    | **4.6x faster** |
-| **CRC32**   | 200k     | **2.58 ms**  | -       | 6.26 ms (DevForum) | -               | **2.4x faster** |
-| **Adler32** | 200k     | **0.19 ms**  | -       | 1.65 ms (Naive Approach)| -           | **8.7x faster** |
+| Algorithm           | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
+|---------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
+| **SHA512**          | 10k       | **512 μs**   | 2232 μs  | -                              | 641 μs          | **4.4x faster** than HashLib |
+| **SHA256**          | 20k       | **390 μs**   | 2058 μs  | 493 μs (old version)           | 596 μs          | **5.3x faster** than HashLib |
+| **Keccak/SHA3-512** | 20k       | **6.28 ms**  | 10.60 ms | -                              | -               | **1.7x faster** than HashLib |
+| **ChaCha20**        | 20k       | **0.91 ms**  | -        | 7.87 ms (EncryptedNet)         | -               | **8.6x faster**              |
+| **AES**             | 20k       | **1.16 ms**  | -        | 5.34 ms (RobloxGamerPro200007) | -               | **4.6x faster**              |
+| **CRC32**           | 200k      | **2.58 ms**  | -        | 6.26 ms (DevForum)             | -               | **2.4x faster**              |
+| **Adler32**         | 200k      | **0.19 ms**  | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
 
-*Benchmarks performed on Roblox Studio*
+*Benchmarks performed on Roblox Studio on an Intel Core i7-12700*
 
 ---
 
@@ -69,7 +69,7 @@ Every implementations is faster than all alternatives:
 https://wally.run/package/daily3014/cryptography
 
 ### Pesde
-https://pesde.dev/packages/daily3014/cryptography)
+https://pesde.dev/packages/daily3014/cryptography
 
 ### Manual Installation
 1. Download the latest release from GitHub
@@ -85,7 +85,7 @@ https://pesde.dev/packages/daily3014/cryptography)
 -- Require the library
 local Cryptography = require(game:GetService("ReplicatedStorage").Cryptography)
 
--- Module shortcuts for cleaner code
+-- Module shortcuts
 local Hashing = Cryptography.Hashing
 local Encryption = Cryptography.Encryption
 local Utilities = Cryptography.Utilities
@@ -107,8 +107,8 @@ print("SHA256:", Hash) -- Output is already in hex format
 local function HashPassword(Password, Salt)
     local PasswordBuffer = buffer.fromstring(Password)
     local SaltBuffer = buffer.fromstring(Salt or "defaultsalt")
-    local Hash = Hashing.SHA2.SHA256(PasswordBuffer, SaltBuffer)
-    return Hash -- Output is already in hex format
+
+    return Hashing.SHA2.SHA256(PasswordBuffer, SaltBuffer)
 end
 
 -- Example usage
@@ -138,6 +138,8 @@ local DecryptedText = Encryption.AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD)
 ```
 ### EdDsa Usage
 ```lua
+local EdDSA = Verification.EdDSA
+
 -- Standard EdDSA usage
 local SecretKey = RandomBytes.Generate(32)
 local PublicKey = EdDSA.PublicKey(SecretKey)
@@ -155,11 +157,13 @@ local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
 
 -- Masked X25519 key exchange via EdDSA module
 local AliceSecret = buffer.fromstring(string.rep("a", 32))
-local BobSecret = buffer.fromstring(string.rep("b", 32))
 local AliceMaskedKey = EdDSA.MaskedX25519.Mask(AliceSecret)
-local BobMaskedKey = EdDSA.MaskedX25519.Mask(BobSecret)
 local AlicePublicKey = EdDSA.MaskedX25519.PublicKey(AliceMaskedKey)
+
+local BobSecret = buffer.fromstring(string.rep("b", 32))
+local BobMaskedKey = EdDSA.MaskedX25519.Mask(BobSecret)
 local BobPublicKey = EdDSA.MaskedX25519.PublicKey(BobMaskedKey)
+
 local AliceStaticSecret, AliceEphemeralSecret = EdDSA.MaskedX25519.Exchange(AliceMaskedKey, BobPublicKey)
 local BobStaticSecret, BobEphemeralSecret = EdDSA.MaskedX25519.Exchange(BobMaskedKey, AlicePublicKey)
 
@@ -175,14 +179,26 @@ local AliceRemaskedKey = EdDSA.MaskedX25519.Remask(AliceMaskedKey)
 
 **SHA-2 Family:**
 ```lua
+Hashing.SHA2.SHA224(Message: buffer, Salt?: buffer) -> string
 Hashing.SHA2.SHA256(Message: buffer, Salt?: buffer) -> string
--- Computes SHA256 hash with optional salt. Most commonly used cryptographic hash function.
+Hashing.SHA2.SHA384(Message: buffer, Salt?: buffer) -> string
+Hashing.SHA2.SHA512(Message: buffer, Salt?: buffer) -> string
+Hashing.SHA2.SHA512_224(Message: buffer, Salt?: buffer) -> string
+Hashing.SHA2.SHA512_256(Message: buffer, Salt?: buffer) -> string
+-- Computes SHA2-xxx hash with optional salt. Most commonly used cryptographic hash function.
 ```
 
 **SHA-3 Family:**
 ```lua
+Hashing.SHA3.SHA3_224(Message: buffer) -> string
 Hashing.SHA3.SHA3_256(Message: buffer) -> string
--- Modern SHA3-256 hash function.
+Hashing.SHA3.SHA3_384(Message: buffer) -> string
+Hashing.SHA3.SHA3_512(Message: buffer) -> string
+-- Modern SHA3-xxx hash function.
+
+Hashing.SHA3.SHAKE_128(Message: buffer) -> string
+Hashing.SHA3.SHAKE_256(Message: buffer) -> string
+-- Modern SHAKE-xxx hash function.
 ```
 
 **BLAKE Family:**
@@ -210,13 +226,13 @@ Hashing.XXH32(Message: buffer, Seed?: number) -> number
 
 **Stream Cipher:**
 ```lua
-Encryption.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter?: number, Rounds?: number) -> buffer
+Encryption.AEAD.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter?: number, Rounds?: number) -> buffer
 -- ChaCha20 stream cipher encryption/decryption.
 ```
 
 **Block Cipher:**
 ```lua
-Encryption.AES.New(Key: buffer, Mode: AESMode, Padding: AESPadding) -> AESProfile
+Encryption.AES.New(Key: buffer, Mode: AESMode, Padding: AESPadding) -> AESCipher
 -- Create AES encryption profile with specified mode and padding scheme.
 
 -- Example AES usage:
@@ -225,6 +241,9 @@ local AESProfile = Encryption.AES.New(
     Encryption.AES.Modes.CBC,
     Encryption.AES.Pads.Pkcs7
 )
+
+local Message = "Can be a buffer too!"
+
 local Encrypted = AESProfile:Encrypt(Message, nil, InitVector)
 local Decrypted = AESProfile:Decrypt(Encrypted, nil, InitVector)
 ```
@@ -291,10 +310,10 @@ Utilities.RandomString(Length: number) -> string
 ### Checksum Functions
 
 ```lua
-Checksums.CRC32(Message: buffer, Mode?: "Jam" | "Iso", Hex?: boolean)
+Checksums.CRC32(Message: buffer, Mode?: "Jam" | "Iso", Hex?: boolean) -> number
 -- Calculate CRC32 checksum with optional mode and output format.
 
-Checksums.Adler(Message: buffer)
+Checksums.Adler(Message: buffer) -> number
 -- Calculate Adler checksum.
 ```
 
@@ -331,7 +350,7 @@ We welcome contributions to improve the library.
 
 ### Guidelines
 
-- **Bug Reports**: Use GitHub Issues with detailed reproduction steps
+- **Bug Reports**: Use issues with reproduction steps
 - **Feature Requests**: Open an issue to discuss before implementing
 - **Pull Requests**: 
   - Follow existing code style
@@ -372,7 +391,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 ### Will you add other algorithms?
 Maybe! Depends if its possible in Luau without needing really expensive calculations like RSA.
 
-### Why is this library faster?
+### How is this library faster?
 Through many optimizations including buffer operations, algorithm tuning and Luau specific optimizations.
 
 ### Which algorithms should I use?
