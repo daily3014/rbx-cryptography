@@ -1,8 +1,8 @@
 # rbx cryptography by daily3014 and xoifail
 
 Devforum Documentation: https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271 \
-Wally link: https://wally.run/package/daily3014/cryptography [Updated - v1.0.0]\
-Pesde link: https://pesde.dev/packages/daily3014/cryptography [Updated - v1.0.0]
+Wally link: https://wally.run/package/daily3014/cryptography [Updated - v1.0.1]\
+Pesde link: https://pesde.dev/packages/daily3014/cryptography [Updated - v1.0.1]
 
 ## Why use this one?
 

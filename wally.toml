@@ -1,10 +1,10 @@
 [package]
 name = "daily3014/cryptography"
 description = "Luau implementations of popular hashing/encryption algorithms"
-version = "1.0.0"
+version = "1.0.1"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 license = "MIT"
 
-include = ["src", "src/**", "wally.toml", "default.project.json"]
+include = ["src", "src/**"]
 exclude = ["**"]
