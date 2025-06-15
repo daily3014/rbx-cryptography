@@ -465,7 +465,7 @@ function AesCipher:CreateBufferFromInput(Input: buffer | string): buffer
 		return buffer.fromstring(Input)
 	end
 	
-	return buffer.create(0)
+	return buffer.fromstring(`Why did I make the input a {type(Input)}....`)
 end
 
 function AesCipher:ExpandMasterKey(MasterKey: buffer | string, OutputBuffer: buffer?): buffer
@@ -511,7 +511,7 @@ function AesCipher:FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.S
 	return (_self :: any) :: AesCipher
 end
 
-function AesCipher:Encrypt(Plaintext: buffer, Output: buffer?, ...): buffer
+function AesCipher:Encrypt(Plaintext: buffer | string, Output: buffer?, ...): buffer
 	local InputBuffer = self:CreateBufferFromInput(Plaintext)
 	local ValidOutput = typeof(Output) == "buffer" and Output or nil
 	local Padded = self.Padding.Pad(InputBuffer, ValidOutput, self.SegmentSize)
@@ -525,7 +525,7 @@ function AesCipher:Encrypt(Plaintext: buffer, Output: buffer?, ...): buffer
 	return Padded
 end
 
-function AesCipher:Decrypt(Ciphertext: buffer, Output: buffer?, ...): buffer
+function AesCipher:Decrypt(Ciphertext: buffer | string, Output: buffer?, ...): buffer
 	local CipherBuffer = self:CreateBufferFromInput(Ciphertext)
 	local ValidOutput = typeof(Output) == "buffer" and Output or nil
 	local Overwrite = self.Padding.Overwrite
@@ -542,12 +542,14 @@ function AesCipher:Decrypt(Ciphertext: buffer, Output: buffer?, ...): buffer
 	return self.Padding.Unpad(OutputBuffer, ValidOutput, self.SegmentSize)
 end
 
-function AesCipher:EncryptBlock(Plaintext: buffer, Offset: number, Output: buffer?, OutputOffset: number)
-	EncryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Plaintext, Offset, Output or Plaintext, OutputOffset or Offset)
+function AesCipher:EncryptBlock(Plaintext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number)
+	local Plainbuffer = self:CreateBufferFromInput(Plaintext)
+	EncryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Plainbuffer, Offset, Output or Plainbuffer, OutputOffset or Offset)
 end
 
-function AesCipher:DecryptBlock(Ciphertext: buffer, Offset: number, Output: buffer?, OutputOffset: number)
-	DecryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Ciphertext, Offset, Output or Ciphertext, OutputOffset or Offset)
+function AesCipher:DecryptBlock(Ciphertext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number)
+	local Cipherbuffer = self:CreateBufferFromInput(Ciphertext)
+	DecryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Cipherbuffer, Offset, Output or Cipherbuffer, OutputOffset or Offset)
 end
 
 function AesCipher:ExpandKey(MasterKey: buffer, OutputBuffer: buffer?): buffer
