@@ -40,7 +40,7 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 **Utility Functions (10+):**
 - **Encoding**: Base64 encode/decode
 - **Conversions**: Hex to/from buffer, string utilities
-- **Random Generation**: Cryptographically secure random strings
+- **Random Generation**: Quick arbitrary length random string generation
 - **Checksums**: CRC32 (JAM/ISO modes), Adler
 
 ---
@@ -304,7 +304,7 @@ Utilities.Conversions.FromHex(Hex: string) -> buffer
 **Random Generation:**
 ```lua
 Utilities.RandomString(Length: number) -> string
--- Generate secure random string of specified length.
+-- Generate random string of specified length.
 ```
 
 ### Checksum Functions
