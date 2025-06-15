@@ -23,6 +23,7 @@
 local FieldQuadratic = require("@self/FieldQuadratic")
 local SHA512 = require("@self/SHA512")
 local Edwards25519 = require("@self/Edwards25519")
+local Mask = require("@self/Mask")
 
 local function ConcatBuffers(...): buffer
 	local Buffers = {...}
@@ -131,4 +132,6 @@ return {
 	PublicKey = PublicKey,
 	Sign = Sign,
 	Verify = Verify,
+
+	Masked25519 = Mask
 }
