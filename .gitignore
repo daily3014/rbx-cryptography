@@ -2,7 +2,11 @@
 /*.rbxl.lock
 /*.rbxl
 /*.rbxm
+pesde.lock
 
+luau_packages/
+lune_packages/
+.pesde/
 DevPackages/
 Packages/
 
