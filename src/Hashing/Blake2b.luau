@@ -90,7 +90,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S2], LowWords[S2]
 
 			CarryBits = WL1 + WL5 + MsgLowX
-			WH1 = WH1 + WH5 + MsgHighX + CarryBits // 0x100000000
+			WH1 += WH5 + MsgHighX + CarryBits // 0x100000000
 			WL1 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH13
@@ -98,7 +98,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL13 = bit32.bxor(CarryBits, WH1)
 
 			CarryBits = WorkL9 + WorkL13
-			WorkH9 = WorkH9 + WorkH13 + CarryBits // 0x100000000
+			WorkH9 += WorkH13 + CarryBits // 0x100000000
 			WorkL9 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH5
@@ -106,7 +106,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL5 = bit32.bxor(bit32.rshift(WL5, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL9, 24), bit32.lshift(WorkH9, 8))
 
 			CarryBits = WL1 + WL5 + MsgLowY
-			WH1 = WH1 + WH5 + MsgHighY + CarryBits // 0x100000000
+			WH1 += WH5 + MsgHighY + CarryBits // 0x100000000
 			WL1 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH13
@@ -114,7 +114,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL13 = bit32.bxor(bit32.rshift(WorkL13, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL1, 16), bit32.lshift(WH1, 16))
 
 			CarryBits = WorkL9 + WorkL13
-			WorkH9 = WorkH9 + WorkH13 + CarryBits // 0x100000000
+			WorkH9 += WorkH13 + CarryBits // 0x100000000
 			WorkL9 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH5
@@ -128,31 +128,31 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S4], LowWords[S4]
 
 			CarryBits = WL2 + WL6 + MsgLowX
-			WH2 = WH2 + WH6 + MsgHighX + CarryBits // 0x100000000
-			WL2 =  bit32.bor(CarryBits, 0)
+			WH2 += WH6 + MsgHighX + CarryBits // 0x100000000
+			WL2 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH14
 			WorkH14 = bit32.bxor(WorkL14, WL2)
 			WorkL14 = bit32.bxor(CarryBits, WH2)
 
 			CarryBits = WorkL10 + WorkL14
-			WorkH10 = WorkH10 + WorkH14 + CarryBits // 0x100000000
-			WorkL10 =  bit32.bor(CarryBits, 0)
+			WorkH10 += WorkH14 + CarryBits // 0x100000000
+			WorkL10 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH6
 			WH6 = bit32.bxor(bit32.rshift(WH6, 24), bit32.lshift(WL6, 8), bit32.rshift(WorkH10, 24), bit32.lshift(WorkL10, 8))
 			WL6 = bit32.bxor(bit32.rshift(WL6, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL10, 24), bit32.lshift(WorkH10, 8))
 
 			CarryBits = WL2 + WL6 + MsgLowY
-			WH2 = WH2 + WH6 + MsgHighY + CarryBits // 0x100000000
-			WL2 =  bit32.bor(CarryBits, 0)
+			WH2 += WH6 + MsgHighY + CarryBits // 0x100000000
+			WL2 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH14
 			WorkH14 = bit32.bxor(bit32.rshift(WorkH14, 16), bit32.lshift(WorkL14, 16), bit32.rshift(WH2, 16), bit32.lshift(WL2, 16))
 			WorkL14 = bit32.bxor(bit32.rshift(WorkL14, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL2, 16), bit32.lshift(WH2, 16))
 
 			CarryBits = WorkL10 + WorkL14
-			WorkH10 = WorkH10 + WorkH14 + CarryBits // 0x100000000
+			WorkH10 += WorkH14 + CarryBits // 0x100000000
 			WorkL10 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH6
@@ -166,7 +166,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S6], LowWords[S6]
 
 			CarryBits = WL3 + WL7 + MsgLowX
-			WH3 = WH3 + WH7 + MsgHighX + CarryBits // 0x100000000
+			WH3 += WH7 + MsgHighX + CarryBits // 0x100000000
 			WL3 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH15
@@ -174,7 +174,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL15 = bit32.bxor(CarryBits, WH3)
 
 			CarryBits = WorkL11 + WorkL15
-			WorkH11 = WorkH11 + WorkH15 + CarryBits // 0x100000000
+			WorkH11 += WorkH15 + CarryBits // 0x100000000
 			WorkL11 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH7
@@ -182,7 +182,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL7 = bit32.bxor(bit32.rshift(WL7, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL11, 24), bit32.lshift(WorkH11, 8))
 
 			CarryBits = WL3 + WL7 + MsgLowY
-			WH3 = WH3 + WH7 + MsgHighY + CarryBits // 0x100000000
+			WH3 += WH7 + MsgHighY + CarryBits // 0x100000000
 			WL3 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH15
@@ -190,7 +190,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL15 = bit32.bxor(bit32.rshift(WorkL15, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL3, 16), bit32.lshift(WH3, 16))
 
 			CarryBits = WorkL11 + WorkL15
-			WorkH11 = WorkH11 + WorkH15 + CarryBits // 0x100000000
+			WorkH11 += WorkH15 + CarryBits // 0x100000000
 			WorkL11 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH7
@@ -204,7 +204,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S8], LowWords[S8]
 
 			CarryBits = WL4 + WL8 + MsgLowX
-			WH4 = WH4 + WH8 + MsgHighX + CarryBits // 0x100000000
+			WH4 += WH8 + MsgHighX + CarryBits // 0x100000000
 			WL4 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH16
@@ -212,7 +212,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL16 = bit32.bxor(CarryBits, WH4)
 
 			CarryBits = WorkL12 + WorkL16
-			WorkH12 = WorkH12 + WorkH16 + CarryBits // 0x100000000
+			WorkH12 += WorkH16 + CarryBits // 0x100000000
 			WorkL12 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH8
@@ -220,7 +220,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL8 = bit32.bxor(bit32.rshift(WL8, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL12, 24), bit32.lshift(WorkH12, 8))
 
 			CarryBits = WL4 + WL8 + MsgLowY
-			WH4 = WH4 + WH8 + MsgHighY + CarryBits // 0x100000000
+			WH4 += WH8 + MsgHighY + CarryBits // 0x100000000
 			WL4 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH16
@@ -228,7 +228,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL16 = bit32.bxor(bit32.rshift(WorkL16, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL4, 16), bit32.lshift(WH4, 16))
 
 			CarryBits = WorkL12 + WorkL16
-			WorkH12 = WorkH12 + WorkH16 + CarryBits // 0x100000000
+			WorkH12 += WorkH16 + CarryBits // 0x100000000
 			WorkL12 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH8
@@ -242,7 +242,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S10], LowWords[S10]
 
 			CarryBits = WL1 + WL6 + MsgLowX
-			WH1 = WH1 + WH6 + MsgHighX + CarryBits // 0x100000000
+			WH1 += WH6 + MsgHighX + CarryBits // 0x100000000
 			WL1 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH16
@@ -250,7 +250,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL16 = bit32.bxor(CarryBits, WH1)
 
 			CarryBits = WorkL11 + WorkL16
-			WorkH11 = WorkH11 + WorkH16 + CarryBits // 0x100000000
+			WorkH11 += WorkH16 + CarryBits // 0x100000000
 			WorkL11 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH6
@@ -258,7 +258,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL6 = bit32.bxor(bit32.rshift(WL6, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL11, 24), bit32.lshift(WorkH11, 8))
 
 			CarryBits = WL1 + WL6 + MsgLowY
-			WH1 = WH1 + WH6 + MsgHighY + CarryBits // 0x100000000
+			WH1 += WH6 + MsgHighY + CarryBits // 0x100000000
 			WL1 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH16
@@ -266,7 +266,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL16 = bit32.bxor(bit32.rshift(WorkL16, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL1, 16), bit32.lshift(WH1, 16))
 
 			CarryBits = WorkL11 + WorkL16
-			WorkH11 = WorkH11 + WorkH16 + CarryBits // 0x100000000
+			WorkH11 += WorkH16 + CarryBits // 0x100000000
 			WorkL11 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH6
@@ -280,7 +280,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S12], LowWords[S12]
 
 			CarryBits = WL2 + WL7 + MsgLowX
-			WH2 = WH2 + WH7 + MsgHighX + CarryBits // 0x100000000
+			WH2 += WH7 + MsgHighX + CarryBits // 0x100000000
 			WL2 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH13
@@ -288,7 +288,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL13 = bit32.bxor(CarryBits, WH2)
 
 			CarryBits = WorkL12 + WorkL13
-			WorkH12 = WorkH12 + WorkH13 + CarryBits // 0x100000000
+			WorkH12 += WorkH13 + CarryBits // 0x100000000
 			WorkL12 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH7
@@ -296,7 +296,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL7 = bit32.bxor(bit32.rshift(WL7, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL12, 24), bit32.lshift(WorkH12, 8))
 
 			CarryBits = WL2 + WL7 + MsgLowY
-			WH2 = WH2 + WH7 + MsgHighY + CarryBits // 0x100000000
+			WH2 += WH7 + MsgHighY + CarryBits // 0x100000000
 			WL2 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH13
@@ -304,7 +304,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL13 = bit32.bxor(bit32.rshift(WorkL13, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL2, 16), bit32.lshift(WH2, 16))
 
 			CarryBits = WorkL12 + WorkL13
-			WorkH12 = WorkH12 + WorkH13 + CarryBits // 0x100000000
+			WorkH12 += WorkH13 + CarryBits // 0x100000000
 			WorkL12 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH7
@@ -318,7 +318,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S14], LowWords[S14]
 
 			CarryBits = WL3 + WL8 + MsgLowX
-			WH3 = WH3 + WH8 + MsgHighX + CarryBits // 0x100000000
+			WH3 += WH8 + MsgHighX + CarryBits // 0x100000000
 			WL3 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH14
@@ -326,7 +326,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL14 = bit32.bxor(CarryBits, WH3)
 
 			CarryBits = WorkL9 + WorkL14
-			WorkH9 = WorkH9 + WorkH14 + CarryBits // 0x100000000
+			WorkH9 += WorkH14 + CarryBits // 0x100000000
 			WorkL9 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH8
@@ -334,7 +334,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL8 = bit32.bxor(bit32.rshift(WL8, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL9, 24), bit32.lshift(WorkH9, 8))
 
 			CarryBits = WL3 + WL8 + MsgLowY
-			WH3 = WH3 + WH8 + MsgHighY + CarryBits // 0x100000000
+			WH3 += WH8 + MsgHighY + CarryBits // 0x100000000
 			WL3 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH14
@@ -342,7 +342,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL14 = bit32.bxor(bit32.rshift(WorkL14, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL3, 16), bit32.lshift(WH3, 16))
 
 			CarryBits = WorkL9 + WorkL14
-			WorkH9 = WorkH9 + WorkH14 + CarryBits // 0x100000000
+			WorkH9 += WorkH14 + CarryBits // 0x100000000
 			WorkL9 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH8
@@ -356,7 +356,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			MsgHighY, MsgLowY = HighWords[S16], LowWords[S16]
 
 			CarryBits = WL4 + WL5 + MsgLowX
-			WH4 = WH4 + WH5 + MsgHighX + CarryBits // 0x100000000
+			WH4 += WH5 + MsgHighX + CarryBits // 0x100000000
 			WL4 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH15
@@ -364,7 +364,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL15 = bit32.bxor(CarryBits, WH4)
 
 			CarryBits = WorkL10 + WorkL15
-			WorkH10 = WorkH10 + WorkH15 + CarryBits // 0x100000000
+			WorkH10 += WorkH15 + CarryBits // 0x100000000
 			WorkL10 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH5
@@ -372,7 +372,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WL5 = bit32.bxor(bit32.rshift(WL5, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL10, 24), bit32.lshift(WorkH10, 8))
 
 			CarryBits = WL4 + WL5 + MsgLowY
-			WH4 = WH4 + WH5 + MsgHighY + CarryBits // 0x100000000
+			WH4 += WH5 + MsgHighY + CarryBits // 0x100000000
 			WL4 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WorkH15
@@ -380,7 +380,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 			WorkL15 = bit32.bxor(bit32.rshift(WorkL15, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL4, 16), bit32.lshift(WH4, 16))
 
 			CarryBits = WorkL10 + WorkL15
-			WorkH10 = WorkH10 + WorkH15 + CarryBits // 0x100000000
+			WorkH10 += WorkH15 + CarryBits // 0x100000000
 			WorkL10 = bit32.bor(CarryBits, 0)
 
 			CarryBits = WH5
@@ -433,7 +433,7 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 
 	for BlockStart = 0, DataLength - FinalBlockSize - 1, BLOCK_SIZE_BYTES do
 		ExtractWordsFromBlock(InputData, BlockStart, BlockHigh, BlockLow)
-		ProcessedBytes = ProcessedBytes + BLOCK_SIZE_BYTES
+		ProcessedBytes += BLOCK_SIZE_BYTES
 		ProcessCompressionRound(BlockHigh, BlockLow, ProcessedBytes, false, StateHigh, StateLow)
 	end
 
