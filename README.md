@@ -40,7 +40,7 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 **Utility Functions (10+):**
 - **Encoding**: Base64 encode/decode
 - **Conversions**: Hex to/from buffer, string utilities
-- **Random Generation**: Quick arbitrary length random string generation
+- **Random Generation**: Generates random strings
 - **Checksums**: CRC32 (JAM/ISO modes), Adler
 
 ---
