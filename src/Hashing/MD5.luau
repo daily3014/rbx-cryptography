@@ -50,7 +50,6 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	for Index = 0, 7 do
 		local Byte = BitLength % 256
 		buffer.writeu8(NewContent, LengthOffset + Index, Byte)
-		--BitLength = BitLength // 256
 		BitLength = bit32.rshift(BitLength, 8)	
 	end
 

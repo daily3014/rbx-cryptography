@@ -37,7 +37,7 @@ for Index = 0, 255 do
 	CRC32_LOOKUP[Index + 1] = CRC
 end
 
-local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?)
+local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?): number | string
 	local Lookup = CRC32_LOOKUP
 	local Hash = 0xFFFFFFFF
 
@@ -55,7 +55,6 @@ local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?)
 		return Hex == true and string.format("%08x", Hash) or Hash
 	end
 
-	-- ISO-HDLC Implementation
 	Hash = bit32.bxor(Hash, 0xFFFFFFFF)
 	return Hex == true and string.format("%08x", Hash) or Hash
 end

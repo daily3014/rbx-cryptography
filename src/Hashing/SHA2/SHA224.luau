@@ -17,7 +17,6 @@
 --!optimize 2
 --!strict
 
-
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
 		0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -129,7 +128,7 @@ local function SHA224(Message: buffer, Salt: buffer?): string
 	end
 
 	local ProcessedMessage, Length = PreProcess(Message)
-	local A, B, C, D, E, F, G, H = DigestBlocks(ProcessedMessage, Length)
+	local A, B, C, D, E, F, G, _ = DigestBlocks(ProcessedMessage, Length)
 
 	return string.format(FormatString, A, B, C, D, E, F, G)
 end

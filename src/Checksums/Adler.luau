@@ -14,8 +14,7 @@
 --!optimize 2
 --!strict
 
-local function Adler(Message: buffer)
-	-- https://github.com/madler/zlib/blob/5a82f71ed1dfc0bec044d9702463dbdf84ea3b71/adler32.c#L128
+local function Adler(Message: buffer): number
 	local MOD_ALDER = 65522
 
 	local Sum = bit32.band(bit32.rshift(MOD_ALDER, 16), 0xffff)

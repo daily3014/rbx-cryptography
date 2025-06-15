@@ -89,9 +89,9 @@ CipherModes.ECB = table.freeze({
 })
 
 CipherModes.CBC = table.freeze({
-	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
+	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer, _: {}, InitVector: buffer)
 		local DataLength = ValidateBlockData(PlaintextBuffer, 16)
-		local InitializationVector = ValidateInitializationVector(InitializationVector)
+		local InitializationVector = ValidateInitializationVector(InitVector)
 
 		XorWords(PlaintextBuffer, 0, InitializationVector, 0, OutputBuffer, 0)
 		EncryptionProcessor(OutputBuffer, 0, OutputBuffer, 0)
@@ -102,9 +102,9 @@ CipherModes.CBC = table.freeze({
 		end
 	end,
 
-	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
+	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer, _: {}, InitVector: buffer)
 		local DataLength = ValidateBlockData(CiphertextBuffer, 16)
-		local InitializationVector = ValidateInitializationVector(InitializationVector)
+		local InitializationVector = ValidateInitializationVector(InitVector)
 
 		local Word0, Word1, Word2, Word3 = ReadWords(CiphertextBuffer, 0)
 		DecryptionProcessor(CiphertextBuffer, 0, OutputBuffer, 0)
@@ -124,9 +124,9 @@ CipherModes.CBC = table.freeze({
 })
 
 CipherModes.PCBC = table.freeze({
-	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
+	ForwardMode = function(EncryptionProcessor: Processor, _: Processor, PlaintextBuffer: buffer, OutputBuffer: buffer, _: {}, InitVector: buffer)
 		local DataLength = ValidateBlockData(PlaintextBuffer, 16)
-		local InitializationVector = ValidateInitializationVector(InitializationVector)
+		local InitializationVector = ValidateInitializationVector(InitVector)
 
 		local Word0, Word1, Word2, Word3 = ReadWords(PlaintextBuffer, 0)
 		WriteWords(OutputBuffer, 0,
@@ -148,9 +148,9 @@ CipherModes.PCBC = table.freeze({
 		end
 	end,
 
-	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
+	InverseMode = function(_: Processor, DecryptionProcessor: Processor, CiphertextBuffer: buffer, OutputBuffer: buffer, _: {}, InitVector: buffer)
 		local DataLength = ValidateBlockData(CiphertextBuffer, 16)
-		local InitializationVector = ValidateInitializationVector(InitializationVector)
+		local InitializationVector = ValidateInitializationVector(InitVector)
 
 		local Word0, Word1, Word2, Word3 = ReadWords(CiphertextBuffer, 0)
 		DecryptionProcessor(CiphertextBuffer, 0, OutputBuffer, 0)
@@ -176,11 +176,11 @@ CipherModes.PCBC = table.freeze({
 local function CipherFeedbackMode(EncryptionProcessor: Processor, _: Processor, InputBuffer: buffer, OutputBuffer: buffer, ModeOptions: {
 	CommonTemp: buffer?,
 	SegmentSize: number
-}, InitializationVector: buffer, IsDecryption: boolean)
+}, InitVector: buffer, IsDecryption: boolean)
 	local SegmentSize: number = ModeOptions.SegmentSize
 	local DataLength = buffer.len(InputBuffer)
 
-	local InitializationVector = ValidateInitializationVector(InitializationVector)
+	local InitializationVector = ValidateInitializationVector(InitVector)
 
 	local TemporaryBuffer = ModeOptions.CommonTemp or buffer.create(31)
 	if DataLength == SegmentSize then
@@ -220,9 +220,9 @@ local function CipherFeedbackMode(EncryptionProcessor: Processor, _: Processor, 
 	end
 end
 
-local function OutputFeedbackMode(EncryptionProcessor: Processor, _: Processor, InputBuffer: buffer, OutputBuffer: buffer, _: {}, InitializationVector: buffer)
+local function OutputFeedbackMode(EncryptionProcessor: Processor, _: Processor, InputBuffer: buffer, OutputBuffer: buffer, _: {}, InitVector: buffer)
 	local DataLength = ValidateBlockData(InputBuffer, 16)
-	local InitializationVector = ValidateInitializationVector(InitializationVector)
+	local InitializationVector = ValidateInitializationVector(InitVector)
 
 	local Word0, Word1, Word2, Word3 = ReadWords(InputBuffer, 0)
 	EncryptionProcessor(InitializationVector, 0, OutputBuffer, 0)

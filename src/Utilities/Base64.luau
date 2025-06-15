@@ -12,13 +12,13 @@
 		local Decoded = Base64.Decode("SGVsbG8gV29ybGQ=")
 --]=]
 
-
 --!optimize 2
 --!native
 --!strict
 
-local PADDING_CHARACTER = 61
+local Base64 = {}
 
+local PADDING_CHARACTER = 61
 local ALPHABET_INDEX = buffer.create(64) do
 	local Characters = {
 		65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
@@ -55,7 +55,7 @@ local DECODE_TABLE = buffer.create(256) do
 	buffer.writeu8(DECODE_TABLE, 47, 63)
 end
 
-local function Encode(Input: buffer): string
+function Base64.Encode(Input: buffer): string
 	local InputLength = buffer.len(Input)
 	local OutputLength = math.ceil(InputLength / 3) * 4
 	local Output = buffer.create(OutputLength)
@@ -97,7 +97,7 @@ local function Encode(Input: buffer): string
 	return buffer.readstring(Output, 0, OutputLength)
 end
 
-local function Decode(Input: buffer): string
+function Base64.Decode(Input: buffer): string
 	local InputLength = buffer.len(Input)
 
 	local PaddingCount = 0
@@ -147,7 +147,4 @@ local function Decode(Input: buffer): string
 	return buffer.tostring(Output)
 end
 
-return {
-	Encode = Encode,
-	Decode = Decode,
-}
+return Base64

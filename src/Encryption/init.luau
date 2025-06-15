@@ -1,8 +1,8 @@
 --!strict
 
 local Algorithms = table.freeze({
-	ChaCha20 = require(script:WaitForChild("ChaCha20")),
-	AES = require(script:WaitForChild("AES")),
+	AEAD = require("@self/AEAD"),
+	AES = require("@self/AES")
 })
 
 return Algorithms

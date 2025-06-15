@@ -1,13 +1,14 @@
 --!strict
 
 local Algorithms = table.freeze({
-	HMAC = require(script:WaitForChild("HMAC")),
-	MD5 = require(script:WaitForChild("MD5")),
-	SHA1 = require(script:WaitForChild("SHA1")),
-	SHA2 = require(script:WaitForChild("SHA2")),
-	Keccak = require(script:WaitForChild("Keccak")),
-	XXH32 = require(script:WaitForChild("XXH32")),
-	Blake2b = require(script:WaitForChild("Blake2b")),
+	HMAC = require("@self/HMAC"),
+	MD5 = require("@self/MD5"),
+	SHA1 = require("@self/SHA1"),
+	SHA2 = require("@self/SHA2"),
+	SHA3 = require("@self/SHA3"),
+	XXH32 = require("@self/XXH32"),
+	Blake2b = require("@self/Blake2b"),
+	Blake3 = require("@self/Blake3"),
 })
 
 return Algorithms
