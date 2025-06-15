@@ -1,20 +1,20 @@
 --[=[
-   Cryptography library: Masked X25519 (Double Key Exchange)
-   
-   Return type: varies by function
-   Example usage:
-   	local MaskedX25519 = require("MaskedX25519")
-   	
-   	--------Usage Case 1: Create masked key--------
-   	local SecretKey = RandomBytes.Generate(32)
-   	local MaskedKey = MaskedX25519.Mask(SecretKey)
-   	local PublicKey = MaskedX25519.PublicKey(MaskedKey)
-   	
-   	--------Usage Case 2: Double key exchange--------
-   	local StaticSecret, EphemeralSecret = MaskedX25519.Exchange(MaskedKey, TheirPublicKey)
-   	
-   	--------Usage Case 3: Refresh masking--------
-   	local RemaskedKey = MaskedX25519.Remask(MaskedKey)
+	Cryptography library: Masked X25519 (Double Key Exchange)
+
+	Return type: varies by function
+	Example usage:
+		local MaskedX25519 = require("MaskedX25519")
+
+		--------Usage Case 1: Create masked key--------
+		local SecretKey = RandomBytes.Generate(32)
+		local MaskedKey = MaskedX25519.Mask(SecretKey)
+		local PublicKey = MaskedX25519.PublicKey(MaskedKey)
+
+		--------Usage Case 2: Double key exchange--------
+		local StaticSecret, EphemeralSecret = MaskedX25519.Exchange(MaskedKey, TheirPublicKey)
+
+		--------Usage Case 3: Refresh masking--------
+		local RemaskedKey = MaskedX25519.Remask(MaskedKey)
 --]=]
 
 --!native

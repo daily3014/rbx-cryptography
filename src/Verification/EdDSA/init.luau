@@ -1,20 +1,20 @@
 --[=[
-   Cryptography library: EdDSA (Ed25519)
-   
-   Return type: varies by function
-   Example usage:
-   	local EdDSA = require("EdDSA")
-   	
-   	--------Usage Case 1: Generate keypair--------
-   	local SecretKey = RandomBytes.Generate(32) -- use your random module
-   	local PublicKey = EdDSA.PublicKey(SecretKey)
-   	
-   	--------Usage Case 2: Sign message--------
-   	local Message = buffer.fromstring("Hello World") -- or use buffer directly
-   	local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
-   	
-   	--------Usage Case 3: Verify signature--------
-   	local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
+	Cryptography library: EdDSA (Ed25519)
+
+	Return type: varies by function
+	Example usage:
+		local EdDSA = require("EdDSA")
+
+		--------Usage Case 1: Generate keypair--------
+		local SecretKey = RandomBytes.Generate(32) -- use your random module
+		local PublicKey = EdDSA.PublicKey(SecretKey)
+
+		--------Usage Case 2: Sign message--------
+		local Message = buffer.fromstring("Hello World") -- or use buffer directly
+		local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
+
+		--------Usage Case 3: Verify signature--------
+		local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
 --]=]
 
 --!native

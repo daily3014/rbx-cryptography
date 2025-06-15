@@ -1,19 +1,19 @@
 --[=[
-   Cryptography library: Field Quadratic (Curve25519 Scalar Field)
-   
-   Return type: varies by function
-   Example usage:
-   	local FieldQuadratic = require("FieldQuadratic")
-   	
-   	--------Usage Case 1: Basic scalar arithmetic--------
-   	local ScalarA = FieldQuadratic.Decode(SomeBytes)
-   	local ScalarB = FieldQuadratic.Decode(OtherBytes)
-   	local Sum = FieldQuadratic.Add(ScalarA, ScalarB)
-   	local Product = FieldQuadratic.Mul(ScalarA, ScalarB)
-   	
-   	--------Usage Case 2: Convert to bits for scalar multiplication--------
-   	local ScalarBits = FieldQuadratic.Bits(ScalarA)
-   	local EncodedResult = FieldQuadratic.Encode(Product)
+	Cryptography library: Field Quadratic (Curve25519 Scalar Field)
+
+	Return type: varies by function
+	Example usage:
+		local FieldQuadratic = require("FieldQuadratic")
+
+		--------Usage Case 1: Basic scalar arithmetic--------
+		local ScalarA = FieldQuadratic.Decode(SomeBytes)
+		local ScalarB = FieldQuadratic.Decode(OtherBytes)
+		local Sum = FieldQuadratic.Add(ScalarA, ScalarB)
+		local Product = FieldQuadratic.Mul(ScalarA, ScalarB)
+
+		--------Usage Case 2: Convert to bits for scalar multiplication--------
+		local ScalarBits = FieldQuadratic.Bits(ScalarA)
+		local EncodedResult = FieldQuadratic.Encode(Product)
 --]=]
 
 --!strict
