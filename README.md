@@ -1,11 +1,8 @@
 # rbx cryptography by daily3014 and xoifail
 
-> [!WARNING]
-> EdDSA is not optimized yet, currently it processes 1 kilobyte of data in 4.4ms
-
 Devforum Documentation: https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271 \
-Wally link: https://wally.run/package/daily3014/cryptography [Updated - v0.2.1]\
-Pesde link: https://pesde.dev/packages/daily3014/cryptography [Updated - v0.2.1]
+Wally link: https://wally.run/package/daily3014/cryptography [Updated - v1.0.0]\
+Pesde link: https://pesde.dev/packages/daily3014/cryptography [Updated - v1.0.0]
 
 ## Why use this one?
 
