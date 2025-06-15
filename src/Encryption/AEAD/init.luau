@@ -24,8 +24,14 @@
 --!native
 --!optimize 2
 
+
 local ChaCha20 = require("@self/ChaCha20")
 local Poly1305 = require("@self/Poly1305")
+
+local AEAD = {
+	ChaCha20 = ChaCha20,
+	Poly1305 = Poly1305
+}
 
 local QWORD = 8
 
@@ -78,7 +84,7 @@ local function GenerateAuthKey(Key: buffer, Nonce: buffer, Rounds: number?): buf
 	return ChaCha20(ZeroBlock, Key, Nonce, 0, BlockRounds)
 end
 
-local function Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAuthData: buffer?, Rounds: number?): (buffer, buffer)
+function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAuthData: buffer?, Rounds: number?): (buffer, buffer)
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or buffer.create(0)
 
@@ -92,7 +98,7 @@ local function Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAu
 	return Ciphertext, Tag
 end
 
-local function Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AdditionalAuthData: buffer?, Rounds: number?): buffer?
+function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AdditionalAuthData: buffer?, Rounds: number?): buffer?
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or buffer.create(0)
 
@@ -109,7 +115,4 @@ local function Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buff
 	return ChaCha20(Ciphertext, Key, Nonce, 1, BlockRounds)
 end
 
-return {
-	Encrypt = Encrypt,
-	Decrypt = Decrypt,
-}
+return AEAD
