@@ -1,5 +1,9 @@
-local function RandomString(Length: number)
-	local FixedLength = Length + ((4 - Length % 4) % 4)
+--!strict
+--!native
+--!optimize 2
+
+local function RandomString(Length: number): buffer
+	local FixedLength = Length + ((4 - Length % 4) % 4) 
 	local Characters = buffer.create(FixedLength)
 	local Packs = bit32.rshift(FixedLength, 2)
 
@@ -12,7 +16,10 @@ local function RandomString(Length: number)
 		)
 		buffer.writeu32(Characters, Index, u32)
 	end
-	return buffer.readstring(Characters, 0, Length)
+	
+	local Buf = buffer.create(Length)
+	buffer.copy(Buf, 0, Characters, 0, Length)
+	return Buf
 end
 
 return {

@@ -1,25 +1,24 @@
 {
-  "name": "Cryptography",
-  "tree": {
-    "$className": "DataModel",
-    "ReplicatedStorage": {
-      "DevPackages": {
-        "$path": "DevPackages"
-      },
-      "Packages": {
-        "$className": "Folder",
-        "Cryptography": {
-          "$path": "src"
-        }
-      },
-      "Tests": {
-        "$path": "tests"
-      }
-    },
-    "ServerScriptService": {
-      "run-tests": {
-        "$path": "scripts/run-tests.server.luau"
-      }
-    }
-  }
+	"name": "Cryptography",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"$ignoreUnknownInstances": true,
+			"Cryptography": {
+				"$path": "src",
+				"Testing": {
+					"$path": "tests"
+				}
+			}
+		},
+		"ServerStorage": {
+			"$ignoreUnknownInstances": true
+		},
+		"ServerScriptService": {
+			"$ignoreUnknownInstances": true,
+			"TestRunner": {
+				"$path": "scripts/run-tests.server.luau"
+			}
+		}
+	}
 }

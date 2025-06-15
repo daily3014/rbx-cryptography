@@ -1,8 +1,8 @@
 --!strict
 
-local Algorithms = table.freeze {
-	CRC32 = require(script:WaitForChild("CRC32")),
-	Adler = require(script:WaitForChild("Adler"))
-}
+local Algorithms = table.freeze({
+	CRC32 = require("@self/CRC32"),
+	Adler = require("@self/Adler")
+})
 
 return Algorithms

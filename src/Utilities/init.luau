@@ -1,9 +1,9 @@
 --!strict
 
-local Utilities = table.freeze({
-	RandomString = require(script:WaitForChild("RandomString")),
-	Conversions = require(script:WaitForChild("Conversions")),
-	Base64 = require(script:WaitForChild("Base64")),
+local Algorithms = table.freeze({
+	RandomString = require("@self/RandomString"),
+	Conversions = require("@self/Conversions"),
+	Base64 = require("@self/Base64")
 })
 
-return Utilities
+return Algorithms

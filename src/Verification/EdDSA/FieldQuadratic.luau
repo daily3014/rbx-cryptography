@@ -16,252 +16,248 @@
    	local EncodedResult = FieldQuadratic.Encode(Product)
 --]=]
 
+--!strict
 --!native
 --!optimize 2
 
-local MultiPrecision = require(script.Parent.MultiPrecision)
+local MultiPrecision = require("./MultiPrecision")
 
-local Unpack = unpack or table.unpack
-local PackFieldQuadratic, FormatFieldQuadratic = string.pack, "<I3I3I3I3I3I3I3I3I3I3I2"
-local UnpackFieldQuadratic = string.unpack
-local UnpackFieldQuadraticLow, FormatFieldQuadraticLow = string.unpack, "<I3I3I3I3I3I3I3I3I3I3I3"
-local UnpackFieldQuadraticHigh, FormatFieldQuadraticHigh = string.unpack, "<I3I3I3I3I3I3I3I3I3I3I1"
+local FieldOrder = buffer.create(96) do
+	local Values = {
+		16110573, 06494812, 14047250, 10680220, 14612958,
+		00000020, 00000000, 00000000, 00000000, 00000000,
+		00004096
+	}
+	for Index = 1, 11 do
+		buffer.writef64(FieldOrder, (Index - 1) * 8, Values[Index])
+	end
+end
 
--- the scalar field's order: q = 2^252 + 27742317777372353535851937790883648493
-local FieldOrder = {
-	16110573,
-	06494812,
-	14047250,
-	10680220,
-	14612958,
-	00000020,
-	00000000,
-	00000000,
-	00000000,
-	00000000,
-	00004096,
-}
+local MontgomeryT0 = buffer.create(96) do
+	local Values = {
+		05537307, 01942290, 16765621, 16628356, 10618610,
+		07072433, 03735459, 01369940, 15276086, 13038191,
+		13409718
+	}
+	for Index = 1, 11 do
+		buffer.writef64(MontgomeryT0, (Index - 1) * 8, Values[Index])
+	end
+end
 
--- first montgomery precomputed constant: -q^(-1) mod 2^264
-local MontgomeryT0 = {
-	05537307,
-	01942290,
-	16765621,
-	16628356,
-	10618610,
-	07072433,
-	03735459,
-	01369940,
-	15276086,
-	13038191,
-	13409718,
-}
+local MontgomeryT1 = buffer.create(96) do
+	local Values = {
+		11711996, 01747860, 08326961, 03814718, 01859974,
+		13327461, 16105061, 07590423, 04050668, 08138906,
+		00000283
+	}
+	for Index = 1, 11 do
+		buffer.writef64(MontgomeryT1, (Index - 1) * 8, Values[Index])
+	end
+end
 
--- second montgomery precomputed constant: 2^528 mod q
-local MontgomeryT1 = {
-	11711996,
-	01747860,
-	08326961,
-	03814718,
-	01859974,
-	13327461,
-	16105061,
-	07590423,
-	04050668,
-	08138906,
-	00000283,
-}
-
--- precomputed constant for division by 8
-local DivideBy8Constant = {
-	5110253,
-	3039345,
-	2503500,
-	11779568,
-	15416472,
-	16766550,
-	16777215,
-	16777215,
-	16777215,
-	16777215,
-	4095,
-}
+local DivideBy8Constant = buffer.create(96) do
+	local Values = {
+		5110253, 3039345, 2503500, 11779568, 15416472,
+		16766550, 16777215, 16777215, 16777215, 16777215,
+		4095
+	}
+	for Index = 1, 11 do
+		buffer.writef64(DivideBy8Constant, (Index - 1) * 8, Values[Index])
+	end
+end
 
 local ZeroConstant = MultiPrecision.Num(0)
 
--- reduce a number modulo q to keep it in the valid range
-local function Reduce(LargeNumber)
+local function Reduce(LargeNumber: buffer): buffer
 	local Difference = MultiPrecision.Sub(LargeNumber, FieldOrder)
 
-	-- return carry(a) if a < q
-	if MultiPrecision.Approx(Difference) < 0 then
-		return MultiPrecision.Carry(LargeNumber)
+	if MultiPrecision.Approx(Difference) < 0 then 
+		return MultiPrecision.Carry(LargeNumber) 
 	end
 
-	-- since q < 2^288, difference < 2q means difference - q < q < 2^288
-	-- difference's limbs fit in (-2^26..2^26) since subtraction adds at most one bit
-	return MultiPrecision.Carry(Difference) -- carry handles the reduction properly
+	return MultiPrecision.Carry(Difference)
 end
 
--- add two scalars modulo q
--- works correctly in montgomery form since (2^264 * a) + (2^264 * b) = 2^264 * (a + b) mod q
-local function Add(ScalarA, ScalarB)
+local function Add(ScalarA: buffer, ScalarB: buffer): buffer
 	return Reduce(MultiPrecision.Add(ScalarA, ScalarB))
 end
 
--- negate a scalar modulo q
-local function Neg(ScalarA)
+local function Neg(ScalarA: buffer): buffer
 	return Reduce(MultiPrecision.Sub(FieldOrder, ScalarA))
 end
 
--- subtract scalars modulo q
--- works correctly in montgomery form like addition
-local function Sub(ScalarA, ScalarB)
+local function Sub(ScalarA: buffer, ScalarB: buffer): buffer
 	return Add(ScalarA, Neg(ScalarB))
 end
 
--- montgomery multiplication: computes 2^(-264) * a * b mod q
-local function Mul(ScalarA, ScalarB)
+local function Mul(ScalarA: buffer, ScalarB: buffer): buffer
 	local ProductLow, ProductHigh = MultiPrecision.Mul(ScalarA, ScalarB)
 	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(ProductLow, MontgomeryT0), FieldOrder)
 	local _, ResultHigh = MultiPrecision.DWAdd(ProductLow, ProductHigh, ReductionLow, ReductionHigh)
+	
 	return Reduce(ResultHigh)
 end
 
--- convert a scalar into montgomery form
-local function Montgomery(RegularScalar)
-	-- 0 <= a < 2^264 and 0 <= t1 < q
+local function Montgomery(RegularScalar: buffer): buffer
 	return Mul(RegularScalar, MontgomeryT1)
 end
 
--- convert a scalar from montgomery form back to regular form
-local function Demontgomery(MontgomeryScalar)
-	-- it's redc again except b is 1
-	local ReductionLow, ReductionHigh =
-		MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MontgomeryT0), FieldOrder)
+local function Demontgomery(MontgomeryScalar: buffer): buffer
+	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MontgomeryT0), FieldOrder)
 	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, ZeroConstant, ReductionLow, ReductionHigh)
+	
 	return Reduce(ResultHigh)
 end
 
--- turn a scalar into 32 bytes
-local function Encode(MontgomeryScalar)
+local function Encode(MontgomeryScalar: buffer): buffer
 	local DemontResult = Demontgomery(MontgomeryScalar)
-	return PackFieldQuadratic(
-		FormatFieldQuadratic,
-		DemontResult[1],
-		DemontResult[2],
-		DemontResult[3],
-		DemontResult[4],
-		DemontResult[5],
-		DemontResult[6],
-		DemontResult[7],
-		DemontResult[8],
-		DemontResult[9],
-		DemontResult[10],
-		DemontResult[11]
-	)
-end
+	local EncodedBuffer = buffer.create(32)
+	local ByteIndex = 0
 
--- turn 32 bytes into a scalar
-local function Decode(EncodedString)
-	if #EncodedString ~= 32 then
-		error("Decode expects exactly 32 bytes, got " .. #EncodedString)
+	for LimbIndex = 0, 9 do
+		local Value = buffer.readf64(DemontResult, LimbIndex * 8)
+
+		buffer.writeu8(EncodedBuffer, ByteIndex, Value % 256)
+		Value = math.floor(Value / 256)
+		buffer.writeu8(EncodedBuffer, ByteIndex + 1, Value % 256)
+		Value = math.floor(Value / 256)
+		buffer.writeu8(EncodedBuffer, ByteIndex + 2, Value % 256)
+
+		ByteIndex += 3
 	end
 
-	local DecodedLimbs = { UnpackFieldQuadratic(FormatFieldQuadratic, EncodedString, 1) }
-	DecodedLimbs[12] = nil
-	return Montgomery(DecodedLimbs)
+	local LastValue = buffer.readf64(DemontResult, 10 * 8)
+	buffer.writeu8(EncodedBuffer, 30, LastValue % 256)
+	LastValue = math.floor(LastValue / 256)
+	buffer.writeu8(EncodedBuffer, 31, LastValue % 256)
+
+	return EncodedBuffer
 end
 
--- decode a scalar from a "wide" 64-byte string
-local function DecodeWide(WideString)
-	local LowPart = { UnpackFieldQuadraticLow(FormatFieldQuadraticLow, WideString, 1) }
-	LowPart[12] = nil
-	local HighPart = { UnpackFieldQuadraticHigh(FormatFieldQuadraticHigh, WideString, 34) }
-	HighPart[12] = nil
+local function Decode(EncodedBuffer: buffer): buffer
+	local DecodedBuffer = buffer.create(96)
+	local ByteIndex = 0
+
+	for LimbIndex = 0, 9 do
+		local Value = buffer.readu8(EncodedBuffer, ByteIndex)
+			+ buffer.readu8(EncodedBuffer, ByteIndex + 1) * 256
+			+ buffer.readu8(EncodedBuffer, ByteIndex + 2) * 65536
+
+		buffer.writef64(DecodedBuffer, LimbIndex * 8, Value)
+		ByteIndex += 3
+	end
+
+	local LastValue = buffer.readu8(EncodedBuffer, 30)
+		+ buffer.readu8(EncodedBuffer, 31) * 256
+	buffer.writef64(DecodedBuffer, 10 * 8, LastValue)
+
+	return Montgomery(DecodedBuffer)
+end
+
+local function DecodeWide(WideBuffer: buffer): buffer
+	local LowPart = buffer.create(96)
+
+	for LimbIndex = 0, 10 do
+		local ByteIndex = LimbIndex * 3
+		local Value = buffer.readu8(WideBuffer, ByteIndex)
+			+ buffer.readu8(WideBuffer, ByteIndex + 1) * 256
+			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
+		buffer.writef64(LowPart, LimbIndex * 8, Value)
+	end
+
+	local HighPart = buffer.create(96)
+
+	for LimbIndex = 0, 9 do
+		local ByteIndex = 33 + LimbIndex * 3
+		local Value = buffer.readu8(WideBuffer, ByteIndex)
+			+ buffer.readu8(WideBuffer, ByteIndex + 1) * 256
+			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
+		buffer.writef64(HighPart, LimbIndex * 8, Value)
+	end
+
+	buffer.writef64(HighPart, 10 * 8, buffer.readu8(WideBuffer, 63))
+
 	return Add(Montgomery(LowPart), Montgomery(Montgomery(HighPart)))
 end
 
--- decode a scalar using x25519/ed25519 bit clamping scheme
-local function DecodeClamped(ClampedString)
-	-- decode the bytes first
-	local WordLimbs = { UnpackFieldQuadratic(FormatFieldQuadratic, ClampedString, 1) }
-	WordLimbs[12] = nil
+local function DecodeClamped(ClampedBuffer: buffer): buffer
+	local ClampedCopy = buffer.create(32)
+	buffer.copy(ClampedCopy, 0, ClampedBuffer, 0, 32)
 
-	-- apply the clamping rules
-	WordLimbs[1] = bit32.band(WordLimbs[1], 0xfffff8)
-	WordLimbs[11] = bit32.band(WordLimbs[11], 0x7fff)
-	WordLimbs[11] = bit32.bor(WordLimbs[11], 0x4000)
+	local FirstByte = buffer.readu8(ClampedCopy, 0)
+	buffer.writeu8(ClampedCopy, 0, bit32.band(FirstByte, 0xF8))
 
-	return Montgomery(WordLimbs)
+	local LastByte = buffer.readu8(ClampedCopy, 31)
+	buffer.writeu8(ClampedCopy, 31, bit32.bor(bit32.band(LastByte, 0x7F), 0x40))
+
+	return Decode(ClampedCopy)
 end
 
--- divide a scalar by 8 (multiply by 1/8)
-local function Eighth(MontgomeryScalar)
+local function Eighth(MontgomeryScalar: buffer): buffer
 	return Mul(MontgomeryScalar, DivideBy8Constant)
 end
 
--- convert a little-endian array from one power-of-two base to another
-local function RebaseLE(InputArray, FromBase, ToBase)
-	local OutputArray = {}
-	local OutputLength = 1
+local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)
+	local OutputBuffer = buffer.create(8192)
+	local OutputLength = 0
 	local Accumulator = 0
 	local Multiplier = 1
-	for Index = 1, #InputArray do
-		Accumulator = Accumulator + InputArray[Index] * Multiplier
-		Multiplier = Multiplier * FromBase
+
+	for Index = 0, InputLength - 1 do
+		Accumulator += buffer.readf64(InputBuffer, Index * 8) * Multiplier
+		Multiplier *= FromBase
 		while Multiplier >= ToBase do
 			local Remainder = Accumulator % ToBase
 			Accumulator = (Accumulator - Remainder) / ToBase
-			Multiplier = Multiplier / ToBase
-			OutputArray[OutputLength] = Remainder
-			OutputLength = OutputLength + 1
+			Multiplier /= ToBase
+			buffer.writef64(OutputBuffer, OutputLength * 8, Remainder)
+			OutputLength += 1
 		end
 	end
+
 	if Multiplier > 0 then
-		OutputArray[OutputLength] = Accumulator
+		buffer.writef64(OutputBuffer, OutputLength * 8, Accumulator)
+		OutputLength += 1
 	end
-	return OutputArray
+
+	return OutputBuffer, OutputLength
 end
 
--- convert a scalar to binary bits for scalar multiplication
-local function Bits(MontgomeryScalar)
-	local BitOutput = RebaseLE(Demontgomery(MontgomeryScalar), 2 ^ 24, 2)
-	for BitIndex = 254, 289 do
-		BitOutput[BitIndex] = nil
+local function Bits(MontgomeryScalar: buffer): (buffer, number)
+	local DemontResult = Demontgomery(MontgomeryScalar)
+	local BitOutput, BitCount = RebaseLE(DemontResult, 11, 2 ^ 24, 2)
+
+	if BitCount > 253 then
+		BitCount = 253
 	end
-	return BitOutput
+
+	return BitOutput, BitCount
 end
 
--- create a prac ruleset from a pair of scalars (for efficient dual scalar multiplication)
--- see section 3.3 of "speeding up subgroup cryptosystems" by martijn stam
-local function MakeRuleset(ScalarA, ScalarB)
-	-- convert to raw multiprecision tables
-	local DTable = Demontgomery(ScalarA) -- (-2^24..2^24)
-	local ETable = Demontgomery(ScalarB) -- (-2^24..2^24)
-	local FTable = MultiPrecision.Sub(DTable, ETable) -- (-2^25..2^25)
+local function MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, number, buffer, number)
+	local DTable = Demontgomery(ScalarA)
+	local ETable = Demontgomery(ScalarB)
+	local FTable = MultiPrecision.Sub(DTable, ETable) 
 
-	-- residue classes modulo 2
 	local DMod2 = MultiPrecision.Mod2(DTable)
 	local EMod2 = MultiPrecision.Mod2(ETable)
 
-	-- residue classes modulo 3
 	local DMod3 = MultiPrecision.Mod3(DTable)
 	local EMod3 = MultiPrecision.Mod3(ETable)
 
-	-- floating point approximations
 	local EFloat = MultiPrecision.Approx(ETable)
 	local FFloat = MultiPrecision.Approx(FTable)
 
-	-- lookup table for inversions and halvings modulo 3
-	local Mod3Lut = { [0] = 0, 2, 1 }
+	local Mod3Lut = {[0] = 0, 2, 1}
 
-	local RuleSequence = {}
+	local RuleBuffer = buffer.create(8192)
+	local RuleCount = 0
+
 	while FFloat ~= 0 do
+		local Rule = -1
+
 		if FFloat < 0 then
-			-- M0: d < e
-			RuleSequence[#RuleSequence + 1] = 0
-			-- (d, e) becomes (e, d)
+			Rule = 0
 			DTable, ETable = ETable, DTable
 			DMod2, EMod2 = EMod2, DMod2
 			DMod3, EMod3 = EMod3, DMod3
@@ -269,81 +265,61 @@ local function MakeRuleset(ScalarA, ScalarB)
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = -FFloat
 		elseif 4 * FFloat < EFloat and DMod3 == Mod3Lut[EMod3] then
-			-- M1: e < d <= 5/4 e, d = -e (mod 3)
-			RuleSequence[#RuleSequence + 1] = 1
-			-- (d, e) becomes ((2d - e)/3, (2e - d)/3)
-			DTable, ETable =
-				MultiPrecision.Third(MultiPrecision.Add(DTable, FTable)),
-				MultiPrecision.Third(MultiPrecision.Sub(ETable, FTable))
+			Rule = 1
+			DTable, ETable = MultiPrecision.Third(MultiPrecision.Add(DTable, FTable)), MultiPrecision.Third(MultiPrecision.Sub(ETable, FTable))
 			DMod2, EMod2 = EMod2, DMod2
 			DMod3, EMod3 = MultiPrecision.Mod3(DTable), MultiPrecision.Mod3(ETable)
 			EFloat = MultiPrecision.Approx(ETable)
 		elseif 4 * FFloat < EFloat and DMod2 == EMod2 and DMod3 == EMod3 then
-			-- M2: e < d <= 5/4 e, d = e (mod 6)
-			RuleSequence[#RuleSequence + 1] = 2
-			-- (d, e) becomes ((d - e)/2, e)
+			Rule = 2
 			DTable = MultiPrecision.Half(FTable)
 			DMod2 = MultiPrecision.Mod2(DTable)
 			DMod3 = Mod3Lut[(DMod3 - EMod3) % 3]
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		elseif FFloat < 3 * EFloat then
-			-- M3: d <= 4e
-			RuleSequence[#RuleSequence + 1] = 3
-			-- (d, e) becomes (d - e, e)
+			Rule = 3
 			DTable = MultiPrecision.CarryWeak(FTable)
 			DMod2 = (DMod2 - EMod2) % 2
 			DMod3 = (DMod3 - EMod3) % 3
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		elseif DMod2 == EMod2 then
-			-- M4: d = e (mod 2)
-			RuleSequence[#RuleSequence + 1] = 2
-			-- (d, e) becomes ((d - e)/2, e)
+			Rule = 2
 			DTable = MultiPrecision.Half(FTable)
 			DMod2 = MultiPrecision.Mod2(DTable)
 			DMod3 = Mod3Lut[(DMod3 - EMod3) % 3]
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		elseif DMod2 == 0 then
-			-- M5: d = 0 (mod 2)
-			RuleSequence[#RuleSequence + 1] = 5
-			-- (d, e) becomes (d/2, e)
+			Rule = 5
 			DTable = MultiPrecision.Half(DTable)
 			DMod2 = MultiPrecision.Mod2(DTable)
 			DMod3 = Mod3Lut[DMod3]
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		elseif DMod3 == 0 then
-			-- M6: d = 0 (mod 3)
-			RuleSequence[#RuleSequence + 1] = 6
-			-- (d, e) becomes (d/3 - e, e)
+			Rule = 6
 			DTable = MultiPrecision.CarryWeak(MultiPrecision.Sub(MultiPrecision.Third(DTable), ETable))
 			DMod2 = (DMod2 - EMod2) % 2
 			DMod3 = MultiPrecision.Mod3(DTable)
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		elseif DMod3 == Mod3Lut[EMod3] then
-			-- M7: d = -e (mod 3)
-			RuleSequence[#RuleSequence + 1] = 7
-			-- (d, e) becomes ((d - 2e)/3, e)
+			Rule = 7
 			DTable = MultiPrecision.Third(MultiPrecision.Sub(FTable, ETable))
 			DMod3 = MultiPrecision.Mod3(DTable)
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		elseif DMod3 == EMod3 then
-			-- M8: d = e (mod 3)
-			RuleSequence[#RuleSequence + 1] = 8
-			-- (d, e) becomes ((d - e)/3, e)
+			Rule = 8
 			DTable = MultiPrecision.Third(FTable)
 			DMod2 = (DMod2 - EMod2) % 2
 			DMod3 = MultiPrecision.Mod3(DTable)
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		else
-			-- M9: e = 0 (mod 2)
-			RuleSequence[#RuleSequence + 1] = 9
-			-- (d, e) becomes (d, e/2)
+			Rule = 9
 			ETable = MultiPrecision.Half(ETable)
 			EMod2 = MultiPrecision.Mod2(ETable)
 			EMod3 = Mod3Lut[EMod3]
@@ -351,14 +327,17 @@ local function MakeRuleset(ScalarA, ScalarB)
 			FTable = MultiPrecision.Sub(DTable, ETable)
 			FFloat = MultiPrecision.Approx(FTable)
 		end
+
+		buffer.writef64(RuleBuffer, RuleCount * 8, Rule)
+		RuleCount += 1
 	end
 
-	local FinalBits = RebaseLE(DTable, 2 ^ 24, 2)
-	while FinalBits[#FinalBits] == 0 do
-		FinalBits[#FinalBits] = nil
+	local FinalBits, FinalBitCount = RebaseLE(DTable, 11, 2 ^ 24, 2)
+	while FinalBitCount > 0 and buffer.readf64(FinalBits, (FinalBitCount - 1) * 8) == 0 do
+		FinalBitCount -= 1
 	end
 
-	return { FinalBits, RuleSequence }
+	return FinalBits, FinalBitCount, RuleBuffer, RuleCount
 end
 
 return {
