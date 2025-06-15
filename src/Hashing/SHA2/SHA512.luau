@@ -17,7 +17,6 @@
 --!optimize 2
 --!strict
 
-
 local FRONT_VALUES = buffer.create(32)
 local BACK_VALUES = buffer.create(32)
 
@@ -74,59 +73,6 @@ do
 	end
 end
 
-@native
-local function LilSig0(Front: number, Back: number): (number, number)
-	return bit32.bxor(
-		bit32.rshift(Front, 1), bit32.lshift(Back, 31), 
-		bit32.rshift(Front, 8), bit32.lshift(Back, 24),
-		bit32.rshift(Front, 7)
-	), bit32.bxor(
-		bit32.rshift(Back, 1), bit32.lshift(Front, 31), 
-		bit32.rshift(Back, 8), bit32.lshift(Front, 24),
-		bit32.rshift(Back, 7), bit32.lshift(Front, 25)
-	)
-end
-
-@native
-local function LilSig1(Front: number, Back: number): (number, number)
-	return bit32.bxor(
-		bit32.rshift(Front, 19), bit32.lshift(Back, 13),
-		bit32.lshift(Front, 3), bit32.rshift(Back, 29),
-		bit32.rshift(Front, 6)
-	), bit32.bxor(
-		bit32.rshift(Back, 19), bit32.lshift(Front, 13),
-		bit32.lshift(Back, 3), bit32.rshift(Front, 29),
-		bit32.rshift(Back, 6), bit32.lshift(Front, 26)
-	)
-end
-
-@native
-local function BigSig0(Front: number, Back: number): (number, number)
-	return bit32.bxor(
-		bit32.rshift(Front, 28), bit32.lshift(Back, 4),
-		bit32.lshift(Front, 30), bit32.rshift(Back, 2),
-		bit32.lshift(Front, 25), bit32.rshift(Back, 7)
-	), bit32.bxor(
-		bit32.rshift(Back, 28), bit32.lshift(Front, 4),
-		bit32.lshift(Back, 30), bit32.rshift(Front, 2),
-		bit32.lshift(Back, 25), bit32.rshift(Front, 7)
-	)
-end
-
-@native
-local function BigSig1(Front: number, Back: number): (number, number)
-	return bit32.bxor(
-		bit32.rshift(Front, 14), bit32.lshift(Back, 18),
-		bit32.rshift(Front, 18), bit32.lshift(Back, 14),
-		bit32.lshift(Front, 23), bit32.rshift(Back, 9)
-	), bit32.bxor(
-		bit32.rshift(Back, 14), bit32.lshift(Front, 18),
-		bit32.rshift(Back, 18), bit32.lshift(Front, 14),
-		bit32.lshift(Back, 23), bit32.rshift(Front, 9)
-	)
-end
-
-@native
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
 	local Padding = (128 - ((ContentLength + 17) % 128)) % 128
@@ -154,33 +100,45 @@ end
 local BlockFrontTable = table.create(80)
 local BlockBackTable = table.create(80)
 
-@native
-local function DigestBlock(
-	Blocks: buffer,
-	Length: number,
-	FrontDigest: buffer,
-	BackDigest: buffer
-)
+local function DigestBlock(Blocks: buffer, Length: number, FrontDigest: buffer, BackDigest: buffer)
 	local BackK, FrontK = BACKK, FRONTK
 	local BlockFront = BlockFrontTable
 	local BlockBack = BlockBackTable
 
-	local H1F, H2F, H3F, H4F = buffer.readu32(FrontDigest, 0), buffer.readu32(FrontDigest, 4), buffer.readu32(FrontDigest, 8), buffer.readu32(FRONT_VALUES, 12)
-	local H5F, H6F, H7F, H8F = buffer.readu32(FrontDigest, 16), buffer.readu32(FrontDigest, 20), buffer.readu32(FrontDigest, 24), buffer.readu32(FrontDigest, 28)
-	local H1B, H2B, H3B, H4B = buffer.readu32(BackDigest, 0), buffer.readu32(BackDigest, 4), buffer.readu32(BackDigest, 8), buffer.readu32(BackDigest, 12)
-	local H5B, H6B, H7B, H8B = buffer.readu32(BackDigest, 16), buffer.readu32(BackDigest, 20), buffer.readu32(BackDigest, 24), buffer.readu32(BackDigest, 28)
+	local DefaultFront, DefaultBack = FRONT_VALUES, BACK_VALUES
+	local H1F, H2F, H3F, H4F = buffer.readu32(DefaultFront, 0), buffer.readu32(DefaultFront, 4), buffer.readu32(DefaultFront, 8), buffer.readu32(DefaultFront, 12)
+	local H5F, H6F, H7F, H8F = buffer.readu32(DefaultFront, 16), buffer.readu32(DefaultFront, 20), buffer.readu32(DefaultFront, 24), buffer.readu32(DefaultFront, 28)
+	local H1B, H2B, H3B, H4B = buffer.readu32(DefaultBack, 0), buffer.readu32(DefaultBack, 4), buffer.readu32(DefaultBack, 8), buffer.readu32(DefaultBack, 12)
+	local H5B, H6B, H7B, H8B = buffer.readu32(DefaultBack, 16), buffer.readu32(DefaultBack, 20), buffer.readu32(DefaultBack, 24), buffer.readu32(DefaultBack, 28)
 
 	for Offset = 0, Length - 1, 128 do
 		for T = 1, 16 do
-			local BlockIndex = Offset + (T - 1) * 8
-
-			BlockFront[T] = bit32.byteswap(buffer.readu32(Blocks, BlockIndex))
-			BlockBack[T] = bit32.byteswap(buffer.readu32(Blocks, BlockIndex + 4))
+			BlockFront[T] = bit32.byteswap(buffer.readu32(Blocks, Offset + (T - 1) * 8))
+			BlockBack[T] = bit32.byteswap(buffer.readu32(Blocks, Offset + (T - 1) * 8 + 4))
 		end
 
 		for T = 17, 80 do
-			local S0Front, S0Back = LilSig0(BlockFront[T - 15], BlockBack[T - 15])
-			local S1Front, S1Back = LilSig1(BlockFront[T - 2], BlockBack[T - 2])
+			local FT15, BT15 = BlockFront[T - 15], BlockBack[T - 15]
+			local S0Front, S0Back = bit32.bxor(
+				bit32.rshift(FT15, 1), bit32.lshift(BT15, 31), 
+				bit32.rshift(FT15, 8), bit32.lshift(BT15, 24),
+				bit32.rshift(FT15, 7)
+			), bit32.bxor(
+				bit32.rshift(BT15, 1), bit32.lshift(FT15, 31), 
+				bit32.rshift(BT15, 8), bit32.lshift(FT15, 24),
+				bit32.rshift(BT15, 7), bit32.lshift(FT15, 25)
+			)
+
+			local FT2, BT2 = BlockFront[T - 2], BlockBack[T - 2]
+			local S1Front, S1Back = bit32.bxor(
+				bit32.rshift(FT2, 19), bit32.lshift(BT2, 13),
+				bit32.lshift(FT2, 3), bit32.rshift(BT2, 29),
+				bit32.rshift(FT2, 6)
+			), bit32.bxor(
+				bit32.rshift(BT2, 19), bit32.lshift(FT2, 13),
+				bit32.lshift(BT2, 3), bit32.rshift(FT2, 29),
+				bit32.rshift(BT2, 6), bit32.lshift(FT2, 26)
+			)
 
 			local TempBack = BlockBack[T - 16] + S0Back + BlockBack[T - 7] + S1Back
 
@@ -192,8 +150,24 @@ local function DigestBlock(
 		local EF, EB, FF, FB, GF, GB, HF, HB = H5F, H5B, H6F, H6B, H7F, H7B, H8F, H8B
 
 		for T = 1, 80 do
-			local S1Front, S1Back = BigSig1(EF, EB)
-			local S0Front, S0Back = BigSig0(AF, AB)
+			local S1Front, S1Back = bit32.bxor(
+				bit32.rshift(EF, 14), bit32.lshift(EB, 18),
+				bit32.rshift(EF, 18), bit32.lshift(EB, 14),
+				bit32.lshift(EF, 23), bit32.rshift(EB, 9)
+			), bit32.bxor(
+				bit32.rshift(EB, 14), bit32.lshift(EF, 18),
+				bit32.rshift(EB, 18), bit32.lshift(EF, 14),
+				bit32.lshift(EB, 23), bit32.rshift(EF, 9)
+			)
+			local S0Front, S0Back = bit32.bxor(
+				bit32.rshift(AF, 28), bit32.lshift(AB, 4),
+				bit32.lshift(AF, 30), bit32.rshift(AB, 2),
+				bit32.lshift(AF, 25), bit32.rshift(AB, 7)
+			), bit32.bxor(
+				bit32.rshift(AB, 28), bit32.lshift(AF, 4),
+				bit32.lshift(AB, 30), bit32.rshift(AF, 2),
+				bit32.lshift(AB, 25), bit32.rshift(AF, 7)
+			)
 
 			local Temp1Back = HB + S1Back + bit32.bor(bit32.band(EB, FB), bit32.band(-1 - EB, GB), 0) + BackK[T] + BlockBack[T]
 			local Temp1Front = HF + S1Front + bit32.bor(bit32.band(EF, FF), bit32.band(-1 - EF, GF), 0) + FrontK[T] + BlockFront[T] + Temp1Back // 2^32
@@ -279,7 +253,7 @@ end
 
 local FormatString = string.rep("%08x", 16)
 
-local function SHA512(Message: buffer, Salt: buffer?)
+local function SHA512(Message: buffer, Salt: buffer?): string
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
 		buffer.copy(MessageWithSalt, 0, Message)
@@ -288,10 +262,10 @@ local function SHA512(Message: buffer, Salt: buffer?)
 	end
 
 	local ProcessedMessage, Length = PreProcess(Message)
+
 	local FrontValues = buffer.create(32)
-	buffer.copy(FrontValues, 0, FRONT_VALUES, 0, 32)
 	local BackValues = buffer.create(32)
-	buffer.copy(BackValues, 0, BACK_VALUES, 0, 32)
+
 	DigestBlock(ProcessedMessage, Length, FrontValues, BackValues)
 
 	local H1F, H2F, H3F, H4F = buffer.readu32(FrontValues, 0), buffer.readu32(FrontValues, 4), buffer.readu32(FrontValues, 8), buffer.readu32(FrontValues, 12)

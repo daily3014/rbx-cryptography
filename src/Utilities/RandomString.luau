@@ -10,7 +10,7 @@
 --!optimize 2
 --!strict
 
-local function RandomString(Length: number)
+local function RandomString(Length: number): string
 	local FixedLength = if Length % 36 ~= 0 then Length + (4 - Length % 4) else Length
 	
 	local Characters = buffer.create(FixedLength)

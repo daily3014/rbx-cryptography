@@ -1,20 +1,9 @@
-_G.NOCOLOR = 1
-
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local DevPackages = ReplicatedStorage.DevPackages
+local Cryptography = ReplicatedStorage:WaitForChild("Cryptography")
+local Tests = Cryptography.Testing
 
-local Jest = require(DevPackages:WaitForChild("Jest"))
-
-local runCLIOptions = {
-	verbose = true,
-	ci = false,
-	testTimeout = 20_000, -- 20 seconds
-}
-
-local projects = {
-	ReplicatedStorage.Tests,
-}
-
-Jest.runCLI(script, runCLIOptions, projects):await()
+for _, Test: ModuleScript in Tests:GetChildren() do
+	require(Test)
+end
 
 return nil

@@ -21,15 +21,15 @@
 --!optimize 2
 --!strict 
 
-local CipherModes = require(script.Modes)
-local PaddingSchemes = require(script.Pads)
+local CipherModes = require("@self/Modes")
+local PaddingSchemes = require("@self/Pads")
 
-local SBOX_16BIT = buffer.create(131072)   -- 16-bit S-box lookup
-local SMIX_TABLE0 = buffer.create(65536)   -- 2*S(b0) ^ 3*S(b1)  
-local SMIX_TABLE1 = buffer.create(65536)   -- S(b0) ^ S(b1)
-local INVS_XOR_TABLE = buffer.create(65536) -- InvS(b0 ^ b1)
-local INVMIX_TABLE0 = buffer.create(65536)  -- 14*b0 ^ 11*b1
-local INVMIX_TABLE1 = buffer.create(65536)  -- 13*b0 ^ 9*b1
+local SBOX_16BIT = buffer.create(131072) 
+local SMIX_TABLE0 = buffer.create(65536)
+local SMIX_TABLE1 = buffer.create(65536)
+local INVS_XOR_TABLE = buffer.create(65536)
+local INVMIX_TABLE0 = buffer.create(65536)
+local INVMIX_TABLE1 = buffer.create(65536)
 
 do
 	local SubstitutionBox = buffer.create(256)
@@ -81,19 +81,19 @@ do
 
 	local TableIndex = 0
 	for OuterIndex = 0, 255 do
-		local PolynomialP = buffer.readu8(SubstitutionBox, OuterIndex)
-		local PolynomialPBytes = PolynomialP * 256
-		local Galois2 = GaloisFieldMultiply(2, PolynomialP)
+		local PolynomialPOuter = buffer.readu8(SubstitutionBox, OuterIndex)
+		local PolynomialPBytes = PolynomialPOuter * 256
+		local Galois2 = GaloisFieldMultiply(2, PolynomialPOuter)
 		local Galois13 = GaloisFieldMultiply(13, OuterIndex)
 		local Galois14 = GaloisFieldMultiply(14, OuterIndex)
 
 		for InnerIndex = 0, 255 do
-			local PolynomialQ = buffer.readu8(SubstitutionBox, InnerIndex)
+			local PolynomialQInner = buffer.readu8(SubstitutionBox, InnerIndex)
 
-			buffer.writeu16(SBOX_16BIT, TableIndex * 2, PolynomialPBytes + PolynomialQ)
+			buffer.writeu16(SBOX_16BIT, TableIndex * 2, PolynomialPBytes + PolynomialQInner)
 			buffer.writeu8(INVS_XOR_TABLE, TableIndex, buffer.readu8(InverseSubstitutionBox, bit32.bxor(OuterIndex, InnerIndex)))
-			buffer.writeu8(SMIX_TABLE0, TableIndex, bit32.bxor(Galois2, buffer.readu8(GaloisMultiply3, PolynomialQ)))
-			buffer.writeu8(SMIX_TABLE1, TableIndex, bit32.bxor(PolynomialP, PolynomialQ))
+			buffer.writeu8(SMIX_TABLE0, TableIndex, bit32.bxor(Galois2, buffer.readu8(GaloisMultiply3, PolynomialQInner)))
+			buffer.writeu8(SMIX_TABLE1, TableIndex, bit32.bxor(PolynomialPOuter, PolynomialQInner))
 			buffer.writeu8(INVMIX_TABLE0, TableIndex, bit32.bxor(Galois14, buffer.readu8(GaloisMultiply11, InnerIndex)))
 			buffer.writeu8(INVMIX_TABLE1, TableIndex, bit32.bxor(Galois13, buffer.readu8(GaloisMultiply9, InnerIndex)))
 			TableIndex += 1
@@ -494,21 +494,21 @@ function AesCipher.New(MasterKey: buffer | string, OperationMode: CipherModes.Si
 end
 
 function AesCipher:FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
-	local self = setmetatable({}, AesCipher)
+	local _self = setmetatable({}, AesCipher)
 
 	local RoundKeysLength = buffer.len(RoundKeysBuffer)
-	local KeyConfig = self:ValidateRoundKeySize(RoundKeysLength)
+	local KeyConfig = _self:ValidateRoundKeySize(RoundKeysLength)
 
-	self.Key = string.sub(buffer.tostring(RoundKeysBuffer), 1, KeyConfig.OriginalKeyLength)
-	self.RoundKeys = buffer.tostring(RoundKeysBuffer)
-	self.Length = RoundKeysLength
-	self.Mode = OperationMode or CipherModes.ECB
-	self.Padding = PaddingScheme or PaddingSchemes.Pkcs7
-	self.RoundKeysBuffer = RoundKeysBuffer
-	self.KeyMaterialLength = KeyConfig.MaterialLength
-	self.SegmentSize = (self.Mode :: CipherModes.SimpleModeStruct2).SegmentSize or 16
+	_self.Key = string.sub(buffer.tostring(RoundKeysBuffer), 1, KeyConfig.OriginalKeyLength)
+	_self.RoundKeys = buffer.tostring(RoundKeysBuffer)
+	_self.Length = RoundKeysLength
+	_self.Mode = OperationMode or CipherModes.ECB
+	_self.Padding = PaddingScheme or PaddingSchemes.Pkcs7
+	_self.RoundKeysBuffer = RoundKeysBuffer
+	_self.KeyMaterialLength = KeyConfig.MaterialLength
+	_self.SegmentSize = (_self.Mode :: CipherModes.SimpleModeStruct2).SegmentSize or 16
 
-	return (self :: any) :: AesCipher
+	return (_self :: any) :: AesCipher
 end
 
 function AesCipher:Encrypt(Plaintext: buffer, Output: buffer?, ...): buffer

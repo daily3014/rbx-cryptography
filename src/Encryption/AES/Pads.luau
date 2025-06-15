@@ -34,12 +34,12 @@ PaddingSchemes.None = table.freeze({
 	Overwrite = false
 })
 
-local AnsiX923_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local AnsiX923_Pad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = CalculatePaddingLength(InputLength, SegmentSize)
 	local RequiredLength = InputLength + PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, RequiredLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, RequiredLength)
 	local PaddingStart = CopyAndPadBuffer(InputBuffer, OutputBuffer, InputLength, InputLength)
 
 	buffer.fill(OutputBuffer, PaddingStart, 0, PaddingLength - 1)
@@ -48,22 +48,22 @@ local AnsiX923_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSiz
 	return OutputBuffer
 end
 
-local AnsiX923_Unpad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local AnsiX923_Unpad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = buffer.readu8(InputBuffer, InputLength - 1)
 	local UnpaddedLength = InputLength - PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, UnpaddedLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, UnpaddedLength)
 	buffer.copy(OutputBuffer, 0, InputBuffer, 0, UnpaddedLength)
 	return OutputBuffer
 end
 
-local Iso10126_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Iso10126_Pad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = CalculatePaddingLength(InputLength, SegmentSize)
 	local RequiredLength = InputLength + PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, RequiredLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, RequiredLength)
 	local PaddingStart = CopyAndPadBuffer(InputBuffer, OutputBuffer, InputLength, InputLength)
 
 	for ByteOffset = PaddingStart, RequiredLength - 2 do
@@ -74,22 +74,22 @@ local Iso10126_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSiz
 	return OutputBuffer
 end
 
-local Iso10126_Unpad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Iso10126_Unpad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = buffer.readu8(InputBuffer, InputLength - 1)
 	local UnpaddedLength = InputLength - PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, UnpaddedLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, UnpaddedLength)
 	buffer.copy(OutputBuffer, 0, InputBuffer, 0, UnpaddedLength)
 	return OutputBuffer
 end
 
-local Pkcs7_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Pkcs7_Pad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = CalculatePaddingLength(InputLength, SegmentSize)
 	local RequiredLength = InputLength + PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, RequiredLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, RequiredLength)
 	local PaddingStart = CopyAndPadBuffer(InputBuffer, OutputBuffer, InputLength, InputLength)
 
 	buffer.fill(OutputBuffer, PaddingStart, PaddingLength, PaddingLength)
@@ -97,22 +97,22 @@ local Pkcs7_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
 	return OutputBuffer
 end
 
-local Pkcs7_Unpad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Pkcs7_Unpad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = buffer.readu8(InputBuffer, InputLength - 1)
 	local UnpaddedLength = InputLength - PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, UnpaddedLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, UnpaddedLength)
 	buffer.copy(OutputBuffer, 0, InputBuffer, 0, UnpaddedLength)
 	return OutputBuffer
 end
 
-local Iso7816_4_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Iso7816_4_Pad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = CalculatePaddingLength(InputLength, SegmentSize)
 	local RequiredLength = InputLength + PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, RequiredLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, RequiredLength)
 	CopyAndPadBuffer(InputBuffer, OutputBuffer, InputLength, InputLength)
 
 	buffer.writeu8(OutputBuffer, InputLength, 128)
@@ -121,14 +121,14 @@ local Iso7816_4_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSi
 	return OutputBuffer
 end
 
-local Iso7816_4_Unpad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Iso7816_4_Unpad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local SearchStart = InputLength - 1
 
 	for ByteOffset = SearchStart, SearchStart - SegmentSize, -1 do
 		local CurrentByte = buffer.readu8(InputBuffer, ByteOffset)
 		if CurrentByte == 128 then
-			local OutputBuffer = CreateOutputBuffer(OutputBuffer, ByteOffset)
+			local OutputBuffer = CreateOutputBuffer(OutBuffer, ByteOffset)
 			buffer.copy(OutputBuffer, 0, InputBuffer, 0, ByteOffset)
 			return OutputBuffer
 		end
@@ -137,12 +137,12 @@ local Iso7816_4_Unpad: PadFunction = function(InputBuffer, OutputBuffer, Segment
 	return buffer.create(0)
 end
 
-local Zero_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Zero_Pad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local PaddingLength = CalculatePaddingLength(InputLength, SegmentSize)
 	local RequiredLength = InputLength + PaddingLength
 
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, RequiredLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, RequiredLength)
 	local PaddingStart = CopyAndPadBuffer(InputBuffer, OutputBuffer, InputLength, InputLength)
 
 	buffer.fill(OutputBuffer, PaddingStart, 0, PaddingLength)
@@ -150,7 +150,7 @@ local Zero_Pad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
 	return OutputBuffer
 end
 
-local Zero_Unpad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
+local Zero_Unpad: PadFunction = function(InputBuffer, OutBuffer, SegmentSize)
 	local InputLength = buffer.len(InputBuffer)
 	local SearchStart = InputLength - 1
 
@@ -158,14 +158,14 @@ local Zero_Unpad: PadFunction = function(InputBuffer, OutputBuffer, SegmentSize)
 		local CurrentByte = buffer.readu8(InputBuffer, ByteOffset)
 		if CurrentByte ~= 0 then
 			local UnpaddedLength = ByteOffset + 1
-			local OutputBuffer = CreateOutputBuffer(OutputBuffer, UnpaddedLength)
+			local OutputBuffer = CreateOutputBuffer(OutBuffer, UnpaddedLength)
 			buffer.copy(OutputBuffer, 0, InputBuffer, 0, UnpaddedLength)
 			return OutputBuffer
 		end
 	end
 
 	local UnpaddedLength = SearchStart - SegmentSize
-	local OutputBuffer = CreateOutputBuffer(OutputBuffer, UnpaddedLength)
+	local OutputBuffer = CreateOutputBuffer(OutBuffer, UnpaddedLength)
 	buffer.copy(OutputBuffer, 0, InputBuffer, 0, UnpaddedLength)
 	return OutputBuffer
 end

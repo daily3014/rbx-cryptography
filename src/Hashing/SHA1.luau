@@ -98,7 +98,6 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 	return A, B, C, D, E
 end
 
-
 local FormatString = string.rep("%08x", 5)
 local function SHA1(Message: buffer, Salt: buffer?): string
 	if Salt and buffer.len(Salt) > 0 then

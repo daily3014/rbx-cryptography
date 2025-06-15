@@ -29,6 +29,7 @@ local PRIME_5 = 0x165667b1
 local function Multiply32(A: number, B: number): number
 	local AHigh, ALow = bit32.rshift(A, 16), A % 65536
 	local BHigh, BLow = bit32.rshift(B, 16), B % 65536
+	
 	return bit32.lshift((AHigh * BLow) + (ALow * BHigh), 16) + (ALow * BLow)
 end
 
@@ -62,35 +63,37 @@ local function ProcessByte(Message: buffer, Offset: number, Digest: number): num
 	end
 	local ByteValue = buffer.readu8(Message, Offset)
 	Digest = Digest + Multiply32(ByteValue, PRIME_5)
+	
 	return Multiply32(bit32.lrotate(Digest, 11), PRIME_1)
 end
 
 local function FinalizeDigest(Digest: number): number
 	Digest = Multiply32(bit32.bxor(Digest, bit32.rshift(Digest, 15)), PRIME_2)
 	Digest = Multiply32(bit32.bxor(Digest, bit32.rshift(Digest, 13)), PRIME_3)
+	
 	return bit32.bxor(Digest, bit32.rshift(Digest, 16))
 end
 
-local function XXHash32(Message: buffer, Seed: number?): number
-	local Seed = Seed or 0
+local function XXH32(Message: buffer, Seed: number?): number
+	local UsedSeed = Seed or 0
 	local MessageLength = buffer.len(Message)
 	local Digest: number
 	local CurrentOffset = 0
 
 	if MessageLength >= 16 then
-		local Accumulator1 = Seed + PRIME_1 + PRIME_2
-		local Accumulator2 = Seed + PRIME_2
-		local Accumulator3 = Seed
-		local ACcumulator4 = Seed - PRIME_1
+		local Accumulator1 = UsedSeed + PRIME_1 + PRIME_2
+		local Accumulator2 = UsedSeed + PRIME_2
+		local Accumulator3 = UsedSeed
+		local Accumulator4 = UsedSeed - PRIME_1
 
 		while CurrentOffset <= MessageLength - 16 do
-			Accumulator1, Accumulator2, Accumulator3, ACcumulator4 = ProcessLargeBlock(Message, CurrentOffset, Accumulator1, Accumulator2, Accumulator3, ACcumulator4)
+			Accumulator1, Accumulator2, Accumulator3, Accumulator4 = ProcessLargeBlock(Message, CurrentOffset, Accumulator1, Accumulator2, Accumulator3, Accumulator4)
 			CurrentOffset += 16
 		end
 
-		Digest = bit32.lrotate(Accumulator1, 1) + bit32.lrotate(Accumulator2, 7) + bit32.lrotate(Accumulator3, 12) + bit32.lrotate(ACcumulator4, 18)
+		Digest = bit32.lrotate(Accumulator1, 1) + bit32.lrotate(Accumulator2, 7) + bit32.lrotate(Accumulator3, 12) + bit32.lrotate(Accumulator4, 18)
 	else
-		Digest = Seed + PRIME_5
+		Digest = UsedSeed + PRIME_5
 	end
 
 	Digest  += MessageLength
@@ -110,4 +113,4 @@ local function XXHash32(Message: buffer, Seed: number?): number
 	return Digest
 end
 
-return XXHash32
+return XXH32
