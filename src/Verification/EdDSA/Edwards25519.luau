@@ -1,22 +1,22 @@
 --[=[
-   Cryptography library: Edwards25519
-   
-   Return type: varies by function
-   Example usage:
-   	local Edwards = require("Edwards25519")
-   	local FieldQuadratic = require("FieldQuadratic")
-   	
-   	--------Usage Case 1: Point addition--------
-   	local Point1 = Edwards.Decode(SomeEncodedBuffer)
-   	local Point2 = Edwards.Decode(AnotherEncodedBuffer)
-   	local NielsPoint2 = Edwards.Niels(Point2)
-   	local Sum = Edwards.Add(Point1, NielsPoint2)
-   	
-   	--------Usage Case 2: Scalar multiplication with buffer-based bits--------
-   	local SomeScalar = FieldQuadratic.Decode(ScalarBytes)
-   	local ScalarBits, BitCount = FieldQuadratic.Bits(SomeScalar)
-   	local Result = Edwards.MulG(ScalarBits, BitCount)
-   	local EncodedResult = Edwards.Encode(Result)
+	Cryptography library: Edwards25519
+
+	Return type: varies by function
+	Example usage:
+		local Edwards = require("Edwards25519")
+		local FieldQuadratic = require("FieldQuadratic")
+
+		--------Usage Case 1: Point addition--------
+		local Point1 = Edwards.Decode(SomeEncodedBuffer)
+		local Point2 = Edwards.Decode(AnotherEncodedBuffer)
+		local NielsPoint2 = Edwards.Niels(Point2)
+		local Sum = Edwards.Add(Point1, NielsPoint2)
+
+		--------Usage Case 2: Scalar multiplication with buffer-based bits--------
+		local SomeScalar = FieldQuadratic.Decode(ScalarBytes)
+		local ScalarBits, BitCount = FieldQuadratic.Bits(SomeScalar)
+		local Result = Edwards.MulG(ScalarBits, BitCount)
+		local EncodedResult = Edwards.Encode(Result)
 --]=]
 
 --!strict
