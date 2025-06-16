@@ -28,6 +28,11 @@ local RandomBytes = require("./Random")
 
 local COORD_SIZE = 104
 
+local X25519_SECRET_KEY_SIZE = 32
+local X25519_PUBLIC_KEY_SIZE = 32
+local X25519_MASKED_KEY_SIZE = 64
+local X25519_SIGNATURE_SECRET_KEY_SIZE = 32
+
 local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
 	local Coord = buffer.create(COORD_SIZE)
 	buffer.copy(Coord, 0, Point, Index * COORD_SIZE, COORD_SIZE)
@@ -35,6 +40,19 @@ local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
 end
 
 local function Mask(SecretKey: buffer): buffer
+	if SecretKey == nil then
+		error("SecretKey cannot be nil", 2)
+	end
+	
+	if typeof(SecretKey) ~= "buffer" then
+		error(`SecretKey must be a buffer, got {typeof(SecretKey)}`, 2)
+	end
+	
+	local SecretKeyLength = buffer.len(SecretKey)
+	if SecretKeyLength ~= X25519_SECRET_KEY_SIZE then
+		error(`SecretKey must be exactly {X25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
+	end
+
 	local RandomMask = RandomBytes.Random(32)
 	local ScalarX = FieldQuadratic.DecodeClamped(SecretKey)
 	local ScalarR = FieldQuadratic.DecodeClamped(RandomMask)
@@ -49,13 +67,40 @@ local function Mask(SecretKey: buffer): buffer
 end
 
 local function MaskSignature(SignatureSecretKey: buffer): buffer
+	if SignatureSecretKey == nil then
+		error("SignatureSecretKey cannot be nil", 2)
+	end
+	
+	if typeof(SignatureSecretKey) ~= "buffer" then
+		error(`SignatureSecretKey must be a buffer, got {typeof(SignatureSecretKey)}`, 2)
+	end
+	
+	local SignatureKeyLength = buffer.len(SignatureSecretKey)
+	if SignatureKeyLength ~= X25519_SIGNATURE_SECRET_KEY_SIZE then
+		error(`SignatureSecretKey must be exactly {X25519_SIGNATURE_SECRET_KEY_SIZE} bytes long, got {SignatureKeyLength} bytes`, 2)
+	end
+
 	local HashResult = SHA512(SignatureSecretKey)
 	local FirstHalf = buffer.create(32)
 	buffer.copy(FirstHalf, 0, HashResult, 0, 32)
+	
 	return Mask(FirstHalf)
 end
 
 local function Remask(MaskedKey: buffer): buffer
+	if MaskedKey == nil then
+		error("MaskedKey cannot be nil", 2)
+	end
+	
+	if typeof(MaskedKey) ~= "buffer" then
+		error(`MaskedKey must be a buffer, got {typeof(MaskedKey)}`, 2)
+	end
+	
+	local MaskedKeyLength = buffer.len(MaskedKey)
+	if MaskedKeyLength ~= X25519_MASKED_KEY_SIZE then
+		error(`MaskedKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedKeyLength} bytes`, 2)
+	end
+
 	local NewRandomMask = RandomBytes.Random(32)
 
 	local MaskedScalarBytes = buffer.create(32)
@@ -78,6 +123,19 @@ local function Remask(MaskedKey: buffer): buffer
 end
 
 local function EphemeralSecretKey(MaskedKey: buffer): buffer
+	if MaskedKey == nil then
+		error("MaskedKey cannot be nil", 2)
+	end
+	
+	if typeof(MaskedKey) ~= "buffer" then
+		error(`MaskedKey must be a buffer, got {typeof(MaskedKey)}`, 2)
+	end
+	
+	local MaskedKeyLength = buffer.len(MaskedKey)
+	if MaskedKeyLength ~= X25519_MASKED_KEY_SIZE then
+		error(`MaskedKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedKeyLength} bytes`, 2)
+	end
+
 	local EphemeralKey = buffer.create(32)
 	buffer.copy(EphemeralKey, 0, MaskedKey, 32, 32)
 	return EphemeralKey
@@ -131,10 +189,49 @@ local function ExchangeOnPoint(MaskedSecretKey: buffer, CurvePoint: buffer): (bu
 end
 
 local function PublicKey(MaskedKey: buffer): buffer
+	if MaskedKey == nil then
+		error("MaskedKey cannot be nil", 2)
+	end
+	
+	if typeof(MaskedKey) ~= "buffer" then
+		error(`MaskedKey must be a buffer, got {typeof(MaskedKey)}`, 2)
+	end
+	
+	local MaskedKeyLength = buffer.len(MaskedKey)
+	if MaskedKeyLength ~= X25519_MASKED_KEY_SIZE then
+		error(`MaskedKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedKeyLength} bytes`, 2)
+	end
+
 	return (ExchangeOnPoint(MaskedKey, Curve25519.G))
 end
 
 local function Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer): (buffer, buffer)
+	if MaskedSecretKey == nil then
+		error("MaskedSecretKey cannot be nil", 2)
+	end
+	
+	if typeof(MaskedSecretKey) ~= "buffer" then
+		error(`MaskedSecretKey must be a buffer, got {typeof(MaskedSecretKey)}`, 2)
+	end
+	
+	local MaskedSecretKeyLength = buffer.len(MaskedSecretKey)
+	if MaskedSecretKeyLength ~= X25519_MASKED_KEY_SIZE then
+		error(`MaskedSecretKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedSecretKeyLength} bytes`, 2)
+	end
+
+	if TheirPublicKey == nil then
+		error("TheirPublicKey cannot be nil", 2)
+	end
+	
+	if typeof(TheirPublicKey) ~= "buffer" then
+		error(`TheirPublicKey must be a buffer, got {typeof(TheirPublicKey)}`, 2)
+	end
+	
+	local TheirPublicKeyLength = buffer.len(TheirPublicKey)
+	if TheirPublicKeyLength ~= X25519_PUBLIC_KEY_SIZE then
+		error(`TheirPublicKey must be exactly {X25519_PUBLIC_KEY_SIZE} bytes long, got {TheirPublicKeyLength} bytes`, 2)
+	end
+
 	return ExchangeOnPoint(MaskedSecretKey, Curve25519.Decode(TheirPublicKey))
 end
 
