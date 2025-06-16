@@ -33,6 +33,7 @@ local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 
 		local Buf = buffer.create(Length)
 		buffer.copy(Buf, 0, Characters, 0, Length)
+		return Buf
  	end
 
 	return buffer.readstring(Characters, 0, Length)

@@ -31,6 +31,18 @@ local INVS_XOR_TABLE = buffer.create(65536)
 local INVMIX_TABLE0 = buffer.create(65536)
 local INVMIX_TABLE1 = buffer.create(65536)
 
+local KEY_CONFIGS = {
+	[16] = {ExpandedLength = 176, MaterialLength = 128},
+	[24] = {ExpandedLength = 208, MaterialLength = 160},
+	[32] = {ExpandedLength = 240, MaterialLength = 192}
+}
+
+local ROUND_KEY_CONFIGS = {
+	[176] = {MaterialLength = 128, OriginalKeyLength = 16},
+	[208] = {MaterialLength = 160, OriginalKeyLength = 24},
+	[240] = {MaterialLength = 192, OriginalKeyLength = 32}
+}
+
 do
 	local SubstitutionBox = buffer.create(256)
 	local InverseSubstitutionBox = buffer.create(256)
@@ -230,7 +242,7 @@ end
 
 local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
 	local B0 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset), buffer.readu8(RoundKeys, 0))
-	
+
 	local B1 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 1), buffer.readu8(RoundKeys, 1))
 	local B2 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 2), buffer.readu8(RoundKeys, 2))
 	local B3 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 3), buffer.readu8(RoundKeys, 3))
@@ -240,7 +252,7 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 	local B7 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 7), buffer.readu8(RoundKeys, 7))
 	local B8 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 8), buffer.readu8(RoundKeys, 8))
 	local B9 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 9), buffer.readu8(RoundKeys, 9))
-	
+
 	local B10 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 10), buffer.readu8(RoundKeys, 10))
 	local B11 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 11), buffer.readu8(RoundKeys, 11))
 	local B12 = bit32.bxor(buffer.readu8(Plaintext, PlaintextOffset + 12), buffer.readu8(RoundKeys, 12))
@@ -262,13 +274,13 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		B5 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I5), buffer.readu8(SMIX_TABLE1, I7), buffer.readu8(RoundKeys, RoundOffset + 5))
 		B6 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I6), buffer.readu8(SMIX_TABLE1, I4), buffer.readu8(RoundKeys, RoundOffset + 6))
 		B7 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I7), buffer.readu8(SMIX_TABLE1, I5), buffer.readu8(RoundKeys, RoundOffset + 7))
-		
+
 		B8 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I8), buffer.readu8(SMIX_TABLE1, I10), buffer.readu8(RoundKeys, RoundOffset + 8))
 		B9 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I9), buffer.readu8(SMIX_TABLE1, I11), buffer.readu8(RoundKeys, RoundOffset + 9))
-		
+
 		B10 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I10), buffer.readu8(SMIX_TABLE1, I8), buffer.readu8(RoundKeys, RoundOffset + 10))
 		B11 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I11), buffer.readu8(SMIX_TABLE1, I9), buffer.readu8(RoundKeys, RoundOffset + 11))
-		
+
 		B12 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I12), buffer.readu8(SMIX_TABLE1, I14), buffer.readu8(RoundKeys, RoundOffset + 12))
 		B13 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I13), buffer.readu8(SMIX_TABLE1, I15), buffer.readu8(RoundKeys, RoundOffset + 13))
 		B14 = bit32.bxor(buffer.readu8(SMIX_TABLE0, I14), buffer.readu8(SMIX_TABLE1, I12), buffer.readu8(RoundKeys, RoundOffset + 14))
@@ -317,21 +329,21 @@ local function DecryptBlock(RoundKeys: buffer, MaterialLength: number, Ciphertex
 	local B0 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset) * 256 + buffer.readu8(RoundKeys, MaterialLength + 32)), buffer.readu8(RoundKeys, MaterialLength + 16))
 	local B1 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 13) * 256 + buffer.readu8(RoundKeys, MaterialLength + 45)), buffer.readu8(RoundKeys, MaterialLength + 17))
 	local B2 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 10) * 256 + buffer.readu8(RoundKeys, MaterialLength + 42)), buffer.readu8(RoundKeys, MaterialLength + 18))
-	
+
 	local B3 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 7) * 256 + buffer.readu8(RoundKeys, MaterialLength + 39)), buffer.readu8(RoundKeys, MaterialLength + 19))
 	local B4 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 4) * 256 + buffer.readu8(RoundKeys, MaterialLength + 36)), buffer.readu8(RoundKeys, MaterialLength + 20))
 	local B5 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 1) * 256 + buffer.readu8(RoundKeys, MaterialLength + 33)), buffer.readu8(RoundKeys, MaterialLength + 21))
-	
+
 	local B6 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 14) * 256 + buffer.readu8(RoundKeys, MaterialLength + 46)), buffer.readu8(RoundKeys, MaterialLength + 22))
 	local B7 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 11) * 256 + buffer.readu8(RoundKeys, MaterialLength + 43)), buffer.readu8(RoundKeys, MaterialLength + 23))
-	
+
 	local B8 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 8) * 256 + buffer.readu8(RoundKeys, MaterialLength + 40)), buffer.readu8(RoundKeys, MaterialLength + 24))
 	local B9 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 5) * 256 + buffer.readu8(RoundKeys, MaterialLength + 37)), buffer.readu8(RoundKeys, MaterialLength + 25))
-	
+
 	local B10 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 2) * 256 + buffer.readu8(RoundKeys, MaterialLength + 34)), buffer.readu8(RoundKeys, MaterialLength + 26))
 	local B11 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 15) * 256 + buffer.readu8(RoundKeys, MaterialLength + 47)), buffer.readu8(RoundKeys, MaterialLength + 27))
 	local B12 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 12) * 256 + buffer.readu8(RoundKeys, MaterialLength + 44)), buffer.readu8(RoundKeys, MaterialLength + 28))
-	
+
 	local B13 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 9) * 256 + buffer.readu8(RoundKeys, MaterialLength + 41)), buffer.readu8(RoundKeys, MaterialLength + 29))
 	local B14 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 6) * 256 + buffer.readu8(RoundKeys, MaterialLength + 38)), buffer.readu8(RoundKeys, MaterialLength + 30))
 	local B15 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(Ciphertext, CiphertextOffset + 3) * 256 + buffer.readu8(RoundKeys, MaterialLength + 35)), buffer.readu8(RoundKeys, MaterialLength + 31))
@@ -345,22 +357,22 @@ local function DecryptBlock(RoundKeys: buffer, MaterialLength: number, Ciphertex
 		B0 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I0) * 256 + buffer.readu8(INVMIX_TABLE1, I2)), buffer.readu8(RoundKeys, RoundOffset))
 		B1 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I13) * 256 + buffer.readu8(INVMIX_TABLE1, I15)), buffer.readu8(RoundKeys, RoundOffset + 1))
 		B2 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I10) * 256 + buffer.readu8(INVMIX_TABLE1, I8)), buffer.readu8(RoundKeys, RoundOffset + 2))
-		
+
 		B3 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I7) * 256 + buffer.readu8(INVMIX_TABLE1, I5)), buffer.readu8(RoundKeys, RoundOffset + 3))
 		B4 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I4) * 256 + buffer.readu8(INVMIX_TABLE1, I6)), buffer.readu8(RoundKeys, RoundOffset + 4))
 		B5 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I1) * 256 + buffer.readu8(INVMIX_TABLE1, I3)), buffer.readu8(RoundKeys, RoundOffset + 5))
-		
+
 		B6 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I14) * 256 + buffer.readu8(INVMIX_TABLE1, I12)), buffer.readu8(RoundKeys, RoundOffset + 6))
-		
+
 		B7 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I11) * 256 + buffer.readu8(INVMIX_TABLE1, I9)), buffer.readu8(RoundKeys, RoundOffset + 7))
 		B8 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I8) * 256 + buffer.readu8(INVMIX_TABLE1, I10)), buffer.readu8(RoundKeys, RoundOffset + 8))
-		
+
 		B9 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I5) * 256 + buffer.readu8(INVMIX_TABLE1, I7)), buffer.readu8(RoundKeys, RoundOffset + 9))
 		B10 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I2) * 256 + buffer.readu8(INVMIX_TABLE1, I0)), buffer.readu8(RoundKeys, RoundOffset + 10))
-		
+
 		B11 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I15) * 256 + buffer.readu8(INVMIX_TABLE1, I13)), buffer.readu8(RoundKeys, RoundOffset + 11))
 		B12 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I12) * 256 + buffer.readu8(INVMIX_TABLE1, I14)), buffer.readu8(RoundKeys, RoundOffset + 12))
-		
+
 		B13 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I9) * 256 + buffer.readu8(INVMIX_TABLE1, I11)), buffer.readu8(RoundKeys, RoundOffset + 13))
 		B14 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I6) * 256 + buffer.readu8(INVMIX_TABLE1, I4)), buffer.readu8(RoundKeys, RoundOffset + 14))
 		B15 = bit32.bxor(buffer.readu8(INVS_XOR_TABLE, buffer.readu8(INVMIX_TABLE0, I3) * 256 + buffer.readu8(INVMIX_TABLE1, I1)), buffer.readu8(RoundKeys, RoundOffset + 15))
@@ -400,8 +412,6 @@ local function DecryptBlock(RoundKeys: buffer, MaterialLength: number, Ciphertex
 	)
 end
 
-
-
 export type KeyLength = { ExpandedLength: number, MaterialLength: number }
 
 export type Struct = {
@@ -417,19 +427,20 @@ export type Struct = {
 
 export type Impl = {
 	__index: Impl,
-	
-	New: (MasterKey: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct) -> AesCipher,
+
+	New: (MasterKey: buffer | string, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct) -> AesCipher,
 	FromKey: (RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct) -> AesCipher,
 	ValidateKeySize: (self: any, KeyLength: number) -> KeyLength,
+	ValidateRoundKeySize: (self: any, RoundKeysLength: number) -> {MaterialLength: number, OriginalKeyLength: number},
 	CreateBufferFromInput: (self: any, Input: buffer | string) -> buffer,
-	
+
 	ExpandMasterKey: (self: AesCipher, MasterKey: buffer | string, OutputBuffer: buffer?) -> buffer,
-	Encrypt: (self: AesCipher, Plaintext: buffer, Output: buffer?, InitVector: buffer?, ...any) -> buffer,
-	Decrypt: (self: AesCipher, Plaintext: buffer, Output: buffer?, InitVector: buffer?, ...any) -> buffer,
-	EncryptBlock: (self: AesCipher, Plaintext: buffer, Offset: number, Output: buffer?, OutputOffset: number?) -> (),
-	DecryptBlock: (self: AesCipher, Ciphertext: buffer, Offset: number, Output: buffer?, OutputOffset: number?) -> (),
-	ExpandKey: (self: AesCipher, MasterKey: buffer, OutputBuffer: buffer?) -> buffer,
-	
+	Encrypt: (self: AesCipher, Plaintext: buffer | string, Output: buffer?, InitVector: buffer?, ...any) -> buffer,
+	Decrypt: (self: AesCipher, Ciphertext: buffer | string, Output: buffer?, InitVector: buffer?, ...any) -> buffer,
+	EncryptBlock: (self: AesCipher, Plaintext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number?) -> (),
+	DecryptBlock: (self: AesCipher, Ciphertext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number?) -> (),
+	ExpandKey: (self: AesCipher, MasterKey: buffer | string, OutputBuffer: buffer?) -> buffer,
+
 	Destroy: (self: AesCipher) -> ()
 }
 
@@ -438,45 +449,76 @@ export type AesCipher = typeof(setmetatable({} :: Struct, {} :: Impl))
 local AesCipher = {}
 AesCipher.__index = AesCipher
 
-function AesCipher:ValidateKeySize(KeyLength)
-	local KeyConfigurations = {
-		[16] = {ExpandedLength = 176, MaterialLength = 128},
-		[24] = {ExpandedLength = 208, MaterialLength = 160},
-		[32] = {ExpandedLength = 240, MaterialLength = 192}
-	}
+function AesCipher:ValidateKeySize(KeyLength: number)
+	local Config = KEY_CONFIGS[KeyLength]
+	if not Config then
+		error(`Key must be 16, 24, or 32 bytes long, got {KeyLength} bytes`, 2)
+	end
 	
-	return KeyConfigurations[KeyLength]
+	return Config
 end
 
-function AesCipher:ValidateRoundKeySize(RoundKeysLength)
-	local RoundKeyConfigurations = {
-		[176] = {MaterialLength = 128, OriginalKeyLength = 16},
-		[208] = {MaterialLength = 160, OriginalKeyLength = 24},
-		[240] = {MaterialLength = 192, OriginalKeyLength = 32}
-	}
+function AesCipher:ValidateRoundKeySize(RoundKeysLength: number)
+	local Config = ROUND_KEY_CONFIGS[RoundKeysLength]
+	if not Config then
+		error(`RoundKeysBuffer length must be 176, 208, or 240 bytes, got {RoundKeysLength} bytes`, 2)
+	end
 	
-	return RoundKeyConfigurations[RoundKeysLength]
+	return Config
 end
 
 function AesCipher:CreateBufferFromInput(Input: buffer | string): buffer
 	if typeof(Input) == "buffer" then
 		return Input
+		
 	elseif typeof(Input) == "string" then
 		return buffer.fromstring(Input)
+	else
+		error(`Input must be a buffer or string, got {typeof(Input)}`, 2)
 	end
-	
-	return buffer.fromstring(`Why did I make the input a {type(Input)}....`)
 end
 
 function AesCipher:ExpandMasterKey(MasterKey: buffer | string, OutputBuffer: buffer?): buffer
+	if MasterKey == nil then
+		error("MasterKey cannot be nil", 2)
+	end
+
+	if typeof(MasterKey) ~= "buffer" and typeof(MasterKey) ~= "string" then
+		error(`MasterKey must be a buffer or string, got {typeof(MasterKey)}`, 2)
+	end
+
 	local KeyLength = if typeof(MasterKey) == "buffer" then buffer.len(MasterKey) else #MasterKey
 	local KeyConfig = self:ValidateKeySize(KeyLength)
+
+	if OutputBuffer then
+		if typeof(OutputBuffer) ~= "buffer" then
+			error(`OutputBuffer must be a buffer, got {typeof(OutputBuffer)}`, 2)
+		end
+		
+		local OutputLength = buffer.len(OutputBuffer)
+		if OutputLength < KeyConfig.ExpandedLength then
+			error(`OutputBuffer must be at least {KeyConfig.ExpandedLength} bytes, got {OutputLength} bytes`, 2)
+		end
+	end
+
 	return ExpandKeySchedule(MasterKey, KeyLength, OutputBuffer or buffer.create(KeyConfig.ExpandedLength), typeof(MasterKey) == "buffer")
 end
 
-function AesCipher.New(MasterKey: buffer | string, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
-	local self = setmetatable({}, AesCipher)
+function AesCipher.New(MasterKey: buffer | string, OperationMode: CipherModes.SimpleModeStruct?, PaddingScheme: PaddingSchemes.Struct?): AesCipher
+	if MasterKey == nil then
+		error("MasterKey cannot be nil", 2)
+	end
 
+	if typeof(MasterKey) ~= "buffer" and typeof(MasterKey) ~= "string" then
+		error(`MasterKey must be a buffer or string, got {typeof(MasterKey)}`, 2)
+	end
+
+	local KeyLength = if typeof(MasterKey) == "buffer" then buffer.len(MasterKey) else #MasterKey
+	if KeyLength == 0 then
+		error("MasterKey cannot be empty", 2)
+	end
+
+	local self = setmetatable({}, AesCipher)
 	local RoundKeysBuffer = self:ExpandMasterKey(MasterKey)
 	local RoundKeysLength = buffer.len(RoundKeysBuffer)
 	local KeyConfig = self:ValidateRoundKeySize(RoundKeysLength)
@@ -493,10 +535,22 @@ function AesCipher.New(MasterKey: buffer | string, OperationMode: CipherModes.Si
 	return (self :: any) :: AesCipher
 end
 
-function AesCipher.FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
-	local _self = setmetatable({}, AesCipher)
+function AesCipher.FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct?, PaddingScheme: PaddingSchemes.Struct?): AesCipher
+	if RoundKeysBuffer == nil then
+		error("RoundKeysBuffer cannot be nil", 2)
+	end
 
+	if typeof(RoundKeysBuffer) ~= "buffer" then
+		error(`RoundKeysBuffer must be a buffer, got {typeof(RoundKeysBuffer)}`, 2)
+	end
+
+	local _self = setmetatable({}, AesCipher)
 	local RoundKeysLength = buffer.len(RoundKeysBuffer)
+
+	if RoundKeysLength == 0 then
+		error("RoundKeysBuffer cannot be empty", 2)
+	end
+
 	local KeyConfig = _self:ValidateRoundKeySize(RoundKeysLength)
 
 	_self.Key = string.sub(buffer.tostring(RoundKeysBuffer), 1, KeyConfig.OriginalKeyLength)
@@ -512,7 +566,27 @@ function AesCipher.FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.S
 end
 
 function AesCipher:Encrypt(Plaintext: buffer | string, Output: buffer?, ...): buffer
+	if Plaintext == nil then
+		error("Plaintext cannot be nil", 2)
+	end
+
+	if typeof(Plaintext) ~= "buffer" and typeof(Plaintext) ~= "string" then
+		error(`Plaintext must be a buffer or string, got {typeof(Plaintext)}`, 2)
+	end
+
 	local InputBuffer = self:CreateBufferFromInput(Plaintext)
+	local InputLength = buffer.len(InputBuffer)
+
+	if InputLength == 0 then
+		error("Plaintext cannot be empty", 2)
+	end
+
+	if Output then
+		if typeof(Output) ~= "buffer" then
+			error(`Output must be a buffer, got {typeof(Output)}`, 2)
+		end
+	end
+
 	local ValidOutput = typeof(Output) == "buffer" and Output or nil
 	local Padded = self.Padding.Pad(InputBuffer, ValidOutput, self.SegmentSize)
 
@@ -526,12 +600,36 @@ function AesCipher:Encrypt(Plaintext: buffer | string, Output: buffer?, ...): bu
 end
 
 function AesCipher:Decrypt(Ciphertext: buffer | string, Output: buffer?, ...): buffer
+	if Ciphertext == nil then
+		error("Ciphertext cannot be nil", 2)
+	end
+
+	if typeof(Ciphertext) ~= "buffer" and typeof(Ciphertext) ~= "string" then
+		error(`Ciphertext must be a buffer or string, got {typeof(Ciphertext)}`, 2)
+	end
+
 	local CipherBuffer = self:CreateBufferFromInput(Ciphertext)
+	local CipherLength = buffer.len(CipherBuffer)
+
+	if CipherLength == 0 then
+		error("Ciphertext cannot be empty", 2)
+	end
+
+	if CipherLength % 16 ~= 0 then
+		error(`Ciphertext length ({CipherLength} bytes) must be a multiple of 16 bytes`, 2)
+	end
+
+	if Output then
+		if typeof(Output) ~= "buffer" then
+			error(`Output must be a buffer, got {typeof(Output)}`, 2)
+		end
+	end
+
 	local ValidOutput = typeof(Output) == "buffer" and Output or nil
 	local Overwrite = self.Padding.Overwrite
-	local OutputBuffer = Overwrite == nil and buffer.create(buffer.len(CipherBuffer))
+	local OutputBuffer = Overwrite == nil and buffer.create(CipherLength)
 		or Overwrite and CipherBuffer
-		or ValidOutput or buffer.create(buffer.len(CipherBuffer))
+		or ValidOutput or buffer.create(CipherLength)
 
 	self.Mode.InverseMode(function(PlaintextBlock, PlaintextOffset, OutputBuffer, OutputOffset)
 		EncryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, PlaintextBlock, PlaintextOffset, OutputBuffer, OutputOffset)
@@ -542,22 +640,101 @@ function AesCipher:Decrypt(Ciphertext: buffer | string, Output: buffer?, ...): b
 	return self.Padding.Unpad(OutputBuffer, ValidOutput, self.SegmentSize)
 end
 
-function AesCipher:EncryptBlock(Plaintext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number)
+function AesCipher:EncryptBlock(Plaintext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number?)
+	if Plaintext == nil then
+		error("Plaintext cannot be nil", 2)
+	end
+
+	if typeof(Plaintext) ~= "buffer" and typeof(Plaintext) ~= "string" then
+		error(`Plaintext must be a buffer or string, got {typeof(Plaintext)}`, 2)
+	end
+
+	if typeof(Offset) ~= "number" then
+		error(`Offset must be a number, got {typeof(Offset)}`, 2)
+	end
+
 	local Plainbuffer = self:CreateBufferFromInput(Plaintext)
+	local PlainLength = buffer.len(Plainbuffer)
+
+	if Offset < 0 then
+		error(`Offset cannot be negative, got {Offset}`, 2)
+	end
+	if Offset + 16 > PlainLength then
+		error(`Offset ({Offset}) + block size (16) exceeds buffer length ({PlainLength})`, 2)
+	end
+
+	if Output then
+		if typeof(Output) ~= "buffer" then
+			error(`Output must be a buffer, got {typeof(Output)}`, 2)
+		end
+		
+		local OutputLength = buffer.len(Output)
+		local ActualOutputOffset = OutputOffset or Offset
+		if typeof(ActualOutputOffset) ~= "number" then
+			error(`OutputOffset must be a number, got {typeof(ActualOutputOffset)}`, 2)
+		end
+		
+		if ActualOutputOffset < 0 then
+			error(`OutputOffset cannot be negative, got {ActualOutputOffset}`, 2)
+		end
+		
+		if ActualOutputOffset + 16 > OutputLength then
+			error(`OutputOffset ({ActualOutputOffset}) + block size (16) exceeds output buffer length ({OutputLength})`, 2)
+		end
+	end
+
 	EncryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Plainbuffer, Offset, Output or Plainbuffer, OutputOffset or Offset)
 end
 
-function AesCipher:DecryptBlock(Ciphertext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number)
+function AesCipher:DecryptBlock(Ciphertext: buffer | string, Offset: number, Output: buffer?, OutputOffset: number?)
+	if Ciphertext == nil then
+		error("Ciphertext cannot be nil", 2)
+	end
+
+	if typeof(Ciphertext) ~= "buffer" and typeof(Ciphertext) ~= "string" then
+		error(`Ciphertext must be a buffer or string, got {typeof(Ciphertext)}`, 2)
+	end
+
+	if typeof(Offset) ~= "number" then
+		error(`Offset must be a number, got {typeof(Offset)}`, 2)
+	end
+
 	local Cipherbuffer = self:CreateBufferFromInput(Ciphertext)
+	local CipherLength = buffer.len(Cipherbuffer)
+
+	if Offset < 0 then
+		error(`Offset cannot be negative, got {Offset}`, 2)
+	end
+	
+	if Offset + 16 > CipherLength then
+		error(`Offset ({Offset}) + block size (16) exceeds buffer length ({CipherLength})`, 2)
+	end
+
+	if Output then
+		if typeof(Output) ~= "buffer" then
+			error(`Output must be a buffer, got {typeof(Output)}`, 2)
+		end
+		
+		local OutputLength = buffer.len(Output)
+		local ActualOutputOffset = OutputOffset or Offset
+		if typeof(ActualOutputOffset) ~= "number" then
+			error(`OutputOffset must be a number, got {typeof(ActualOutputOffset)}`, 2)
+		end
+		
+		if ActualOutputOffset < 0 then
+			error(`OutputOffset cannot be negative, got {ActualOutputOffset}`, 2)
+		end
+		
+		if ActualOutputOffset + 16 > OutputLength then
+			error(`OutputOffset ({ActualOutputOffset}) + block size (16) exceeds output buffer length ({OutputLength})`, 2)
+		end
+	end
+
 	DecryptBlock(self.RoundKeysBuffer, self.KeyMaterialLength, Cipherbuffer, Offset, Output or Cipherbuffer, OutputOffset or Offset)
 end
 
-function AesCipher:ExpandKey(MasterKey: buffer, OutputBuffer: buffer?): buffer
+function AesCipher:ExpandKey(MasterKey: buffer | string, OutputBuffer: buffer?): buffer
 	return self:ExpandMasterKey(MasterKey, OutputBuffer)
-end
-
-function AesCipher:Destroy()
-	setmetatable(self, nil)
 end
 
 return table.freeze({

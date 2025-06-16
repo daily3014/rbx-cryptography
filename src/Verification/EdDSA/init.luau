@@ -24,6 +24,11 @@ local FieldQuadratic = require("@self/FieldQuadratic")
 local SHA512 = require("@self/SHA512")
 local Edwards25519 = require("@self/Edwards25519")
 local Mask = require("@self/Mask")
+local RandomBytes = require("@self/Random")
+
+local ED25519_SECRET_KEY_SIZE = 32
+local ED25519_PUBLIC_KEY_SIZE = 32
+local ED25519_SIGNATURE_SIZE = 64
 
 local function ConcatBuffers(...): buffer
 	local Buffers = {...}
@@ -46,6 +51,19 @@ local function ConcatBuffers(...): buffer
 end
 
 local function PublicKey(SecretKey: buffer): buffer
+	if SecretKey == nil then
+		error("SecretKey cannot be nil", 2)
+	end
+	
+	if typeof(SecretKey) ~= "buffer" then
+		error(`SecretKey must be a buffer, got {typeof(SecretKey)}`, 2)
+	end
+	
+	local SecretKeyLength = buffer.len(SecretKey)
+	if SecretKeyLength ~= ED25519_SECRET_KEY_SIZE then
+		error(`SecretKey must be exactly {ED25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
+	end
+
 	local Hash = SHA512(SecretKey)
 
 	local FirstHalf = buffer.create(32)
@@ -58,6 +76,40 @@ local function PublicKey(SecretKey: buffer): buffer
 end
 
 local function Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buffer
+	if SecretKey == nil then
+		error("SecretKey cannot be nil", 2)
+	end
+	
+	if typeof(SecretKey) ~= "buffer" then
+		error(`SecretKey must be a buffer, got {typeof(SecretKey)}`, 2)
+	end
+	
+	local SecretKeyLength = buffer.len(SecretKey)
+	if SecretKeyLength ~= ED25519_SECRET_KEY_SIZE then
+		error(`SecretKey must be exactly {ED25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
+	end
+
+	if PublicKey == nil then
+		error("PublicKey cannot be nil", 2)
+	end
+	
+	if typeof(PublicKey) ~= "buffer" then
+		error(`PublicKey must be a buffer, got {typeof(PublicKey)}`, 2)
+	end
+	
+	local PublicKeyLength = buffer.len(PublicKey)
+	if PublicKeyLength ~= ED25519_PUBLIC_KEY_SIZE then
+		error(`PublicKey must be exactly {ED25519_PUBLIC_KEY_SIZE} bytes long, got {PublicKeyLength} bytes`, 2)
+	end
+
+	if Message == nil then
+		error("Message cannot be nil", 2)
+	end
+	
+	if typeof(Message) ~= "buffer" then
+		error(`Message must be a buffer, got {typeof(Message)}`, 2)
+	end
+
 	local Hash = SHA512(SecretKey)
 
 	local FirstHalf = buffer.create(32)
@@ -86,13 +138,43 @@ local function Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buff
 end
 
 local function Verify(PublicKey: buffer, Message: buffer, Signature: buffer): boolean
+	if PublicKey == nil then
+		error("PublicKey cannot be nil", 2)
+	end
+	
+	if typeof(PublicKey) ~= "buffer" then
+		error(`PublicKey must be a buffer, got {typeof(PublicKey)}`, 2)
+	end
+	
+	local PublicKeyLength = buffer.len(PublicKey)
+	if PublicKeyLength ~= ED25519_PUBLIC_KEY_SIZE then
+		error(`PublicKey must be exactly {ED25519_PUBLIC_KEY_SIZE} bytes long, got {PublicKeyLength} bytes`, 2)
+	end
+
+	if Message == nil then
+		error("Message cannot be nil", 2)
+	end
+	
+	if typeof(Message) ~= "buffer" then
+		error(`Message must be a buffer, got {typeof(Message)}`, 2)
+	end
+
+	if Signature == nil then
+		error("Signature cannot be nil", 2)
+	end
+	
+	if typeof(Signature) ~= "buffer" then
+		error(`Signature must be a buffer, got {typeof(Signature)}`, 2)
+	end
+	
+	local SignatureLength = buffer.len(Signature)
+	if SignatureLength ~= ED25519_SIGNATURE_SIZE then
+		error(`Signature must be exactly {ED25519_SIGNATURE_SIZE} bytes long, got {SignatureLength} bytes`, 2)
+	end
+
 	local PublicPoint = Edwards25519.Decode(PublicKey)
 	if not PublicPoint then
 		return false
-	end
-
-	if buffer.len(Signature) ~= 64 then
-		return false 
 	end
 
 	local CommitmentString = buffer.create(32)
@@ -119,6 +201,7 @@ local function Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	if buffer.len(VerificationR) ~= buffer.len(CommitmentString) then
 		return false
 	end
+	
 	for Index = 0, buffer.len(CommitmentString) - 1 do
 		if buffer.readu8(VerificationR, Index) ~= buffer.readu8(CommitmentString, Index) then
 			return false
@@ -133,5 +216,6 @@ return {
 	Sign = Sign,
 	Verify = Verify,
 
+	RandomBytes = RandomBytes,
 	MaskedX25519 = Mask
 }

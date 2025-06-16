@@ -21,6 +21,8 @@ local DWORD = 4
 local TAG_SIZE = 16
 local BLOCK_SIZE = 16
 
+local POLY1305_KEY_SIZE = 32
+
 local function ReadU32Array(Data: buffer, Offset: number, Count: number): {number}
 	local Result = {}
 	for Index = 1, Count do
@@ -201,6 +203,27 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 end
 
 local function Poly1305(Message: buffer, Key: buffer): buffer
+	if Message == nil then
+		error("Message cannot be nil", 2)
+	end
+	
+	if typeof(Message) ~= "buffer" then
+		error(`Message must be a buffer, got {typeof(Message)}`, 2)
+	end
+
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+	
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+	
+	local KeyLength = buffer.len(Key)
+	if KeyLength ~= POLY1305_KEY_SIZE then
+		error(`Key must be exactly {POLY1305_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)
+	end
+
 	return ProcessMessage(Message, Key)
 end
 

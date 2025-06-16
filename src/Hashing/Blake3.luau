@@ -33,6 +33,10 @@ local EXTENDED_CV_SIZE = 64
 local MAX_STACK_DEPTH = 64
 local STACK_BUFFER_SIZE = MAX_STACK_DEPTH * CV_SIZE
 
+local BLAKE3_KEY_SIZE = 32
+local BLAKE3_MIN_OUTPUT_BYTES = 1
+local BLAKE3_MAX_OUTPUT_BYTES = 2^32 - 1
+
 local BitwiseXor = bit32.bxor
 local RotateLeft = bit32.lrotate
 
@@ -128,45 +132,45 @@ local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14
 
 	local Temp
 	for Index = 1, 7 do
-		V00 = V00 + V04 + M00; V12 = RotateLeft(BitwiseXor(V12, V00), 16)
-		V08 = V08 + V12; V04 = RotateLeft(BitwiseXor(V04, V08), 20)
-		V00 = V00 + V04 + M01; V12 = RotateLeft(BitwiseXor(V12, V00), 24)
-		V08 = V08 + V12; V04 = RotateLeft(BitwiseXor(V04, V08), 25)
+		V00 += V04 + M00; V12 = RotateLeft(BitwiseXor(V12, V00), 16)
+		V08 += V12; V04 = RotateLeft(BitwiseXor(V04, V08), 20)
+		V00 += V04 + M01; V12 = RotateLeft(BitwiseXor(V12, V00), 24)
+		V08 += V12; V04 = RotateLeft(BitwiseXor(V04, V08), 25)
 
-		V01 = V01 + V05 + M02; V13 = RotateLeft(BitwiseXor(V13, V01), 16)
-		V09 = V09 + V13; V05 = RotateLeft(BitwiseXor(V05, V09), 20)
-		V01 = V01 + V05 + M03; V13 = RotateLeft(BitwiseXor(V13, V01), 24)
-		V09 = V09 + V13; V05 = RotateLeft(BitwiseXor(V05, V09), 25)
+		V01 += V05 + M02; V13 = RotateLeft(BitwiseXor(V13, V01), 16)
+		V09 += V13; V05 = RotateLeft(BitwiseXor(V05, V09), 20)
+		V01 += V05 + M03; V13 = RotateLeft(BitwiseXor(V13, V01), 24)
+		V09 += V13; V05 = RotateLeft(BitwiseXor(V05, V09), 25)
 
-		V02 = V02 + V06 + M04; V14 = RotateLeft(BitwiseXor(V14, V02), 16)
-		V10 = V10 + V14; V06 = RotateLeft(BitwiseXor(V06, V10), 20)
-		V02 = V02 + V06 + M05; V14 = RotateLeft(BitwiseXor(V14, V02), 24)
-		V10 = V10 + V14; V06 = RotateLeft(BitwiseXor(V06, V10), 25)
+		V02 += V06 + M04; V14 = RotateLeft(BitwiseXor(V14, V02), 16)
+		V10 += V14; V06 = RotateLeft(BitwiseXor(V06, V10), 20)
+		V02 += V06 + M05; V14 = RotateLeft(BitwiseXor(V14, V02), 24)
+		V10 += V14; V06 = RotateLeft(BitwiseXor(V06, V10), 25)
 
-		V03 = V03 + V07 + M06; V15 = RotateLeft(BitwiseXor(V15, V03), 16)
-		V11 = V11 + V15; V07 = RotateLeft(BitwiseXor(V07, V11), 20)
-		V03 = V03 + V07 + M07; V15 = RotateLeft(BitwiseXor(V15, V03), 24)
-		V11 = V11 + V15; V07 = RotateLeft(BitwiseXor(V07, V11), 25)
+		V03 += V07 + M06; V15 = RotateLeft(BitwiseXor(V15, V03), 16)
+		V11 += V15; V07 = RotateLeft(BitwiseXor(V07, V11), 20)
+		V03 += V07 + M07; V15 = RotateLeft(BitwiseXor(V15, V03), 24)
+		V11 += V15; V07 = RotateLeft(BitwiseXor(V07, V11), 25)
 
-		V00 = V00 + V05 + M08; V15 = RotateLeft(BitwiseXor(V15, V00), 16)
-		V10 = V10 + V15; V05 = RotateLeft(BitwiseXor(V05, V10), 20)
-		V00 = V00 + V05 + M09; V15 = RotateLeft(BitwiseXor(V15, V00), 24)
-		V10 = V10 + V15; V05 = RotateLeft(BitwiseXor(V05, V10), 25)
+		V00 += V05 + M08; V15 = RotateLeft(BitwiseXor(V15, V00), 16)
+		V10 += V15; V05 = RotateLeft(BitwiseXor(V05, V10), 20)
+		V00 += V05 + M09; V15 = RotateLeft(BitwiseXor(V15, V00), 24)
+		V10 += V15; V05 = RotateLeft(BitwiseXor(V05, V10), 25)
 
-		V01 = V01 + V06 + M10; V12 = RotateLeft(BitwiseXor(V12, V01), 16)
-		V11 = V11 + V12; V06 = RotateLeft(BitwiseXor(V06, V11), 20)
-		V01 = V01 + V06 + M11; V12 = RotateLeft(BitwiseXor(V12, V01), 24)
-		V11 = V11 + V12; V06 = RotateLeft(BitwiseXor(V06, V11), 25)
+		V01 += V06 + M10; V12 = RotateLeft(BitwiseXor(V12, V01), 16)
+		V11 += V12; V06 = RotateLeft(BitwiseXor(V06, V11), 20)
+		V01 += V06 + M11; V12 = RotateLeft(BitwiseXor(V12, V01), 24)
+		V11 += V12; V06 = RotateLeft(BitwiseXor(V06, V11), 25)
 
-		V02 = V02 + V07 + M12; V13 = RotateLeft(BitwiseXor(V13, V02), 16)
-		V08 = V08 + V13; V07 = RotateLeft(BitwiseXor(V07, V08), 20)
-		V02 = V02 + V07 + M13; V13 = RotateLeft(BitwiseXor(V13, V02), 24)
-		V08 = V08 + V13; V07 = RotateLeft(BitwiseXor(V07, V08), 25)
+		V02 += V07 + M12; V13 = RotateLeft(BitwiseXor(V13, V02), 16)
+		V08 += V13; V07 = RotateLeft(BitwiseXor(V07, V08), 20)
+		V02 += V07 + M13; V13 = RotateLeft(BitwiseXor(V13, V02), 24)
+		V08 += V13; V07 = RotateLeft(BitwiseXor(V07, V08), 25)
 
-		V03 = V03 + V04 + M14; V14 = RotateLeft(BitwiseXor(V14, V03), 16)
-		V09 = V09 + V14; V04 = RotateLeft(BitwiseXor(V04, V09), 20)
-		V03 = V03 + V04 + M15; V14 = RotateLeft(BitwiseXor(V14, V03), 24)
-		V09 = V09 + V14; V04 = RotateLeft(BitwiseXor(V04, V09), 25)
+		V03 += V04 + M14; V14 = RotateLeft(BitwiseXor(V14, V03), 16)
+		V09 += V14; V04 = RotateLeft(BitwiseXor(V04, V09), 20)
+		V03 += V04 + M15; V14 = RotateLeft(BitwiseXor(V14, V03), 24)
+		V09 += V14; V04 = RotateLeft(BitwiseXor(V04, V09), 25)
 
 		if Index ~= 7 then
 			Temp = M02
@@ -331,21 +335,114 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 end
 
 local function Digest(Message: buffer, Length: number?): string
-	local Result = ProcessMessage(InitialVector, 0, Message, Length or 32)
+	if Message == nil then
+		error("Message cannot be nil", 2)
+	end
 	
+	if typeof(Message) ~= "buffer" then
+		error(`Message must be a buffer, got {typeof(Message)}`, 2)
+	end
+
+	if Length then
+		if typeof(Length) ~= "number" then
+			error(`Length must be a number, got {typeof(Length)}`, 2)
+		end
+		
+		if Length ~= math.floor(Length) then
+			error(`Length must be an integer, got {Length}`, 2)
+		end
+		
+		if Length < BLAKE3_MIN_OUTPUT_BYTES then
+			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
+		end
+		
+		if Length > BLAKE3_MAX_OUTPUT_BYTES then
+			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
+		end
+	end
+
+	local Result = ProcessMessage(InitialVector, 0, Message, Length or 32)
 	return ToHex(Result)
 end
 
 local function DigestKeyed(Key: buffer, Message: buffer, Length: number?): string
-	local Result = ProcessMessage(Key, KeyedHashFlag, Message, Length or 32)
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+	
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+	
+	local KeyLength = buffer.len(Key)
+	if KeyLength ~= BLAKE3_KEY_SIZE then
+		error(`Key must be exactly {BLAKE3_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)
+	end
 
+	if Message == nil then
+		error("Message cannot be nil", 2)
+	end
+	if typeof(Message) ~= "buffer" then
+		error(`Message must be a buffer, got {typeof(Message)}`, 2)
+	end
+
+	if Length then
+		if typeof(Length) ~= "number" then
+			error(`Length must be a number, got {typeof(Length)}`, 2)
+		end
+		if Length ~= math.floor(Length) then
+			error(`Length must be an integer, got {Length}`, 2)
+		end
+		if Length < BLAKE3_MIN_OUTPUT_BYTES then
+			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
+		end
+		if Length > BLAKE3_MAX_OUTPUT_BYTES then
+			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
+		end
+	end
+
+	local Result = ProcessMessage(Key, KeyedHashFlag, Message, Length or 32)
 	return ToHex(Result)
 end
 
 local function DeriveKey(Context: buffer): (buffer, number?) -> string
+	if Context == nil then
+		error("Context cannot be nil", 2)
+	end
+	
+	if typeof(Context) ~= "buffer" then
+		error(`Context must be a buffer, got {typeof(Context)}`, 2)
+	end
+
 	local ContextHash = ProcessMessage(InitialVector, DeriveKeyContextFlag, Context, 32)
 
 	return function(Material: buffer, Length: number?): string
+		if Material == nil then
+			error("Material cannot be nil", 2)
+		end
+		
+		if typeof(Material) ~= "buffer" then
+			error(`Material must be a buffer, got {typeof(Material)}`, 2)
+		end
+
+		if Length then
+			if typeof(Length) ~= "number" then
+				error(`Length must be a number, got {typeof(Length)}`, 2)
+			end
+			
+			if Length ~= math.floor(Length) then
+				error(`Length must be an integer, got {Length}`, 2)
+			end
+			
+			if Length < BLAKE3_MIN_OUTPUT_BYTES then
+				error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
+			end
+			
+			if Length > BLAKE3_MAX_OUTPUT_BYTES then
+				error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
+			end
+		end
+
 		local Result = ProcessMessage(ContextHash, DeriveKeyMaterialFlag, Material, Length or 32)
 		return ToHex(Result)
 	end

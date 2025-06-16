@@ -26,6 +26,10 @@ local DWORD = 4
 local BLOCK_SIZE = 64
 local STATE_SIZE = 16
 
+local CHACHA20_NONCE_SIZE = 12
+local CHACHA20_KEY_SIZE_16 = 16
+local CHACHA20_KEY_SIZE_32 = 32
+
 local SIGMA_CONSTANTS = buffer.create(16) do
 	local SigmaBytes = { string.byte("expand 32-byte k", 1, -1) }
 	for Index, ByteValue in ipairs(SigmaBytes) do
@@ -117,7 +121,77 @@ local function InitializeState(Key: buffer, Nonce: buffer, Counter: number): buf
 end
 
 local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?): buffer
-	local BlockCounter  = Counter or 1
+	if Data == nil then
+		error("Data cannot be nil", 2)
+	end
+	
+	if typeof(Data) ~= "buffer" then
+		error(`Data must be a buffer, got {typeof(Data)}`, 2)
+	end
+
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+	
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+	
+	local KeyLength = buffer.len(Key)
+	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then
+		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {KeyLength} bytes`, 2)
+	end
+
+	if Nonce == nil then
+		error("Nonce cannot be nil", 2)
+	end
+	
+	if typeof(Nonce) ~= "buffer" then
+		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
+	end
+	
+	local NonceLength = buffer.len(Nonce)
+	if NonceLength ~= CHACHA20_NONCE_SIZE then
+		error(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long, got {NonceLength} bytes`, 2)
+	end
+
+	if Counter then
+		if typeof(Counter) ~= "number" then
+			error(`Counter must be a number, got {typeof(Counter)}`, 2)
+		end
+		
+		if Counter < 0 then
+			error(`Counter cannot be negative, got {Counter}`, 2)
+		end
+		
+		if Counter ~= math.floor(Counter) then
+			error(`Counter must be an integer, got {Counter}`, 2)
+		end
+		
+		if Counter >= 2^32 then
+			error(`Counter must be less than 2^32, got {Counter}`, 2)
+		end
+	end
+
+	if Rounds then
+		if typeof(Rounds) ~= "number" then
+			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
+		end
+		
+		if Rounds <= 0 then
+			error(`Rounds must be positive, got {Rounds}`, 2)
+		end
+		
+		if Rounds ~= math.floor(Rounds) then
+			error(`Rounds must be an integer, got {Rounds}`, 2)
+		end
+		
+		if Rounds % 2 ~= 0 then
+			error(`Rounds must be even, got {Rounds}`, 2)
+		end
+	end
+
+	local BlockCounter = Counter or 1
 	local BlockRounds = Rounds or 20
 
 	local DataLength = buffer.len(Data)
