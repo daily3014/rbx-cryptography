@@ -59,7 +59,8 @@ Every implementations is faster than all alternatives:
 | **CRC32**           | 200k      | **2.58 ms**  | -        | 6.26 ms (DevForum)             | -               | **2.4x faster**              |
 | **Adler32**         | 200k      | **0.19 ms**  | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
 
-*Benchmarks performed in Roblox Studio on an Intel Core i7-12700*
+*Benchmarks performed in Roblox Studio on an Intel Core i7-12700*\
+*Plugin used: Benchmarker by @boatbomber*
 
 ---
 
