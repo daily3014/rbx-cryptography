@@ -1,5 +1,5 @@
 name = "daily3014/cryptography"
-version = "1.0.4"
+version = "1.1.0"
 description = "Luau implementations of popular hashing/encryption algorithms"
 authors = ["daily3014", "xoifail"]
 repository = "https://github.com/daily3014/rbx-cryptography"
@@ -8,7 +8,7 @@ license = "MIT"
 includes = ["README.md", "pesde.toml", "src/**"]
 
 [target]
-environment = "roblox"
+environment = "luau"
 lib = "src/init.luau"
 build_files = ["src"]
 
