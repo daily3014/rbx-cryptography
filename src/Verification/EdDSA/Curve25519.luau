@@ -50,17 +50,12 @@ local function Double(PointToDouble: buffer): buffer
 	local CoordZ = GetMontgomeryCoord(PointToDouble, 1)
 
 	local SumXZ = FieldPrime.Add(CoordX, CoordZ)
-	FieldPrime.Square(SumXZ, SumXZ) -- Reused SumXZ
-	local SumSquared = SumXZ
-	FieldPrime.Sub(CoordX, CoordZ, CoordX) -- Reused CoordX
-	FieldPrime.Square(CoordX, CoordX) -- Reused CoordX
-	local DiffSquared = CoordX
+	local SumSquared = FieldPrime.Square(SumXZ)
+	local DiffXZ = FieldPrime.Sub(CoordX, CoordZ)
+	local DiffSquared = FieldPrime.Square(DiffXZ)
 	local Difference = FieldPrime.Sub(SumSquared, DiffSquared)
-	FieldPrime.Mul(SumSquared, DiffSquared, SumSquared) -- Reused SumSquared
-	local NewX = SumSquared
-	FieldPrime.Add(DiffSquared, FieldPrime.KMul(Difference, 121666), DiffSquared) -- Reused DiffSquared
-	FieldPrime.Mul(Difference, DiffSquared, Difference) -- Reused Difference
-	local NewZ = Difference
+	local NewX = FieldPrime.Mul(SumSquared, DiffSquared)
+	local NewZ = FieldPrime.Mul(Difference, FieldPrime.Add(DiffSquared, FieldPrime.KMul(Difference, 121666)))
 
 	return CreateMontgomeryPoint(NewX, NewZ)
 end
@@ -74,24 +69,13 @@ local function DifferentialAdd(DifferencePoint: buffer, Point1: buffer, Point2: 
 	local Z2 = GetMontgomeryCoord(Point2, 1)
 
 	local SumA = FieldPrime.Add(X1, Z1)
-	FieldPrime.Sub(X1, Z1, X1) -- Reused X1
-	local DiffB = X1
+	local DiffB = FieldPrime.Sub(X1, Z1)
 	local SumC = FieldPrime.Add(X2, Z2)
-	FieldPrime.Sub(X2, Z2, X2) -- Reused X2
-	local DiffD = X2
-	FieldPrime.Mul(DiffD, SumA, DiffD) -- Reused DiffD
-	local CrossDA = DiffD
-	FieldPrime.Mul(SumC, DiffB, SumC) -- Reused SumC
-	local CrossCB = SumC
-	
-	local CrossDACB = FieldPrime.Add(CrossDA, CrossCB)
-	FieldPrime.Square(CrossDACB, CrossDACB) -- Reused CrossDACB
-	FieldPrime.Mul(DiffZ, CrossDACB) -- Reused CrossDACB
-	local NewX = CrossDACB
-	FieldPrime.Sub(CrossDA, CrossCB, CrossDA) -- Reused CrossDA
-	FieldPrime.Square(CrossDA, CrossDA) -- Reused CrossDA
-	FieldPrime.Mul(DiffX, CrossDA, CrossDA) -- Reused CrossDA
-	local NewZ = CrossDA
+	local DiffD = FieldPrime.Sub(X2, Z2)
+	local CrossDA = FieldPrime.Mul(DiffD, SumA)
+	local CrossCB = FieldPrime.Mul(SumC, DiffB)
+	local NewX = FieldPrime.Mul(DiffZ, FieldPrime.Square(FieldPrime.Add(CrossDA, CrossCB)))
+	local NewZ = FieldPrime.Mul(DiffX, FieldPrime.Square(FieldPrime.Sub(CrossDA, CrossCB)))
 
 	return CreateMontgomeryPoint(NewX, NewZ)
 end
@@ -103,32 +87,19 @@ local function LadderStep(DifferencePoint: buffer, Point1: buffer, Point2: buffe
 	local Z1 = GetMontgomeryCoord(Point1, 1)
 	local X2 = GetMontgomeryCoord(Point2, 0)
 	local Z2 = GetMontgomeryCoord(Point2, 1)
-
 	local SumA = FieldPrime.Add(X1, Z1)
 	local SumSquaredAA = FieldPrime.Square(SumA)
-	FieldPrime.Sub(X1, Z1, X1) -- Reused X1
-	local DiffB = X1
+	local DiffB = FieldPrime.Sub(X1, Z1)
 	local DiffSquaredBB = FieldPrime.Square(DiffB)
 	local DifferenceE = FieldPrime.Sub(SumSquaredAA, DiffSquaredBB)
-	
 	local DiffD = FieldPrime.Sub(X2, Z2)
-	FieldPrime.Mul(DiffD, SumA, DiffD) -- Reused DiffD
-	local CrossDA = DiffD
-	
-	FieldPrime.Add(X2, Z2, X2) -- Reused X2
-	local SumC = X2
-	FieldPrime.Mul(SumC, DiffB, SumC) -- Reused SumC
-	local CrossCB = SumC
-	
+	local CrossDA = FieldPrime.Mul(DiffD, SumA)
+	local SumC = FieldPrime.Add(X2, Z2)
+	local CrossCB = FieldPrime.Mul(SumC, DiffB)
 	local NewX4 = FieldPrime.Mul(DiffZ, FieldPrime.Square(FieldPrime.Add(CrossDA, CrossCB)))
 	local NewZ4 = FieldPrime.Mul(DiffX, FieldPrime.Square(FieldPrime.Sub(CrossDA, CrossCB)))
-	
-	FieldPrime.Mul(SumSquaredAA, DiffSquaredBB, SumSquaredAA) -- Reused SumSquaredAA
-	local NewX3 = SumSquaredAA
-	
-	local A = FieldPrime.Add(DiffSquaredBB, FieldPrime.KMul(DifferenceE, 121666), DiffSquaredBB) -- Reused DiffSquaredBB
-	FieldPrime.Mul(DifferenceE, A) -- Reused DifferenceE
-	local NewZ3 = DifferenceE
+	local NewX3 = FieldPrime.Mul(SumSquaredAA, DiffSquaredBB)
+	local NewZ3 = FieldPrime.Mul(DifferenceE, FieldPrime.Add(DiffSquaredBB, FieldPrime.KMul(DifferenceE, 121666)))
 
 	return CreateMontgomeryPoint(NewX3, NewZ3), CreateMontgomeryPoint(NewX4, NewZ4)
 end
