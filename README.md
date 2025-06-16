@@ -187,28 +187,28 @@ assert(IsValid)
 
 -- Alice setup
 local AliceSecret = RandomBytes.Random(32)
-local AliceMaskedKey = MaskedX25519.Mask(AliceSecret)
-local AlicePublicKey = MaskedX25519.PublicKey(AliceMaskedKey)
+local AliceMaskedKey = EdDSA.MaskedX25519.Mask(AliceSecret)
+local AlicePublicKey = EdDSA.MaskedX25519.PublicKey(AliceMaskedKey)
 
 -- Bob setup  
 local BobSecret = RandomBytes.Random(32)
-local BobMaskedKey = MaskedX25519.Mask(BobSecret)
-local BobPublicKey = MaskedX25519.PublicKey(BobMaskedKey)
+local BobMaskedKey = EdDSA.MaskedX25519.Mask(BobSecret)
+local BobPublicKey = EdDSA.MaskedX25519.PublicKey(BobMaskedKey)
 
 -- Key exchange
 -- (The secrets themselves won't match, but can derive the same shared key)
-local AliceStaticSecret, AliceEphemeralSecret = MaskedX25519.Exchange(AliceMaskedKey, BobPublicKey)
-local BobStaticSecret, BobEphemeralSecret = MaskedX25519.Exchange(BobMaskedKey, AlicePublicKey)
+local AliceStaticSecret, AliceEphemeralSecret = EdDSA.MaskedX25519.Exchange(AliceMaskedKey, BobPublicKey)
+local BobStaticSecret, BobEphemeralSecret = EdDSA.MaskedX25519.Exchange(BobMaskedKey, AlicePublicKey)
 
 -- Refresh masking
-local AliceRemasked = MaskedX25519.Remask(AliceMaskedKey)
+local AliceRemasked = EdDSA.MaskedX25519.Remask(AliceMaskedKey)
 
 -- Create masked signing key
-local AliceSigningMasked = MaskedX25519.MaskSignature(SecretKey)
-local AliceSigningPublic = MaskedX25519.PublicKey(AliceSigningMasked)
+local AliceSigningMasked = EdDSA.MaskedX25519.MaskSignature(SecretKey)
+local AliceSigningPublic = EdDSA.MaskedX25519.PublicKey(AliceSigningMasked)
 
 -- Get ephemeral key
-local EphemeralKey = MaskedX25519.EphemeralSecretKey(AliceMaskedKey)
+local EphemeralKey = EdDSA.MaskedX25519.EphemeralSecretKey(AliceMaskedKey)
 
 -- Test that signatures work correctly
 local TestMessage = buffer.fromstring("Test validation message")
@@ -267,9 +267,11 @@ Hashing.SHA3.SHAKE_256(Message: buffer) -> string
 ```lua
 Hashing.Blake3.Digest(Message: buffer, Length?: number) -> string
 -- Fastest cryptographic hash function available. Optimized for performance.
-
 Hashing.Blake3.DigestKeyed(Key: buffer, Message: buffer, Length?: number) -> string
 -- Keyed Blake3 hash for authenticated hashing scenarios.
+
+Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> string
+-- Secure cryptographic hash function with optional keying (1-64 byte output, 0-64 byte key).
 ```
 
 **Authentication:**
