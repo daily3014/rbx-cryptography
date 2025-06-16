@@ -149,7 +149,7 @@ local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
 
 -- EdDSA with signature masking (enhanced security)
 local SecretKey = RandomBytes.Random(32)
-local MaskedSignatureKey = EdDSA.Masked25519.Mask(SecretKey)
+local MaskedSignatureKey = EdDSA.MaskedX25519.Mask(SecretKey)
 local PublicKey = EdDSA.PublicKey(SecretKey)
 local Message = buffer.fromstring("Hello World")
 local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
@@ -157,19 +157,19 @@ local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
 
 -- Masked X25519 key exchange via EdDSA module
 local AliceSecret = buffer.fromstring(string.rep("a", 32))
-local AliceMaskedKey = EdDSA.Masked25519.Mask(AliceSecret)
-local AlicePublicKey = EdDSA.Masked25519.PublicKey(AliceMaskedKey)
+local AliceMaskedKey = EdDSA.MaskedX25519.Mask(AliceSecret)
+local AlicePublicKey = EdDSA.MaskedX25519.PublicKey(AliceMaskedKey)
 
 local BobSecret = buffer.fromstring(string.rep("b", 32))
-local BobMaskedKey = EdDSA.Masked25519.Mask(BobSecret)
-local BobPublicKey = EdDSA.Masked25519.PublicKey(BobMaskedKey)
+local BobMaskedKey = EdDSA.MaskedX25519.Mask(BobSecret)
+local BobPublicKey = EdDSA.MaskedX25519.PublicKey(BobMaskedKey)
 
 -- Note that the secrets *shouldn't match!*
-local AliceStaticSecret, AliceEphemeralSecret = EdDSA.Masked25519.Exchange(AliceMaskedKey, BobPublicKey)
-local BobStaticSecret, BobEphemeralSecret = EdDSA.Masked25519.Exchange(BobMaskedKey, AlicePublicKey)
+local AliceStaticSecret, AliceEphemeralSecret = EdDSA.MaskedX25519.Exchange(AliceMaskedKey, BobPublicKey)
+local BobStaticSecret, BobEphemeralSecret = EdDSA.MaskedX25519.Exchange(BobMaskedKey, AlicePublicKey)
 
 -- Refresh masking for ongoing security
-local AliceRemaskedKey = EdDSA.Masked25519.Remask(AliceMaskedKey)
+local AliceRemaskedKey = EdDSA.MaskedX25519.Remask(AliceMaskedKey)
 
 --- Masked X25519 Examples
 
@@ -335,22 +335,22 @@ Verification.EdDSA.Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer) -
 Verification.EdDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer) -> boolean
 -- Returns true if signature is valid.
 
-Verification.EdDSA.Masked25519.Mask(SecretKey: buffer) -> buffer
+Verification.EdDSA.MaskedX25519.Mask(SecretKey: buffer) -> buffer
 -- Creates a 64-byte masked key from a 32-byte secret key for side-channel attack protection.
 
-Verification.EdDSA.Masked25519.MaskSignature(SignatureSecretKey: buffer) -> buffer
+Verification.EdDSA.MaskedX25519.MaskSignature(SignatureSecretKey: buffer) -> buffer
 -- Creates a masked key from an EdDSA signature secret key (applies SHA512 then masking).
 
-Verification.EdDSA.Masked25519.Remask(MaskedKey: buffer) -> buffer
+Verification.EdDSA.MaskedX25519.Remask(MaskedKey: buffer) -> buffer
 -- Refreshes the masking on a 64-byte masked key with new randomness.
 
-Verification.EdDSA.Masked25519.PublicKey(MaskedKey: buffer) -> buffer
+Verification.EdDSA.MaskedX25519.PublicKey(MaskedKey: buffer) -> buffer
 -- Generates a 32-byte public key from a 64-byte masked key.
 
-Verification.EdDSA.Masked25519.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer) -> (buffer, buffer)
+Verification.EdDSA.MaskedX25519.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer) -> (buffer, buffer)
 -- Performs double key exchange returning (StaticSecret, EphemeralSecret).
 
-Verification.EdDSA.Masked25519.EphemeralSecretKey(MaskedKey: buffer) -> buffer
+Verification.EdDSA.MaskedX25519.EphemeralSecretKey(MaskedKey: buffer) -> buffer
 -- Extracts the 32-byte ephemeral secret from a 64-byte masked key.
 ```
 
