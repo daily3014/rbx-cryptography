@@ -133,5 +133,5 @@ return {
 	Sign = Sign,
 	Verify = Verify,
 
-	Masked25519 = Mask
+	MaskedX25519 = Mask
 }

@@ -493,7 +493,7 @@ function AesCipher.New(MasterKey: buffer | string, OperationMode: CipherModes.Si
 	return (self :: any) :: AesCipher
 end
 
-function AesCipher:FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
+function AesCipher.FromKey(RoundKeysBuffer: buffer, OperationMode: CipherModes.SimpleModeStruct, PaddingScheme: PaddingSchemes.Struct): AesCipher
 	local _self = setmetatable({}, AesCipher)
 
 	local RoundKeysLength = buffer.len(RoundKeysBuffer)
@@ -561,6 +561,7 @@ function AesCipher:Destroy()
 end
 
 return table.freeze({
+	AesCipher = AesCipher,
 	New = AesCipher.New,
 	Modes = CipherModes,
 	Pads = PaddingSchemes

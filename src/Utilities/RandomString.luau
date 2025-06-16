@@ -10,7 +10,7 @@
 --!optimize 2
 --!strict
 
-local function RandomString(Length: number): string
+local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 	local FixedLength = if Length % 36 ~= 0 then Length + (4 - Length % 4) else Length
 	
 	local Characters = buffer.create(FixedLength)
@@ -25,6 +25,15 @@ local function RandomString(Length: number): string
 		)
 		buffer.writeu32(Characters, Index, u32)
 	end
+
+	if AsBuffer then
+		if FixedLength == Length then
+			return Characters
+		end
+
+		local Buf = buffer.create(Length)
+		buffer.copy(Buf, 0, Characters, 0, Length)
+ 	end
 
 	return buffer.readstring(Characters, 0, Length)
 end
