@@ -5,13 +5,20 @@
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		
-		--------Usage Case 1--------
-		local Result = BLAKE2b(Message)
+		-- BLAKE2b-128 (128-bit output)
+		local Result128 = BLAKE2b(Message, 16)
 		
-		--------Usage Case 2--------
-		local Result = BLAKE2b(Message, 32) -- 32 byte output
+		-- BLAKE2b-256 (256-bit output)  
+		local Result256 = BLAKE2b(Message, 32)
 		
-		--------Usage Case 3--------
+		-- BLAKE2b-384 (384-bit output)
+		local Result384 = BLAKE2b(Message, 48)
+		
+		-- BLAKE2b-512 (512-bit output, default)
+		local Result512 = BLAKE2b(Message, 64)
+		-- or simply: local Result512 = BLAKE2b(Message)
+		
+		-- With optional key
 		local OptionalKey = buffer.fromstring("MyKey")
 		local Result = BLAKE2b(Message, 64, OptionalKey)
 --]=]
@@ -22,6 +29,10 @@
 
 local BLOCK_SIZE_BYTES = 128
 local DEFAULT_OUTPUT_BYTES = 64
+
+local BLAKE2B_MIN_OUTPUT_BYTES = 1
+local BLAKE2B_MAX_OUTPUT_BYTES = 64
+local BLAKE2B_MAX_KEY_BYTES = 64
 
 local INIT_VECTORS = buffer.create(64) do
 	local InitializationConstants = {
@@ -444,6 +455,7 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 		if CopyBytes > 0 then
 			buffer.copy(PaddedBlock, 0, InputData, CopyStart, CopyBytes)
 		end
+		
 		ExtractWordsFromBlock(PaddedBlock, 0, BlockHigh, BlockLow)
 		ProcessCompressionRound(BlockHigh, BlockLow, ProcessedBytes + CopyBytes, true, StateHigh, StateLow)
 	end
@@ -464,6 +476,43 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 end
 
 local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer?): string
+	if InputData == nil then
+		error("InputData cannot be nil", 2)
+	end
+	
+	if typeof(InputData) ~= "buffer" then
+		error(`InputData must be a buffer, got {typeof(InputData)}`, 2)
+	end
+
+	if OutputLength then
+		if typeof(OutputLength) ~= "number" then
+			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 2)
+		end
+		
+		if OutputLength ~= math.floor(OutputLength) then
+			error(`OutputLength must be an integer, got {OutputLength}`, 2)
+		end
+		
+		if OutputLength < BLAKE2B_MIN_OUTPUT_BYTES or OutputLength > BLAKE2B_MAX_OUTPUT_BYTES then
+			error(`OutputLength must be between {BLAKE2B_MIN_OUTPUT_BYTES} and {BLAKE2B_MAX_OUTPUT_BYTES} bytes, got {OutputLength} bytes`, 2)
+		end
+	end
+
+	if KeyData then
+		if typeof(KeyData) ~= "buffer" then
+			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 2)
+		end
+		
+		local KeyLength = buffer.len(KeyData)
+		if KeyLength == 0 then
+			error("KeyData cannot be empty", 2)
+		end
+		
+		if KeyLength > BLAKE2B_MAX_KEY_BYTES then
+			error(`KeyData must be at most {BLAKE2B_MAX_KEY_BYTES} bytes long, got {KeyLength} bytes`, 2)
+		end
+	end
+
 	return HashDigest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
 end
 
