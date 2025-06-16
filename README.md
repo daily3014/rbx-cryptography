@@ -51,8 +51,8 @@ Every implementations is faster than all alternatives:
 
 | Algorithm           | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
 |---------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
-| **SHA512**          | 10k       | **512 μs**   | 2232 μs  | -                              | 641 μs          | **4.4x faster** than HashLib |
-| **SHA256**          | 20k       | **390 μs**   | 2058 μs  | 493 μs (old version)           | 596 μs          | **5.3x faster** than HashLib |
+| **SHA512**          | 10k       | **415 μs**   | 2232 μs  | -                              | 641 μs          | **5.6x faster** than HashLib |
+| **SHA256**          | 20k       | **370 μs**   | 2058 μs  | 493 μs (old version)           | 596 μs          | **5.5x faster** than HashLib |
 | **Keccak/SHA3-512** | 20k       | **6.28 ms**  | 10.60 ms | -                              | -               | **1.7x faster** than HashLib |
 | **ChaCha20**        | 20k       | **0.91 ms**  | -        | 7.87 ms (EncryptedNet)         | -               | **8.6x faster**              |
 | **AES**             | 20k       | **1.16 ms**  | -        | 5.34 ms (RobloxGamerPro200007) | -               | **4.6x faster**              |
