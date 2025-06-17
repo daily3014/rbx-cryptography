@@ -47,7 +47,7 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 
 ## Performance
 Table would be too large if everything was benched.
-Every implementations is faster than all alternatives:
+Every implementation is faster than all alternatives:
 
 | Algorithm           | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
 |---------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
