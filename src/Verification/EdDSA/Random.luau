@@ -4,11 +4,22 @@
 
 local function RandomBytes(): buffer
 	local Output = buffer.create(32)
-
-	for Index = 0, 31 do
-		local RandomByte = math.random(1, 254)
-		buffer.writeu8(Output, Index, RandomByte)
+	
+	for Index = 0, 31, 4 do
+		buffer.writeu32(Output, Index, bit32.bor(
+			bit32.lshift(math.random(0, 255), 0),
+			bit32.lshift(math.random(0, 255), 8),
+			bit32.lshift(math.random(0, 255), 16),
+			bit32.lshift(math.random(0, 255), 24)
+		))
 	end
+	
+	return Output
+end
+
+local function Clamp(Input: buffer): buffer
+	local Output = buffer.create(32)
+	buffer.copy(Output, 0, Input, 0, 32)
 
 	local FirstByte = buffer.readu8(Output, 0)
 	FirstByte = bit32.band(FirstByte, 0xF8)
@@ -19,10 +30,8 @@ local function RandomBytes(): buffer
 	LastByte = bit32.bor(LastByte, 0x40)
 	buffer.writeu8(Output, 31, LastByte)
 
-
 	local HasVariation = false
 	local FirstMiddleByte = buffer.readu8(Output, 1)
-
 	for Index = 2, 30 do
 		if buffer.readu8(Output, Index) ~= FirstMiddleByte then
 			HasVariation = true
@@ -37,6 +46,11 @@ local function RandomBytes(): buffer
 	return Output
 end
 
+local function RandomEdDSA(): buffer
+	return Clamp(RandomBytes())
+end
+
 return {
-	Random = RandomBytes,
+	Clamp = Clamp,
+	Random = RandomEdDSA,
 }
