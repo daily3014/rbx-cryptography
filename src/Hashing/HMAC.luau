@@ -24,7 +24,7 @@ export type HashFunction = (Message: buffer, Salt: buffer?) -> string
 export type HMAC = (Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number) -> string
 export type PresetHMAC = (Message: buffer, Key: buffer) -> string
 
-local Functions = {}
+local HMAC = {}
 
 local function HexToBinary(HexBuffer: buffer)
 	local HexBufferLength = buffer.len(HexBuffer)
@@ -94,7 +94,7 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 	return Key
 end
 
-function Functions.HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): string
+function HMAC.HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): string
 	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes)
 
 	local OuterPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x5C, BlockSizeBytes))
@@ -105,10 +105,10 @@ function Functions.HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction
 	return HashFunction(FinalMessage)
 end
 
-function Functions.PresetHMAC(HashFunction: HashFunction, BlockSizeBytes: number): PresetHMAC
+function HMAC.PresetHMAC(HashFunction: HashFunction, BlockSizeBytes: number): PresetHMAC
 	return function(Message: buffer, Key: buffer): string
 		return Functions.HMAC(Message, Key, HashFunction, BlockSizeBytes)
 	end
 end
 	
-return Functions
+return HMAC

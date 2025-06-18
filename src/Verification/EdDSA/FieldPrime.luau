@@ -20,7 +20,9 @@
 --!native
 --!optimize 2
 
-local SIZE = 104 
+local SIZE = 104
+
+local FieldPrime = {}
 
 local SquareRootMinusOne = buffer.create(SIZE) do
 	local Tbl = {
@@ -43,14 +45,14 @@ local SquareRootMinusOne = buffer.create(SIZE) do
 	end
 end
 
-local function Num(Number: number): buffer
+function FieldPrime.Num(Number: number): buffer
 	local Buf = buffer.create(SIZE)
 	buffer.writef64(Buf, 0, Number)
 
 	return Buf
 end
 
-local function Neg(ElementA: buffer): buffer
+function FieldPrime.Neg(ElementA: buffer): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -77,7 +79,7 @@ local function Neg(ElementA: buffer): buffer
 	return Buf
 end
 
-local function Add(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
+function FieldPrime.Add(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -112,7 +114,7 @@ local function Add(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-local function Sub(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
+function FieldPrime.Sub(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -147,7 +149,7 @@ local function Sub(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-local function Carry(ElementA: buffer, Storage: buffer?): buffer
+function FieldPrime.Carry(ElementA: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -158,30 +160,30 @@ local function Carry(ElementA: buffer, Storage: buffer?): buffer
 
 	local C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11
 
-	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306  
+	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 	A00 += 19 / 2 ^ 255 * C11
 
-	C00 = A00 + 3 * 2 ^ 73  - 3 * 2 ^ 73   
+	C00 = A00 + 3 * 2 ^ 73  - 3 * 2 ^ 73
 	A01 += C00
-	C01 = A01 + 3 * 2 ^ 94  - 3 * 2 ^ 94   
+	C01 = A01 + 3 * 2 ^ 94  - 3 * 2 ^ 94
 	A02 += C01
-	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115  
+	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
 	A03 += C02
-	C03 = A03 + 3 * 2 ^ 136 - 3 * 2 ^ 136  
+	C03 = A03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
 	A04 += C03
-	C04 = A04 + 3 * 2 ^ 158 - 3 * 2 ^ 158  
+	C04 = A04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
 	A05 += C04
-	C05 = A05 + 3 * 2 ^ 179 - 3 * 2 ^ 179  
+	C05 = A05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
 	A06 += C05
-	C06 = A06 + 3 * 2 ^ 200 - 3 * 2 ^ 200  
+	C06 = A06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
 	A07 += C06
-	C07 = A07 + 3 * 2 ^ 221 - 3 * 2 ^ 221  
+	C07 = A07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
 	A08 += C07
-	C08 = A08 + 3 * 2 ^ 243 - 3 * 2 ^ 243  
+	C08 = A08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
 	A09 += C08
-	C09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264  
+	C09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	A10 += C09
-	C10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285  
+	C10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	A11 = A11 - C11 + C10
 
 	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
@@ -204,7 +206,7 @@ local function Carry(ElementA: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-local function Canonicalize(ElementA: buffer, Storage: buffer?): buffer
+function FieldPrime.Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -215,29 +217,29 @@ local function Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 
 	local C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11
 
-	C00 = A00 % 2 ^ 22   
+	C00 = A00 % 2 ^ 22
 	A01 += A00 - C00
-	C01 = A01 % 2 ^ 43   
+	C01 = A01 % 2 ^ 43
 	A02 += A01 - C01
-	C02 = A02 % 2 ^ 64   
+	C02 = A02 % 2 ^ 64
 	A03 += A02 - C02
-	C03 = A03 % 2 ^ 85   
+	C03 = A03 % 2 ^ 85
 	A04 += A03 - C03
-	C04 = A04 % 2 ^ 107  
+	C04 = A04 % 2 ^ 107
 	A05 += A04 - C04
-	C05 = A05 % 2 ^ 128  
+	C05 = A05 % 2 ^ 128
 	A06 += A05 - C05
-	C06 = A06 % 2 ^ 149  
+	C06 = A06 % 2 ^ 149
 	A07 += A06 - C06
-	C07 = A07 % 2 ^ 170  
+	C07 = A07 % 2 ^ 170
 	A08 += A07 - C07
-	C08 = A08 % 2 ^ 192  
+	C08 = A08 % 2 ^ 192
 	A09 += A08 - C08
-	C09 = A09 % 2 ^ 213  
+	C09 = A09 % 2 ^ 213
 	A10 += A09 - C09
-	C10 = A10 % 2 ^ 234  
+	C10 = A10 % 2 ^ 234
 	A11 += A10 - C10
-	C11 = A11 % 2 ^ 255  
+	C11 = A11 % 2 ^ 255
 	C00 += 19 / 2 ^ 255 * (A11 - C11)
 
 	local Buf = Storage or buffer.create(SIZE)
@@ -277,7 +279,7 @@ local function Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 end
 
 local function Eq(ElementA: buffer, ElementB: buffer): boolean
-	local Difference = Canonicalize(Sub(ElementA, ElementB))
+	local Difference = FieldPrime.Canonicalize(FieldPrime.Sub(ElementA, ElementB))
 
 	for LimbIndex = 0, 88, 8 do
 		if buffer.readf64(Difference, LimbIndex) ~= 0 then
@@ -295,7 +297,7 @@ local a00: number, a01: number, a02: number, a03: number, a04: number, a05: numb
 local b00: number, b01: number, b02: number, b03: number, b04: number, b05: number, b06: number,
 	b07: number, b08: number, b09: number, b10: number, b11: number
 
-local function Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
+function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	local COMPOUND_V = CompoundV
 	a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10, a11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
@@ -498,32 +500,32 @@ local function Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 		+ A01 * B10
 		+ A00 * B11
 
-	A10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285  
+	A10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	C11 += A10
-	A11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306  
+	A11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 	C00 += COMPOUND_V * A11
 
-	A00 = C00 + 3 * 2 ^ 73  - 3 * 2 ^ 73   
+	A00 = C00 + 3 * 2 ^ 73  - 3 * 2 ^ 73
 	C01 += A00
-	A01 = C01 + 3 * 2 ^ 94  - 3 * 2 ^ 94   
+	A01 = C01 + 3 * 2 ^ 94  - 3 * 2 ^ 94
 	C02 += A01
-	A02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115  
+	A02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
 	C03 += A02
-	A03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136  
+	A03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
 	C04 += A03
-	A04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158  
+	A04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
 	C05 += A04
-	A05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179  
+	A05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
 	C06 += A05
-	A06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200  
+	A06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
 	C07 += A06
-	A07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221  
+	A07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
 	C08 += A07
-	A08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243  
+	A08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
 	C09 += A08
-	A09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264  
+	A09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	C10 = C10 - A10 + A09
-	A10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285  
+	A10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	C11 = C11 - A11 + A10
 
 	A11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
@@ -546,7 +548,7 @@ local function Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-local function Square(ElementA: buffer, Storage: buffer?): buffer
+function FieldPrime.Square(ElementA: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -608,10 +610,10 @@ local function Square(ElementA: buffer, Storage: buffer?): buffer
 	buffer.writef64(Result, 80, H10 * ReductionFactor + L10)
 	buffer.writef64(Result, 88, L11)
 
-	return Carry(Result, Result)
+	return FieldPrime.Carry(Result, Result)
 end
 
-local function KMul(ElementA: buffer, SmallK: number, Storage: buffer?): buffer
+function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -635,30 +637,30 @@ local function KMul(ElementA: buffer, SmallK: number, Storage: buffer?): buffer
 	A10 *= SmallK
 	A11 *= SmallK
 
-	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306  
+	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 	A00 += 19 / 2 ^ 255 * C11
 
-	C00 = A00 + 3 * 2 ^ 73  - 3 * 2 ^ 73   
+	C00 = A00 + 3 * 2 ^ 73  - 3 * 2 ^ 73
 	A01 += C00
-	C01 = A01 + 3 * 2 ^ 94  - 3 * 2 ^ 94   
+	C01 = A01 + 3 * 2 ^ 94  - 3 * 2 ^ 94
 	A02 += C01
-	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115  
+	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
 	A03 += C02
-	C03 = A03 + 3 * 2 ^ 136 - 3 * 2 ^ 136  
+	C03 = A03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
 	A04 += C03
-	C04 = A04 + 3 * 2 ^ 158 - 3 * 2 ^ 158  
+	C04 = A04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
 	A05 += C04
-	C05 = A05 + 3 * 2 ^ 179 - 3 * 2 ^ 179  
+	C05 = A05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
 	A06 += C05
-	C06 = A06 + 3 * 2 ^ 200 - 3 * 2 ^ 200  
+	C06 = A06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
 	A07 += C06
-	C07 = A07 + 3 * 2 ^ 221 - 3 * 2 ^ 221  
+	C07 = A07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
 	A08 += C07
-	C08 = A08 + 3 * 2 ^ 243 - 3 * 2 ^ 243  
+	C08 = A08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
 	A09 += C08
-	C09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264  
+	C09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	A10 += C09
-	C10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285  
+	C10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	A11 = A11 - C11 + C10
 
 	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
@@ -684,25 +686,27 @@ end
 local function NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
 	if StoreInBuffer then
 		for _ = 1, SquareCount do
-			Square(ElementA, ElementA)
+			FieldPrime.Square(ElementA, ElementA)
 		end
-		
+
 		return ElementA
 	else
 		for _ = 1, SquareCount do
-			ElementA = Square(ElementA)
+			ElementA = FieldPrime.Square(ElementA)
 		end
-		
+
 		return ElementA
 	end
 end
 
-local function Invert(ElementA: buffer, Storage: buffer?): buffer
-	local A2 = Square(ElementA)
+function FieldPrime.Invert(ElementA: buffer, Storage: buffer?): buffer
+    local Mul = FieldPrime.Mul
+
+	local A2 = FieldPrime.Square(ElementA)
 	local A9 = Mul(ElementA, NSquare(A2, 2))
 	local A11 = Mul(A9, A2)
 
-	local X5 = Mul(Square(A11), A9)
+	local X5 = Mul(FieldPrime.Square(A11), A9)
 	local X10 = Mul(NSquare(X5, 5), X5)
 	local X20 = Mul(NSquare(X10, 10), X10)
 	local X40 = Mul(NSquare(X20, 20), X20)
@@ -714,8 +718,11 @@ local function Invert(ElementA: buffer, Storage: buffer?): buffer
 	return Mul(NSquare(X250, 5), A11, Storage)
 end
 
-local function SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
-	Carry(ElementU, ElementU)
+function FieldPrime.SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
+    local Mul = FieldPrime.Mul
+    local Square = FieldPrime.Square
+
+	FieldPrime.Carry(ElementU, ElementU)
 
 	local V2 = Square(ElementV)
 	local V3 = Mul(ElementV, V2)
@@ -752,8 +759,8 @@ local function SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
 		return nil
 	end
 end
-local function Encode(ElementA: buffer): buffer
-	ElementA = Canonicalize(ElementA)
+function FieldPrime.Encode(ElementA: buffer): buffer
+	ElementA = FieldPrime.Canonicalize(ElementA)
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
@@ -775,34 +782,34 @@ local function Encode(ElementA: buffer): buffer
 		end
 	end
 
-	PutBytes(2) 
+	PutBytes(2)
 	Accumulator += A01 / 2 ^ 16
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A02 / 2 ^ 40
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A03 / 2 ^ 64
-	PutBytes(2) 
+	PutBytes(2)
 	Accumulator += A04 / 2 ^ 80
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A05 / 2 ^ 104
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A06 / 2 ^ 128
-	PutBytes(2) 
+	PutBytes(2)
 	Accumulator += A07 / 2 ^ 144
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A08 / 2 ^ 168
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A09 / 2 ^ 192
-	PutBytes(2) 
+	PutBytes(2)
 	Accumulator += A10 / 2 ^ 208
-	PutBytes(3) 
+	PutBytes(3)
 	Accumulator += A11 / 2 ^ 232
 	PutBytes(3)
 
 	return Buf
 end
 
-local function Decode(EncodedBytes: buffer): buffer
+function FieldPrime.Decode(EncodedBytes: buffer): buffer
 	local function ReadLittleEndian(Offset: number, Bytes: number): number
 		local Result = 0
 		for Index = 0, Bytes - 1 do
@@ -842,11 +849,11 @@ local function Decode(EncodedBytes: buffer): buffer
 	buffer.writef64(Buf, 80, W10 * 2 ^ 216)
 	buffer.writef64(Buf, 88, W11 * 2 ^ 240)
 
-	return Carry(Buf, Buf)
+	return FieldPrime.Carry(Buf, Buf)
 end
 
-local function Eqz(ElementA: buffer): boolean
-	local Canonical = Canonicalize(ElementA)
+function FieldPrime.Eqz(ElementA: buffer): boolean
+	local Canonical = FieldPrime.Canonicalize(ElementA)
 	local C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11 =
 		buffer.readf64(Canonical, 0), buffer.readf64(Canonical, 8),
 		buffer.readf64(Canonical, 16), buffer.readf64(Canonical, 24),
@@ -859,19 +866,4 @@ local function Eqz(ElementA: buffer): boolean
 		== 0
 end
 
-return {
-	Num = Num,
-	Neg = Neg,
-	Add = Add,
-	Sub = Sub,
-	KMul = KMul,
-	Mul = Mul,
-	Canonicalize = Canonicalize,
-	Square = Square,
-	Carry = Carry,
-	Invert = Invert,
-	SqrtDiv = SqrtDiv,
-	Encode = Encode,
-	Decode = Decode,
-	Eqz = Eqz,
-}
+return FieldPrime
