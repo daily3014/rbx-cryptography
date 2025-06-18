@@ -28,6 +28,8 @@ local FieldPrime = require("./FieldPrime")
 local POINT_SIZE = 416
 local COORD_SIZE = 104
 
+local Edwards25519 = {}
+
 local BasePointRadixWidth = 5
 local BasePointTableMaxRowSize = 2 ^ BasePointRadixWidth / 2
 
@@ -37,12 +39,12 @@ local CurveK = FieldPrime.KMul(CurveD, 2)
 local IdentityO = buffer.create(POINT_SIZE)
 do
 	buffer.copy(IdentityO, 0, FieldPrime.Num(0), 0, COORD_SIZE)
-	buffer.copy(IdentityO, COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE) 
+	buffer.copy(IdentityO, COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
 	buffer.copy(IdentityO, 2 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
 	buffer.copy(IdentityO, 3 * COORD_SIZE, FieldPrime.Num(0), 0, COORD_SIZE)
 end
 
-local BasePointG = nil 
+local BasePointG = nil
 local BasePointTable = nil
 
 local function GetCoord(Point: buffer, Index: number): buffer
@@ -55,7 +57,7 @@ local function SetCoord(Point: buffer, Index: number, Value: buffer)
 	buffer.copy(Point, Index * COORD_SIZE, Value, 0, COORD_SIZE)
 end
 
-local function Double(Point1: buffer, Storage: buffer?): buffer
+function Edwards25519.Double(Point1: buffer, Storage: buffer?): buffer
 	local Point1X = GetCoord(Point1, 0)
 	local Point1Y = GetCoord(Point1, 1)
 	local Point1Z = GetCoord(Point1, 2)
@@ -93,7 +95,7 @@ local function Double(Point1: buffer, Storage: buffer?): buffer
 	return Result
 end
 
-local function Add(Point1: buffer, NielsPoint2: buffer, Storage: buffer?): buffer
+function Edwards25519.Add(Point1: buffer, NielsPoint2: buffer, Storage: buffer?): buffer
 	local Point1X = GetCoord(Point1, 0)
 	local Point1Y = GetCoord(Point1, 1)
 	local Point1Z = GetCoord(Point1, 2)
@@ -142,7 +144,7 @@ local function Add(Point1: buffer, NielsPoint2: buffer, Storage: buffer?): buffe
 	return Result
 end
 
-local function Sub(Point1: buffer, NielsPoint2: buffer, Storage: buffer?): buffer
+function Edwards25519.Sub(Point1: buffer, NielsPoint2: buffer, Storage: buffer?): buffer
 	local Point1X = GetCoord(Point1, 0)
 	local Point1Y = GetCoord(Point1, 1)
 	local Point1Z = GetCoord(Point1, 2)
@@ -185,7 +187,7 @@ local function Sub(Point1: buffer, NielsPoint2: buffer, Storage: buffer?): buffe
 	return Result
 end
 
-local function Niels(Point1: buffer, Storage: buffer?): buffer
+function Edwards25519.Niels(Point1: buffer, Storage: buffer?): buffer
 	local Point1X = GetCoord(Point1, 0)
 	local Point1Y = GetCoord(Point1, 1)
 	local Point1Z = GetCoord(Point1, 2)
@@ -206,7 +208,7 @@ local function Niels(Point1: buffer, Storage: buffer?): buffer
 	return Result
 end
 
-local function Scale(Point1: buffer): buffer
+function Edwards25519.Scale(Point1: buffer): buffer
 	local Point1X = GetCoord(Point1, 0)
 	local Point1Y = GetCoord(Point1, 1)
 	local Point1Z = GetCoord(Point1, 2)
@@ -228,8 +230,8 @@ local function Scale(Point1: buffer): buffer
 	return Result
 end
 
-local function Encode(Point1: buffer): buffer
-	local ScaledPoint = Scale(Point1)
+function Edwards25519.Encode(Point1: buffer): buffer
+	local ScaledPoint = Edwards25519.Scale(Point1)
 	local Point1X = GetCoord(ScaledPoint, 0)
 	local Point1Y = GetCoord(ScaledPoint, 1)
 
@@ -246,7 +248,7 @@ local function Encode(Point1: buffer): buffer
 	return ResultBuffer
 end
 
-local function Decode(EncodedBuffer: buffer): buffer?
+function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	local WorkingBuffer = buffer.create(32)
 	buffer.copy(WorkingBuffer, 0, EncodedBuffer, 0, 32)
 
@@ -261,8 +263,8 @@ local function Decode(EncodedBuffer: buffer): buffer?
 	local DenomPlusOne = FieldPrime.Add(Denominator, FieldPrime.Num(1))
 
 	local XCoord = FieldPrime.SqrtDiv(Numerator, DenomPlusOne)
-	if not XCoord then 
-		return nil 
+	if not XCoord then
+		return nil
 	end
 
 	local CanonicalX = FieldPrime.Canonicalize(XCoord)
@@ -296,7 +298,7 @@ do
 		buffer.writeu8(BasePointBytes, Index - 1, BasePointHex[Index])
 	end
 
-	BasePointG = Decode(BasePointBytes)
+	BasePointG = Edwards25519.Decode(BasePointBytes)
 end
 
 local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWidth: number): (buffer, number)
@@ -314,8 +316,8 @@ local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWid
 
 		while BitIndex == ScalarBitCount and Accumulator > 0 or Multiplier > RadixValue do
 			local Remainder = Accumulator % RadixValue
-			if Remainder >= HalfRadix then 
-				Remainder = Remainder - RadixValue 
+			if Remainder >= HalfRadix then
+				Remainder = Remainder - RadixValue
 			end
 			Accumulator = (Accumulator - Remainder) / RadixValue
 			Multiplier = Multiplier / RadixValue
@@ -343,19 +345,19 @@ local function RadixWTable(BasePoint: buffer, RadixWidth: number): buffer
 		buffer.copy(WorkingPoint, 0, CurrentBasePoint, 0, PointSize)
 
 		local NielsBuffer = buffer.create(PointSize)
-		local FirstNiels = Niels(WorkingPoint)
+		local FirstNiels = Edwards25519.Niels(WorkingPoint)
 		buffer.copy(TableData, BaseOffset, FirstNiels, 0, PointSize)
 
 		for Multiple = 2, MaxRowSize do
-			Add(WorkingPoint, FirstNiels, WorkingPoint)
-			Niels(WorkingPoint, NielsBuffer)
+			Edwards25519.Add(WorkingPoint, FirstNiels, WorkingPoint)
+			Edwards25519.Niels(WorkingPoint, NielsBuffer)
 
 			local Offset = BaseOffset + ((Multiple - 1) * PointSize)
 			buffer.copy(TableData, Offset, NielsBuffer, 0, PointSize)
 		end
 
 		for _ = 1, RadixWidth do
-			CurrentBasePoint = Double(CurrentBasePoint)
+			CurrentBasePoint = Edwards25519.Double(CurrentBasePoint)
 		end
 	end
 
@@ -398,8 +400,8 @@ local function WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, WindowWid
 				OutputLength = OutputLength + 1
 			else
 				local Remainder = Accumulator % WindowValue
-				if Remainder >= HalfWindow then 
-					Remainder = Remainder - WindowValue 
+				if Remainder >= HalfWindow then
+					Remainder = Remainder - WindowValue
 				end
 				Accumulator = Accumulator - Remainder
 				buffer.writef64(OutputNAF, OutputLength * 8, Remainder)
@@ -408,7 +410,7 @@ local function WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, WindowWid
 		end
 	end
 
-	while OutputLength > 0 and buffer.readf64(OutputNAF, (OutputLength - 1) * 8) == 0 do 
+	while OutputLength > 0 and buffer.readf64(OutputNAF, (OutputLength - 1) * 8) == 0 do
 		OutputLength = OutputLength - 1
 	end
 
@@ -417,13 +419,13 @@ end
 
 local function WindowedNAFTable(BasePoint: buffer, WindowWidth: number): buffer
 	local PointSize = POINT_SIZE
-	
+
 	local MaxOddMultiples = 2 ^ WindowWidth
-	local DoubledPoint = Double(BasePoint)
+	local DoubledPoint = Edwards25519.Double(BasePoint)
 
 	local TableData = buffer.create(MaxOddMultiples * PointSize)
 
-	Niels(BasePoint, BasePoint) -- Reused BasePoint
+	Edwards25519.Niels(BasePoint, BasePoint) -- Reused BasePoint
 	local FirstNiels = BasePoint
 	buffer.copy(TableData, 0, FirstNiels, 0, PointSize)
 
@@ -433,7 +435,7 @@ local function WindowedNAFTable(BasePoint: buffer, WindowWidth: number): buffer
 
 		buffer.copy(BasePoint, 0, TableData, PrevOffset, PointSize)
 
-		Niels(Add(DoubledPoint, BasePoint, BasePoint), BasePoint) -- Reused BasePoint
+		Edwards25519.Niels(Edwards25519.Add(DoubledPoint, BasePoint, BasePoint), BasePoint) -- Reused BasePoint
 		local CurrentNiels = BasePoint
 		buffer.copy(TableData, CurrentOffset, CurrentNiels, 0, PointSize)
 	end
@@ -441,9 +443,9 @@ local function WindowedNAFTable(BasePoint: buffer, WindowWidth: number): buffer
 	return TableData
 end
 
-local function MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
+function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local PointSize = POINT_SIZE
-	
+
 	local SignedWindows, WindowCount = SignedRadixW(ScalarBits, ScalarBitCount, BasePointRadixWidth)
 	local ResultPoint = buffer.create(PointSize)
 	buffer.copy(ResultPoint, 0, IdentityO, 0, PointSize)
@@ -453,17 +455,17 @@ local function MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 		local WindowValue = buffer.readf64(SignedWindows, (WindowIndex - 1) * 8)
 		if WindowValue > 0 then
 			GetBasePointTableEntry(WindowIndex, WindowValue, NielsPoint)
-			ResultPoint = Add(ResultPoint, NielsPoint)
+			ResultPoint = Edwards25519.Add(ResultPoint, NielsPoint)
 		elseif WindowValue < 0 then
 			GetBasePointTableEntry(WindowIndex, -WindowValue, NielsPoint)
-			ResultPoint = Sub(ResultPoint, NielsPoint)
+			ResultPoint = Edwards25519.Sub(ResultPoint, NielsPoint)
 		end
 	end
 
 	return ResultPoint
 end
 
-local function Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
+function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	local NAFForm, NAFLength = WindowedNAF(ScalarBits, ScalarBitCount, 5)
 	local MultipleTable = WindowedNAFTable(BasePoint, 5)
 	local ResultPoint = buffer.create(POINT_SIZE)
@@ -474,27 +476,17 @@ local function Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number
 		local NAFDigit = buffer.readf64(NAFForm, (NAFIndex - 1) * 8)
 
 		if NAFDigit == 0 then
-			Double(ResultPoint, ResultPoint)
+			Edwards25519.Double(ResultPoint, ResultPoint)
 		elseif NAFDigit > 0 then
 			buffer.copy(NielsPoint, 0, MultipleTable, ((NAFDigit - 1) * POINT_SIZE), POINT_SIZE)
-			Add(ResultPoint, NielsPoint, ResultPoint)
+			Edwards25519.Add(ResultPoint, NielsPoint, ResultPoint)
 		else
 			buffer.copy(NielsPoint, 0, MultipleTable, (((-NAFDigit) - 1) * POINT_SIZE), POINT_SIZE)
-			Sub(ResultPoint, NielsPoint, ResultPoint)
+			Edwards25519.Sub(ResultPoint, NielsPoint, ResultPoint)
 		end
 	end
-	
+
 	return ResultPoint
 end
 
-return {
-	Double = Double,
-	Add = Add,
-	Sub = Sub,
-	Niels = Niels,
-	Scale = Scale,
-	Encode = Encode,
-	Decode = Decode,
-	MulG = MulG,
-	Mul = Mul,
-}
+return Edwards25519
