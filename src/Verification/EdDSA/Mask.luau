@@ -26,6 +26,8 @@ local Curve25519 = require("./Curve25519")
 local SHA512 = require("./SHA512")
 local RandomBytes = require("./Random")
 
+local Mask = {}
+
 local COORD_SIZE = 104
 
 local X25519_SECRET_KEY_SIZE = 32
@@ -39,7 +41,7 @@ local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
 	return Coord
 end
 
-local function Mask(SecretKey: buffer): buffer
+function Mask.Mask(SecretKey: buffer): buffer
 	if SecretKey == nil then
 		error("SecretKey cannot be nil", 2)
 	end
@@ -66,7 +68,7 @@ local function Mask(SecretKey: buffer): buffer
 	return MaskedKey
 end
 
-local function MaskSignature(SignatureSecretKey: buffer): buffer
+function Mask.MaskSignature(SignatureSecretKey: buffer): buffer
 	if SignatureSecretKey == nil then
 		error("SignatureSecretKey cannot be nil", 2)
 	end
@@ -87,7 +89,7 @@ local function MaskSignature(SignatureSecretKey: buffer): buffer
 	return Mask(FirstHalf)
 end
 
-local function Remask(MaskedKey: buffer): buffer
+function Mask.Remask(MaskedKey: buffer): buffer
 	if MaskedKey == nil then
 		error("MaskedKey cannot be nil", 2)
 	end
@@ -122,7 +124,7 @@ local function Remask(MaskedKey: buffer): buffer
 	return RemaskedKey
 end
 
-local function EphemeralSecretKey(MaskedKey: buffer): buffer
+function Mask.EphemeralSecretKey(MaskedKey: buffer): buffer
 	if MaskedKey == nil then
 		error("MaskedKey cannot be nil", 2)
 	end
@@ -188,7 +190,7 @@ local function ExchangeOnPoint(MaskedSecretKey: buffer, CurvePoint: buffer): (bu
 	return FieldPrime.Encode(FieldPrime.Mul(FullPointX, FullPointZInverse)), FieldPrime.Encode(FieldPrime.Mul(MaskPointX, MaskPointZInverse))
 end
 
-local function PublicKey(MaskedKey: buffer): buffer
+function Mask.PublicKey(MaskedKey: buffer): buffer
 	if MaskedKey == nil then
 		error("MaskedKey cannot be nil", 2)
 	end
@@ -205,7 +207,7 @@ local function PublicKey(MaskedKey: buffer): buffer
 	return (ExchangeOnPoint(MaskedKey, Curve25519.G))
 end
 
-local function Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer): (buffer, buffer)
+function Mask.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer): (buffer, buffer)
 	if MaskedSecretKey == nil then
 		error("MaskedSecretKey cannot be nil", 2)
 	end
@@ -235,11 +237,4 @@ local function Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer): (buffe
 	return ExchangeOnPoint(MaskedSecretKey, Curve25519.Decode(TheirPublicKey))
 end
 
-return {
-	Mask = Mask,
-	MaskSignature = MaskSignature,
-	Remask = Remask,
-	PublicKey = PublicKey,
-	EphemeralSecretKey = EphemeralSecretKey,
-	Exchange = Exchange,
-}
+return Mask 

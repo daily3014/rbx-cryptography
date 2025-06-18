@@ -22,6 +22,8 @@
 
 local MultiPrecision = require("./MultiPrecision")
 
+local FieldQuadratic = {}
+
 local FieldOrder = buffer.create(96) do
 	local Values = {
 		16110573, 06494812, 14047250, 10680220, 14612958,
@@ -71,45 +73,45 @@ local ZeroConstant = MultiPrecision.Num(0)
 local function Reduce(LargeNumber: buffer): buffer
 	local Difference = MultiPrecision.Sub(LargeNumber, FieldOrder)
 
-	if MultiPrecision.Approx(Difference) < 0 then 
-		return MultiPrecision.Carry(LargeNumber) 
+	if MultiPrecision.Approx(Difference) < 0 then
+		return MultiPrecision.Carry(LargeNumber)
 	end
 
 	return MultiPrecision.Carry(Difference)
 end
 
-local function Add(ScalarA: buffer, ScalarB: buffer): buffer
+function FieldQuadratic.Add(ScalarA: buffer, ScalarB: buffer): buffer
 	return Reduce(MultiPrecision.Add(ScalarA, ScalarB))
 end
 
-local function Neg(ScalarA: buffer): buffer
+function FieldQuadratic.Neg(ScalarA: buffer): buffer
 	return Reduce(MultiPrecision.Sub(FieldOrder, ScalarA))
 end
 
-local function Sub(ScalarA: buffer, ScalarB: buffer): buffer
-	return Add(ScalarA, Neg(ScalarB))
+function FieldQuadratic.Sub(ScalarA: buffer, ScalarB: buffer): buffer
+	return FieldQuadratic.Add(ScalarA, FieldQuadratic.Neg(ScalarB))
 end
 
-local function Mul(ScalarA: buffer, ScalarB: buffer): buffer
+function FieldQuadratic.Mul(ScalarA: buffer, ScalarB: buffer): buffer
 	local ProductLow, ProductHigh = MultiPrecision.Mul(ScalarA, ScalarB)
 	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(ProductLow, MontgomeryT0), FieldOrder)
 	local _, ResultHigh = MultiPrecision.DWAdd(ProductLow, ProductHigh, ReductionLow, ReductionHigh)
-	
+
 	return Reduce(ResultHigh)
 end
 
 local function Montgomery(RegularScalar: buffer): buffer
-	return Mul(RegularScalar, MontgomeryT1)
+	return FieldQuadratic.Mul(RegularScalar, MontgomeryT1)
 end
 
 local function Demontgomery(MontgomeryScalar: buffer): buffer
 	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MontgomeryT0), FieldOrder)
 	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, ZeroConstant, ReductionLow, ReductionHigh)
-	
+
 	return Reduce(ResultHigh)
 end
 
-local function Encode(MontgomeryScalar: buffer): buffer
+function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 	local DemontResult = Demontgomery(MontgomeryScalar)
 	local EncodedBuffer = buffer.create(32)
 	local ByteIndex = 0
@@ -134,7 +136,7 @@ local function Encode(MontgomeryScalar: buffer): buffer
 	return EncodedBuffer
 end
 
-local function Decode(EncodedBuffer: buffer): buffer
+function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
 	local DecodedBuffer = buffer.create(96)
 	local ByteIndex = 0
 
@@ -154,7 +156,7 @@ local function Decode(EncodedBuffer: buffer): buffer
 	return Montgomery(DecodedBuffer)
 end
 
-local function DecodeWide(WideBuffer: buffer): buffer
+function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 	local LowPart = buffer.create(96)
 
 	for LimbIndex = 0, 10 do
@@ -177,10 +179,10 @@ local function DecodeWide(WideBuffer: buffer): buffer
 
 	buffer.writef64(HighPart, 10 * 8, buffer.readu8(WideBuffer, 63))
 
-	return Add(Montgomery(LowPart), Montgomery(Montgomery(HighPart)))
+	return FieldQuadratic.Add(Montgomery(LowPart), Montgomery(Montgomery(HighPart)))
 end
 
-local function DecodeClamped(ClampedBuffer: buffer): buffer
+function FieldQuadratic.DecodeClamped(ClampedBuffer: buffer): buffer
 	local ClampedCopy = buffer.create(32)
 	buffer.copy(ClampedCopy, 0, ClampedBuffer, 0, 32)
 
@@ -190,11 +192,11 @@ local function DecodeClamped(ClampedBuffer: buffer): buffer
 	local LastByte = buffer.readu8(ClampedCopy, 31)
 	buffer.writeu8(ClampedCopy, 31, bit32.bor(bit32.band(LastByte, 0x7F), 0x40))
 
-	return Decode(ClampedCopy)
+	return FieldQuadratic.Decode(ClampedCopy)
 end
 
-local function Eighth(MontgomeryScalar: buffer): buffer
-	return Mul(MontgomeryScalar, DivideBy8Constant)
+function FieldQuadratic.Eighth(MontgomeryScalar: buffer): buffer
+	return FieldQuadratic.Mul(MontgomeryScalar, DivideBy8Constant)
 end
 
 local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)
@@ -223,7 +225,7 @@ local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: numb
 	return OutputBuffer, OutputLength
 end
 
-local function Bits(MontgomeryScalar: buffer): (buffer, number)
+function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 	local DemontResult = Demontgomery(MontgomeryScalar)
 	local BitOutput, BitCount = RebaseLE(DemontResult, 11, 2 ^ 24, 2)
 
@@ -234,10 +236,10 @@ local function Bits(MontgomeryScalar: buffer): (buffer, number)
 	return BitOutput, BitCount
 end
 
-local function MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, number, buffer, number)
+function FieldQuadratic.MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, number, buffer, number)
 	local DTable = Demontgomery(ScalarA)
 	local ETable = Demontgomery(ScalarB)
-	local FTable = MultiPrecision.Sub(DTable, ETable) 
+	local FTable = MultiPrecision.Sub(DTable, ETable)
 
 	local DMod2 = MultiPrecision.Mod2(DTable)
 	local EMod2 = MultiPrecision.Mod2(ETable)
@@ -340,15 +342,4 @@ local function MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, number, b
 	return FinalBits, FinalBitCount, RuleBuffer, RuleCount
 end
 
-return {
-	Add = Add,
-	Sub = Sub,
-	Mul = Mul,
-	Encode = Encode,
-	Decode = Decode,
-	DecodeWide = DecodeWide,
-	DecodeClamped = DecodeClamped,
-	Eighth = Eighth,
-	Bits = Bits,
-	MakeRuleset = MakeRuleset,
-}
+return FieldQuadratic
