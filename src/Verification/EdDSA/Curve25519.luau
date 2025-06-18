@@ -28,6 +28,8 @@ local RandomBytes = require("./Random")
 local MONTGOMERY_POINT_SIZE = 208
 local COORD_SIZE = 104
 
+local Curve25519 = {}
+
 local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
 	local Coord = buffer.create(COORD_SIZE)
 	buffer.copy(Coord, 0, Point, Index * COORD_SIZE, COORD_SIZE)
@@ -60,7 +62,7 @@ local function Double(PointToDouble: buffer): buffer
 	return CreateMontgomeryPoint(NewX, NewZ)
 end
 
-local function DifferentialAdd(DifferencePoint: buffer, Point1: buffer, Point2: buffer): buffer
+function Curve25519.DifferentialAdd(DifferencePoint: buffer, Point1: buffer, Point2: buffer): buffer
 	local DiffX = GetMontgomeryCoord(DifferencePoint, 0)
 	local DiffZ = GetMontgomeryCoord(DifferencePoint, 1)
 	local X1 = GetMontgomeryCoord(Point1, 0)
@@ -121,40 +123,40 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 	return CurrentP
 end
 
-local function Ladder8(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
+function Curve25519.Ladder8(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	local RandomBuffer = RandomBytes.Random(32)
 	local RandomFactor = FieldPrime.Decode(RandomBuffer)
 
 	local BaseX = GetMontgomeryCoord(BasePoint, 0)
 	local BaseZ = GetMontgomeryCoord(BasePoint, 1)
 	local RandomizedPoint = CreateMontgomeryPoint(
-		FieldPrime.Mul(BaseX, RandomFactor), 
+		FieldPrime.Mul(BaseX, RandomFactor),
 		FieldPrime.Mul(BaseZ, RandomFactor)
 	)
 
 	return Double(Double(Double(Ladder(RandomizedPoint, ScalarBits, ScalarBitCount))))
 end
 
-local function Scale(InputPoint: buffer): buffer
+function Curve25519.Scale(InputPoint: buffer): buffer
 	local InputX = GetMontgomeryCoord(InputPoint, 0)
 	local InputZ = GetMontgomeryCoord(InputPoint, 1)
 
 	return CreateMontgomeryPoint(
-		FieldPrime.Mul(InputX, FieldPrime.Invert(InputZ)), 
+		FieldPrime.Mul(InputX, FieldPrime.Invert(InputZ)),
 		FieldPrime.Num(1)
 	)
 end
 
-local function Encode(NormalizedPoint: buffer): buffer
+function Curve25519.Encode(NormalizedPoint: buffer): buffer
 	local X = GetMontgomeryCoord(NormalizedPoint, 0)
 	return FieldPrime.Encode(X)
 end
 
-local function Decode(EncodedBuffer: buffer): buffer
+function Curve25519.Decode(EncodedBuffer: buffer): buffer
 	return CreateMontgomeryPoint(FieldPrime.Decode(EncodedBuffer), FieldPrime.Num(1))
 end
 
-local function DecodeEd(EdwardsBuffer: buffer): buffer
+function Curve25519.DecodeEd(EdwardsBuffer: buffer): buffer
 	local YCoord = FieldPrime.Decode(EdwardsBuffer)
 	local Numerator = FieldPrime.Carry(FieldPrime.Add(FieldPrime.Num(1), YCoord))
 	local Denominator = FieldPrime.Carry(FieldPrime.Sub(FieldPrime.Num(1), YCoord))
@@ -165,7 +167,7 @@ local function DecodeEd(EdwardsBuffer: buffer): buffer
 	end
 end
 
-local function MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
+function Curve25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local EdwardsPoint = Edwards25519.MulG(ScalarBits, ScalarBitCount)
 
 	-- Extract Y and Z coordinates from Edwards point (indices 1 and 2)
@@ -180,14 +182,15 @@ local function MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	return CreateMontgomeryPoint(NewX, NewZ)
 end
 
-local function Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, buffer?)
+function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, buffer?)
+    local DifferentialAdd = Curve25519.DifferentialAdd
 	local RandomBuffer = RandomBytes.Random(32)
 	local RandomFactor = FieldPrime.Decode(RandomBuffer)
 
 	local BaseX = GetMontgomeryCoord(BasePoint, 0)
 	local BaseZ = GetMontgomeryCoord(BasePoint, 1)
 	local RandomizedA = CreateMontgomeryPoint(
-		FieldPrime.Mul(BaseX, RandomFactor), 
+		FieldPrime.Mul(BaseX, RandomFactor),
 		FieldPrime.Mul(BaseZ, RandomFactor)
 	)
 
@@ -202,7 +205,7 @@ local function Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, b
 
 	local Rules = PracRuleset[3]
 	local RuleCount = PracRuleset[4]
-	if RuleCount == 0 then 
+	if RuleCount == 0 then
 		return RandomizedA, nil, nil
 	end
 
@@ -262,16 +265,6 @@ local function Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, b
 	return RandomizedA, CurrentB, CurrentC
 end
 
-local G = CreateMontgomeryPoint(FieldPrime.Num(9), FieldPrime.Num(1))
+Curve25519.G = CreateMontgomeryPoint(FieldPrime.Num(9), FieldPrime.Num(1))
 
-return {
-	G = G,
-	DifferentialAdd = DifferentialAdd,
-	Scale = Scale,
-	Encode = Encode,
-	Decode = Decode,
-	DecodeEd = DecodeEd,
-	Ladder8 = Ladder8,
-	MulG = MulG,
-	Prac = Prac,
-}
+return Curve25519

@@ -48,6 +48,8 @@ local KeyedHashFlag = 0x10
 local DeriveKeyContextFlag = 0x20
 local DeriveKeyMaterialFlag = 0x40
 
+local Blake3 = {}
+
 local InitialVector = buffer.create(CV_SIZE)
 do
 	local IV = {
@@ -334,7 +336,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	return Output
 end
 
-local function Digest(Message: buffer, Length: number?): string
+function Blake3.Digest(Message: buffer, Length: number?): string
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
@@ -365,7 +367,7 @@ local function Digest(Message: buffer, Length: number?): string
 	return ToHex(Result)
 end
 
-local function DigestKeyed(Key: buffer, Message: buffer, Length: number?): string
+function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): string
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
@@ -405,7 +407,7 @@ local function DigestKeyed(Key: buffer, Message: buffer, Length: number?): strin
 	return ToHex(Result)
 end
 
-local function DeriveKey(Context: buffer): (buffer, number?) -> string
+function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> string
 	if Context == nil then
 		error("Context cannot be nil", 2)
 	end
@@ -448,8 +450,4 @@ local function DeriveKey(Context: buffer): (buffer, number?) -> string
 	end
 end
 
-return {
-	Digest = Digest,
-	DigestKeyed = DigestKeyed,
-	DeriveKey = DeriveKey,
-}
+return Blake3

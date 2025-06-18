@@ -33,6 +33,8 @@ local RhoOffsets = {
 	1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14, 27, 41, 56, 8, 25, 43, 62, 18, 39, 61, 20, 44
 }
 
+local SHA3 = {}
+
 local State = buffer.create(200)
 local TempState = buffer.create(200)
 local OutputBuffer = buffer.create(64)
@@ -315,35 +317,28 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	return table.concat(HexParts)
 end
 
-local function SHA3_224(Message: buffer): string
+function SHA3.SHA3_224(Message: buffer): string
 	return ProcessSponge(Message, 448, 28, 0x06)
 end
 
-local function SHA3_256(Message: buffer): string
+function SHA3.SHA3_256(Message: buffer): string
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-local function SHA3_384(Message: buffer): string
+function SHA3.SHA3_384(Message: buffer): string
 	return ProcessSponge(Message, 768, 48, 0x06)
 end
 
-local function SHA3_512(Message: buffer): string
+function SHA3.SHA3_512(Message: buffer): string
 	return ProcessSponge(Message, 1024, 64, 0x06)
 end
 
-local function SHAKE128(Message: buffer, OutputBytes: number): string
+function SHA3.SHAKE128(Message: buffer, OutputBytes: number): string
 	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
-local function SHAKE256(Message: buffer, OutputBytes: number): string
+function SHA3.SHAKE256(Message: buffer, OutputBytes: number): string
 	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
 end
 
-return {
-	SHA3_224 = SHA3_224,
-	SHA3_256 = SHA3_256,
-	SHA3_384 = SHA3_384,
-	SHA3_512 = SHA3_512,
-	SHAKE128 = SHAKE128,
-	SHAKE256 = SHAKE256
-}
+return SHA3
