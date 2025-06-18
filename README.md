@@ -458,7 +458,7 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 - Thanks to those who gave feedback and testing
 - Special thanks to all contributors and bug reporters
-- AES was originaly made by @RobloxGamerPro200007
+- AES was originally made by @RobloxGamerPro200007
 
 ---
 
