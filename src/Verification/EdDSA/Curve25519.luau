@@ -124,7 +124,7 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 end
 
 function Curve25519.Ladder8(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
-	local RandomBuffer = RandomBytes.Random(32)
+	local RandomBuffer = RandomBytes.Random()
 	local RandomFactor = FieldPrime.Decode(RandomBuffer)
 
 	local BaseX = GetMontgomeryCoord(BasePoint, 0)
@@ -184,7 +184,7 @@ end
 
 function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, buffer?)
     local DifferentialAdd = Curve25519.DifferentialAdd
-	local RandomBuffer = RandomBytes.Random(32)
+	local RandomBuffer = RandomBytes.Random()
 	local RandomFactor = FieldPrime.Decode(RandomBuffer)
 
 	local BaseX = GetMontgomeryCoord(BasePoint, 0)
