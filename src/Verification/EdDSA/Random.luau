@@ -2,9 +2,11 @@
 --!native
 --!optimize 2
 
-local function RandomBytes(): buffer
+local Random = {}
+
+function RandomBytes(): buffer
 	local Output = buffer.create(32)
-	
+
 	for Index = 0, 31, 4 do
 		buffer.writeu32(Output, Index, bit32.bor(
 			bit32.lshift(math.random(0, 255), 0),
@@ -13,11 +15,11 @@ local function RandomBytes(): buffer
 			bit32.lshift(math.random(0, 255), 24)
 		))
 	end
-	
+
 	return Output
 end
 
-local function Clamp(Input: buffer): buffer
+function Random.Clamp(Input: buffer): buffer
 	local Output = buffer.create(32)
 	buffer.copy(Output, 0, Input, 0, 32)
 
@@ -46,11 +48,8 @@ local function Clamp(Input: buffer): buffer
 	return Output
 end
 
-local function RandomEdDSA(): buffer
-	return Clamp(RandomBytes())
+function Random.Random(): buffer -- RandomEdDSA
+	return Random.Clamp(RandomBytes())
 end
 
-return {
-	Clamp = Clamp,
-	Random = RandomEdDSA,
-}
+return Random
