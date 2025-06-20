@@ -4,27 +4,18 @@
 	Return type: string or function
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		local Key = buffer.fromstring( "Key" )
-		local BlockSize = 64 -- SHA256 block length
+		local Key = buffer.fromstring("Key")
+		local BlockSize = 64 -- SHA256 block length (= string.len(SHA256(...)))
 		
-		--------Usage Case 1--------
 		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize)
-	
-		--------Usage Case 2----------
-		local Preset = PresetHMAC(SHA2.SHA256, BlockSize)
-		local Result = Preset(Message, Key)
 --]=]
 
 --!native
 --!strict
 --!optimize 2
 
-export type HashFunction = (Message: buffer, Salt: buffer?) -> string
+export type HashFunction = (Message: buffer, Salt: buffer?) -> (string, buffer)
 
-export type HMAC = (Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number) -> string
-export type PresetHMAC = (Message: buffer, Key: buffer) -> string
-
-local HMAC = {}
 
 local function HexToBinary(HexBuffer: buffer)
 	local HexBufferLength = buffer.len(HexBuffer)
@@ -76,12 +67,14 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 	local KeyLength = buffer.len(Key)
 
 	if KeyLength > BlockSizeBytes then
-		local HashString = HashFunction(Key)
-		local HexBuffer = buffer.fromstring(HashString)
-		local HashedKey = HexToBinary(HexBuffer)
+		local _, Digest = HashFunction(Key)
+		
+		for Index = 0, buffer.len(Digest) - 1, 4 do
+			buffer.writeu32(Digest, Index, bit32.byteswap(buffer.readu32(Digest, Index)))
+		end
 
 		local PaddedKey = buffer.create(BlockSizeBytes)
-		buffer.copy(PaddedKey, 0, HashedKey)
+		buffer.copy(PaddedKey, 0, Digest)
 
 		return PaddedKey
 	elseif KeyLength < BlockSizeBytes then
@@ -94,21 +87,15 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 	return Key
 end
 
-function HMAC.HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): string
+local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): (string, buffer)
 	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes)
 
 	local OuterPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x5C, BlockSizeBytes))
 	local InnerPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x36, BlockSizeBytes))
 	
-	local HashedMessageWithInnerKey = HexToBinary(buffer.fromstring(HashFunction(ConcatenateBuffers(InnerPaddedKey, Message))))
+	local HashedMessageWithInnerKey = HexToBinary(buffer.fromstring((HashFunction(ConcatenateBuffers(InnerPaddedKey, Message)))))
 	local FinalMessage = ConcatenateBuffers(OuterPaddedKey, HashedMessageWithInnerKey)
 	return HashFunction(FinalMessage)
 end
 
-function HMAC.PresetHMAC(HashFunction: HashFunction, BlockSizeBytes: number): PresetHMAC
-	return function(Message: buffer, Key: buffer): string
-		return Functions.HMAC(Message, Key, HashFunction, BlockSizeBytes)
-	end
-end
-	
 return HMAC

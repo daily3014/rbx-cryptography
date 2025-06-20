@@ -200,7 +200,7 @@ Testing.Describe("HMAC Algorithm Tests", function()
 			local KeyBuffer = buffer.fromstring(TestCase.Key)
 			local BlockSize = BLOCK_SIZES[TestCase.Algorithm or "HMAC-MD5"] or 64
 			local HashFunction = GetHashFunction(TestCase.Algorithm or "HMAC-MD5")
-			local Result = HMAC.HMAC(MessageBuffer, KeyBuffer, HashFunction, BlockSize)
+			local Result = HMAC(MessageBuffer, KeyBuffer, HashFunction, BlockSize)
 
 			local ExpectedResult = TestCase.Expected
 			if Index == 12 or Index == 19 then

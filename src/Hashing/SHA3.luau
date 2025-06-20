@@ -222,7 +222,7 @@ local function KeccakF1600()
 	end
 end
 
-local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): string
+local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): (string, buffer)
 	local RateBytes = (1600 - CapacityBits) // 8
 	local StateBuffer = State
 	local Output_Buffer = OutputBuffer
@@ -314,30 +314,30 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 		HexParts[Index + 1] = string.sub(Hex_Chars, Hi, Hi) .. string.sub(Hex_Chars, Lo, Lo)
 	end
 
-	return table.concat(HexParts)
+	return table.concat(HexParts), Output
 end
 
 function SHA3.SHA3_224(Message: buffer): string
 	return ProcessSponge(Message, 448, 28, 0x06)
 end
 
-function SHA3.SHA3_256(Message: buffer): string
+function SHA3.SHA3_256(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-function SHA3.SHA3_384(Message: buffer): string
+function SHA3.SHA3_384(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 768, 48, 0x06)
 end
 
-function SHA3.SHA3_512(Message: buffer): string
+function SHA3.SHA3_512(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 1024, 64, 0x06)
 end
 
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): string
+function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
 	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
-function SHA3.SHAKE256(Message: buffer, OutputBytes: number): string
+function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
 	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
 end
 
