@@ -336,7 +336,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	return Output
 end
 
-function Blake3.Digest(Message: buffer, Length: number?): string
+function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
@@ -364,10 +364,10 @@ function Blake3.Digest(Message: buffer, Length: number?): string
 	end
 
 	local Result = ProcessMessage(InitialVector, 0, Message, Length or 32)
-	return ToHex(Result)
+	return ToHex(Result), Result
 end
 
-function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): string
+function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): (string, buffer)
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
@@ -404,10 +404,10 @@ function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): stri
 	end
 
 	local Result = ProcessMessage(Key, KeyedHashFlag, Message, Length or 32)
-	return ToHex(Result)
+	return ToHex(Result), Result
 end
 
-function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> string
+function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
 	if Context == nil then
 		error("Context cannot be nil", 2)
 	end
@@ -418,7 +418,7 @@ function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> string
 
 	local ContextHash = ProcessMessage(InitialVector, DeriveKeyContextFlag, Context, 32)
 
-	return function(Material: buffer, Length: number?): string
+	return function(Material: buffer, Length: number?): (string, buffer)
 		if Material == nil then
 			error("Material cannot be nil", 2)
 		end
@@ -446,7 +446,7 @@ function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> string
 		end
 
 		local Result = ProcessMessage(ContextHash, DeriveKeyMaterialFlag, Material, Length or 32)
-		return ToHex(Result)
+		return ToHex(Result), Result
 	end
 end
 

@@ -99,7 +99,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 end
 
 local FormatString = string.rep("%08x", 5)
-local function SHA1(Message: buffer, Salt: buffer?): string
+local function SHA1(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
 
@@ -111,8 +111,15 @@ local function SHA1(Message: buffer, Salt: buffer?): string
 
 	local ProcessedMessage, Length = PreProcess(Message)
 	local A, B, C, D, E = DigestBlocks(ProcessedMessage, Length)
+	local Digest = buffer.create(20)
 
-	return string.format(FormatString, A, B, C, D, E)
+	buffer.writeu32(Digest, 0, A)
+	buffer.writeu32(Digest, 4, B)
+	buffer.writeu32(Digest, 8, C)
+	buffer.writeu32(Digest, 12, D)
+	buffer.writeu32(Digest, 16, E)
+
+	return string.format(FormatString, A, B, C, D, E), Digest
 end
 
 return SHA1

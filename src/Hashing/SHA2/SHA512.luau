@@ -100,7 +100,7 @@ end
 local BlockFrontTable = table.create(80)
 local BlockBackTable = table.create(80)
 
-local function DigestBlock(Blocks: buffer, Length: number, FrontDigest: buffer, BackDigest: buffer)
+local function DigestBlock(Blocks: buffer, Length: number, Digest: buffer)
 	local BackK, FrontK = BACKK, FRONTK
 	local BlockFront = BlockFrontTable
 	local BlockBack = BlockBackTable
@@ -226,34 +226,34 @@ local function DigestBlock(Blocks: buffer, Length: number, FrontDigest: buffer, 
 		H8B = bit32.bor(H8B, 0)
 	end
 
-	buffer.writeu32(FrontDigest, 0, H1F)
-	buffer.writeu32(BackDigest, 0, H1B)
+	buffer.writeu32(Digest, 0, H1F)
+	buffer.writeu32(Digest, 4, H1B)
 
-	buffer.writeu32(FrontDigest, 4, H2F)
-	buffer.writeu32(BackDigest, 4, H2B)
+	buffer.writeu32(Digest, 8, H2F)
+	buffer.writeu32(Digest, 12, H2B)
 
-	buffer.writeu32(FrontDigest, 8, H3F)
-	buffer.writeu32(BackDigest, 8, H3B)
+	buffer.writeu32(Digest, 16, H3F)
+	buffer.writeu32(Digest, 20, H3B)
 
-	buffer.writeu32(FrontDigest, 12, H4F)
-	buffer.writeu32(BackDigest, 12, H4B)
+	buffer.writeu32(Digest, 24, H4F)
+	buffer.writeu32(Digest, 28, H4B)
 
-	buffer.writeu32(FrontDigest, 16, H5F)
-	buffer.writeu32(BackDigest, 16, H5B)
+	buffer.writeu32(Digest, 32, H5F)
+	buffer.writeu32(Digest, 36, H5B)
 
-	buffer.writeu32(FrontDigest, 20, H6F)
-	buffer.writeu32(BackDigest, 20, H6B)
+	buffer.writeu32(Digest, 40, H6F)
+	buffer.writeu32(Digest, 44, H6B)
 
-	buffer.writeu32(FrontDigest, 24, H7F)
-	buffer.writeu32(BackDigest, 24, H7B)
+	buffer.writeu32(Digest, 48, H7F)
+	buffer.writeu32(Digest, 52, H7B)
 
-	buffer.writeu32(FrontDigest, 28, H8F)
-	buffer.writeu32(BackDigest, 28, H8B)
+	buffer.writeu32(Digest, 56, H8F)
+	buffer.writeu32(Digest, 60, H8B)
 end
 
 local FormatString = string.rep("%08x", 16)
 
-local function SHA512(Message: buffer, Salt: buffer?): string
+local function SHA512(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
 		buffer.copy(MessageWithSalt, 0, Message)
@@ -263,17 +263,15 @@ local function SHA512(Message: buffer, Salt: buffer?): string
 
 	local ProcessedMessage, Length = PreProcess(Message)
 
-	local FrontValues = buffer.create(32)
-	local BackValues = buffer.create(32)
+	local Digest = buffer.create(64)
+	DigestBlock(ProcessedMessage, Length, Digest)
 
-	DigestBlock(ProcessedMessage, Length, FrontValues, BackValues)
+	local H1F, H2F, H3F, H4F = buffer.readu32(Digest, 0), buffer.readu32(Digest, 8), buffer.readu32(Digest, 16), buffer.readu32(Digest, 24)
+	local H1B, H2B, H3B, H4B = buffer.readu32(Digest, 4), buffer.readu32(Digest, 12), buffer.readu32(Digest, 20), buffer.readu32(Digest, 28)
+	local H5F, H6F, H7F, H8F = buffer.readu32(Digest, 32), buffer.readu32(Digest, 40), buffer.readu32(Digest, 48), buffer.readu32(Digest, 56)
+	local H5B, H6B, H7B, H8B = buffer.readu32(Digest, 36), buffer.readu32(Digest, 44), buffer.readu32(Digest, 52), buffer.readu32(Digest, 60)
 
-	local H1F, H2F, H3F, H4F = buffer.readu32(FrontValues, 0), buffer.readu32(FrontValues, 4), buffer.readu32(FrontValues, 8), buffer.readu32(FrontValues, 12)
-	local H5F, H6F, H7F, H8F = buffer.readu32(FrontValues, 16), buffer.readu32(FrontValues, 20), buffer.readu32(FrontValues, 24), buffer.readu32(FrontValues, 28)
-	local H1B, H2B, H3B, H4B = buffer.readu32(BackValues, 0), buffer.readu32(BackValues, 4), buffer.readu32(BackValues, 8), buffer.readu32(BackValues, 12)
-	local H5B, H6B, H7B, H8B = buffer.readu32(BackValues, 16), buffer.readu32(BackValues, 20), buffer.readu32(BackValues, 24), buffer.readu32(BackValues, 28)
-
-	return string.format(FormatString, H1F, H1B, H2F, H2B, H3F, H3B, H4F, H4B, H5F, H5B, H6F, H6B, H7F, H7B, H8F, H8B)
+	return string.format(FormatString, H1F, H1B, H2F, H2B, H3F, H3B, H4F, H4B, H5F, H5B, H6F, H6B, H7F, H7B, H8F, H8B), Digest
 end
 
 return SHA512

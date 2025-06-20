@@ -120,10 +120,10 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 		D = bit32.bor(OldD + D)
 	end
 
-	return A, B, C, D	
+	return bit32.byteswap(A), bit32.byteswap(B), bit32.byteswap(C), bit32.byteswap(D)
 end
 
-local function MD5(Message: buffer, Salt: buffer?): string
+local function MD5(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
 		buffer.copy(MessageWithSalt, 0, Message)
@@ -133,13 +133,14 @@ local function MD5(Message: buffer, Salt: buffer?): string
 
 	local ProcessedMessage, Length = PreProcess(Message)
 	local A, B, C, D = DigestBlocks(ProcessedMessage, Length)
+	local Digest = buffer.create(16)
+	
+	buffer.writeu32(Digest, 0, A)
+	buffer.writeu32(Digest, 4, B)
+	buffer.writeu32(Digest, 8, C)
+	buffer.writeu32(Digest, 12, D)
 
-	return string.format("%08x%08x%08x%08x",
-		bit32.byteswap(A),
-		bit32.byteswap(B),
-		bit32.byteswap(C),
-		bit32.byteswap(D)
-	)
+	return string.format("%08x%08x%08x%08x", A, B, C, D), Digest
 end
 
 return MD5
