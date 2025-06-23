@@ -55,7 +55,7 @@ function Mask.Mask(SecretKey: buffer): buffer
 		error(`SecretKey must be exactly {X25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
 	end
 
-	local RandomMask = RandomBytes.Random(32)
+	local RandomMask = RandomBytes.Random()
 	local ScalarX = FieldQuadratic.DecodeClamped(SecretKey)
 	local ScalarR = FieldQuadratic.DecodeClamped(RandomMask)
 	local MaskedScalar = FieldQuadratic.Sub(ScalarX, ScalarR)
@@ -86,7 +86,7 @@ function Mask.MaskSignature(SignatureSecretKey: buffer): buffer
 	local FirstHalf = buffer.create(32)
 	buffer.copy(FirstHalf, 0, HashResult, 0, 32)
 	
-	return Mask(FirstHalf)
+	return Mask.Mask(FirstHalf)
 end
 
 function Mask.Remask(MaskedKey: buffer): buffer
@@ -103,7 +103,7 @@ function Mask.Remask(MaskedKey: buffer): buffer
 		error(`MaskedKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedKeyLength} bytes`, 2)
 	end
 
-	local NewRandomMask = RandomBytes.Random(32)
+	local NewRandomMask = RandomBytes.Random()
 
 	local MaskedScalarBytes = buffer.create(32)
 	buffer.copy(MaskedScalarBytes, 0, MaskedKey, 0, 32)
