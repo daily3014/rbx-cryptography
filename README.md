@@ -53,7 +53,7 @@ Every implementation is faster than all alternatives:
 |---------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
 | **SHA512**          | 10k       | **415 μs**   | 2232 μs  | -                              | 641 μs          | **5.6x faster** than HashLib |
 | **SHA256**          | 20k       | **370 μs**   | 2058 μs  | 493 μs (old version)           | 596 μs          | **5.5x faster** than HashLib |
-| **Keccak/SHA3-512** | 20k       | **6.28 ms**  | 10.60 ms | -                              | -               | **1.7x faster** than HashLib |
+| **Keccak/SHA3-512** | 20k       | **1.74 ms**  | 10.60 ms | -                              | -               | **6.1x faster** than HashLib |
 | **ChaCha20**        | 20k       | **0.91 ms**  | -        | 7.87 ms (EncryptedNet)         | -               | **8.6x faster**              |
 | **AES (Encrypt)**   | 20k       | **0.87 ms**  | -        | 1.13 ms (RobloxGamerPro200007) | -               | **1.3x faster**              |
 | **AES (Decrypt)**   | 20k       | **1.47 ms**  | -        | 2.00 ms (RobloxGamerPro200007) | -               | **1.4x faster**              |
