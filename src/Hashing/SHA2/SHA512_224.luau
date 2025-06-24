@@ -73,6 +73,11 @@ do
 	end
 end
 
+local BLOCK_FRONT = table.create(80)
+local BLOCK_BACK = table.create(80)
+
+local FORMAT_STRING = string.rep("%08x", 7)
+
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
 	local Padding = (128 - ((ContentLength + 17) % 128)) % 128
@@ -83,7 +88,6 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	buffer.writeu8(NewContent, ContentLength, 0x80)
 
 	local Length8 = ContentLength * 8
-
 	for Index = 0, 7 do
 		buffer.writeu8(NewContent, ContentLength + 1 + Padding + Index, 0)
 	end
@@ -97,13 +101,10 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return NewContent, NewContentLength
 end
 
-local BlockFrontTable = table.create(80)
-local BlockBackTable = table.create(80)
-
 local function DigestBlock(Blocks: buffer, Length: number, Digest: buffer)
 	local BackK, FrontK = BACKK, FRONTK
-	local BlockFront = BlockFrontTable
-	local BlockBack = BlockBackTable
+	local BlockFront = BLOCK_FRONT
+	local BlockBack = BLOCK_BACK
 
 	local DefaultFront, DefaultBack = FRONT_VALUES, BACK_VALUES
 	local H1F, H2F, H3F, H4F = buffer.readu32(DefaultFront, 0), buffer.readu32(DefaultFront, 4), buffer.readu32(DefaultFront, 8), buffer.readu32(DefaultFront, 12)
@@ -251,8 +252,6 @@ local function DigestBlock(Blocks: buffer, Length: number, Digest: buffer)
 	buffer.writeu32(Digest, 60, H8B)
 end
 
-local FormatString = string.rep("%08x", 7)
-
 local function SHA512_224(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
@@ -269,7 +268,7 @@ local function SHA512_224(Message: buffer, Salt: buffer?): (string, buffer)
 	local H1F, H2F, H3F, H4F = buffer.readu32(Digest, 0), buffer.readu32(Digest, 8), buffer.readu32(Digest, 16), buffer.readu32(Digest, 24)
 	local H1B, H2B, H3B, _ = buffer.readu32(Digest, 4), buffer.readu32(Digest, 12), buffer.readu32(Digest, 20), buffer.readu32(Digest, 28)
 
-	return string.format(FormatString, H1F, H1B, H2F, H2B, H3F, H3B, H4F), Digest
+	return string.format(FORMAT_STRING, H1F, H1B, H2F, H2B, H3F, H3B, H4F), Digest
 end
 
 return SHA512_224

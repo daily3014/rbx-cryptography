@@ -35,6 +35,9 @@ local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	end
 end
 
+local OFFSETS = buffer.create(256)
+local FORMAT_STRING = string.rep("%08x", 8)
+
 local function PreProcess(Content: buffer): (buffer, number)
 	local ContentLength = buffer.len(Content)
 	local Padding = (64 - ((ContentLength + 9) % 64)) % 64
@@ -43,6 +46,7 @@ local function PreProcess(Content: buffer): (buffer, number)
 	local NewContent = buffer.create(NewContentLength)
 	buffer.copy(NewContent, 0, Content)
 	buffer.writeu8(NewContent, ContentLength, 128)
+	
 	local Length8 = ContentLength * 8
 	for Index = 7, 0, -1 do
 		local Remainder = Length8 % 256
@@ -53,11 +57,10 @@ local function PreProcess(Content: buffer): (buffer, number)
 	return NewContent, NewContentLength
 end
 
-local OFFSETS = buffer.create(256)
 local function DigestBlocks(Blocks: buffer, Length: number): (number, number, number, number, number, number, number, number)
 	local A, B, C, D = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
 	local E, F, G, H = 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-	
+
 	local Offsets = OFFSETS
 	local Constants = CONSTANTS
 
@@ -76,7 +79,6 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			local Sub16 = buffer.readu32(Offsets, Index - 64)
 			local Sub7 = buffer.readu32(Offsets, Index - 28)
 
-
 			local S0 = bit32.bxor(bit32.rrotate(Sub15, 7), bit32.rrotate(Sub15, 18), bit32.rshift(Sub15, 3))
 			local S1 = bit32.bxor(bit32.rrotate(Sub2, 17), bit32.rrotate(Sub2, 19), bit32.rshift(Sub2, 10))
 
@@ -92,7 +94,6 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			local S0 = bit32.bxor(bit32.rrotate(A, 2), bit32.rrotate(A, 13), bit32.rrotate(A, 22))
 			local Maj = bit32.bxor(bit32.band(A, B), bit32.band(A, C), bit32.band(B, C))
 			local Temp2 = S0 + Maj
-
 			H = G
 			G = F
 			F = E
@@ -103,20 +104,19 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			A = Temp1 + Temp2
 		end
 
-		A = (A + OldA) % 2^32
-		B = (B + OldB) % 2^32
-		C = (C + OldC) % 2^32
-		D = (D + OldD) % 2^32
-		E = (E + OldE) % 2^32
-		F = (F + OldF) % 2^32
-		G = (G + OldG) % 2^32
-		H = (H + OldH) % 2^32
+		A = bit32.bor(A + OldA, 0)
+		B = bit32.bor(B + OldB, 0)
+		C = bit32.bor(C + OldC, 0)
+		D = bit32.bor(D + OldD, 0)
+		E = bit32.bor(E + OldE, 0)
+		F = bit32.bor(F + OldF, 0)
+		G = bit32.bor(G + OldG, 0)
+		H = bit32.bor(H + OldH, 0)
 	end
 
 	return A, B, C, D, E, F, G, H
 end
 
-local FormatString = string.rep("%08x", 8)
 local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
@@ -141,7 +141,7 @@ local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 24, G)
 	buffer.writeu32(Digest, 28, H)
 
-	return string.format(FormatString, A, B, C, D, E, F, G, H), Digest
+	return string.format(FORMAT_STRING, A, B, C, D, E, F, G, H), Digest
 end
 
 return SHA256

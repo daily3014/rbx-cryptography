@@ -25,37 +25,33 @@
 
 local FieldPrime = require("./FieldPrime")
 
+local BASEPONT_G = nil
+local BASEPOINT_TABLE = nil
+
 local POINT_SIZE = 416
 local COORD_SIZE = 104
 
-local Edwards25519 = {}
+local BASE_RADIX_WIDTH = 5
+local BASE_POINT_ROW = 2 ^ BASE_RADIX_WIDTH / 2
 
-local BasePointRadixWidth = 5
-local BasePointTableMaxRowSize = 2 ^ BasePointRadixWidth / 2
+local CURVE_D = FieldPrime.Mul(FieldPrime.Num(-121665), FieldPrime.Invert(FieldPrime.Num(121666)))
+local CURVE_K = FieldPrime.KMul(CURVE_D, 2)
 
-local CurveD = FieldPrime.Mul(FieldPrime.Num(-121665), FieldPrime.Invert(FieldPrime.Num(121666)))
-local CurveK = FieldPrime.KMul(CurveD, 2)
-
-local IdentityO = buffer.create(POINT_SIZE)
-do
-	buffer.copy(IdentityO, 0, FieldPrime.Num(0), 0, COORD_SIZE)
-	buffer.copy(IdentityO, COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
-	buffer.copy(IdentityO, 2 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
-	buffer.copy(IdentityO, 3 * COORD_SIZE, FieldPrime.Num(0), 0, COORD_SIZE)
+local IDENTITY_O = buffer.create(POINT_SIZE) do
+	buffer.copy(IDENTITY_O, 0, FieldPrime.Num(0), 0, COORD_SIZE)
+	buffer.copy(IDENTITY_O, COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
+	buffer.copy(IDENTITY_O, 2 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
+	buffer.copy(IDENTITY_O, 3 * COORD_SIZE, FieldPrime.Num(0), 0, COORD_SIZE)
 end
-
-local BasePointG = nil
-local BasePointTable = nil
 
 local function GetCoord(Point: buffer, Index: number): buffer
 	local Coord = buffer.create(COORD_SIZE)
 	buffer.copy(Coord, 0, Point, Index * COORD_SIZE, COORD_SIZE)
+	
 	return Coord
 end
 
-local function SetCoord(Point: buffer, Index: number, Value: buffer)
-	buffer.copy(Point, Index * COORD_SIZE, Value, 0, COORD_SIZE)
-end
+local Edwards25519 = {}
 
 function Edwards25519.Double(Point1: buffer, Storage: buffer?): buffer
 	local Point1X = GetCoord(Point1, 0)
@@ -64,34 +60,35 @@ function Edwards25519.Double(Point1: buffer, Storage: buffer?): buffer
 
 	local SquaredA = FieldPrime.Square(Point1X)
 	local SquaredB = FieldPrime.Square(Point1Y)
-	FieldPrime.Square(Point1Z, Point1Z) -- Reused Point1Z
-	FieldPrime.Add(Point1Z, Point1Z, Point1Z) -- Reused Point1Z
+	FieldPrime.Square(Point1Z, Point1Z)
+	FieldPrime.Add(Point1Z, Point1Z, Point1Z)
 	local DoubledD = Point1Z
 	local SumE = FieldPrime.Add(SquaredA, SquaredB)
-	FieldPrime.Add(Point1X, Point1Y, Point1X) -- Reused Point1X
+	FieldPrime.Add(Point1X, Point1Y, Point1X)
 	local SumF = Point1X
 	local SquaredG = FieldPrime.Square(SumF)
-	FieldPrime.Sub(SquaredG, SumE, SquaredG) -- Reused SquaredG
-	FieldPrime.Carry(SquaredG, SquaredG) -- Reused SquaredG
+	FieldPrime.Sub(SquaredG, SumE, SquaredG)
+	FieldPrime.Carry(SquaredG, SquaredG)
 	local DiffH = SquaredG
-	FieldPrime.Sub(SquaredB, SquaredA, SquaredB) -- Reused SquaredB
+	FieldPrime.Sub(SquaredB, SquaredA, SquaredB)
 	local DiffI = SquaredB
-	FieldPrime.Sub(DoubledD, DiffI, DoubledD) -- Reused DoubledD
-	FieldPrime.Carry(DoubledD, DoubledD) -- Reused DoubledD
+	FieldPrime.Sub(DoubledD, DiffI, DoubledD)
+	FieldPrime.Carry(DoubledD, DoubledD)
 	local DiffJ = DoubledD
 
 	local NewX = FieldPrime.Mul(DiffH, DiffJ)
 	local NewY = FieldPrime.Mul(DiffI, SumE)
-	FieldPrime.Mul(DiffJ, DiffI, DiffJ) -- Reused DiffJ
+	FieldPrime.Mul(DiffJ, DiffI, DiffJ)
 	local NewZ = DiffJ
-	FieldPrime.Mul(DiffH, SumE, DiffH) -- Reused DiffH
+	FieldPrime.Mul(DiffH, SumE, DiffH)
 	local NewT = DiffH
 
 	local Result = Storage or buffer.create(POINT_SIZE)
-	SetCoord(Result, 0, NewX)
-	SetCoord(Result, 1, NewY)
-	SetCoord(Result, 2, NewZ)
-	SetCoord(Result, 3, NewT)
+	buffer.copy(Result, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
+	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
+	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
+	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
+	
 	return Result
 end
 
@@ -107,40 +104,41 @@ function Edwards25519.Add(Point1: buffer, NielsPoint2: buffer, Storage: buffer?)
 	local Niels1T = GetCoord(NielsPoint2, 3)
 
 	local DiffA = FieldPrime.Sub(Point1Y, Point1X)
-	FieldPrime.Mul(DiffA, Niels1Minus, DiffA) -- Reused DiffA
+	FieldPrime.Mul(DiffA, Niels1Minus, DiffA)
 	local ProductB = DiffA
 
 	local SumC = FieldPrime.Add(Point1Y, Point1X)
-	FieldPrime.Mul(SumC, Niels1Plus, SumC) -- Reused SumC
+	FieldPrime.Mul(SumC, Niels1Plus, SumC)
 	local ProductD = SumC
 
-	FieldPrime.Mul(Point1T, Niels1T, Point1T) -- Reused Point1T
+	FieldPrime.Mul(Point1T, Niels1T, Point1T)
 	local ProductE = Point1T
 
-	FieldPrime.Mul(Point1Z, Niels1Z, Point1Z) -- Reused Point1Z
+	FieldPrime.Mul(Point1Z, Niels1Z, Point1Z)
 	local ProductF = Point1Z
 
 	local DiffG = FieldPrime.Sub(ProductD, ProductB)
 	local DiffH = FieldPrime.Sub(ProductF, ProductE)
 
-	FieldPrime.Add(ProductF, ProductE, ProductF) -- Reused ProductF
+	FieldPrime.Add(ProductF, ProductE, ProductF)
 	local SumI = ProductF
 
-	FieldPrime.Add(ProductD, ProductB, ProductD) -- Reused ProductD
+	FieldPrime.Add(ProductD, ProductB, ProductD)
 	local SumJ = ProductD
 
 	local NewX = FieldPrime.Mul(DiffG, DiffH)
 	local NewY = FieldPrime.Mul(SumI, SumJ)
-	FieldPrime.Mul(DiffH, SumI, DiffH) -- Reused DiffH
+	FieldPrime.Mul(DiffH, SumI, DiffH)
 	local NewZ = DiffH
-	FieldPrime.Mul(DiffG, SumJ, DiffG) -- Reused  DiffG
+	FieldPrime.Mul(DiffG, SumJ, DiffG)
 	local NewT = DiffG
 
 	local Result = Storage or buffer.create(POINT_SIZE)
-	SetCoord(Result, 0, NewX)
-	SetCoord(Result, 1, NewY)
-	SetCoord(Result, 2, NewZ)
-	SetCoord(Result, 3, NewT)
+	buffer.copy(Result, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
+	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
+	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
+	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
+	
 	return Result
 end
 
@@ -156,34 +154,35 @@ function Edwards25519.Sub(Point1: buffer, NielsPoint2: buffer, Storage: buffer?)
 	local Niels1T = GetCoord(NielsPoint2, 3)
 
 	local DiffA = FieldPrime.Sub(Point1Y, Point1X)
-	FieldPrime.Mul(DiffA, Niels1Plus, DiffA) -- Reused DiffA
+	FieldPrime.Mul(DiffA, Niels1Plus, DiffA)
 	local ProductB = DiffA
-	FieldPrime.Add(Point1Y, Point1X, Point1Y) -- Reused Point1Y
+	FieldPrime.Add(Point1Y, Point1X, Point1Y)
 	local SumC = Point1Y
-	FieldPrime.Mul(SumC, Niels1Minus, SumC) -- Reused SumC (=> Point1Y)
+	FieldPrime.Mul(SumC, Niels1Minus, SumC)
 	local ProductD = SumC
-	FieldPrime.Mul(Point1T, Niels1T, Point1T) -- Reused Point1T
+	FieldPrime.Mul(Point1T, Niels1T, Point1T)
 	local ProductE = Point1T
-	FieldPrime.Mul(Point1Z, Niels1Z, Point1Z) -- Reused Point1Z
+	FieldPrime.Mul(Point1Z, Niels1Z, Point1Z)
 	local ProductF = Point1Z
 	local DiffG = FieldPrime.Sub(ProductD, ProductB)
 	local SumH = FieldPrime.Add(ProductF, ProductE)
 	local DiffI = FieldPrime.Sub(ProductF, ProductE)
-	FieldPrime.Add(ProductD, ProductB, ProductD) -- Reused ProductD
+	FieldPrime.Add(ProductD, ProductB, ProductD)
 	local SumJ = ProductD
 
 	local NewX = FieldPrime.Mul(DiffG, SumH)
 	local NewY = FieldPrime.Mul(DiffI, SumJ)
-	FieldPrime.Mul(SumH, DiffI, SumH) -- Reused SumH
+	FieldPrime.Mul(SumH, DiffI, SumH)
 	local NewZ = SumH
-	FieldPrime.Mul(DiffG, SumJ, DiffG) -- Reused DiffG
+	FieldPrime.Mul(DiffG, SumJ, DiffG)
 	local NewT = DiffG
 
 	local Result = Storage or buffer.create(POINT_SIZE)
-	SetCoord(Result, 0, NewX)
-	SetCoord(Result, 1, NewY)
-	SetCoord(Result, 2, NewZ)
-	SetCoord(Result, 3, NewT)
+	buffer.copy(Result, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
+	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
+	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
+	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
+	
 	return Result
 end
 
@@ -195,16 +194,17 @@ function Edwards25519.Niels(Point1: buffer, Storage: buffer?): buffer
 
 	local PlusN3 = FieldPrime.Add(Point1Y, Point1X)
 	local MinusN3 = FieldPrime.Sub(Point1Y, Point1X)
-	FieldPrime.Add(Point1Z, Point1Z, Point1Z) -- Reused Point1Z
+	FieldPrime.Add(Point1Z, Point1Z, Point1Z)
 	local DoubledN3Z = Point1Z
-	FieldPrime.Mul(Point1T, CurveK, Point1T) -- Reused Point1T
+	FieldPrime.Mul(Point1T, CURVE_K, Point1T)
 	local ScaledN3T = Point1T
 
 	local Result = Storage or buffer.create(POINT_SIZE)
-	SetCoord(Result, 0, PlusN3)
-	SetCoord(Result, 1, MinusN3)
-	SetCoord(Result, 2, DoubledN3Z)
-	SetCoord(Result, 3, ScaledN3T)
+	buffer.copy(Result, 0 * COORD_SIZE, PlusN3, 0, COORD_SIZE)
+	buffer.copy(Result, 1 * COORD_SIZE, MinusN3, 0, COORD_SIZE)
+	buffer.copy(Result, 2 * COORD_SIZE, DoubledN3Z, 0, COORD_SIZE)
+	buffer.copy(Result, 3 * COORD_SIZE, ScaledN3T, 0, COORD_SIZE)
+	
 	return Result
 end
 
@@ -213,20 +213,21 @@ function Edwards25519.Scale(Point1: buffer): buffer
 	local Point1Y = GetCoord(Point1, 1)
 	local Point1Z = GetCoord(Point1, 2)
 
-	FieldPrime.Invert(Point1Z, Point1Z) -- Reused Point1Z
+	FieldPrime.Invert(Point1Z, Point1Z)
 	local ZInverse = Point1Z
-	FieldPrime.Mul(Point1X, ZInverse, Point1X) -- Reused Point1X
+	FieldPrime.Mul(Point1X, ZInverse, Point1X)
 	local NewX = Point1X
-	FieldPrime.Mul(Point1Y, ZInverse, Point1Y) -- Reused Point1Y
+	FieldPrime.Mul(Point1Y, ZInverse, Point1Y)
 	local NewY = Point1Y
 	local NewZ = FieldPrime.Num(1)
 	local NewT = FieldPrime.Mul(NewX, NewY)
 
 	local Result = buffer.create(POINT_SIZE)
-	SetCoord(Result, 0, NewX)
-	SetCoord(Result, 1, NewY)
-	SetCoord(Result, 2, NewZ)
-	SetCoord(Result, 3, NewT)
+	buffer.copy(Result, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
+	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
+	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
+	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
+	
 	return Result
 end
 
@@ -259,7 +260,7 @@ function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	local YCoord = FieldPrime.Decode(WorkingBuffer)
 	local YSquared = FieldPrime.Square(YCoord)
 	local Numerator = FieldPrime.Sub(YSquared, FieldPrime.Num(1))
-	local Denominator = FieldPrime.Mul(YSquared, CurveD)
+	local Denominator = FieldPrime.Mul(YSquared, CURVE_D)
 	local DenomPlusOne = FieldPrime.Add(Denominator, FieldPrime.Num(1))
 
 	local XCoord = FieldPrime.SqrtDiv(Numerator, DenomPlusOne)
@@ -278,15 +279,15 @@ function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	local TCoord = FieldPrime.Mul(XCoord, YCoord)
 
 	local Result = buffer.create(POINT_SIZE)
-	SetCoord(Result, 0, XCoord)
-	SetCoord(Result, 1, YCoord)
-	SetCoord(Result, 2, ZCoord)
-	SetCoord(Result, 3, TCoord)
+	buffer.copy(Result, 0 * COORD_SIZE, XCoord, 0, COORD_SIZE)
+	buffer.copy(Result, 1 * COORD_SIZE, YCoord, 0, COORD_SIZE)
+	buffer.copy(Result, 2 * COORD_SIZE, ZCoord, 0, COORD_SIZE)
+	buffer.copy(Result, 3 * COORD_SIZE, TCoord, 0, COORD_SIZE)
+	
 	return Result
 end
 
-do
-	local BasePointBytes = buffer.create(32)
+local BASEPOINT_BYTES = buffer.create(32) do
 	local BasePointHex = {
 		0x58, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
 		0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
@@ -295,10 +296,10 @@ do
 	}
 
 	for Index = 1, 32 do
-		buffer.writeu8(BasePointBytes, Index - 1, BasePointHex[Index])
+		buffer.writeu8(BASEPOINT_BYTES, Index - 1, BasePointHex[Index])
 	end
 
-	BasePointG = Edwards25519.Decode(BasePointBytes)
+	BASEPONT_G = Edwards25519.Decode(BASEPOINT_BYTES)
 end
 
 local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWidth: number): (buffer, number)
@@ -311,18 +312,18 @@ local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWid
 
 	for BitIndex = 1, ScalarBitCount do
 		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
-		Accumulator = Accumulator + BitValue * Multiplier
-		Multiplier = Multiplier * 2
+		Accumulator += BitValue * Multiplier
+		Multiplier *= 2
 
 		while BitIndex == ScalarBitCount and Accumulator > 0 or Multiplier > RadixValue do
 			local Remainder = Accumulator % RadixValue
 			if Remainder >= HalfRadix then
-				Remainder = Remainder - RadixValue
+				Remainder -= RadixValue
 			end
 			Accumulator = (Accumulator - Remainder) / RadixValue
-			Multiplier = Multiplier / RadixValue
+			Multiplier /= RadixValue
 			buffer.writef64(OutputDigits, OutputLength * 8, Remainder)
-			OutputLength = OutputLength + 1
+			OutputLength += 1
 		end
 	end
 
@@ -365,17 +366,18 @@ local function RadixWTable(BasePoint: buffer, RadixWidth: number): buffer
 end
 
 do
-	if BasePointG then
-		BasePointTable = RadixWTable(BasePointG, BasePointRadixWidth)
+	if BASEPONT_G then
+		BASEPOINT_TABLE = RadixWTable(BASEPONT_G, BASE_RADIX_WIDTH)
 	end
 end
 
 local function GetBasePointTableEntry(WindowIndex: number, Multiple: number, Storage: buffer?): buffer
-	local BaseOffset = ((WindowIndex - 1) * BasePointTableMaxRowSize * POINT_SIZE)
+	local BaseOffset = ((WindowIndex - 1) * BASE_POINT_ROW * POINT_SIZE)
 	local Offset = BaseOffset + ((Multiple - 1) * POINT_SIZE)
 
 	local NielsPoint = Storage or buffer.create(POINT_SIZE)
-	buffer.copy(NielsPoint, 0, BasePointTable, Offset, POINT_SIZE)
+	buffer.copy(NielsPoint, 0, BASEPOINT_TABLE, Offset, POINT_SIZE)
+	
 	return NielsPoint
 end
 
@@ -389,29 +391,29 @@ local function WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, WindowWid
 
 	for BitIndex = 1, ScalarBitCount do
 		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
-		Accumulator = Accumulator + BitValue * Multiplier
-		Multiplier = Multiplier * 2
+		Accumulator += BitValue * Multiplier
+		Multiplier *= 2
 
 		while BitIndex == ScalarBitCount and Accumulator > 0 or Multiplier > WindowValue do
 			if Accumulator % 2 == 0 then
-				Accumulator = Accumulator / 2
-				Multiplier = Multiplier / 2
+				Accumulator /= 2
+				Multiplier /= 2
 				buffer.writef64(OutputNAF, OutputLength * 8, 0)
-				OutputLength = OutputLength + 1
+				OutputLength += 1
 			else
 				local Remainder = Accumulator % WindowValue
 				if Remainder >= HalfWindow then
-					Remainder = Remainder - WindowValue
+					Remainder -= WindowValue
 				end
-				Accumulator = Accumulator - Remainder
+				Accumulator -= Remainder
 				buffer.writef64(OutputNAF, OutputLength * 8, Remainder)
-				OutputLength = OutputLength + 1
+				OutputLength += 1
 			end
 		end
 	end
 
 	while OutputLength > 0 and buffer.readf64(OutputNAF, (OutputLength - 1) * 8) == 0 do
-		OutputLength = OutputLength - 1
+		OutputLength -= 1
 	end
 
 	return OutputNAF, OutputLength
@@ -425,7 +427,7 @@ local function WindowedNAFTable(BasePoint: buffer, WindowWidth: number): buffer
 
 	local TableData = buffer.create(MaxOddMultiples * PointSize)
 
-	Edwards25519.Niels(BasePoint, BasePoint) -- Reused BasePoint
+	Edwards25519.Niels(BasePoint, BasePoint)
 	local FirstNiels = BasePoint
 	buffer.copy(TableData, 0, FirstNiels, 0, PointSize)
 
@@ -435,7 +437,7 @@ local function WindowedNAFTable(BasePoint: buffer, WindowWidth: number): buffer
 
 		buffer.copy(BasePoint, 0, TableData, PrevOffset, PointSize)
 
-		Edwards25519.Niels(Edwards25519.Add(DoubledPoint, BasePoint, BasePoint), BasePoint) -- Reused BasePoint
+		Edwards25519.Niels(Edwards25519.Add(DoubledPoint, BasePoint, BasePoint), BasePoint)
 		local CurrentNiels = BasePoint
 		buffer.copy(TableData, CurrentOffset, CurrentNiels, 0, PointSize)
 	end
@@ -446,9 +448,9 @@ end
 function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local PointSize = POINT_SIZE
 
-	local SignedWindows, WindowCount = SignedRadixW(ScalarBits, ScalarBitCount, BasePointRadixWidth)
+	local SignedWindows, WindowCount = SignedRadixW(ScalarBits, ScalarBitCount, BASE_RADIX_WIDTH)
 	local ResultPoint = buffer.create(PointSize)
-	buffer.copy(ResultPoint, 0, IdentityO, 0, PointSize)
+	buffer.copy(ResultPoint, 0, IDENTITY_O, 0, PointSize)
 
 	local NielsPoint = buffer.create(PointSize)
 	for WindowIndex = 1, WindowCount do
@@ -469,7 +471,7 @@ function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount:
 	local NAFForm, NAFLength = WindowedNAF(ScalarBits, ScalarBitCount, 5)
 	local MultipleTable = WindowedNAFTable(BasePoint, 5)
 	local ResultPoint = buffer.create(POINT_SIZE)
-	buffer.copy(ResultPoint, 0, IdentityO, 0, POINT_SIZE)
+	buffer.copy(ResultPoint, 0, IDENTITY_O, 0, POINT_SIZE)
 
 	local NielsPoint = buffer.create(POINT_SIZE)
 	for NAFIndex = NAFLength, 1, -1 do

@@ -1,5 +1,5 @@
 --[=[
-	Cryptography library: Poly1305
+	Cryptography library: Poly1305 (Optimized Buffer Usage)
 	
 	Sizes:
 		Key: 32 bytes
@@ -17,45 +17,30 @@
 --!native
 --!optimize 2
 
-local DWORD = 4
 local TAG_SIZE = 16
 local BLOCK_SIZE = 16
-
 local POLY1305_KEY_SIZE = 32
-
-local function ReadU32Array(Data: buffer, Offset: number, Count: number): {number}
-	local Result = {}
-	for Index = 1, Count do
-		Result[Index] = buffer.readu32(Data, Offset + (Index - 1) * DWORD)
-	end
-	return Result
-end
-
-local function WriteU32Array(Data: buffer, Offset: number, Values: {number})
-	for Index, Value in ipairs(Values) do
-		buffer.writeu32(Data, Offset + (Index - 1) * DWORD, Value)
-	end
-end
 
 local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	local MessageLength = buffer.len(Message)
 
-	local PaddedMessage = buffer.create(MessageLength + BLOCK_SIZE)
-	buffer.copy(PaddedMessage, 0, Message, 0, MessageLength)
+	local PaddedMessage = Message
+	local ProcessLength = MessageLength
 
-	local PartialBlockLength = MessageLength - 15
 	if MessageLength % BLOCK_SIZE ~= 0 or MessageLength == 0 then
+		local PaddingSize = BLOCK_SIZE - (MessageLength % BLOCK_SIZE)
+		ProcessLength = MessageLength + PaddingSize
+		PaddedMessage = buffer.create(ProcessLength)
+		buffer.copy(PaddedMessage, 0, Message, 0, MessageLength)
 		buffer.writeu8(PaddedMessage, MessageLength, 1)
-		local PaddingSize = (-MessageLength % BLOCK_SIZE) - 1
-		MessageLength += 1 + PaddingSize
 	end
 
-	local RValues = ReadU32Array(Key, 0, 4)
+	local PartialBlockLength = MessageLength - 15
 
-	local R0 = RValues[1] % (2 ^ 28)
-	local R1 = (RValues[2] - RValues[2] % 4) % (2 ^ 28) * (2 ^ 32)
-	local R2 = (RValues[3] - RValues[3] % 4) % (2 ^ 28) * (2 ^ 64)
-	local R3 = (RValues[4] - RValues[4] % 4) % (2 ^ 28) * (2 ^ 96)
+	local R0 = buffer.readu32(Key, 0) % (2 ^ 28)
+	local R1 = bit32.band(buffer.readu32(Key, 4), 0x0FFFFFFC) % (2 ^ 28) * (2 ^ 32)
+	local R2 = bit32.band(buffer.readu32(Key, 8), 0x0FFFFFFC) % (2 ^ 28) * (2 ^ 64)
+	local R3 = bit32.band(buffer.readu32(Key, 12), 0x0FFFFFFC) % (2 ^ 28) * (2 ^ 96)
 
 	local R0Low = R0 % (2 ^ 18)
 	local R0High = R0 - R0Low
@@ -80,13 +65,16 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	local Accumulator0, Accumulator1, Accumulator2, Accumulator3 = 0, 0, 0, 0
 	local Accumulator4, Accumulator5, Accumulator6, Accumulator7 = 0, 0, 0, 0
 
-	for BlockOffset = 0, MessageLength - 1, BLOCK_SIZE do
-		local MessageBlock = ReadU32Array(PaddedMessage, BlockOffset, 4)
+	for BlockOffset = 0, ProcessLength - 1, BLOCK_SIZE do
+		local MessageBlock0 = buffer.readu32(PaddedMessage, BlockOffset)
+		local MessageBlock1 = buffer.readu32(PaddedMessage, BlockOffset + 4)
+		local MessageBlock2 = buffer.readu32(PaddedMessage, BlockOffset + 8)
+		local MessageBlock3 = buffer.readu32(PaddedMessage, BlockOffset + 12)
 
-		local X0 = Accumulator0 + Accumulator1 + MessageBlock[1]
-		local X2 = Accumulator2 + Accumulator3 + MessageBlock[2] * (2 ^ 32)
-		local X4 = Accumulator4 + Accumulator5 + MessageBlock[3] * (2 ^ 64)
-		local X6 = Accumulator6 + Accumulator7 + MessageBlock[4] * (2 ^ 96)
+		local X0 = Accumulator0 + Accumulator1 + MessageBlock0
+		local X2 = Accumulator2 + Accumulator3 + MessageBlock1 * (2 ^ 32)
+		local X4 = Accumulator4 + Accumulator5 + MessageBlock2 * (2 ^ 64)
+		local X6 = Accumulator6 + Accumulator7 + MessageBlock3 * (2 ^ 96)
 
 		if BlockOffset <= PartialBlockLength then
 			X6 = X6 + (2 ^ 128)
@@ -176,29 +164,29 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 		Carry0 -= 0xfffb
 	end
 
-	local SValues = ReadU32Array(Key, 16, 4)
+	local S0 = buffer.readu32(Key, 16)
+	local S1Val = buffer.readu32(Key, 20)
+	local S2Val = buffer.readu32(Key, 24)
+	local S3Val = buffer.readu32(Key, 28)
 
-	local Unpacked0 = SValues[1] + Carry0 + Carry1
+	local Unpacked0 = S0 + Carry0 + Carry1
 	local Unpacked1 = Unpacked0 % (2 ^ 32)
 
-	local Unpacked2 = Unpacked0 - Unpacked1 + SValues[2] * (2 ^ 32) + Carry2 + Carry3
+	local Unpacked2 = Unpacked0 - Unpacked1 + S1Val * (2 ^ 32) + Carry2 + Carry3
 	local Unpacked3 = Unpacked2 % (2 ^ 64)
 
-	local Unpacked4 = Unpacked2 - Unpacked3 + SValues[3] * (2 ^ 64) + Carry4 + Carry5
+	local Unpacked4 = Unpacked2 - Unpacked3 + S2Val * (2 ^ 64) + Carry4 + Carry5
 	local Unpacked5 = Unpacked4 % (2 ^ 96)
 
-	local Unpacked6 = Unpacked4 - Unpacked5 + SValues[4] * (2 ^ 96) + Carry6 + Carry7
+	local Unpacked6 = Unpacked4 - Unpacked5 + S3Val * (2 ^ 96) + Carry6 + Carry7
 	local Unpacked7 = Unpacked6 % (2 ^ 128)
 
 	local Output = buffer.create(TAG_SIZE)
-	local OutputValues = {
-		Unpacked1,
-		Unpacked3 / (2 ^ 32),
-		Unpacked5 / (2 ^ 64),
-		Unpacked7 / (2 ^ 96)
-	}
+	buffer.writeu32(Output, 0, Unpacked1)
+	buffer.writeu32(Output, 4, Unpacked3 / (2 ^ 32))
+	buffer.writeu32(Output, 8, Unpacked5 / (2 ^ 64))
+	buffer.writeu32(Output, 12, Unpacked7 / (2 ^ 96))
 
-	WriteU32Array(Output, 0, OutputValues)
 	return Output
 end
 
@@ -206,7 +194,7 @@ local function Poly1305(Message: buffer, Key: buffer): buffer
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
-	
+
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
@@ -214,11 +202,11 @@ local function Poly1305(Message: buffer, Key: buffer): buffer
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
-	
+
 	if typeof(Key) ~= "buffer" then
 		error(`Key must be a buffer, got {typeof(Key)}`, 2)
 	end
-	
+
 	local KeyLength = buffer.len(Key)
 	if KeyLength ~= POLY1305_KEY_SIZE then
 		error(`Key must be exactly {POLY1305_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)

@@ -51,8 +51,9 @@ local function ProcessSmallWord(Message: buffer, Offset: number, Digest: number)
 	if Offset + 4 > buffer.len(Message) then
 		return Digest
 	end
+	
 	local Word = buffer.readu32(Message, Offset)
-	Digest = Digest + Multiply32(Word, PRIME_3)
+	Digest += Multiply32(Word, PRIME_3)
 	
 	return Multiply32(bit32.lrotate(Digest, 17), PRIME_4)
 end
@@ -62,7 +63,7 @@ local function ProcessByte(Message: buffer, Offset: number, Digest: number): num
 		return Digest
 	end
 	local ByteValue = buffer.readu8(Message, Offset)
-	Digest = Digest + Multiply32(ByteValue, PRIME_5)
+	Digest += Multiply32(ByteValue, PRIME_5)
 	
 	return Multiply32(bit32.lrotate(Digest, 11), PRIME_1)
 end
@@ -96,7 +97,7 @@ local function XXH32(Message: buffer, Seed: number?): number
 		Digest = UsedSeed + PRIME_5
 	end
 
-	Digest  += MessageLength
+	Digest += MessageLength
 
 	while CurrentOffset <= MessageLength - 4 do
 		Digest = ProcessSmallWord(Message, CurrentOffset, Digest)
