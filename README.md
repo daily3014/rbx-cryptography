@@ -74,7 +74,7 @@ Every implementation is faster than all alternatives
 | AES (Roundtrip)      | 20k       | **2.40 ms**  | 2.91 ms (@RobloxGamerPro200007) | -               | **1.2x faster**              |
 
 *Benchmarks performed in Roblox Studio on an Intel Core i7-12700*\
-*Plugin used: Benchmarker by @boatbomber*
+*Plugin used: Benchmarker by @boatbomber*\
 Roundtrip: Encrypt and Decrypt
 
 ---
