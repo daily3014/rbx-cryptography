@@ -48,7 +48,7 @@ function Random.Clamp(Input: buffer): buffer
 	return Output
 end
 
-function Random.Random(): buffer -- RandomEdDSA
+function Random.Random(): buffer
 	return Random.Clamp(RandomBytes())
 end
 

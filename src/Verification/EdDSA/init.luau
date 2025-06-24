@@ -50,7 +50,12 @@ local function ConcatBuffers(...): buffer
 	return Result
 end
 
-local function PublicKey(SecretKey: buffer): buffer
+local EDDSA = {
+	RandomBytes = RandomBytes,
+	MaskedX25519 = Mask
+}
+
+function EDDSA.PublicKey(SecretKey: buffer): buffer
 	if SecretKey == nil then
 		error("SecretKey cannot be nil", 2)
 	end
@@ -75,7 +80,7 @@ local function PublicKey(SecretKey: buffer): buffer
 	return Edwards25519.Encode(Edwards25519.MulG(ScalarBits, BitCount))
 end
 
-local function Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buffer
+function EDDSA.Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buffer
 	if SecretKey == nil then
 		error("SecretKey cannot be nil", 2)
 	end
@@ -137,7 +142,7 @@ local function Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buff
 	return ConcatBuffers(CommitmentString, ResponseString)
 end
 
-local function Verify(PublicKey: buffer, Message: buffer, Signature: buffer): boolean
+function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): boolean
 	if PublicKey == nil then
 		error("PublicKey cannot be nil", 2)
 	end
@@ -211,11 +216,4 @@ local function Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	return true
 end
 
-return {
-	PublicKey = PublicKey,
-	Sign = Sign,
-	Verify = Verify,
-
-	RandomBytes = RandomBytes,
-	MaskedX25519 = Mask
-}
+return EDDSA

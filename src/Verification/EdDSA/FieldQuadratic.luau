@@ -22,56 +22,53 @@
 
 local MultiPrecision = require("./MultiPrecision")
 
-local FieldQuadratic = {}
-
-local FieldOrder = buffer.create(96) do
+local CONSTANT_ZERO = MultiPrecision.Num(0)
+local FIELD_ORDER = buffer.create(96) do
 	local Values = {
 		16110573, 06494812, 14047250, 10680220, 14612958,
 		00000020, 00000000, 00000000, 00000000, 00000000,
 		00004096
 	}
 	for Index = 1, 11 do
-		buffer.writef64(FieldOrder, (Index - 1) * 8, Values[Index])
+		buffer.writef64(FIELD_ORDER, (Index - 1) * 8, Values[Index])
 	end
 end
 
-local MontgomeryT0 = buffer.create(96) do
+local MONTGOMERY_T0 = buffer.create(96) do
 	local Values = {
 		05537307, 01942290, 16765621, 16628356, 10618610,
 		07072433, 03735459, 01369940, 15276086, 13038191,
 		13409718
 	}
 	for Index = 1, 11 do
-		buffer.writef64(MontgomeryT0, (Index - 1) * 8, Values[Index])
+		buffer.writef64(MONTGOMERY_T0, (Index - 1) * 8, Values[Index])
 	end
 end
 
-local MontgomeryT1 = buffer.create(96) do
+local MONTGOMERY_T1 = buffer.create(96) do
 	local Values = {
 		11711996, 01747860, 08326961, 03814718, 01859974,
 		13327461, 16105061, 07590423, 04050668, 08138906,
 		00000283
 	}
 	for Index = 1, 11 do
-		buffer.writef64(MontgomeryT1, (Index - 1) * 8, Values[Index])
+		buffer.writef64(MONTGOMERY_T1, (Index - 1) * 8, Values[Index])
 	end
 end
 
-local DivideBy8Constant = buffer.create(96) do
+local DIVIDE_8 = buffer.create(96) do
 	local Values = {
 		5110253, 3039345, 2503500, 11779568, 15416472,
 		16766550, 16777215, 16777215, 16777215, 16777215,
 		4095
 	}
 	for Index = 1, 11 do
-		buffer.writef64(DivideBy8Constant, (Index - 1) * 8, Values[Index])
+		buffer.writef64(DIVIDE_8, (Index - 1) * 8, Values[Index])
 	end
 end
 
-local ZeroConstant = MultiPrecision.Num(0)
-
 local function Reduce(LargeNumber: buffer): buffer
-	local Difference = MultiPrecision.Sub(LargeNumber, FieldOrder)
+	local Difference = MultiPrecision.Sub(LargeNumber, FIELD_ORDER)
 
 	if MultiPrecision.Approx(Difference) < 0 then
 		return MultiPrecision.Carry(LargeNumber)
@@ -80,12 +77,14 @@ local function Reduce(LargeNumber: buffer): buffer
 	return MultiPrecision.Carry(Difference)
 end
 
+local FieldQuadratic = {}
+
 function FieldQuadratic.Add(ScalarA: buffer, ScalarB: buffer): buffer
 	return Reduce(MultiPrecision.Add(ScalarA, ScalarB))
 end
 
 function FieldQuadratic.Neg(ScalarA: buffer): buffer
-	return Reduce(MultiPrecision.Sub(FieldOrder, ScalarA))
+	return Reduce(MultiPrecision.Sub(FIELD_ORDER, ScalarA))
 end
 
 function FieldQuadratic.Sub(ScalarA: buffer, ScalarB: buffer): buffer
@@ -94,19 +93,19 @@ end
 
 function FieldQuadratic.Mul(ScalarA: buffer, ScalarB: buffer): buffer
 	local ProductLow, ProductHigh = MultiPrecision.Mul(ScalarA, ScalarB)
-	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(ProductLow, MontgomeryT0), FieldOrder)
+	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(ProductLow, MONTGOMERY_T0), FIELD_ORDER)
 	local _, ResultHigh = MultiPrecision.DWAdd(ProductLow, ProductHigh, ReductionLow, ReductionHigh)
 
 	return Reduce(ResultHigh)
 end
 
 local function Montgomery(RegularScalar: buffer): buffer
-	return FieldQuadratic.Mul(RegularScalar, MontgomeryT1)
+	return FieldQuadratic.Mul(RegularScalar, MONTGOMERY_T1)
 end
 
 local function Demontgomery(MontgomeryScalar: buffer): buffer
-	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MontgomeryT0), FieldOrder)
-	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, ZeroConstant, ReductionLow, ReductionHigh)
+	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MONTGOMERY_T0), FIELD_ORDER)
+	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, CONSTANT_ZERO, ReductionLow, ReductionHigh)
 
 	return Reduce(ResultHigh)
 end
@@ -115,24 +114,21 @@ function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 	local DemontResult = Demontgomery(MontgomeryScalar)
 	local EncodedBuffer = buffer.create(32)
 	local ByteIndex = 0
-
 	for LimbIndex = 0, 9 do
 		local Value = buffer.readf64(DemontResult, LimbIndex * 8)
-
 		buffer.writeu8(EncodedBuffer, ByteIndex, Value % 256)
-		Value = math.floor(Value / 256)
+		Value = Value // 256
 		buffer.writeu8(EncodedBuffer, ByteIndex + 1, Value % 256)
-		Value = math.floor(Value / 256)
+		Value = Value // 256
 		buffer.writeu8(EncodedBuffer, ByteIndex + 2, Value % 256)
-
 		ByteIndex += 3
 	end
-
+	
 	local LastValue = buffer.readf64(DemontResult, 10 * 8)
 	buffer.writeu8(EncodedBuffer, 30, LastValue % 256)
-	LastValue = math.floor(LastValue / 256)
+	LastValue = LastValue // 256
 	buffer.writeu8(EncodedBuffer, 31, LastValue % 256)
-
+	
 	return EncodedBuffer
 end
 
@@ -196,7 +192,7 @@ function FieldQuadratic.DecodeClamped(ClampedBuffer: buffer): buffer
 end
 
 function FieldQuadratic.Eighth(MontgomeryScalar: buffer): buffer
-	return FieldQuadratic.Mul(MontgomeryScalar, DivideBy8Constant)
+	return FieldQuadratic.Mul(MontgomeryScalar, DIVIDE_8)
 end
 
 local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)

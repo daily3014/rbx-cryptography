@@ -27,16 +27,16 @@
 local ChaCha20 = require("@self/ChaCha20")
 local Poly1305 = require("@self/Poly1305")
 
-local AEAD = {
-	ChaCha20 = ChaCha20,
-	Poly1305 = Poly1305
-}
-
 local QWORD = 8
 
 local CHACHA20_KEY_SIZE = 32
 local CHACHA20_NONCE_SIZE = 12
 local POLY1305_TAG_SIZE = 16
+
+local AEAD = {
+	ChaCha20 = ChaCha20,
+	Poly1305 = Poly1305
+}
 
 local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 	local Length1 = buffer.len(Buffer1)
@@ -44,7 +44,7 @@ local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 	if Length1 ~= Length2 then
 		return false
 	end
-	
+
 	local Difference = 0
 	for Index = 0, Length1 - 1 do
 		Difference = bit32.bor(Difference, bit32.bxor(
@@ -52,15 +52,17 @@ local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 			buffer.readu8(Buffer2, Index)
 			))
 	end
-	
+
 	return Difference == 0
 end
 
 local function ConstructAuthData(AAD: buffer, Ciphertext: buffer): buffer
 	local AADLength = buffer.len(AAD)
 	local CiphertextLength = buffer.len(Ciphertext)
+	
 	local AADPadding = (-AADLength) % 16
 	local CiphertextPadding = (-CiphertextLength) % 16
+	
 	local TotalSize = AADLength + AADPadding + CiphertextLength + CiphertextPadding + 16
 	local AuthData = buffer.create(TotalSize)
 	local Offset = 0
@@ -78,7 +80,7 @@ end
 local function GenerateAuthKey(Key: buffer, Nonce: buffer, Rounds: number?): buffer
 	local BlockRounds = Rounds or 20
 	local ZeroBlock = buffer.create(32)
-	
+
 	return ChaCha20(ZeroBlock, Key, Nonce, 0, BlockRounds)
 end
 
@@ -86,11 +88,11 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
-	
+
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
-	
+
 	local MessageLength = buffer.len(Message)
 	if MessageLength == 0 then
 		error("Message cannot be empty", 2)
@@ -99,11 +101,11 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
-	
+
 	if typeof(Key) ~= "buffer" then
 		error(`Key must be a buffer, got {typeof(Key)}`, 2)
 	end
-	
+
 	local KeyLength = buffer.len(Key)
 	if KeyLength ~= CHACHA20_KEY_SIZE then
 		error(`Key must be exactly {CHACHA20_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)
@@ -112,11 +114,11 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 	if Nonce == nil then
 		error("Nonce cannot be nil", 2)
 	end
-	
+
 	if typeof(Nonce) ~= "buffer" then
 		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
 	end
-	
+
 	local NonceLength = buffer.len(Nonce)
 	if NonceLength ~= CHACHA20_NONCE_SIZE then
 		error(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long, got {NonceLength} bytes`, 2)
@@ -132,11 +134,11 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end
-		
+
 		if Rounds <= 0 then
 			error(`Rounds must be positive, got {Rounds}`, 2)
 		end
-		
+
 		if Rounds % 2 ~= 0 then
 			error(`Rounds must be even, got {Rounds}`, 2)
 		end
@@ -144,6 +146,7 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or buffer.create(0)
+
 	local AuthenticationKey = GenerateAuthKey(Key, Nonce, BlockRounds)
 	local Ciphertext = ChaCha20(Message, Key, Nonce, 1, BlockRounds)
 	local AuthData = ConstructAuthData(AAD, Ciphertext)
@@ -156,11 +159,11 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	if Ciphertext == nil then
 		error("Ciphertext cannot be nil", 2)
 	end
-	
+
 	if typeof(Ciphertext) ~= "buffer" then
 		error(`Ciphertext must be a buffer, got {typeof(Ciphertext)}`, 2)
 	end
-	
+
 	local CiphertextLength = buffer.len(Ciphertext)
 	if CiphertextLength == 0 then
 		error("Ciphertext cannot be empty", 2)
@@ -169,11 +172,11 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
-	
+
 	if typeof(Key) ~= "buffer" then
 		error(`Key must be a buffer, got {typeof(Key)}`, 2)
 	end
-	
+
 	local KeyLength = buffer.len(Key)
 	if KeyLength ~= CHACHA20_KEY_SIZE then
 		error(`Key must be exactly {CHACHA20_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)
@@ -182,11 +185,11 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	if Nonce == nil then
 		error("Nonce cannot be nil", 2)
 	end
-	
+
 	if typeof(Nonce) ~= "buffer" then
 		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
 	end
-	
+
 	local NonceLength = buffer.len(Nonce)
 	if NonceLength ~= CHACHA20_NONCE_SIZE then
 		error(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long, got {NonceLength} bytes`, 2)
@@ -195,11 +198,11 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	if Tag == nil then
 		error("Tag cannot be nil", 2)
 	end
-	
+
 	if typeof(Tag) ~= "buffer" then
 		error(`Tag must be a buffer, got {typeof(Tag)}`, 2)
 	end
-	
+
 	local TagLength = buffer.len(Tag)
 	if TagLength ~= POLY1305_TAG_SIZE then
 		error(`Tag must be exactly {POLY1305_TAG_SIZE} bytes long, got {TagLength} bytes`, 2)
@@ -215,11 +218,11 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end
-		
+
 		if Rounds <= 0 then
 			error(`Rounds must be positive, got {Rounds}`, 2)
 		end
-		
+
 		if Rounds % 2 ~= 0 then
 			error(`Rounds must be even, got {Rounds}`, 2)
 		end
@@ -227,6 +230,7 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or buffer.create(0)
+
 	local AuthenticationKey = GenerateAuthKey(Key, Nonce, BlockRounds)
 	local AuthData = ConstructAuthData(AAD, Ciphertext)
 	local ExpectedTag = Poly1305(AuthData, AuthenticationKey)

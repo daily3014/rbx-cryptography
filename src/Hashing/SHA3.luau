@@ -13,8 +13,6 @@
 --!optimize 2
 --!strict
 
-local SHA3 = {}
-
 local OUTPUT_BUFFER = buffer.create(64)
 local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	local HighFactorKeccak = 0
@@ -85,8 +83,6 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 		local Lane24Low, Lane24High = buffer.readu32(LanesLow, 92), buffer.readu32(LanesHigh, 92)
 		local Lane25Low, Lane25High = buffer.readu32(LanesLow, 96), buffer.readu32(LanesHigh, 96)
 
-		local TWO_POW_32 = 2^32
-
 		for RoundIndex = 0, 92, 4 do
 			local Column1Low, Column1High = bit32.bxor(Lane01Low, Lane06Low, Lane11Low, Lane16Low, Lane21Low), bit32.bxor(Lane01High, Lane06High, Lane11High, Lane16High, Lane21High)
 			local Column2Low, Column2High = bit32.bxor(Lane02Low, Lane07Low, Lane12Low, Lane17Low, Lane22Low), bit32.bxor(Lane02High, Lane07High, Lane12High, Lane17High, Lane22High)
@@ -127,11 +123,11 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Temp3Low = bit32.bxor(DeltaLow, Lane19Low); Temp3High = bit32.bxor(DeltaHigh, Lane19High)
 			Temp4Low = bit32.bxor(DeltaLow, Lane24Low); Temp4High = bit32.bxor(DeltaHigh, Lane24High)
 
-			Lane04Low = Temp3Low * 2097152 % TWO_POW_32 + (bit32.bor(Temp3High, 0) - Temp3High % 2048) // 2048; Lane04High = Temp3High * 2097152 % TWO_POW_32 + (bit32.bor(Temp3Low, 0) - Temp3Low % 2048) // 2048
-			Lane09Low = Temp0Low * 268435456 % TWO_POW_32 + (bit32.bor(Temp0High, 0) - Temp0High % 16) // 16; Lane09High = Temp0High * 268435456 % TWO_POW_32 + (bit32.bor(Temp0Low, 0) - Temp0Low % 16) // 16
-			Lane14Low = Temp2Low * 33554432 % TWO_POW_32 + (bit32.bor(Temp2High, 0) - Temp2High % 128) // 128; Lane14High = Temp2High * 33554432 % TWO_POW_32 + (bit32.bor(Temp2Low, 0) - Temp2Low % 128) // 128
-			Lane19Low = (bit32.bor(Temp4Low, 0) - Temp4Low % 256) // 256 + Temp4High * 16777216 % TWO_POW_32; Lane19High = (bit32.bor(Temp4High, 0) - Temp4High % 256) // 256 + Temp4Low * 16777216 % TWO_POW_32
-			Lane24Low = (bit32.bor(Temp1Low, 0) - Temp1Low % 512) // 512 + Temp1High * 8388608 % TWO_POW_32; Lane24High = (bit32.bor(Temp1High, 0) - Temp1High % 512) // 512 + Temp1Low * 8388608 % TWO_POW_32
+			Lane04Low = bit32.bor(Temp3Low * 2097152, 0) + (bit32.bor(Temp3High, 0) - Temp3High % 2048) // 2048; Lane04High = bit32.bor(Temp3High * 2097152, 0) + (bit32.bor(Temp3Low, 0) - Temp3Low % 2048) // 2048
+			Lane09Low = bit32.bor(Temp0Low * 268435456, 0) + (bit32.bor(Temp0High, 0) - Temp0High % 16) // 16; Lane09High = bit32.bor(Temp0High * 268435456, 0) + (bit32.bor(Temp0Low, 0) - Temp0Low % 16) // 16
+			Lane14Low = bit32.bor(Temp2Low * 33554432, 0) + (bit32.bor(Temp2High, 0) - Temp2High % 128) // 128; Lane14High = bit32.bor(Temp2High * 33554432, 0) + (bit32.bor(Temp2Low, 0) - Temp2Low % 128) // 128
+			Lane19Low = (bit32.bor(Temp4Low, 0) - Temp4Low % 256) // 256 + bit32.bor(Temp4High * 16777216, 0); Lane19High = (bit32.bor(Temp4High, 0) - Temp4High % 256) // 256 + bit32.bor(Temp4Low * 16777216, 0)
+			Lane24Low = (bit32.bor(Temp1Low, 0) - Temp1Low % 512) // 512 + bit32.bor(Temp1High * 8388608, 0); Lane24High = (bit32.bor(Temp1High, 0) - Temp1High % 512) // 512 + bit32.bor(Temp1Low * 8388608, 0)
 			DeltaLow = bit32.bxor(Column4Low, Column1Low * 2 + (bit32.bor(Column1High, 0) - Column1High % 2147483648) // 2147483648); DeltaHigh = bit32.bxor(Column4High, Column1High * 2 + (bit32.bor(Column1Low, 0) - Column1Low % 2147483648) // 2147483648)
 
 			Temp0Low = bit32.bxor(DeltaLow, Lane05Low); Temp0High = bit32.bxor(DeltaHigh, Lane05High)
@@ -141,9 +137,9 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Temp4Low = bit32.bxor(DeltaLow, Lane25Low); Temp4High = bit32.bxor(DeltaHigh, Lane25High)
 
 			Lane05Low = Temp4Low * 16384 + (bit32.bor(Temp4High, 0) - Temp4High % 262144) // 262144; Lane05High = Temp4High * 16384 + (bit32.bor(Temp4Low, 0) - Temp4Low % 262144) // 262144
-			Lane10Low = Temp1Low * 1048576 % TWO_POW_32 + (bit32.bor(Temp1High, 0) - Temp1High % 4096) // 4096; Lane10High = Temp1High * 1048576 % TWO_POW_32 + (bit32.bor(Temp1Low, 0) - Temp1Low % 4096) // 4096
+			Lane10Low = bit32.bor(Temp1Low * 1048576, 0) + (bit32.bor(Temp1High, 0) - Temp1High % 4096) // 4096; Lane10High = bit32.bor(Temp1High * 1048576, 0) + (bit32.bor(Temp1Low, 0) - Temp1Low % 4096) // 4096
 			Lane15Low = Temp3Low * 256 + (bit32.bor(Temp3High, 0) - Temp3High % 16777216) // 16777216; Lane15High = Temp3High * 256 + (bit32.bor(Temp3Low, 0) - Temp3Low % 16777216) // 16777216
-			Lane20Low = Temp0Low * 134217728 % TWO_POW_32 + (bit32.bor(Temp0High, 0) - Temp0High % 32) // 32; Lane20High = Temp0High * 134217728 % TWO_POW_32 + (bit32.bor(Temp0Low, 0) - Temp0Low % 32) // 32
+			Lane20Low = bit32.bor(Temp0Low * 134217728, 0) + (bit32.bor(Temp0High, 0) - Temp0High % 32) // 32; Lane20High = bit32.bor(Temp0High * 134217728, 0) + (bit32.bor(Temp0Low, 0) - Temp0Low % 32) // 32
 			Lane25Low = (bit32.bor(Temp2Low, 0) - Temp2Low % 33554432) // 33554432 + Temp2High * 128; Lane25High = (bit32.bor(Temp2High, 0) - Temp2High % 33554432) // 33554432 + Temp2Low * 128
 
 			DeltaLow = bit32.bxor(Column5Low, Column2Low * 2 + (bit32.bor(Column2High, 0) - Column2High % 2147483648) // 2147483648); DeltaHigh = bit32.bxor(Column5High, Column2High * 2 + (bit32.bor(Column2Low, 0) - Column2Low % 2147483648) // 2147483648)
@@ -272,6 +268,8 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 
 	return buffer.tostring(Hex)
 end
+
+local SHA3 = {}
 
 function SHA3.SHA3_224(Message: buffer): string
 	return ProcessSponge(Message, 448, 28, 0x06)

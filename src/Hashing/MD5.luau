@@ -33,6 +33,8 @@ local SHIFTS = {
 	6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
 }
 
+local OFFSETS = table.create(64)
+
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
 	local BitLength = ContentLength * 8
@@ -56,7 +58,6 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return NewContent, NewContentLength
 end
 
-local OFFSETS = table.create(64)
 local function DigestBlocks(Blocks: buffer, Length: number): (number, number, number, number)
 	local A, B, C, D = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
 

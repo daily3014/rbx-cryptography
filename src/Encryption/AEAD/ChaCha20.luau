@@ -53,13 +53,10 @@ local function QuarterRound(State: buffer, A: number, B: number, C: number, D: n
 	StateA = (StateA + StateB) % 2^32
 	StateD = bit32.lrotate(bit32.bxor(StateD, StateA), 16)
 	StateC += StateD
-	StateC %= 2^32
 	StateB = bit32.lrotate(bit32.bxor(StateB, StateC), 12)
 	StateA += StateB
-	StateA %= 2^32
 	StateD = bit32.lrotate(bit32.bxor(StateD, StateA), 8)
 	StateC += StateD
-	StateC %= 2^32
 	StateB = bit32.lrotate(bit32.bxor(StateB, StateC), 7)
 
 	buffer.writeu32(State, A * DWORD, StateA)
@@ -91,7 +88,7 @@ local function ProcessBlock(InitialState: buffer, Rounds: number): buffer
 	for StateIndex = 0, STATE_SIZE - 1 do
 		local OriginalValue = buffer.readu32(InitialState, StateIndex * DWORD)
 		local WorkingValue = buffer.readu32(WorkingState, StateIndex * DWORD)
-		buffer.writeu32(WorkingState, StateIndex * DWORD, (WorkingValue + OriginalValue) % 2^32)
+		buffer.writeu32(WorkingState, StateIndex * DWORD, (WorkingValue + OriginalValue))
 	end
 
 	return WorkingState
@@ -124,7 +121,7 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 	if Data == nil then
 		error("Data cannot be nil", 2)
 	end
-	
+
 	if typeof(Data) ~= "buffer" then
 		error(`Data must be a buffer, got {typeof(Data)}`, 2)
 	end
@@ -132,11 +129,11 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
-	
+
 	if typeof(Key) ~= "buffer" then
 		error(`Key must be a buffer, got {typeof(Key)}`, 2)
 	end
-	
+
 	local KeyLength = buffer.len(Key)
 	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then
 		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {KeyLength} bytes`, 2)
@@ -145,11 +142,11 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 	if Nonce == nil then
 		error("Nonce cannot be nil", 2)
 	end
-	
+
 	if typeof(Nonce) ~= "buffer" then
 		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
 	end
-	
+
 	local NonceLength = buffer.len(Nonce)
 	if NonceLength ~= CHACHA20_NONCE_SIZE then
 		error(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long, got {NonceLength} bytes`, 2)
@@ -159,15 +156,15 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 		if typeof(Counter) ~= "number" then
 			error(`Counter must be a number, got {typeof(Counter)}`, 2)
 		end
-		
+
 		if Counter < 0 then
 			error(`Counter cannot be negative, got {Counter}`, 2)
 		end
-		
+
 		if Counter ~= math.floor(Counter) then
 			error(`Counter must be an integer, got {Counter}`, 2)
 		end
-		
+
 		if Counter >= 2^32 then
 			error(`Counter must be less than 2^32, got {Counter}`, 2)
 		end
@@ -177,15 +174,15 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end
-		
+
 		if Rounds <= 0 then
 			error(`Rounds must be positive, got {Rounds}`, 2)
 		end
-		
+
 		if Rounds ~= math.floor(Rounds) then
 			error(`Rounds must be an integer, got {Rounds}`, 2)
 		end
-		
+
 		if Rounds % 2 ~= 0 then
 			error(`Rounds must be even, got {Rounds}`, 2)
 		end

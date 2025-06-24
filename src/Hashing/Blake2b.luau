@@ -8,7 +8,7 @@
 		-- BLAKE2b-128 (128-bit output)
 		local Result128 = BLAKE2b(Message, 16)
 		
-		-- BLAKE2b-256 (256-bit output)  
+		-- BLAKE2b-256 (256-bit output)
 		local Result256 = BLAKE2b(Message, 32)
 		
 		-- BLAKE2b-384 (384-bit output)

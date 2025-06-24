@@ -26,20 +26,15 @@ local Curve25519 = require("./Curve25519")
 local SHA512 = require("./SHA512")
 local RandomBytes = require("./Random")
 
-local Mask = {}
-
 local COORD_SIZE = 104
 
 local X25519_SECRET_KEY_SIZE = 32
 local X25519_PUBLIC_KEY_SIZE = 32
 local X25519_MASKED_KEY_SIZE = 64
+
 local X25519_SIGNATURE_SECRET_KEY_SIZE = 32
 
-local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
-	local Coord = buffer.create(COORD_SIZE)
-	buffer.copy(Coord, 0, Point, Index * COORD_SIZE, COORD_SIZE)
-	return Coord
-end
+local Mask = {}
 
 function Mask.Mask(SecretKey: buffer): buffer
 	if SecretKey == nil then
@@ -140,6 +135,7 @@ function Mask.EphemeralSecretKey(MaskedKey: buffer): buffer
 
 	local EphemeralKey = buffer.create(32)
 	buffer.copy(EphemeralKey, 0, MaskedKey, 32, 32)
+	
 	return EphemeralKey
 end
 
@@ -160,12 +156,20 @@ local function ExchangeOnPoint(MaskedSecretKey: buffer, CurvePoint: buffer): (bu
 
 	local FullScalarPoint = Curve25519.DifferentialAdd(DifferencePoint, MaskPoint, MaskedPoint)
 
-	local PointX = GetMontgomeryCoord(CurvePoint, 0)
-	local PointZ = GetMontgomeryCoord(CurvePoint, 1)
-	local FullPointX = GetMontgomeryCoord(FullScalarPoint, 0)
-	local FullPointZ = GetMontgomeryCoord(FullScalarPoint, 1)
-	local MaskPointX = GetMontgomeryCoord(MaskPoint, 0)
-	local MaskPointZ = GetMontgomeryCoord(MaskPoint, 1)
+	local PointX = buffer.create(COORD_SIZE)
+	buffer.copy(PointX, 0, CurvePoint, 0 * COORD_SIZE, COORD_SIZE)
+	local PointZ = buffer.create(COORD_SIZE)
+	buffer.copy(PointZ, 0, CurvePoint, 1 * COORD_SIZE, COORD_SIZE)
+
+	local FullPointX = buffer.create(COORD_SIZE)
+	buffer.copy(FullPointX, 0, FullScalarPoint, 0 * COORD_SIZE, COORD_SIZE)
+	local FullPointZ = buffer.create(COORD_SIZE)
+	buffer.copy(FullPointZ, 0, FullScalarPoint, 1 * COORD_SIZE, COORD_SIZE)
+
+	local MaskPointX = buffer.create(COORD_SIZE)
+	buffer.copy(MaskPointX, 0, MaskPoint, 0 * COORD_SIZE, COORD_SIZE)
+	local MaskPointZ = buffer.create(COORD_SIZE)
+	buffer.copy(MaskPointZ, 0, MaskPoint, 1 * COORD_SIZE, COORD_SIZE)
 
 	PointX, PointZ = FieldPrime.Mul(PointX, PointZ), FieldPrime.Square(PointZ)
 	FullPointX, FullPointZ = FieldPrime.Mul(FullPointX, FullPointZ), FieldPrime.Square(FullPointZ)

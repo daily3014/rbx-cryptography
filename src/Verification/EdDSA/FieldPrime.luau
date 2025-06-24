@@ -21,10 +21,7 @@
 --!optimize 2
 
 local SIZE = 104
-
-local FieldPrime = {}
-
-local SquareRootMinusOne = buffer.create(SIZE) do
+local SQUARES = buffer.create(SIZE) do
 	local Tbl = {
 		0958640 * 2 ^ 0,
 		0826664 * 2 ^ 22,
@@ -41,9 +38,11 @@ local SquareRootMinusOne = buffer.create(SIZE) do
 	}
 
 	for Index = 1, 12 do
-		buffer.writef64(SquareRootMinusOne, (Index - 1) * 8, Tbl[Index])
+		buffer.writef64(SQUARES, (Index - 1) * 8, Tbl[Index])
 	end
 end
+
+local FieldPrime = {}
 
 function FieldPrime.Num(Number: number): buffer
 	local Buf = buffer.create(SIZE)
@@ -315,7 +314,6 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 		buffer.readf64(ElementB, 64), buffer.readf64(ElementB, 72),
 		buffer.readf64(ElementB, 80), buffer.readf64(ElementB, 88)
 
-	-- evil codegen hack scientists dont want u to know about
 	local A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number,
 			A07: number, A08: number, A09: number, A10: number, A11: number =
 		a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10, a11
@@ -748,7 +746,7 @@ function FieldPrime.SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
 	local VB2 = Mul(ElementV, B2)
 
 	if not Eq(VB2, ElementU) then
-		CandidateB = Mul(CandidateB, SquareRootMinusOne)
+		CandidateB = Mul(CandidateB, SQUARES)
 		B2 = Square(CandidateB)
 		VB2 = Mul(ElementV, B2)
 	end
@@ -759,6 +757,7 @@ function FieldPrime.SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
 		return nil
 	end
 end
+
 function FieldPrime.Encode(ElementA: buffer): buffer
 	ElementA = FieldPrime.Canonicalize(ElementA)
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
@@ -862,8 +861,7 @@ function FieldPrime.Eqz(ElementA: buffer): boolean
 		buffer.readf64(Canonical, 64), buffer.readf64(Canonical, 72),
 		buffer.readf64(Canonical, 80), buffer.readf64(Canonical, 88)
 
-	return C00 + C01 + C02 + C03 + C04 + C05 + C06 + C07 + C08 + C09 + C10 + C11
-		== 0
+	return C00 + C01 + C02 + C03 + C04 + C05 + C06 + C07 + C08 + C09 + C10 + C11 == 0
 end
 
 return FieldPrime

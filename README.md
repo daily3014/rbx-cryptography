@@ -29,9 +29,10 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 - **Authentication**: HMAC (works with any hash function)
 - **Fast Hashing**: XXH32 (ultra-fast non-cryptographic)
 
-**Encryption Functions (3):**
+**Encryption Functions (6):**
 - **Stream Cipher**: ChaCha20 (stream cipher)
-- **Block Cipher**: AES with multiple modes (CBC, ECB, etc.) and padding schemes
+- **Block Cipher**: AES with multiple modes (CBC, ECB, etc.) and padding schemes, Simon, Speck
+- **Additive Cipher**: XOR
 - **Authenticated Encryption**: ChaCha20-Poly1305 AEAD
 
 **Digital Signatures (3):**
@@ -46,22 +47,35 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 ---
 
 ## Performance
-Table would be too large if everything was benched.
-Every implementation is faster than all alternatives:
+(Only some of the algorithms are present!)\
+Every implementation is faster than all alternatives
 
-| Algorithm           | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
-|---------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
-| **SHA512**          | 10k       | **415 μs**   | 2232 μs  | -                              | 641 μs          | **5.6x faster** than HashLib |
-| **SHA256**          | 20k       | **370 μs**   | 2058 μs  | 493 μs (old version)           | 596 μs          | **5.5x faster** than HashLib |
-| **Keccak/SHA3-512** | 20k       | **1.74 ms**  | 10.60 ms | -                              | -               | **6.1x faster** than HashLib |
-| **ChaCha20**        | 20k       | **0.91 ms**  | -        | 7.87 ms (EncryptedNet)         | -               | **8.6x faster**              |
-| **AES (Encrypt)**   | 20k       | **0.87 ms**  | -        | 1.13 ms (RobloxGamerPro200007) | -               | **1.3x faster**              |
-| **AES (Decrypt)**   | 20k       | **1.47 ms**  | -        | 2.00 ms (RobloxGamerPro200007) | -               | **1.4x faster**              |
-| **CRC32**           | 200k      | **2.58 ms**  | -        | 6.26 ms (DevForum)             | -               | **2.4x faster**              |
-| **Adler32**         | 200k      | **0.19 ms**  | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
+### Hashing / Checksum
+| Algorithm            | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
+|----------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
+| Adler32              | 200k      | **0.19 ms**  | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
+| SHA256               | 20k       | **370 μs**   | 2058 μs  | 493 μs (Old Version)           | 596 μs          | **5.5x faster** than HashLib |
+| SHA512               | 20k       | **822 μs**   | 4348 μs  | -                              | 1066 μs         | **5.6x faster** than HashLib |
+| Keccak/SHA3-512      | 20k       | **1.74 ms**  | 10.60 ms | -                              | -               | **6.1x faster** than HashLib |
+| CRC32                | 200k      | **2.01 ms**  | -        | 6.26 ms (DevForum)             | -               | **3.1x faster**              |
+
+### Encryption
+| Algorithm            | Data Size | This Library | Alternative                     | Other Libraries | Improvement                  |
+|----------------------|-----------|--------------|---------------------------------|-----------------|------------------------------|
+| XOR (Encrypt)        | 1 million | **1.10 ms**  | ~49.5 ms (@TwiistedRoyalty)     | 4000ms (daily)  | **64.3x faster**             |
+| XOR (Roundtrip)      | 1 million | **2.20 ms**  | 98.9 ms (@TwiistedRoyalty)      | ~8000ms (daily) | **64.3x faster**             |
+| Simon (Encrypt)      | 20k       | **0.42 ms**  | -                               | -               | -                            |
+| Simon (Roundtrip)    | 20k       | **0.85 ms**  | -                               | -               | -                            |
+| Speck (Encrypt)      | 20k       | **0.48 ms**  | -                               | -               | -                            |
+| Speck (Roundtrip)    | 20k       | **0.98 ms**  | -                               | -               | -                            |
+| ChaCha20 (Encrypt)   | 20k       | **0.62 ms**  | 7.87 ms (EncryptedNet)          | -               | **8.6x faster**              |
+| ChaCha20 (Roundtrip) | 20k       | **1.25 ms**  |  ~15 ms (EncryptedNet)          | -               | **8.6x faster**              |
+| AES (Encrypt)        | 20k       | **0.87 ms**  | 1.13 ms (@RobloxGamerPro200007) | -               | **1.3x faster**              |
+| AES (Roundtrip)      | 20k       | **2.40 ms**  | 2.91 ms (@RobloxGamerPro200007) | -               | **1.2x faster**              |
 
 *Benchmarks performed in Roblox Studio on an Intel Core i7-12700*\
 *Plugin used: Benchmarker by @boatbomber*
+Roundtrip: Encrypt and Decrypt
 
 ---
 
@@ -140,99 +154,7 @@ local DecryptedText = Encryption.AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD)
 ```
 ### EdDsa Usage
 ```lua
-local EdDSA = Verification.EdDSA
-
--- Standard EdDSA usage
-local SecretKey = RandomBytes.Random(32) -- You may use any random string generator but it has to be a buffer!
-local PublicKey = EdDSA.PublicKey(SecretKey)
-local Message = buffer.fromstring("Hello World")
-local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
-local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
-
--- EdDSA with signature masking (enhanced security)
-local SecretKey = RandomBytes.Random(32)
-local MaskedSignatureKey = EdDSA.MaskedX25519.Mask(SecretKey)
-local PublicKey = EdDSA.PublicKey(SecretKey)
-local Message = buffer.fromstring("Hello World")
-local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
-local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
-
--- Masked X25519 key exchange via EdDSA module
-local AliceSecret = buffer.fromstring(string.rep("a", 32))
-local AliceMaskedKey = EdDSA.MaskedX25519.Mask(AliceSecret)
-local AlicePublicKey = EdDSA.MaskedX25519.PublicKey(AliceMaskedKey)
-
-local BobSecret = buffer.fromstring(string.rep("b", 32))
-local BobMaskedKey = EdDSA.MaskedX25519.Mask(BobSecret)
-local BobPublicKey = EdDSA.MaskedX25519.PublicKey(BobMaskedKey)
-
--- Note that the secrets *shouldn't match!*
-local AliceStaticSecret, AliceEphemeralSecret = EdDSA.MaskedX25519.Exchange(AliceMaskedKey, BobPublicKey)
-local BobStaticSecret, BobEphemeralSecret = EdDSA.MaskedX25519.Exchange(BobMaskedKey, AlicePublicKey)
-
--- Refresh masking for ongoing security
-local AliceRemaskedKey = EdDSA.MaskedX25519.Remask(AliceMaskedKey)
-
---- Masked X25519 Examples
-
--- Generate keypair
-local SecretKey = RandomBytes.Random(32)
-local PublicKey = EdDSA.PublicKey(SecretKey)
-
--- Sign message
-local Message = buffer.fromstring("Hello World")
-local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
-
--- Verify signature
-local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
-assert(IsValid)
-
--- Alice setup
-local AliceSecret = RandomBytes.Random(32)
-local AliceMaskedKey = EdDSA.MaskedX25519.Mask(AliceSecret)
-local AlicePublicKey = EdDSA.MaskedX25519.PublicKey(AliceMaskedKey)
-
--- Bob setup  
-local BobSecret = RandomBytes.Random(32)
-local BobMaskedKey = EdDSA.MaskedX25519.Mask(BobSecret)
-local BobPublicKey = EdDSA.MaskedX25519.PublicKey(BobMaskedKey)
-
--- Key exchange
--- (The secrets themselves won't match, but can derive the same shared key)
-local AliceStaticSecret, AliceEphemeralSecret = EdDSA.MaskedX25519.Exchange(AliceMaskedKey, BobPublicKey)
-local BobStaticSecret, BobEphemeralSecret = EdDSA.MaskedX25519.Exchange(BobMaskedKey, AlicePublicKey)
-
--- Refresh masking
-local AliceRemasked = EdDSA.MaskedX25519.Remask(AliceMaskedKey)
-
--- Create masked signing key
-local AliceSigningMasked = EdDSA.MaskedX25519.MaskSignature(SecretKey)
-local AliceSigningPublic = EdDSA.MaskedX25519.PublicKey(AliceSigningMasked)
-
--- Get ephemeral key
-local EphemeralKey = EdDSA.MaskedX25519.EphemeralSecretKey(AliceMaskedKey)
-
--- Test that signatures work correctly
-local TestMessage = buffer.fromstring("Test validation message")
-local TestSignature = EdDSA.Sign(SecretKey, PublicKey, TestMessage)
-local TestValid = EdDSA.Verify(PublicKey, TestMessage, TestSignature)
-assert(TestValid)
-
--- Test that wrong signature fails
-local WrongMessage = buffer.fromstring("Different message")
-local WrongValid = EdDSA.Verify(PublicKey, WrongMessage, TestSignature)
-assert(not WrongValid)
-
--- Test that key exchange produces 32-byte secrets
-assert(buffer.len(AliceStaticSecret) == 32, "Alice static secret should be 32 bytes")
-assert(buffer.len(AliceEphemeralSecret) == 32, "Alice ephemeral secret should be 32 bytes")
-assert(buffer.len(BobStaticSecret) == 32, "Bob static secret should be 32 bytes")
-assert(buffer.len(BobEphemeralSecret) == 32, "Bob ephemeral secret should be 32 bytes")
-
--- Test that public keys are 32 bytes
-assert(buffer.len(PublicKey) == 32, "EdDSA public key should be 32 bytes")
-assert(buffer.len(AlicePublicKey) == 32, "Alice X25519 public key should be 32 bytes")
-assert(buffer.len(BobPublicKey) == 32, "Bob X25519 public key should be 32 bytes")
+-- *Moved to examples/MaskedX25519.luau*
 ```
 
 ---
@@ -296,7 +218,13 @@ Encryption.AEAD.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter?: num
 -- ChaCha20 stream cipher encryption/decryption.
 ```
 
-**Block Cipher:**
+**Additive Cipher:**
+```lua
+Encryption.XOR(Data: buffer, Key: buffer) -> buffer
+-- XOR additive cipher encryption/decryption.
+```
+
+**Block Cipher: AES**
 ```lua
 -- Modes are found in AES.Modes
 -- Pads are found in AES.Pads
@@ -315,6 +243,22 @@ local Message = "Can be a buffer too!"
 
 local Encrypted = AESProfile:Encrypt(Message, nil, InitVector)
 local Decrypted = AESProfile:Decrypt(Encrypted, nil, InitVector)
+```
+
+**Block Cipher: Simon and Speck**
+```lua
+
+Encryption.Simon.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
+-- Simon cipher encryption. Recommended key size is 16 bytes
+
+Encryption.Simon.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
+-- Simon cipher decryption. Recommended key size is 16 bytes
+
+Encryption.Speck.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
+-- Speck cipher encryption. Recommended key size is 8 bytes
+
+Encryption.Speck.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
+-- Speck cipher decryption. Recommended key size is 8 bytes
 ```
 
 **Authenticated Encryption:**

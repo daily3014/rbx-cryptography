@@ -73,6 +73,9 @@ do
 	end
 end
 
+local BLOCK_FRONT = table.create(80)
+local BLOCK_BACK = table.create(80)
+
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
 	local Padding = (128 - ((ContentLength + 17) % 128)) % 128
@@ -97,13 +100,10 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return NewContent, NewContentLength
 end
 
-local BlockFrontTable = table.create(80)
-local BlockBackTable = table.create(80)
-
 local function DigestBlock(Blocks: buffer, Length: number, FrontDigest: buffer, BackDigest: buffer)
 	local BackK, FrontK = BACKK, FRONTK
-	local BlockFront = BlockFrontTable
-	local BlockBack = BlockBackTable
+	local BlockFront = BLOCK_FRONT
+	local BlockBack = BLOCK_BACK
 
 	local DefaultFront, DefaultBack = FRONT_VALUES, BACK_VALUES
 	local H1F, H2F, H3F, H4F = buffer.readu32(DefaultFront, 0), buffer.readu32(DefaultFront, 4), buffer.readu32(DefaultFront, 8), buffer.readu32(DefaultFront, 12)
