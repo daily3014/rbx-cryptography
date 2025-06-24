@@ -53,7 +53,7 @@ Every implementation is faster than all alternatives
 ### Hashing / Checksum
 | Algorithm            | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
 |----------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
-| Adler32              | 200k      | **0.19 ms**  | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
+| Adler32              | 200k      | **190 us**   | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
 | SHA256               | 20k       | **370 μs**   | 2058 μs  | 493 μs (Old Version)           | 596 μs          | **5.5x faster** than HashLib |
 | SHA512               | 20k       | **822 μs**   | 4348 μs  | -                              | 1066 μs         | **5.6x faster** than HashLib |
 | Keccak/SHA3-512      | 20k       | **1.74 ms**  | 10.60 ms | -                              | -               | **6.1x faster** than HashLib |
