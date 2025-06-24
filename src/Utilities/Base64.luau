@@ -16,8 +16,6 @@
 --!native
 --!strict
 
-local Base64 = {}
-
 local PADDING_CHARACTER = 61
 local ALPHABET_INDEX = buffer.create(64) do
 	local Characters = {
@@ -54,6 +52,8 @@ local DECODE_TABLE = buffer.create(256) do
 	buffer.writeu8(DECODE_TABLE, 43, 62)
 	buffer.writeu8(DECODE_TABLE, 47, 63)
 end
+
+local Base64 = {}
 
 function Base64.Encode(Input: buffer): string
 	local InputLength = buffer.len(Input)

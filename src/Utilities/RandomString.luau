@@ -17,13 +17,13 @@ local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 	local Packs = bit32.rshift(FixedLength, 2)
 	
 	for Index = 0, Packs * 4 - 1, 4 do
-		local u32 = bit32.bor(
+		local U32 = bit32.bor(
 			bit32.lshift(math.random(36, 122), 0),
 			bit32.lshift(math.random(36, 122), 8),
 			bit32.lshift(math.random(36, 122), 16),
 			bit32.lshift(math.random(36, 122), 24)
 		)
-		buffer.writeu32(Characters, Index, u32)
+		buffer.writeu32(Characters, Index, U32)
 	end
 
 	if AsBuffer then
@@ -33,6 +33,7 @@ local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 
 		local Buf = buffer.create(Length)
 		buffer.copy(Buf, 0, Characters, 0, Length)
+		
 		return Buf
  	end
 

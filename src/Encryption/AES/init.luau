@@ -43,13 +43,8 @@ local ROUND_KEY_CONFIGS = {
 	[240] = {MaterialLength = 192, OriginalKeyLength = 32}
 }
 
-do
-	local SubstitutionBox = buffer.create(256)
-	local InverseSubstitutionBox = buffer.create(256)
-	local GaloisMultiply3 = buffer.create(256)
-	local GaloisMultiply9 = buffer.create(256)
-	local GaloisMultiply11 = buffer.create(256)
-
+local SUBSTITUTION_BOX, INVERSE_SUBSTITUTION_BOX = buffer.create(256), buffer.create(256) do
+	local GaloisMultiply3, GaloisMultiply9, GaloisMultiply11 = buffer.create(256), buffer.create(256), buffer.create(256)
 	local function GaloisFieldMultiply(FirstValue: number, SecondValue: number): number
 		local Product = 0
 		for _ = 0, 7 do
@@ -65,7 +60,7 @@ do
 
 	local PolynomialP = 1
 	local PolynomialQ = 1
-	buffer.writeu8(SubstitutionBox, 0, 99)
+	buffer.writeu8(SUBSTITUTION_BOX, 0, 99)
 
 	for _ = 1, 255 do
 		PolynomialP = bit32.bxor(PolynomialP, PolynomialP * 2, PolynomialP < 128 and 0 or 27) % 256
@@ -84,8 +79,8 @@ do
 			PolynomialQ % 16 * 16 + PolynomialQ / 16,
 			99
 		)
-		buffer.writeu8(SubstitutionBox, PolynomialP, TempValue)
-		buffer.writeu8(InverseSubstitutionBox, TempValue, PolynomialP)
+		buffer.writeu8(SUBSTITUTION_BOX, PolynomialP, TempValue)
+		buffer.writeu8(INVERSE_SUBSTITUTION_BOX, TempValue, PolynomialP)
 		buffer.writeu8(GaloisMultiply3, PolynomialP, GaloisFieldMultiply(3, PolynomialP))
 		buffer.writeu8(GaloisMultiply9, PolynomialP, GaloisFieldMultiply(9, PolynomialP))
 		buffer.writeu8(GaloisMultiply11, PolynomialP, GaloisFieldMultiply(11, PolynomialP))
@@ -93,17 +88,17 @@ do
 
 	local TableIndex = 0
 	for OuterIndex = 0, 255 do
-		local PolynomialPOuter = buffer.readu8(SubstitutionBox, OuterIndex)
+		local PolynomialPOuter = buffer.readu8(SUBSTITUTION_BOX, OuterIndex)
 		local PolynomialPBytes = PolynomialPOuter * 256
 		local Galois2 = GaloisFieldMultiply(2, PolynomialPOuter)
 		local Galois13 = GaloisFieldMultiply(13, OuterIndex)
 		local Galois14 = GaloisFieldMultiply(14, OuterIndex)
 
 		for InnerIndex = 0, 255 do
-			local PolynomialQInner = buffer.readu8(SubstitutionBox, InnerIndex)
+			local PolynomialQInner = buffer.readu8(SUBSTITUTION_BOX, InnerIndex)
 
 			buffer.writeu16(SBOX_16BIT, TableIndex * 2, PolynomialPBytes + PolynomialQInner)
-			buffer.writeu8(INVS_XOR_TABLE, TableIndex, buffer.readu8(InverseSubstitutionBox, bit32.bxor(OuterIndex, InnerIndex)))
+			buffer.writeu8(INVS_XOR_TABLE, TableIndex, buffer.readu8(INVERSE_SUBSTITUTION_BOX, bit32.bxor(OuterIndex, InnerIndex)))
 			buffer.writeu8(SMIX_TABLE0, TableIndex, bit32.bxor(Galois2, buffer.readu8(GaloisMultiply3, PolynomialQInner)))
 			buffer.writeu8(SMIX_TABLE1, TableIndex, bit32.bxor(PolynomialPOuter, PolynomialQInner))
 			buffer.writeu8(INVMIX_TABLE0, TableIndex, bit32.bxor(Galois14, buffer.readu8(GaloisMultiply11, InnerIndex)))
@@ -272,18 +267,18 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 
 	local Tbl0, Tbl1 = SMIX_TABLE0, SMIX_TABLE1
 	for RoundOffset = 16, MaterialLength, 16 do
-		B0  = bit32.bxor(buffer.readu8(Tbl0, I0),  buffer.readu8(Tbl1, I2),  buffer.readu8(RoundKeys, RoundOffset))
-		B1  = bit32.bxor(buffer.readu8(Tbl0, I1),  buffer.readu8(Tbl1, I3),  buffer.readu8(RoundKeys, RoundOffset + 1))
-		B2  = bit32.bxor(buffer.readu8(Tbl0, I2),  buffer.readu8(Tbl1, I0),  buffer.readu8(RoundKeys, RoundOffset + 2))
-		B3  = bit32.bxor(buffer.readu8(Tbl0, I3),  buffer.readu8(Tbl1, I1),  buffer.readu8(RoundKeys, RoundOffset + 3))
-		B4  = bit32.bxor(buffer.readu8(Tbl0, I4),  buffer.readu8(Tbl1, I6),  buffer.readu8(RoundKeys, RoundOffset + 4))
-		B5  = bit32.bxor(buffer.readu8(Tbl0, I5),  buffer.readu8(Tbl1, I7),  buffer.readu8(RoundKeys, RoundOffset + 5))
-		B6  = bit32.bxor(buffer.readu8(Tbl0, I6),  buffer.readu8(Tbl1, I4),  buffer.readu8(RoundKeys, RoundOffset + 6))
-		B7  = bit32.bxor(buffer.readu8(Tbl0, I7),  buffer.readu8(Tbl1, I5),  buffer.readu8(RoundKeys, RoundOffset + 7))
-		B8  = bit32.bxor(buffer.readu8(Tbl0, I8),  buffer.readu8(Tbl1, I10), buffer.readu8(RoundKeys, RoundOffset + 8))
-		B9  = bit32.bxor(buffer.readu8(Tbl0, I9),  buffer.readu8(Tbl1, I11), buffer.readu8(RoundKeys, RoundOffset + 9))
-		B10 = bit32.bxor(buffer.readu8(Tbl0, I10), buffer.readu8(Tbl1, I8),  buffer.readu8(RoundKeys, RoundOffset + 10))
-		B11 = bit32.bxor(buffer.readu8(Tbl0, I11), buffer.readu8(Tbl1, I9),  buffer.readu8(RoundKeys, RoundOffset + 11))
+		B0 = bit32.bxor(buffer.readu8(Tbl0, I0), buffer.readu8(Tbl1, I2), buffer.readu8(RoundKeys, RoundOffset))
+		B1 = bit32.bxor(buffer.readu8(Tbl0, I1), buffer.readu8(Tbl1, I3), buffer.readu8(RoundKeys, RoundOffset + 1))
+		B2 = bit32.bxor(buffer.readu8(Tbl0, I2), buffer.readu8(Tbl1, I0), buffer.readu8(RoundKeys, RoundOffset + 2))
+		B3 = bit32.bxor(buffer.readu8(Tbl0, I3), buffer.readu8(Tbl1, I1), buffer.readu8(RoundKeys, RoundOffset + 3))
+		B4 = bit32.bxor(buffer.readu8(Tbl0, I4), buffer.readu8(Tbl1, I6), buffer.readu8(RoundKeys, RoundOffset + 4))
+		B5 = bit32.bxor(buffer.readu8(Tbl0, I5), buffer.readu8(Tbl1, I7), buffer.readu8(RoundKeys, RoundOffset + 5))
+		B6 = bit32.bxor(buffer.readu8(Tbl0, I6), buffer.readu8(Tbl1, I4), buffer.readu8(RoundKeys, RoundOffset + 6))
+		B7 = bit32.bxor(buffer.readu8(Tbl0, I7), buffer.readu8(Tbl1, I5), buffer.readu8(RoundKeys, RoundOffset + 7))
+		B8 = bit32.bxor(buffer.readu8(Tbl0, I8), buffer.readu8(Tbl1, I10), buffer.readu8(RoundKeys, RoundOffset + 8))
+		B9 = bit32.bxor(buffer.readu8(Tbl0, I9), buffer.readu8(Tbl1, I11), buffer.readu8(RoundKeys, RoundOffset + 9))
+		B10 = bit32.bxor(buffer.readu8(Tbl0, I10), buffer.readu8(Tbl1, I8), buffer.readu8(RoundKeys, RoundOffset + 10))
+		B11 = bit32.bxor(buffer.readu8(Tbl0, I11), buffer.readu8(Tbl1, I9), buffer.readu8(RoundKeys, RoundOffset + 11))
 		B12 = bit32.bxor(buffer.readu8(Tbl0, I12), buffer.readu8(Tbl1, I14), buffer.readu8(RoundKeys, RoundOffset + 12))
 		B13 = bit32.bxor(buffer.readu8(Tbl0, I13), buffer.readu8(Tbl1, I15), buffer.readu8(RoundKeys, RoundOffset + 13))
 		B14 = bit32.bxor(buffer.readu8(Tbl0, I14), buffer.readu8(Tbl1, I12), buffer.readu8(RoundKeys, RoundOffset + 14))
@@ -330,16 +325,16 @@ end
 
 local function DecryptBlock(RoundKeys: buffer, MaterialLength: number, Ciphertext: buffer, CiphertextOffset: number, Output: buffer, OutputOffset: number)
 	local Invs = INVS_XOR_TABLE
-	b0  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset     ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 32)), buffer.readu8(RoundKeys, MaterialLength + 16))
-	b1  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 13) * 256 + buffer.readu8(RoundKeys, MaterialLength + 45)), buffer.readu8(RoundKeys, MaterialLength + 17))
-	b2  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 10) * 256 + buffer.readu8(RoundKeys, MaterialLength + 42)), buffer.readu8(RoundKeys, MaterialLength + 18))
-	b3  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 7 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 39)), buffer.readu8(RoundKeys, MaterialLength + 19))
-	b4  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 4 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 36)), buffer.readu8(RoundKeys, MaterialLength + 20))
-	b5  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 1 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 33)), buffer.readu8(RoundKeys, MaterialLength + 21))
-	b6  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 14) * 256 + buffer.readu8(RoundKeys, MaterialLength + 46)), buffer.readu8(RoundKeys, MaterialLength + 22))
-	b7  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 11) * 256 + buffer.readu8(RoundKeys, MaterialLength + 43)), buffer.readu8(RoundKeys, MaterialLength + 23))
-	b8  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 8 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 40)), buffer.readu8(RoundKeys, MaterialLength + 24))
-	b9  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 5 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 37)), buffer.readu8(RoundKeys, MaterialLength + 25))
+	b0 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset) * 256 + buffer.readu8(RoundKeys, MaterialLength + 32)), buffer.readu8(RoundKeys, MaterialLength + 16))
+	b1 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 13) * 256 + buffer.readu8(RoundKeys, MaterialLength + 45)), buffer.readu8(RoundKeys, MaterialLength + 17))
+	b2 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 10) * 256 + buffer.readu8(RoundKeys, MaterialLength + 42)), buffer.readu8(RoundKeys, MaterialLength + 18))
+	b3 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 7 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 39)), buffer.readu8(RoundKeys, MaterialLength + 19))
+	b4 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 4 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 36)), buffer.readu8(RoundKeys, MaterialLength + 20))
+	b5 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 1 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 33)), buffer.readu8(RoundKeys, MaterialLength + 21))
+	b6 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 14) * 256 + buffer.readu8(RoundKeys, MaterialLength + 46)), buffer.readu8(RoundKeys, MaterialLength + 22))
+	b7 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 11) * 256 + buffer.readu8(RoundKeys, MaterialLength + 43)), buffer.readu8(RoundKeys, MaterialLength + 23))
+	b8 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 8 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 40)), buffer.readu8(RoundKeys, MaterialLength + 24))
+	b9 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 5 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 37)), buffer.readu8(RoundKeys, MaterialLength + 25))
 	b10 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 2 ) * 256 + buffer.readu8(RoundKeys, MaterialLength + 34)), buffer.readu8(RoundKeys, MaterialLength + 26))
 	b11 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 15) * 256 + buffer.readu8(RoundKeys, MaterialLength + 47)), buffer.readu8(RoundKeys, MaterialLength + 27))
 	b12 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(Ciphertext, CiphertextOffset + 12) * 256 + buffer.readu8(RoundKeys, MaterialLength + 44)), buffer.readu8(RoundKeys, MaterialLength + 28))
@@ -356,16 +351,16 @@ local function DecryptBlock(RoundKeys: buffer, MaterialLength: number, Ciphertex
 	local I12 = B12 * 256 + B13; local I13 = B13 * 256 + B14; local I14 = B14 * 256 + B15; local I15 = B15 * 256 + B12
 
 	for RoundOffset = MaterialLength, 16, -16 do
-		B0  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I0 ) * 256 + buffer.readu8(INVMIX_TABLE1, I2)), buffer.readu8(RoundKeys, RoundOffset))
-		B1  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I13) * 256 + buffer.readu8(INVMIX_TABLE1, I15)), buffer.readu8(RoundKeys, RoundOffset + 1))
-		B2  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I10) * 256 + buffer.readu8(INVMIX_TABLE1, I8)), buffer.readu8(RoundKeys, RoundOffset + 2))
-		B3  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I7 ) * 256 + buffer.readu8(INVMIX_TABLE1, I5)), buffer.readu8(RoundKeys, RoundOffset + 3))
-		B4  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I4 ) * 256 + buffer.readu8(INVMIX_TABLE1, I6)), buffer.readu8(RoundKeys, RoundOffset + 4))
-		B5  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I1 ) * 256 + buffer.readu8(INVMIX_TABLE1, I3)), buffer.readu8(RoundKeys, RoundOffset + 5))
-		B6  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I14) * 256 + buffer.readu8(INVMIX_TABLE1, I12)), buffer.readu8(RoundKeys, RoundOffset + 6))
-		B7  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I11) * 256 + buffer.readu8(INVMIX_TABLE1, I9)), buffer.readu8(RoundKeys, RoundOffset + 7))
-		B8  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I8 ) * 256 + buffer.readu8(INVMIX_TABLE1, I10)), buffer.readu8(RoundKeys, RoundOffset + 8))
-		B9  = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I5 ) * 256 + buffer.readu8(INVMIX_TABLE1, I7)), buffer.readu8(RoundKeys, RoundOffset + 9))
+		B0 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I0 ) * 256 + buffer.readu8(INVMIX_TABLE1, I2)), buffer.readu8(RoundKeys, RoundOffset))
+		B1 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I13) * 256 + buffer.readu8(INVMIX_TABLE1, I15)), buffer.readu8(RoundKeys, RoundOffset + 1))
+		B2 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I10) * 256 + buffer.readu8(INVMIX_TABLE1, I8)), buffer.readu8(RoundKeys, RoundOffset + 2))
+		B3 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I7 ) * 256 + buffer.readu8(INVMIX_TABLE1, I5)), buffer.readu8(RoundKeys, RoundOffset + 3))
+		B4 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I4 ) * 256 + buffer.readu8(INVMIX_TABLE1, I6)), buffer.readu8(RoundKeys, RoundOffset + 4))
+		B5 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I1 ) * 256 + buffer.readu8(INVMIX_TABLE1, I3)), buffer.readu8(RoundKeys, RoundOffset + 5))
+		B6 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I14) * 256 + buffer.readu8(INVMIX_TABLE1, I12)), buffer.readu8(RoundKeys, RoundOffset + 6))
+		B7 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I11) * 256 + buffer.readu8(INVMIX_TABLE1, I9)), buffer.readu8(RoundKeys, RoundOffset + 7))
+		B8 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I8 ) * 256 + buffer.readu8(INVMIX_TABLE1, I10)), buffer.readu8(RoundKeys, RoundOffset + 8))
+		B9 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I5 ) * 256 + buffer.readu8(INVMIX_TABLE1, I7)), buffer.readu8(RoundKeys, RoundOffset + 9))
 		B10 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I2 ) * 256 + buffer.readu8(INVMIX_TABLE1, I0)), buffer.readu8(RoundKeys, RoundOffset + 10))
 		B11 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I15) * 256 + buffer.readu8(INVMIX_TABLE1, I13)), buffer.readu8(RoundKeys, RoundOffset + 11))
 		B12 = bit32.bxor(buffer.readu8(Invs, buffer.readu8(INVMIX_TABLE0, I12) * 256 + buffer.readu8(INVMIX_TABLE1, I14)), buffer.readu8(RoundKeys, RoundOffset + 12))
