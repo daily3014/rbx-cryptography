@@ -1,15 +1,15 @@
 --[=[
-    Cryptography library: Speck
-	
-    ⚠️ WARNING: Speck is not very secure!
+	Cryptography library: Speck
+
+	⚠️ WARNING: Speck is not very secure!
 	For security, use AES or CHACHA20. ⚠️
-	
-    Return type: buffer
-    Example Usage:
-        local Message = buffer.fromstring("Hello World")
-        local Key = buffer.fromstring("Key")
-        local Encrypted = Encrypt(Message, Key)
-        local Decrypted = Decrypt(Encrypted, Key)
+
+	Return type: buffer
+	Example Usage:
+		local Message = buffer.fromstring("Hello World")
+		local Key = buffer.fromstring("Key")
+		local Encrypted = Encrypt(Message, Key)
+		local Decrypted = Decrypt(Encrypted, Key)
 --]=]
 
 --!strict
