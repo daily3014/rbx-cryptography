@@ -1,17 +1,17 @@
 --[=[
-    Cryptography library: XOR Symmetric Cipher
+	Cryptography library: XOR Symmetric Cipher
 
-    ⚠️ WARNING: XOR is not cryptographically secure!
+	⚠️ WARNING: XOR is not cryptographically secure!
 	Do not use the same key twice!
 	For security, use AES or CHACHA20. ⚠️
 
-    Return type: buffer 
-    Example Usage:
-        local Message = buffer.fromstring("Hello World")
-        local Key = buffer.fromstring("MySecretKey12345") -- Fastest when its a multiple of 4 or is longer than the message
-        
-        local Encrypted = XOR(Message, Key)
-        local Decrypted = XOR(Encrypted, Key) 
+	Return type: buffer 
+	Example Usage:
+		local Message = buffer.fromstring("Hello World")
+		local Key = buffer.fromstring("MySecretKey12345") -- Fastest when its a multiple of 4 or is longer than the message
+		
+		local Encrypted = XOR(Message, Key)
+		local Decrypted = XOR(Encrypted, Key) 
 --]=]
 
 --!strict
