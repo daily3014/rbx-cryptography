@@ -71,8 +71,8 @@ local function ConstructAuthData(AAD: buffer, Ciphertext: buffer): buffer
 	Offset += AADLength + AADPadding
 	buffer.copy(AuthData, Offset, Ciphertext, 0, CiphertextLength)
 	Offset += CiphertextLength + CiphertextPadding
-	buffer.writef64(AuthData, Offset, AADLength)
-	buffer.writef64(AuthData, Offset + QWORD, CiphertextLength)
+	buffer.writeu32(AuthData, Offset, AADLength)
+	buffer.writeu32(AuthData, Offset + QWORD, CiphertextLength)
 
 	return AuthData
 end
