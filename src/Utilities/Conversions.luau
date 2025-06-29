@@ -3,10 +3,8 @@
 	
 	Return type: string (ToHex) / buffer (FromHex)
 	Example Usage:
-		local Message = buffer.fromstring("Hello World")
-		
 		--------Usage Case 1--------
-		local HexString = Conversions.ToHex(Message)
+		local HexString = Conversions.ToHex(buffer.fromstring("Hello World"))
 		
 		--------Usage Case 2--------
 		local OriginalBuffer = Conversions.FromHex("48656c6c6f20576f726c64")
@@ -19,12 +17,20 @@
 local Conversions = {}
 
 function Conversions.ToHex(Buffer: buffer): string
-	local Hex = ""
-	for Index = 0, buffer.len(Buffer) - 1 do
-		Hex ..= string.format("%02x", buffer.readu8(Buffer, Index))
+	local Length = buffer.len(Buffer)
+	local Hex = buffer.create(Length * 2)
+
+	local Leftover = Length % 4
+
+	for Index = 0, Length - Leftover - 1, 4 do
+		buffer.writestring(Hex, Index * 2, string.format("%08x", bit32.byteswap(buffer.readu32(Buffer, Index))))
 	end
-	
-	return Hex
+
+	for Index = Length - Leftover, Length - 1 do
+		buffer.writestring(Hex, Index * 2, string.format("%02x", buffer.readu8(Buffer, Index)))
+	end
+
+	return buffer.tostring(Hex)
 end
 
 function Conversions.FromHex(Hex: string): buffer

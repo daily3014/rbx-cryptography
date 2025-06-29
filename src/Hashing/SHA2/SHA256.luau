@@ -13,9 +13,9 @@
 		local Result = SHA256(Message, OptionalSalt)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
@@ -35,18 +35,15 @@ local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	end
 end
 
-local OFFSETS = buffer.create(256)
-local FORMAT_STRING = string.rep("%08x", 8)
-
-local function PreProcess(Content: buffer): (buffer, number)
-	local ContentLength = buffer.len(Content)
+local function PreProcess(Contents: buffer): (buffer, number)
+	local ContentLength = buffer.len(Contents)
 	local Padding = (64 - ((ContentLength + 9) % 64)) % 64
+	--local Padding = -(ContentLength + 9) % 64
 
 	local NewContentLength = ContentLength + 1 + Padding + 8
 	local NewContent = buffer.create(NewContentLength)
-	buffer.copy(NewContent, 0, Content)
+	buffer.copy(NewContent, 0, Contents)
 	buffer.writeu8(NewContent, ContentLength, 128)
-	
 	local Length8 = ContentLength * 8
 	for Index = 7, 0, -1 do
 		local Remainder = Length8 % 256
@@ -57,6 +54,7 @@ local function PreProcess(Content: buffer): (buffer, number)
 	return NewContent, NewContentLength
 end
 
+local OFFSETS = buffer.create(256)
 local function DigestBlocks(Blocks: buffer, Length: number): (number, number, number, number, number, number, number, number)
 	local A, B, C, D = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
 	local E, F, G, H = 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
@@ -66,22 +64,17 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 
 	for Offset = 0, Length - 1, 64 do
 		for BlockIndex = 0, 60, 4 do
-			local BlockBufferIndex = Offset + BlockIndex
-			local Word = bit32.byteswap(buffer.readu32(Blocks, BlockBufferIndex))
-
-			buffer.writeu32(Offsets, BlockIndex, Word)
+			buffer.writeu32(Offsets, BlockIndex, bit32.byteswap(buffer.readu32(Blocks, Offset + BlockIndex)))
 		end
 
 		for Index = 64, 252, 4 do
 			local Sub15 = buffer.readu32(Offsets, Index - 60)
-			local Sub2 = buffer.readu32(Offsets, Index - 8)
-
-			local Sub16 = buffer.readu32(Offsets, Index - 64)
-			local Sub7 = buffer.readu32(Offsets, Index - 28)
-
 			local S0 = bit32.bxor(bit32.rrotate(Sub15, 7), bit32.rrotate(Sub15, 18), bit32.rshift(Sub15, 3))
+
+			local Sub2 = buffer.readu32(Offsets, Index - 8)
 			local S1 = bit32.bxor(bit32.rrotate(Sub2, 17), bit32.rrotate(Sub2, 19), bit32.rshift(Sub2, 10))
 
+			local Sub7, Sub16 = buffer.readu32(Offsets, Index - 28), buffer.readu32(Offsets, Index - 64)
 			buffer.writeu32(Offsets, Index, (Sub16 + S0 + Sub7 + S1))
 		end
 
@@ -91,32 +84,28 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			local S1 = bit32.bxor(bit32.rrotate(E, 6), bit32.rrotate(E, 11), bit32.rrotate(E, 25))
 			local Ch = bit32.bxor(bit32.band(E, F), bit32.band(bit32.bnot(E), G))
 			local Temp1 = H + S1 + Ch + buffer.readu32(Constants, BufferIndex) + buffer.readu32(Offsets, BufferIndex)
+			H, G, F, E, D = G, F, E, D + Temp1, C
+
 			local S0 = bit32.bxor(bit32.rrotate(A, 2), bit32.rrotate(A, 13), bit32.rrotate(A, 22))
 			local Maj = bit32.bxor(bit32.band(A, B), bit32.band(A, C), bit32.band(B, C))
-			local Temp2 = S0 + Maj
-			H = G
-			G = F
-			F = E
-			E = D + Temp1
-			D = C
-			C = B
-			B = A
-			A = Temp1 + Temp2
+			C, B, A = B, A, Temp1 + S0 + Maj
 		end
 
-		A = bit32.bor(A + OldA, 0)
-		B = bit32.bor(B + OldB, 0)
-		C = bit32.bor(C + OldC, 0)
-		D = bit32.bor(D + OldD, 0)
-		E = bit32.bor(E + OldE, 0)
-		F = bit32.bor(F + OldF, 0)
-		G = bit32.bor(G + OldG, 0)
-		H = bit32.bor(H + OldH, 0)
+		A, B, C, D, E, F, G, H =
+			bit32.bor(A + OldA, 0),
+			bit32.bor(B + OldB, 0),
+			bit32.bor(C + OldC, 0),
+			bit32.bor(D + OldD, 0),
+			bit32.bor(E + OldE, 0),
+			bit32.bor(F + OldF, 0),
+			bit32.bor(G + OldG, 0),
+			bit32.bor(H + OldH, 0)
 	end
 
 	return A, B, C, D, E, F, G, H
 end
 
+local FormatString = string.rep("%08x", 8)
 local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
@@ -141,7 +130,7 @@ local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 24, G)
 	buffer.writeu32(Digest, 28, H)
 
-	return string.format(FORMAT_STRING, A, B, C, D, E, F, G, H), Digest
+	return string.format(FormatString, A, B, C, D, E, F, G, H), Digest
 end
 
 return SHA256

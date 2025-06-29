@@ -44,54 +44,79 @@ local TAU_CONSTANTS = buffer.create(16) do
 	end
 end
 
-local function QuarterRound(State: buffer, A: number, B: number, C: number, D: number)
-	local StateA = buffer.readu32(State, A * DWORD)
-	local StateB = buffer.readu32(State, B * DWORD)
-	local StateC = buffer.readu32(State, C * DWORD)
-	local StateD = buffer.readu32(State, D * DWORD)
-
-	StateA = (StateA + StateB) % 2^32
-	StateD = bit32.lrotate(bit32.bxor(StateD, StateA), 16)
-	StateC += StateD
-	StateB = bit32.lrotate(bit32.bxor(StateB, StateC), 12)
-	StateA += StateB
-	StateD = bit32.lrotate(bit32.bxor(StateD, StateA), 8)
-	StateC += StateD
-	StateB = bit32.lrotate(bit32.bxor(StateB, StateC), 7)
-
-	buffer.writeu32(State, A * DWORD, StateA)
-	buffer.writeu32(State, B * DWORD, StateB)
-	buffer.writeu32(State, C * DWORD, StateC)
-	buffer.writeu32(State, D * DWORD, StateD)
-end
-
-local function ProcessBlock(InitialState: buffer, Rounds: number): buffer
-	local WorkingState = buffer.create(STATE_SIZE * DWORD)
-	buffer.copy(WorkingState, 0, InitialState, 0, STATE_SIZE * DWORD)
+local function ProcessBlock(InitialState: buffer, Rounds: number)
+	local S0: number, S1: number, S2: number, S3: number, S4: number, S5: number, S6: number, S7: number, S8: number, S9: number, S10: number, S11: number, S12: number, S13: number, S14: number, S15: number =
+		buffer.readu32(InitialState,  0), buffer.readu32(InitialState,  4),
+		buffer.readu32(InitialState,  8), buffer.readu32(InitialState, 12),
+		buffer.readu32(InitialState, 16), buffer.readu32(InitialState, 20),
+		buffer.readu32(InitialState, 24), buffer.readu32(InitialState, 28),
+		buffer.readu32(InitialState, 32), buffer.readu32(InitialState, 36),
+		buffer.readu32(InitialState, 40), buffer.readu32(InitialState, 44),
+		buffer.readu32(InitialState, 48), buffer.readu32(InitialState, 52),
+		buffer.readu32(InitialState, 56), buffer.readu32(InitialState, 60)
 
 	for Round = 1, Rounds do
 		local IsOddRound = Round % 2 == 1
 
 		if IsOddRound then
-			QuarterRound(WorkingState, 0, 4, 8, 12)
-			QuarterRound(WorkingState, 1, 5, 9, 13)
-			QuarterRound(WorkingState, 2, 6, 10, 14)
-			QuarterRound(WorkingState, 3, 7, 11, 15)
+			S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 16)
+			S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 12)
+			S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 8)
+			S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 7)
+
+			S1 = bit32.bor(S1 + S5, 0); S13 = bit32.lrotate(bit32.bxor(S13, S1), 16)
+			S9 = bit32.bor(S9 + S13, 0); S5 = bit32.lrotate(bit32.bxor(S5, S9), 12)
+			S1 = bit32.bor(S1 + S5, 0); S13 = bit32.lrotate(bit32.bxor(S13, S1), 8)
+			S9 = bit32.bor(S9 + S13, 0); S5 = bit32.lrotate(bit32.bxor(S5, S9), 7)
+
+			S2 = bit32.bor(S2 + S6, 0); S14 = bit32.lrotate(bit32.bxor(S14, S2), 16)
+			S10 = bit32.bor(S10 + S14, 0); S6 = bit32.lrotate(bit32.bxor(S6, S10), 12)
+			S2 = bit32.bor(S2 + S6, 0); S14 = bit32.lrotate(bit32.bxor(S14, S2), 8)
+			S10 = bit32.bor(S10 + S14, 0); S6 = bit32.lrotate(bit32.bxor(S6, S10), 7)
+
+			S3 = bit32.bor(S3 + S7, 0); S15 = bit32.lrotate(bit32.bxor(S15, S3), 16)
+			S11 = bit32.bor(S11 + S15, 0); S7 = bit32.lrotate(bit32.bxor(S7, S11), 12)
+			S3 = bit32.bor(S3 + S7, 0); S15 = bit32.lrotate(bit32.bxor(S15, S3), 8)
+			S11 = bit32.bor(S11 + S15, 0); S7 = bit32.lrotate(bit32.bxor(S7, S11), 7)
 		else
-			QuarterRound(WorkingState, 0, 5, 10, 15)
-			QuarterRound(WorkingState, 1, 6, 11, 12)
-			QuarterRound(WorkingState, 2, 7, 8, 13)
-			QuarterRound(WorkingState, 3, 4, 9, 14)
+			S0 = bit32.bor(S0 + S5, 0); S15 = bit32.lrotate(bit32.bxor(S15, S0), 16)
+			S10 = bit32.bor(S10 + S15, 0); S5 = bit32.lrotate(bit32.bxor(S5, S10), 12)
+			S0 = bit32.bor(S0 + S5, 0); S15 = bit32.lrotate(bit32.bxor(S15, S0), 8)
+			S10 = bit32.bor(S10 + S15, 0); S5 = bit32.lrotate(bit32.bxor(S5, S10), 7)
+
+			S1 = bit32.bor(S1 + S6, 0); S12 = bit32.lrotate(bit32.bxor(S12, S1), 16)
+			S11 = bit32.bor(S11 + S12, 0); S6 = bit32.lrotate(bit32.bxor(S6, S11), 12)
+			S1 = bit32.bor(S1 + S6, 0); S12 = bit32.lrotate(bit32.bxor(S12, S1), 8)
+			S11 = bit32.bor(S11 + S12, 0); S6 = bit32.lrotate(bit32.bxor(S6, S11), 7)
+
+			S2 = bit32.bor(S2 + S7, 0); S13 = bit32.lrotate(bit32.bxor(S13, S2), 16)
+			S8 = bit32.bor(S8 + S13, 0); S7 = bit32.lrotate(bit32.bxor(S7, S8), 12)
+			S2 = bit32.bor(S2 + S7, 0); S13 = bit32.lrotate(bit32.bxor(S13, S2), 8)
+			S8 = bit32.bor(S8 + S13, 0); S7 = bit32.lrotate(bit32.bxor(S7, S8), 7)
+
+			S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 16)
+			S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 12)
+			S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 8)
+			S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 7)
 		end
 	end
-
-	for StateIndex = 0, STATE_SIZE - 1 do
-		local OriginalValue = buffer.readu32(InitialState, StateIndex * DWORD)
-		local WorkingValue = buffer.readu32(WorkingState, StateIndex * DWORD)
-		buffer.writeu32(WorkingState, StateIndex * DWORD, (WorkingValue + OriginalValue))
-	end
-
-	return WorkingState
+	
+	buffer.writeu32(InitialState,  0, buffer.readu32(InitialState,  0) +  S0)
+	buffer.writeu32(InitialState,  4, buffer.readu32(InitialState,  4) +  S1)
+	buffer.writeu32(InitialState,  8, buffer.readu32(InitialState,  8) +  S2)
+	buffer.writeu32(InitialState, 12, buffer.readu32(InitialState, 12) +  S3)
+	buffer.writeu32(InitialState, 16, buffer.readu32(InitialState, 16) +  S4)
+	buffer.writeu32(InitialState, 20, buffer.readu32(InitialState, 20) +  S5)
+	buffer.writeu32(InitialState, 24, buffer.readu32(InitialState, 24) +  S6)
+	buffer.writeu32(InitialState, 28, buffer.readu32(InitialState, 28) +  S7)
+	buffer.writeu32(InitialState, 32, buffer.readu32(InitialState, 32) +  S8)
+	buffer.writeu32(InitialState, 36, buffer.readu32(InitialState, 36) +  S9)
+	buffer.writeu32(InitialState, 40, buffer.readu32(InitialState, 40) + S10)
+	buffer.writeu32(InitialState, 44, buffer.readu32(InitialState, 44) + S11)
+	buffer.writeu32(InitialState, 48, buffer.readu32(InitialState, 48) + S12)
+	buffer.writeu32(InitialState, 52, buffer.readu32(InitialState, 52) + S13)
+	buffer.writeu32(InitialState, 56, buffer.readu32(InitialState, 56) + S14)
+	buffer.writeu32(InitialState, 60, buffer.readu32(InitialState, 60) + S15)
 end
 
 local function InitializeState(Key: buffer, Nonce: buffer, Counter: number): buffer
@@ -200,22 +225,27 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 
 	local DataOffset = 0
 
+	local State = InitializeState(Key, Nonce, BlockCounter)
+	local StateBackup = buffer.create(64)
+	buffer.copy(StateBackup, 0, State, 0)
+	
 	while DataOffset < DataLength do
-		local State = InitializeState(Key, Nonce, BlockCounter)
-		local Keystream = ProcessBlock(State, BlockRounds)
+		ProcessBlock(State, BlockRounds)
 
 		local BytesToProcess = math.min(BLOCK_SIZE, DataLength - DataOffset)
 
 		for Index = 0, BytesToProcess - 1 do
 			local DataByte = buffer.readu8(Data, DataOffset + Index)
-			local KeystreamByte = buffer.readu8(Keystream, Index)
+			local KeystreamByte = buffer.readu8(State, Index)
 			buffer.writeu8(Output, DataOffset + Index, bit32.bxor(DataByte, KeystreamByte))
 		end
 
 		DataOffset += BytesToProcess
 		BlockCounter += 1
+		buffer.copy(State, 0, StateBackup, 0)
+		buffer.writeu32(State, 48, BlockCounter)
 	end
-
+	
 	return Output
 end
 

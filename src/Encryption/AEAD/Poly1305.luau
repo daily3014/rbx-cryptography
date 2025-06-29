@@ -1,5 +1,5 @@
 --[=[
-	Cryptography library: Poly1305 (Optimized Buffer Usage)
+	Cryptography library: Poly1305
 	
 	Sizes:
 		Key: 32 bytes
@@ -76,7 +76,7 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 		local X4 = Accumulator4 + Accumulator5 + MessageBlock2 * (2 ^ 64)
 		local X6 = Accumulator6 + Accumulator7 + MessageBlock3 * (2 ^ 96)
 
-		if BlockOffset <= PartialBlockLength then
+		if BlockOffset < PartialBlockLength then
 			X6 = X6 + (2 ^ 128)
 		end
 
