@@ -51,25 +51,25 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 Every implementation is faster than all alternatives
 
 ### Hashing / Checksum
-| Algorithm            | Data Size | This Library | HashLib  | Alternative                    | Other Libraries | Improvement                  |
-|----------------------|-----------|--------------|----------|--------------------------------|-----------------|------------------------------|
-| Adler32              | 200k      | **190 us**   | -        | 1.65 ms (Naive Approach)       | -               | **8.7x faster**              |
-| SHA256               | 20k       | **370 μs**   | 2058 μs  | 493 μs (Old Version)           | 596 μs          | **5.5x faster** than HashLib |
-| SHA512               | 20k       | **822 μs**   | 4348 μs  | -                              | 1066 μs         | **5.6x faster** than HashLib |
-| Keccak/SHA3-512      | 20k       | **1.74 ms**  | 10.60 ms | -                              | -               | **6.1x faster** than HashLib |
-| CRC32                | 200k      | **2.01 ms**  | -        | 6.26 ms (DevForum)             | -               | **3.1x faster**              |
+| Algorithm            | Data Size | This Library | HashLib  | Alternative                    | Other Libraries   | Improvement                  |
+|----------------------|-----------|--------------|----------|--------------------------------|-------------------|------------------------------|
+| Adler32              | 200k      | **190 us**   | -        | 1.65 ms (Naive Approach)       | -                 | **8.7x faster**              |
+| SHA256               | 20k       | **370 μs**   | 2058 μs  | 493 μs (Old Version)           | 596 μs (Dekkonot) | **5.5x faster** than HashLib |
+| SHA512               | 20k       | **822 μs**   | 4348 μs  | 1066 μs (Dekkonot)             | -                 | **5.6x faster** than HashLib |
+| Keccak/SHA3-512      | 20k       | **1.74 ms**  | 10.60 ms | -                              | -                 | **6.1x faster** than HashLib |
+| CRC32                | 200k      | **2.01 ms**  | -        | 6.26 ms (DevForum)             | -                 | **3.1x faster**              |
 
 ### Encryption
 | Algorithm            | Data Size | This Library | Alternative                     | Other Libraries | Improvement                  |
 |----------------------|-----------|--------------|---------------------------------|-----------------|------------------------------|
 | XOR (Encrypt)        | 1 million | **1.10 ms**  | ~49.5 ms (@TwiistedRoyalty)     | 4000ms (daily)  | **64.3x faster**             |
 | XOR (Roundtrip)      | 1 million | **2.20 ms**  | 98.9 ms (@TwiistedRoyalty)      | ~8000ms (daily) | **64.3x faster**             |
+| ChaCha20 (Encrypt)   | 20k       | **0.31 ms**  | 7.87 ms (EncryptedNet)          | -               | **25.3x faster**             |
+| ChaCha20 (Roundtrip) | 20k       | **0.64 ms**  |  ~15 ms (EncryptedNet)          | -               | **25.3x faster**             |
 | Simon (Encrypt)      | 20k       | **0.42 ms**  | -                               | -               | -                            |
 | Simon (Roundtrip)    | 20k       | **0.85 ms**  | -                               | -               | -                            |
 | Speck (Encrypt)      | 20k       | **0.48 ms**  | -                               | -               | -                            |
 | Speck (Roundtrip)    | 20k       | **0.98 ms**  | -                               | -               | -                            |
-| ChaCha20 (Encrypt)   | 20k       | **0.62 ms**  | 7.87 ms (EncryptedNet)          | -               | **8.6x faster**              |
-| ChaCha20 (Roundtrip) | 20k       | **1.25 ms**  |  ~15 ms (EncryptedNet)          | -               | **8.6x faster**              |
 | AES (Encrypt)        | 20k       | **0.87 ms**  | 1.13 ms (@RobloxGamerPro200007) | -               | **1.3x faster**              |
 | AES (Roundtrip)      | 20k       | **2.40 ms**  | 2.91 ms (@RobloxGamerPro200007) | -               | **1.2x faster**              |
 
