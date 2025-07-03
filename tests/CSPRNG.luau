@@ -1,4 +1,5 @@
 --!strict
+
 local Testing = require("./")
 type TestVector = {
 	Description: string,
@@ -74,6 +75,67 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		local InstanceBytes = Instance1:GetBytes(16)
 		Testing.Expect(typeof(InstanceBytes)).ToBe("buffer")
 		Testing.Expect(buffer.len(InstanceBytes)).ToBe(16)
+	end)
+	
+	Testing.Test("Chance", function()
+		local WeightedChances = {
+			Common = 50,
+			Rare = 30,
+			Legendary = 20,
+			Mythic = 1
+		}
+		
+		local TotalWeight = 0
+		
+		for Name, Weight in WeightedChances do
+			TotalWeight += Weight :: any
+		end
+		
+		local function ChooseRandom()
+			local Number = Algorithm.RandomInt(1, TotalWeight)
+			local CurrentWeight = 0
+
+			for Name, Weight in WeightedChances do
+				local Name: string = Name :: any
+				local Weight: number = Weight :: number
+
+				CurrentWeight += Weight
+
+				if Number <= CurrentWeight then
+					return Name
+				end
+			end
+
+			return "Common"
+		end
+		
+		local ROLLS = 100_000
+		local EPSILON = 0.1
+		
+		local Occurences = {
+			Common = 0,
+			Rare = 0,
+			Legendary = 0,
+			Mythic = 0,
+		}
+		
+		local function ExpectedOccurences(Rarity: string)
+			return math.ceil((WeightedChances[Rarity] / TotalWeight) * ROLLS)
+		end
+		
+		for _ = 1, ROLLS do
+			local ChosenRarity = ChooseRandom()
+			Occurences[ChosenRarity] += 1
+		end
+		
+		for Name, Count in Occurences do
+			-- For some reason they're "unknown"
+			local Name: string = Name :: any
+			local Count: number = Count :: number
+
+			local ActualRate = math.abs(1 - (Count / ExpectedOccurences(Name)))
+			Testing.Expect(ActualRate).ToBeLessThan(EPSILON)
+		end
 	end)
 
 	Testing.Test("Distribution Tests", function()
