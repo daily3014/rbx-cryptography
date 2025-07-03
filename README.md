@@ -358,7 +358,7 @@ Utilities.CSPRNG.Ed25519Random(): buffer
 -- Generate a clamped buffer with random bytes for use with EdDSA
 
 Utilities.CSPRNG.Reseed(CustomEntropy: buffer?)
--- Add new entropy to the CSPRNG
+-- Add new entropy to the CSPRNG with up to 1024 bytes of custom entropy (in most cases it will be less)
 ```
 
 ### Checksum Functions
