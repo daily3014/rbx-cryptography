@@ -328,6 +328,39 @@ Utilities.RandomString(Length: number) -> string
 -- Generate random string of specified length.
 ```
 
+**CSPRNG:**
+```lua
+Utilities.CSPRNG.Random()
+-- Generate a random number between 0 and 1
+
+Utilities.CSPRNG.RandomInt(Min: number, Max: number?): number
+-- Generate a random integer between Min and Max or 0 - Min
+
+Utilities.CSPRNG.RandomNumber(Min: number, Max: number?): number
+-- Generate a random number between Min and Max or 0 - Min
+
+Utilities.CSPRNG.RandomBytes(Count: number): buffer
+-- Generate a buffer with random bytes of length Count
+
+Utilities.CSPRNG.RandomHex(Length: number): string
+-- Generate a random hexadecimal string
+
+Utilities.CSPRNG.RandomString(Length: number, AsBuffer: boolean?): buffer | string
+-- Generate a random string / buffer
+
+Utilities.CSPRNG.Ed25519RandomBytes(): buffer
+-- Generate a buffer with random bytes for use with EdDSA
+
+Utilities.CSPRNG.Ed25519ClampedBytes(Input: buffer): buffer
+-- Clamp the bytes to always work with EdDSA
+
+Utilities.CSPRNG.Ed25519Random(): buffer
+-- Generate a clamped buffer with random bytes for use with EdDSA
+
+Utilities.CSPRNG.Reseed(CustomEntropy: buffer?)
+-- Add new entropy to the CSPRNG
+```
+
 ### Checksum Functions
 
 ```lua
