@@ -17,7 +17,7 @@ type X25519TestVector = {
 
 local Algorithm = require("../Verification/EdDSA")
 local MaskedX25519 = Algorithm.MaskedX25519
-local RandomBytes = Algorithm.RandomBytes
+local CSPRNG = Algorithm.CSPRNG
 
 local function FromHex(Hex: string): buffer
 	local Length = #Hex
@@ -203,7 +203,7 @@ Test("Generated X25519 Keys Validation (1000 Keys)", function()
 	local InvalidReasons = {}
 
 	for I = 1, 1e3 do
-		local GeneratedKey = RandomBytes.Random()
+		local GeneratedKey = CSPRNG.Ed25519Random()
 		local IsValid, Message = IsValidX25519Key(GeneratedKey)
 
 		if IsValid then
