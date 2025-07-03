@@ -5,26 +5,27 @@
 	Example usage:
 		local EdDSA = require("EdDSA")
 
-		--------Usage Case 1: Generate keypair--------
+		--------Usage Case 1--------
 		local SecretKey = RandomBytes.Generate(32) -- use your random module
 		local PublicKey = EdDSA.PublicKey(SecretKey)
 
-		--------Usage Case 2: Sign message--------
+		--------Usage Case 2--------
 		local Message = buffer.fromstring("Hello World") -- or use buffer directly
 		local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
 
-		--------Usage Case 3: Verify signature--------
+		--------Usage Case 3--------
 		local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
 --]=]
 
 --!native
 --!optimize 2
+--!strict
 
 local FieldQuadratic = require("@self/FieldQuadratic")
 local SHA512 = require("@self/SHA512")
 local Edwards25519 = require("@self/Edwards25519")
 local Mask = require("@self/Mask")
-local RandomBytes = require("@self/Random")
+local CSPRNG = require("@self/CSPRNG")
 
 local ED25519_SECRET_KEY_SIZE = 32
 local ED25519_PUBLIC_KEY_SIZE = 32
@@ -51,7 +52,7 @@ local function ConcatBuffers(...): buffer
 end
 
 local EDDSA = {
-	RandomBytes = RandomBytes,
+	CSPRNG = CSPRNG,
 	MaskedX25519 = Mask
 }
 
