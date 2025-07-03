@@ -23,7 +23,7 @@
 
 local FieldPrime = require("./FieldPrime")
 local Edwards25519 = require("./Edwards25519")
-local RandomBytes = require("./Random")
+local CSPRNG = require("./CSPRNG")
 
 local MONTGOMERY_POINT_SIZE = 208
 local COORD_SIZE = 104
@@ -137,7 +137,7 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 end
 
 function Curve25519.Ladder8(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
-	local RandomBuffer = RandomBytes.Random()
+	local RandomBuffer = CSPRNG.Ed25519Random()
 	local RandomFactor = FieldPrime.Decode(RandomBuffer)
 
 	local BaseX = GetMontgomeryCoord(BasePoint, 0)
@@ -213,7 +213,7 @@ end
 
 function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, buffer?)
 	local DifferentialAdd = Curve25519.DifferentialAdd
-	local RandomBuffer = RandomBytes.Random()
+	local RandomBuffer = CSPRNG.Ed25519Random()
 	local RandomFactor = FieldPrime.Decode(RandomBuffer)
 
 	local BaseX = GetMontgomeryCoord(BasePoint, 0)
