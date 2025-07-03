@@ -116,7 +116,7 @@ function CSPRNGClass.New(): CSPRNGInstance
 end
 
 function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
-	local EntropyBuffers = buffer.create(1024 + 64)
+	local EntropyBuffers = buffer.create(1024)
 	local Offset = 0
 
 	local function WriteToBuffer(Source: buffer): ()
@@ -124,11 +124,14 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 		buffer.copy(EntropyBuffers, Offset, Source, 0, Size)
 		Offset += Size
 	end
-
-	local CurrentTime = tick()
-	local TimeBuffer = buffer.create(8)
-	buffer.writef64(TimeBuffer, 0, CurrentTime)
-	WriteToBuffer(TimeBuffer)
+	
+	local CurrentTime = 1.234
+	if tick then
+		CurrentTime = tick()
+		local TimeBuffer = buffer.create(8)
+		buffer.writef64(TimeBuffer, 0, CurrentTime)
+		WriteToBuffer(TimeBuffer)
+	end
 
 	local ClockTime = os.clock()
 	local ClockBuffer = buffer.create(8)
@@ -141,7 +144,7 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 	buffer.writeu32(UnixBuffer, 4, math.floor(UnixTime / 0x100000000))
 	WriteToBuffer(UnixBuffer)
 
-	local DateTimeMillis = 0
+	local DateTimeMillis = 5.678
 	if DateTime then
 		DateTimeMillis = DateTime.now().UnixTimestampMillis
 		local DateTimeBuffer = buffer.create(8)
@@ -284,7 +287,10 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 	WriteToBuffer(AddressEntropy)
 	
 	if CustomEntropy then
-		buffer.copy(EntropyBuffers, 0, CustomEntropy, 0, math.min(64, buffer.len(CustomEntropy)))
+		local BytesLeft = 1024 - Offset
+		if BytesLeft > 0 then
+			buffer.copy(EntropyBuffers, Offset, CustomEntropy, 0, math.min(BytesLeft, buffer.len(CustomEntropy)))
+		end
 	end
 
 	local EntropyHash = SHA256(EntropyBuffers)
