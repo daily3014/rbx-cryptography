@@ -24,7 +24,7 @@ local FieldQuadratic = require("./FieldQuadratic")
 local FieldPrime = require("./FieldPrime")
 local Curve25519 = require("./Curve25519")
 local SHA512 = require("./SHA512")
-local RandomBytes = require("./Random")
+local CSPRNG = require("./CSPRNG")
 
 local COORD_SIZE = 104
 
@@ -50,7 +50,7 @@ function Mask.Mask(SecretKey: buffer): buffer
 		error(`SecretKey must be exactly {X25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
 	end
 
-	local RandomMask = RandomBytes.Random()
+	local RandomMask = CSPRNG.Ed25519Random()
 	local ScalarX = FieldQuadratic.DecodeClamped(SecretKey)
 	local ScalarR = FieldQuadratic.DecodeClamped(RandomMask)
 	local MaskedScalar = FieldQuadratic.Sub(ScalarX, ScalarR)
@@ -98,7 +98,7 @@ function Mask.Remask(MaskedKey: buffer): buffer
 		error(`MaskedKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedKeyLength} bytes`, 2)
 	end
 
-	local NewRandomMask = RandomBytes.Random()
+	local NewRandomMask = CSPRNG.Ed25519Random()
 
 	local MaskedScalarBytes = buffer.create(32)
 	buffer.copy(MaskedScalarBytes, 0, MaskedKey, 0, 32)
