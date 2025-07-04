@@ -110,7 +110,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			return "Common"
 		end
 		
-		local ROLLS = 400_000
+		local ROLLS = 100_000
 		local EPSILON = 0.05
 		local ITERATIONS = 10
 

@@ -325,6 +325,8 @@ function CSPRNGClass:GenerateBlock(): ()
 	
 	if CSPRNG.BlockExpansion then
 		self.Buffer = Blake3(ChaChaOutput, math.clamp(math.floor(CSPRNG.SizeTarget), 64, 2^32 - 1))
+	else
+		self.Buffer = ChaChaOutput
 	end
 	
 	self.BufferPosition = 0
