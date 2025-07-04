@@ -1,6 +1,6 @@
 --!strict
---!native
 --!optimize 2
+--!native
 
 export type PadFunction = (InputBuffer: buffer, OutputBuffer: buffer?, SegmentSize: number) -> buffer
 export type Struct = {Pad: PadFunction, Unpad: PadFunction, Overwrite: nil | boolean}

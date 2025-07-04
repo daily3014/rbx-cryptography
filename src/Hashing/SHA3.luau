@@ -9,9 +9,9 @@
 		local Result2 = SHAKE128(Message, 32)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local OUTPUT_BUFFER = buffer.create(64)
 local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do

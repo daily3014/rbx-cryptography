@@ -93,6 +93,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		
 		local function ChooseRandom()
 			local Number = Algorithm.RandomInt(1, TotalWeight)
+			--local Number = math.random(1, TotalWeight)
 			local CurrentWeight = 0
 
 			for Name, Weight in WeightedChances do
@@ -109,9 +110,10 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			return "Common"
 		end
 		
-		local ROLLS = 100_000
-		local EPSILON = 0.1
-		
+		local ROLLS = 400_000
+		local EPSILON = 0.05
+		local ITERATIONS = 10
+
 		local Occurences = {
 			Common = 0,
 			Rare = 0,
@@ -119,22 +121,42 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Mythic = 0,
 		}
 		
+		local function Reset()
+			for Name, Count in Occurences do
+				Occurences[Name] = 0
+			end
+		end
+		
 		local function ExpectedOccurences(Rarity: string)
 			return math.ceil((WeightedChances[Rarity] / TotalWeight) * ROLLS)
 		end
 		
-		for _ = 1, ROLLS do
-			local ChosenRarity = ChooseRandom()
-			Occurences[ChosenRarity] += 1
+		local Accumlated = table.clone(Occurences)
+		for _ = 1, ITERATIONS do
+			for _ = 1, ROLLS do
+				local ChosenRarity = ChooseRandom()
+				Occurences[ChosenRarity] += 1
+			end
+			
+			for Name, Count in Occurences do
+				-- For some reason they're "unknown"
+				local Name: string = Name :: any
+				local Count: number = Count :: number
+
+				local ActualRate = math.abs(1 - (Count / ExpectedOccurences(Name)))
+				Accumlated[Name] += ActualRate
+			end
+			
+			Reset()
 		end
 		
-		for Name, Count in Occurences do
+		for Name, Chance in Accumlated do
 			-- For some reason they're "unknown"
 			local Name: string = Name :: any
-			local Count: number = Count :: number
+			local Chance: number = Chance :: number
 
-			local ActualRate = math.abs(1 - (Count / ExpectedOccurences(Name)))
-			Testing.Expect(ActualRate).ToBeLessThan(EPSILON)
+			local AverageRate = Chance / ITERATIONS
+			Testing.Expect(AverageRate).ToBeLessThan(EPSILON)
 		end
 	end)
 

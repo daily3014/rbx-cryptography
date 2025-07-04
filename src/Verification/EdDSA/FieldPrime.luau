@@ -17,8 +17,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local SIZE = 104
 local SQUARES = buffer.create(SIZE) do

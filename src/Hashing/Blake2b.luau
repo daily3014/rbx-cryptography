@@ -23,9 +23,9 @@
 		local Result = BLAKE2b(Message, 64, OptionalKey)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local BLOCK_SIZE_BYTES = 128
 local DEFAULT_OUTPUT_BYTES = 64

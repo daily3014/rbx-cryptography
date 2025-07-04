@@ -17,9 +17,9 @@
 		local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local FieldQuadratic = require("@self/FieldQuadratic")
 local SHA512 = require("@self/SHA512")

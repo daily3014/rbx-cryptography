@@ -1,6 +1,6 @@
 --!strict
---!native
 --!optimize 2
+--!native
 
 type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number) -> ()
 export type SimpleModeStruct = {

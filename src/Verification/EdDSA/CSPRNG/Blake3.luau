@@ -22,9 +22,9 @@
 		local DerivedKey = KeyDeriver(Message, 32)
 --]=]
 
---!strict
---!optimize 2
 --!native
+--!optimize 2
+--!strict
 
 local DWORD = 4
 local BLOCK_SIZE = 64
@@ -33,10 +33,6 @@ local EXTENDED_CV_SIZE = 64
 local MAX_STACK_DEPTH = 64
 local STACK_BUFFER_SIZE = MAX_STACK_DEPTH * CV_SIZE
 
-local BLAKE3_KEY_SIZE = 32
-local BLAKE3_MIN_OUTPUT_BYTES = 1
-local BLAKE3_MAX_OUTPUT_BYTES = 2^32 - 1
-
 local XOR = bit32.bxor
 local LEFT_ROTATE = bit32.lrotate
 
@@ -44,9 +40,6 @@ local CHUNK_START = 0x01
 local CHUNK_END = 0x02
 local PARENT_FLAG = 0x04
 local ROOT_FLAG = 0x08
-local HASH_FLAG = 0x10
-local DERIVE_CONTEXT_FLAG = 0x20
-local DERIVE_MATERIAL_FLAG = 0x40
 
 local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	local IV = {
@@ -66,23 +59,6 @@ end
 
 local function WriteCV(Target: buffer, Offset: number, Source: buffer)
 	buffer.copy(Target, Offset, Source, 0, CV_SIZE)
-end
-
-local function ToHex(Buffer: buffer): string
-	local Length = buffer.len(Buffer)
-	local Hex = buffer.create(Length * 2)
-
-	local Leftover = Length % 4
-
-	for Index = 0, Length - Leftover - 1, 4 do
-		buffer.writestring(Hex, Index * 2, string.format("%08x", bit32.byteswap(buffer.readu32(Buffer, Index))))
-	end
-
-	for Index = Length - Leftover, Length - 1 do
-		buffer.writestring(Hex, Index * 2, string.format("%02x", buffer.readu8(Buffer, Index)))
-	end
-
-	return buffer.tostring(Hex)
 end
 
 local function CreateCVStack(): (buffer, number)
@@ -341,120 +317,6 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	return Output
 end
 
-local Blake3 = {}
-
-function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
-	if Message == nil then
-		error("Message cannot be nil", 2)
-	end
-
-	if typeof(Message) ~= "buffer" then
-		error(`Message must be a buffer, got {typeof(Message)}`, 2)
-	end
-
-	if Length then
-		if typeof(Length) ~= "number" then
-			error(`Length must be a number, got {typeof(Length)}`, 2)
-		end
-
-		if Length ~= math.floor(Length) then
-			error(`Length must be an integer, got {Length}`, 2)
-		end
-
-		if Length < BLAKE3_MIN_OUTPUT_BYTES then
-			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-		end
-
-		if Length > BLAKE3_MAX_OUTPUT_BYTES then
-			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-		end
-	end
-
-	local Result = ProcessMessage(INITIAL_VECTORS, 0, Message, Length or 32)
-	return ToHex(Result), Result
+return function(Message: buffer, Length: number?): buffer
+	return ProcessMessage(INITIAL_VECTORS, 0, Message, Length or 32)
 end
-
-function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): (string, buffer)
-	if Key == nil then
-		error("Key cannot be nil", 2)
-	end
-
-	if typeof(Key) ~= "buffer" then
-		error(`Key must be a buffer, got {typeof(Key)}`, 2)
-	end
-
-	local KeyLength = buffer.len(Key)
-	if KeyLength ~= BLAKE3_KEY_SIZE then
-		error(`Key must be exactly {BLAKE3_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)
-	end
-
-	if Message == nil then
-		error("Message cannot be nil", 2)
-	end
-	if typeof(Message) ~= "buffer" then
-		error(`Message must be a buffer, got {typeof(Message)}`, 2)
-	end
-
-	if Length then
-		if typeof(Length) ~= "number" then
-			error(`Length must be a number, got {typeof(Length)}`, 2)
-		end
-		if Length ~= math.floor(Length) then
-			error(`Length must be an integer, got {Length}`, 2)
-		end
-		if Length < BLAKE3_MIN_OUTPUT_BYTES then
-			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-		end
-		if Length > BLAKE3_MAX_OUTPUT_BYTES then
-			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-		end
-	end
-
-	local Result = ProcessMessage(Key, HASH_FLAG, Message, Length or 32)
-	return ToHex(Result), Result
-end
-
-function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
-	if Context == nil then
-		error("Context cannot be nil", 2)
-	end
-
-	if typeof(Context) ~= "buffer" then
-		error(`Context must be a buffer, got {typeof(Context)}`, 2)
-	end
-
-	local ContextHash = ProcessMessage(INITIAL_VECTORS, DERIVE_CONTEXT_FLAG, Context, 32)
-
-	return function(Material: buffer, Length: number?): (string, buffer)
-		if Material == nil then
-			error("Material cannot be nil", 2)
-		end
-
-		if typeof(Material) ~= "buffer" then
-			error(`Material must be a buffer, got {typeof(Material)}`, 2)
-		end
-
-		if Length then
-			if typeof(Length) ~= "number" then
-				error(`Length must be a number, got {typeof(Length)}`, 2)
-			end
-
-			if Length ~= math.floor(Length) then
-				error(`Length must be an integer, got {Length}`, 2)
-			end
-
-			if Length < BLAKE3_MIN_OUTPUT_BYTES then
-				error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-			end
-
-			if Length > BLAKE3_MAX_OUTPUT_BYTES then
-				error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-			end
-		end
-
-		local Result = ProcessMessage(ContextHash, DERIVE_MATERIAL_FLAG, Material, Length or 32)
-		return ToHex(Result), Result
-	end
-end
-
-return Blake3

@@ -18,8 +18,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local FieldPrime = require("./FieldPrime")
 local Edwards25519 = require("./Edwards25519")
