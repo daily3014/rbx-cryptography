@@ -21,8 +21,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local ChaCha20 = require("@self/ChaCha20")
 local Poly1305 = require("@self/Poly1305")

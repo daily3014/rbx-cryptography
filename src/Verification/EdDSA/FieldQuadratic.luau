@@ -17,8 +17,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local MultiPrecision = require("./MultiPrecision")
 

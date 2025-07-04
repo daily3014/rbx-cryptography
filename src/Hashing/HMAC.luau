@@ -10,12 +10,11 @@
 		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize)
 --]=]
 
---!native
 --!strict
 --!optimize 2
+--!native
 
 export type HashFunction = (Message: buffer, Salt: buffer?) -> (string, buffer)
-
 
 local function HexToBinary(HexBuffer: buffer)
 	local HexBufferLength = buffer.len(HexBuffer)

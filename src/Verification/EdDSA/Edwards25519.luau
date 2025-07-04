@@ -20,8 +20,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local FieldPrime = require("./FieldPrime")
 

@@ -13,9 +13,9 @@
 		local Result = SHA512(Message, OptionalSalt)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local FRONTK = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 

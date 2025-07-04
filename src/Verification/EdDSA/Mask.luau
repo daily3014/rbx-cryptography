@@ -17,8 +17,9 @@
 		local RemaskedKey = MaskedX25519.Remask(MaskedKey)
 --]=]
 
---!native
+--!strict
 --!optimize 2
+--!native
 
 local FieldQuadratic = require("./FieldQuadratic")
 local FieldPrime = require("./FieldPrime")
@@ -150,6 +151,11 @@ local function ExchangeOnPoint(MaskedSecretKey: buffer, CurvePoint: buffer): (bu
 
 	local MaskPoint, MaskedPoint, DifferencePoint = Curve25519.Prac(CurvePoint, {FieldQuadratic.MakeRuleset(FieldQuadratic.Eighth(MaskScalar), FieldQuadratic.Eighth(MaskedScalar))})
 	if not MaskPoint then
+		local ZeroOutput = FieldPrime.Encode(FieldPrime.Num(0))
+		return ZeroOutput, ZeroOutput
+	end
+
+	if not DifferencePoint or not MaskedPoint then
 		local ZeroOutput = FieldPrime.Encode(FieldPrime.Num(0))
 		return ZeroOutput, ZeroOutput
 	end

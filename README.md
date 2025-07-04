@@ -306,7 +306,7 @@ Verification.EdDSA.MaskedX25519.EphemeralSecretKey(MaskedKey: buffer) -> buffer
 
 **Encoding:**
 ```lua
-Utilities.Base64.Encode(Input: buffer) -> string
+Utilities.Base64.Encode(Input: buffer) -> buffer
 -- Encode buffer data to Base64 string representation.
 
 Utilities.Base64.Decode(Input: buffer) -> string

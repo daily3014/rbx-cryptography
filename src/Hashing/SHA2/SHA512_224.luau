@@ -13,9 +13,9 @@
 		local Result = SHA512_224(Message, OptionalSalt)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local FRONT_VALUES = buffer.create(32)
 local BACK_VALUES = buffer.create(32)

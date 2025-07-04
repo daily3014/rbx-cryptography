@@ -12,9 +12,9 @@
 		local Decoded = Base64.Decode("SGVsbG8gV29ybGQ=")
 --]=]
 
+--!strict
 --!optimize 2
 --!native
---!strict
 
 local PADDING_CHARACTER = 61
 local ALPHABET_INDEX = buffer.create(64) do

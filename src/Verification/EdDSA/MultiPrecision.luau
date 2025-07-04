@@ -17,8 +17,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local CARRY = 88
 local SIZE = 96

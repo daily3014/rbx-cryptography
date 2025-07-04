@@ -17,9 +17,9 @@
 		local Decrypted = Cipher:Decrypt(Encrypted, nil, IV)
 --]=]
 
---!native
+--!strict
 --!optimize 2
---!strict 
+--!native
 
 local CipherModes = require("@self/Modes")
 local PaddingSchemes = require("@self/Pads")

@@ -24,6 +24,7 @@
 local SHA256 = require("@self/SHA256")
 local Conversions = require("@self/Conversions")
 local ChaCha20 = require("@self/ChaCha20")
+local Blake3 = require("@self/Blake3")
 
 type CSPRNGClass = {
 	__index: CSPRNGClass,
@@ -62,6 +63,10 @@ type CSPRNGModule = {
 	New: () -> CSPRNGInstance,
 	Test: () -> boolean?,
 	
+	BlockExpansion: boolean,
+	SizeTarget: number,
+	RekeyAfter: number,
+	
 	Reseed: (CustomEntropy: buffer?) -> (),
 	
 	Random: () -> number,
@@ -75,7 +80,11 @@ type CSPRNGModule = {
 	Ed25519Random: () -> buffer,
 }
 
-local CSPRNG: CSPRNGModule = {} :: CSPRNGModule
+local CSPRNG: CSPRNGModule = {
+	BlockExpansion = false,
+	SizeTarget = 2048,
+	RekeyAfter = 1024
+} :: CSPRNGModule
 
 local CSPRNGClass = {} :: CSPRNGClass
 CSPRNGClass.__index = CSPRNGClass
@@ -312,12 +321,17 @@ end
 
 function CSPRNGClass:GenerateBlock(): ()
 	local InputBuffer = buffer.create(BLOCK_SIZE)
-	self.Buffer = ChaCha20(InputBuffer, self.Key, self.Nonce, self.Counter, 20)
+	local ChaChaOutput = ChaCha20(InputBuffer, self.Key, self.Nonce, self.Counter, 20)
+	
+	if CSPRNG.BlockExpansion then
+		self.Buffer = Blake3(ChaChaOutput, math.clamp(math.floor(CSPRNG.SizeTarget), 64, 2^32 - 1))
+	end
+	
 	self.BufferPosition = 0
 	self.BufferSize = buffer.len(self.Buffer)
 
 	self.Counter += 1
-	if self.Counter % 1024 == 0 then
+	if self.Counter % math.max(math.floor(CSPRNG.RekeyAfter), 2) == 0 then
 		self:ReKey()
 	end
 end

@@ -15,8 +15,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local function XOR(StringBuffer: buffer, KeyBuffer: buffer): buffer
 	local StringLength = buffer.len(StringBuffer)

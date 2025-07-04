@@ -6,9 +6,9 @@
 		local String = RandomString(500)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 	local FixedLength = if Length % 36 ~= 0 then Length + (4 - Length % 4) else Length

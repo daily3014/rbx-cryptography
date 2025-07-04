@@ -13,9 +13,9 @@
 		local Result = SHA224(Message, OptionalSalt)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
