@@ -14,8 +14,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local ROUNDS: number = 44
 local KEY_WORDS: number = 4

@@ -10,9 +10,9 @@
         local Hash = Adler(Message)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local function Adler(Message: buffer): number
 	local MOD_ALDER = 65522

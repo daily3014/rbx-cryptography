@@ -16,9 +16,9 @@
 		local Result = XXHash32(Message, Seed)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local PRIME_1 = 0x9e3779B1
 local PRIME_2 = 0x85ebca77

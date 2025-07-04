@@ -19,9 +19,9 @@
 		Hash is returned as the hexadecimal representation (string)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local CRC32_LOOKUP = table.create(256)
 for Index = 0, 255 do
@@ -41,14 +41,30 @@ local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?): numb
 	local Lookup = CRC32_LOOKUP
 	local Hash = 0xFFFFFFFF
 
-	for Index = 0, buffer.len(Message) - 1 do
+	local Leftover = buffer.len(Message) % 4
+	
+	for Index = 0, Leftover - 1 do
 		local Value = buffer.readu8(Message, Index)
 		local TableIndex = bit32.band(bit32.bxor(Hash, Value), 0xFF) + 1
-		
+
 		Hash = bit32.bxor(
 			Lookup[TableIndex],
 			bit32.rshift(Hash, 8)
 		)
+	end
+	
+	for Index = Leftover, buffer.len(Message) - 1, 4 do
+		local TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index)), 0xFF) + 1
+		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
+		
+		TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index + 1)), 0xFF) + 1
+		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
+		
+		TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index + 2)), 0xFF) + 1
+		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
+
+		TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index + 3)), 0xFF) + 1
+		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
 	end
 
 	if Mode == "Jam" then

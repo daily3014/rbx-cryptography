@@ -14,8 +14,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local TAG_SIZE = 16
 local BLOCK_SIZE = 16

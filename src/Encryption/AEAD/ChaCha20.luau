@@ -19,8 +19,8 @@
 --]=]
 
 --!strict
---!native
 --!optimize 2
+--!native
 
 local DWORD = 4
 local BLOCK_SIZE = 64

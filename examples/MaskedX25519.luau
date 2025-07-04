@@ -1,4 +1,4 @@
---[[ Cryptography library: MaskedX25519 Example - Client to Server Key Exchange and Symmetric Key Encryption with Ephemeral Keys --]]
+--[[ Cryptography library: MaskedX25519 Example - Client to Server Key Exchange and Symmetric Key Encryption with Ephemeral Keys ]]--
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,12 +13,12 @@ local EdDSA = Cryptography.Verification.EdDSA
 local MaskedX25519 = EdDSA.MaskedX25519
 
 -- Client
-local ClientPrivate = EdDSA.RandomBytes.Random()
+local ClientPrivate = EdDSA.CSPRNG.RandomBytes(32)
 local ClientMasked = MaskedX25519.Mask(ClientPrivate)
 local ClientMaskedPublic = MaskedX25519.PublicKey(ClientMasked)
 
 -- Server
-local ServerPrivate = EdDSA.RandomBytes.Random()
+local ServerPrivate = EdDSA.CSPRNG.RandomBytes(32)
 local ServerMasked = MaskedX25519.Mask(ServerPrivate)
 local ServerMaskedPublic = MaskedX25519.PublicKey(ServerMasked)
 
