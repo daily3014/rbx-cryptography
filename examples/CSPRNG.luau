@@ -16,7 +16,18 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 	CSPRNG works by creating entropy out of various factors
 	then using the entropy as the internal state of the RNG
 
+	To generate random numbers, CSPRNG creates a 64 byte block
+	of random data and takes however many bytes is needed for 
+	the output data i.e 8 bytes for a float/integer, 20 bytes for a 20
+	character long string. Once all 64 bytes are used up, an
+	another block is generated which may slow down the call.
+	The generated block can be extended to an arbitrary length
+	with Blake3 by enabling CSPRNG.BlockExpansion
+
 	Developers can renew the state and add their own entropy by passing it as a buffer in CSRNG.Reseed
+
+	CSPRNG will also automatically renew the stateafter a certain amount of calls controlled
+	by CSRNG.RekeyAfter (by default 1024, so 64 * 1024 bytes without block expansion)
 --]]
 
 -- Generate a random number between 0 and 1
@@ -42,8 +53,8 @@ CSPRNG.Reseed(CustomEntropy)
 -- Create a custom CSRPNG instance
 local NewInstance = CSPRNG.New() -- This instance has an independent state
 
--- It is slightly more complicated to reseed
-NewInstance:Reset()
+-- Reseed the custom instance
+NewInstance:Reset() -- Resetting the instance is optional, it will just set the internal counter back to 0
 NewInstance:GatherEntropy(CustomEntropy)
 
 NewInstance:GetIntRange(1, 100)
