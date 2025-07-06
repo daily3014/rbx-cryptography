@@ -26,7 +26,7 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 
 	Developers can renew the state and add their own entropy by passing it as a buffer in CSRNG.Reseed
 
-	CSPRNG will also automatically renew the stateafter a certain amount of calls controlled
+	CSPRNG will also automatically renew the state after a certain amount of calls controlled
 	by CSRNG.RekeyAfter (by default 1024, so 64 * 1024 bytes without block expansion)
 --]]
 
@@ -47,7 +47,7 @@ local LastPlayerWeaponUse = 12317127.123
 local AmountOfRemoteCalls = 1282
 local CustomEntropy = buffer.create(8 + 4) -- You can pass a buffer as big as 1024 bytes!
 buffer.writef64(CustomEntropy, 0, LastPlayerWeaponUse) -- 8 bytes
-buffer.writef64(CustomEntropy, 8, AmountOfRemoteCalls) -- 4 bytes
+buffer.writeu32(CustomEntropy, 8, AmountOfRemoteCalls) -- 4 bytes
 CSPRNG.Reseed(CustomEntropy)
 
 -- Create a custom CSRPNG instance

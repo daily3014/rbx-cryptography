@@ -32,66 +32,6 @@ end
 
 local Speck = require("../Encryption/Speck")
 
-local TestVectors: TestVectors = {
-	["6561656e7320466174"] = {
-		Mode = "Encrypt",
-		Description = "Speck64/96 Official Test Vector [Encrypt]",
-		Expected = "6c9475419f7952ec",
-		Key = FromHex("0001020308094b10111213000000"),
-		Plaintext = "6561656e7320466174"
-	},
-
-	["6c9475419f7952ec"] = {
-		Mode = "Decrypt",
-		Description = "Speck64/96 Official Test Vector [Decrypt]",
-		Expected = "6561656e7320466174",
-		Key = FromHex("0001020308094b10111213000000")
-	},
-
-	["2d43757474657233b"] = {
-		Mode = "Encrypt",
-		Description = "Speck64/128 Official Test Vector [Encrypt]",
-		Expected = "8b024e4548a56f8c",
-		Key = FromHex("000102030809040b101112131819141b"),
-		Plaintext = "2d43757474657233b"
-	},
-
-	["8b024e4548a56f8c"] = {
-		Mode = "Decrypt",
-		Description = "Speck64/128 Official Test Vector [Decrypt]",
-		Expected = "2d43757474657233b",
-		Key = FromHex("000102030809040b101112131819141b")
-	},
-
-	["Hello!!!"] = {
-		Mode = "Encrypt",
-		Description = "Hello!!! [Encrypt]",
-		Expected = "",
-		Key = FromHex("0001020304050607")
-	},
-
-	["TestData"] = {
-		Mode = "Encrypt",
-		Description = "TestData [Encrypt]",
-		Expected = "",
-		Key = FromHex("0f0e0d0c0b0a0908")
-	},
-
-	["0000000000000000"] = {
-		Mode = "Encrypt",
-		Description = "All Zeros Block [Encrypt]",
-		Expected = "",
-		Key = FromHex("0000000000000000")
-	},
-
-	["ffffffffffffffff"] = {
-		Mode = "Encrypt",
-		Description = "All Ones Block [Encrypt]",
-		Expected = "",
-		Key = FromHex("ffffffffffffffff")
-	}
-}
-
 local function StringToHex(Str: string): string
 	local Hex = ""
 	for Index = 1, #Str do

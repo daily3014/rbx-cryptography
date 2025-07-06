@@ -32,59 +32,6 @@ end
 
 local Simon = require("../Encryption/Simon")
 
-local TestVectors: TestVectors = {
-	["636c696e6720726f"] = {
-		Mode = "Encrypt",
-		Description = "Simon64/96 Official Test Vector [Encrypt]",
-		Expected = "c88f1a117fe2a25c",
-		Key = FromHex("00010203080904b101112130000000"),
-		Plaintext = "636c696e6720726f"
-	},
-
-	["c88f1a117fe2a25c"] = {
-		Mode = "Decrypt",
-		Description = "Simon64/96 Official Test Vector [Decrypt]",
-		Expected = "636c696e6720726f",
-		Key = FromHex("00010203080904b101112130000000")
-	},
-
-	["75756e64206c696b65"] = {
-		Mode = "Encrypt",
-		Description = "Simon64/128 Official Test Vector [Encrypt]",
-		Expected = "7aa0dfb920fcc844",
-		Key = FromHex("000102030809040b101112131819141b"),
-		Plaintext = "75756e64206c696b65"
-	},
-
-	["7aa0dfb920fcc844"] = {
-		Mode = "Decrypt",
-		Description = "Simon64/128 Official Test Vector [Decrypt]",
-		Expected = "75756e64206c696b65",
-		Key = FromHex("000102030809040b101112131819141b")
-	},
-
-	["Hello!!!"] = {
-		Mode = "Encrypt",
-		Description = "Hello!!! [Encrypt]",
-		Expected = "",
-		Key = FromHex("000102030405060708090a0b0c0d0e0f")
-	},
-
-	["0000000000000000"] = {
-		Mode = "Encrypt",
-		Description = "All Zeros Block [Encrypt]",
-		Expected = "",
-		Key = FromHex("00000000000000000000000000000000")
-	},
-
-	["aaaaaaaaaaaaaaaa"] = {
-		Mode = "Encrypt",
-		Description = "Alternating Pattern [Encrypt]",
-		Expected = "",
-		Key = FromHex("0f0e0d0c0b0a09080706050403020100")
-	}
-}
-
 local function StringToHex(Str: string): string
 	local Hex = ""
 	for Index = 1, #Str do
