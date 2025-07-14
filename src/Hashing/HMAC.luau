@@ -14,7 +14,7 @@
 --!optimize 2
 --!native
 
-export type HashFunction = (Message: buffer, Salt: buffer?) -> (string, buffer)
+export type HashFunction = (...any) -> (string, buffer)
 
 local function HexToBinary(HexBuffer: buffer)
 	local HexBufferLength = buffer.len(HexBuffer)
@@ -39,7 +39,7 @@ local function FromByteAndSize(Byte: number, Size: number)
 	return Buffer
 end
 
-local function XORBuffer(LeftBuffer, RightBuffer)
+local function XORBuffer(LeftBuffer: buffer, RightBuffer: buffer)
 	local Size = math.min(buffer.len(LeftBuffer), buffer.len(RightBuffer))
 	local NewBuffer = buffer.create(Size)
 	
@@ -52,7 +52,7 @@ local function XORBuffer(LeftBuffer, RightBuffer)
 	return NewBuffer
 end
 
-local function ConcatenateBuffers(LeftBuffer, RightBuffer)
+local function ConcatenateBuffers(LeftBuffer: buffer, RightBuffer: buffer)
 	local LeftBufLen = buffer.len(LeftBuffer)
 	local Buffer = buffer.create(LeftBufLen + buffer.len(RightBuffer))
 	
@@ -62,15 +62,22 @@ local function ConcatenateBuffers(LeftBuffer, RightBuffer)
 	return Buffer
 end
 
+local function ToBigEndian(Buffer: buffer)
+	-- The hashing algorithms only ever write to buffers
+	-- with writeu32, so if the buffer size isn't a multiple
+	-- of four, we don't know if the remaining bytes have to
+	-- be swapped
+	for Index = 0, buffer.len(Buffer) - 1, 4 do
+		buffer.writeu32(Buffer, Index, bit32.byteswap(buffer.readu32(Buffer, Index)))
+	end
+end
+
 local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): buffer
 	local KeyLength = buffer.len(Key)
 
 	if KeyLength > BlockSizeBytes then
 		local _, Digest = HashFunction(Key)
-		
-		for Index = 0, buffer.len(Digest) - 1, 4 do
-			buffer.writeu32(Digest, Index, bit32.byteswap(buffer.readu32(Digest, Index)))
-		end
+		ToBigEndian(Digest)
 
 		local PaddedKey = buffer.create(BlockSizeBytes)
 		buffer.copy(PaddedKey, 0, Digest)
@@ -87,6 +94,16 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 end
 
 local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): (string, buffer)
+	local StringDigest, BufferDigest = HashFunction(buffer.fromstring("Hello World"))
+
+	if not StringDigest or type(StringDigest) ~= "string" then
+		error(`Incompatible hash function. Expected HashFunction to return a string and a buffer, expected string but got {typeof(StringDigest)}`, 2)
+	end
+
+	if not BufferDigest or type(BufferDigest) ~= "buffer" then
+		error(`Incompatible hash function. Expected HashFunction to return a string and a buffer, expected buffer but got {typeof(BufferDigest)}`, 2)
+	end
+
 	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes)
 
 	local OuterPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x5C, BlockSizeBytes))

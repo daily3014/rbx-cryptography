@@ -1,8 +1,5 @@
 --[=[
     Cryptography library: Adler
-    
-    Note: Although Adler has practically no use, it was
-    still fun to implement.
 
     Return type: number
     Example Usage:
@@ -23,12 +20,12 @@ local function Adler(Message: buffer): number
 	local MessageLength = buffer.len(Message)
 
 	if MessageLength == 1 then
-		MOD_ALDER += buffer.readu8(Message, 0);
+		MOD_ALDER += buffer.readu8(Message, 0)
 		if MOD_ALDER >= 65521 then
 			MOD_ALDER -= 65521
 		end
 
-		Sum += MOD_ALDER;
+		Sum += MOD_ALDER
 		if Sum >= 65521 then
 			Sum -= 65521
 		end
@@ -69,144 +66,144 @@ local function Adler(Message: buffer): number
 		while Iters > 0 do
 			Iters -= 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 		end
 	end
 
 	if MessageLength > 0 then
 		while MessageLength >= 16 do
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 
 			MessageLength -= 16
 		end
 
 		while MessageLength > 0 do
-			MOD_ALDER += buffer.readu8(Message, BufferPointer);
-			Sum += MOD_ALDER;
+			MOD_ALDER += buffer.readu8(Message, BufferPointer)
+			Sum += MOD_ALDER
 			BufferPointer += 1
 			MessageLength -= 1
 		end
