@@ -4,10 +4,14 @@
 	⚠️ WARNING: Speck is not very secure!
 	For security, use AES or CHACHA20. ⚠️
 
+	Sizes:
+		Key: 8 bytes
+
 	Return type: buffer
 	Example Usage:
 		local Message = buffer.fromstring("Hello World")
-		local Key = buffer.fromstring("Key")
+		local Key = buffer.fromstring("Key") 
+
 		local Encrypted = Encrypt(Message, Key)
 		local Decrypted = Decrypt(Encrypted, Key)
 --]=]

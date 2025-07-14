@@ -1,5 +1,8 @@
 --[=[
 	Cryptography library: SHA512/256
+
+	Sizes:
+		Digest: 32 bytes
 	
 	Return type: string
 	Example usage:
@@ -17,8 +20,13 @@
 --!optimize 2
 --!native
 
+local FORMAT_STRING = string.rep("%08x", 8)
+
 local FRONT_VALUES = buffer.create(32)
 local BACK_VALUES = buffer.create(32)
+
+local BLOCK_FRONT = table.create(80)
+local BLOCK_BACK = table.create(80)
 
 local FRONTK: {number}, BACKK: {number} do
 	FRONTK = {
@@ -72,11 +80,6 @@ do
 		buffer.writeu32(BACK_VALUES, (Index - 1) * 4, Value)
 	end
 end
-
-local BLOCK_FRONT = table.create(80)
-local BLOCK_BACK = table.create(80)
-
-local FORMAT_STRING = string.rep("%08x", 8)
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -238,18 +241,6 @@ local function DigestBlock(Blocks: buffer, Length: number, Digest: buffer)
 
 	buffer.writeu32(Digest, 24, H4F)
 	buffer.writeu32(Digest, 28, H4B)
-
-	buffer.writeu32(Digest, 32, H5F)
-	buffer.writeu32(Digest, 36, H5B)
-
-	buffer.writeu32(Digest, 40, H6F)
-	buffer.writeu32(Digest, 44, H6B)
-
-	buffer.writeu32(Digest, 48, H7F)
-	buffer.writeu32(Digest, 52, H7B)
-
-	buffer.writeu32(Digest, 56, H8F)
-	buffer.writeu32(Digest, 60, H8B)
 end
 
 local function SHA512_256(Message: buffer, Salt: buffer?): (string, buffer)
@@ -262,7 +253,7 @@ local function SHA512_256(Message: buffer, Salt: buffer?): (string, buffer)
 
 	local ProcessedMessage, Length = PreProcess(Message)
 
-	local Digest = buffer.create(64)
+	local Digest = buffer.create(32)
 	DigestBlock(ProcessedMessage, Length, Digest)
 
 	local H1F, H2F, H3F, H4F = buffer.readu32(Digest, 0), buffer.readu32(Digest, 8), buffer.readu32(Digest, 16), buffer.readu32(Digest, 24)

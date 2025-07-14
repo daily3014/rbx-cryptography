@@ -1,12 +1,9 @@
 --[=[
 	Cryptography library: Conversions
 	
-	Return type: string (ToHex) / buffer (FromHex)
+	Return type: string / buffer
 	Example Usage:
-		--------Usage Case 1--------
 		local HexString = Conversions.ToHex(buffer.fromstring("Hello World"))
-		
-		--------Usage Case 2--------
 		local OriginalBuffer = Conversions.FromHex("48656c6c6f20576f726c64")
 --]=]
 
