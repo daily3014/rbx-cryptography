@@ -119,9 +119,13 @@ local function RunTest(Function: () -> (), Info: TestInfo)
 	local Ok, Error
 	local StackTrace = {}
 	local TimeStart = os.clock()
+	local ThisSource = debug.info(function() end, "s")
 
 	Ok = xpcall(Function, function(ErrorMessage)
 		local LastName = debug.info(1, "n")
+		local WasIntentional = debug.info(2, "n") == "error"
+		local ShortSource, SourceScript
+
 		for Index = 1, 30 do
 			local DebugFunction, Name, Line, Source = debug.info(Index + 1, "fnls")
 			if not DebugFunction then
@@ -136,10 +140,31 @@ local function RunTest(Function: () -> (), Info: TestInfo)
 				continue
 			end
 
-			table.insert(StackTrace, WriteStackTrace(Source, LineNumber :: string, Line, tostring(DebugFunction)))
+			if Source == ThisSource and WasIntentional then
+				continue
+			end
+
+			local ShortenedSource = ShortSource or Source
+
+			-- Only runs when a test fails, so the deoptimization
+			-- should never occur when all the tests pass
+			if not ShortSource then
+				local SourceEnv = getfenv(DebugFunction)
+				if SourceEnv and SourceEnv.script then
+					SourceScript = SourceEnv.script
+
+					ShortenedSource = `{SourceScript.Parent}.{SourceScript}`
+					ShortSource = ShortenedSource
+				end
+			end
+
+			table.insert(StackTrace, WriteStackTrace(ShortenedSource, LineNumber :: string, Line, tostring(DebugFunction)))
 		end
 
 		Error = ErrorMessage
+		if ShortSource and SourceScript then
+			Error = Error:gsub(SourceScript:GetFullName(), ShortSource)
+		end
 	end)
 
 	local TimeLength = SecondsToMicroseconds(os.clock() - TimeStart)

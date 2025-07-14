@@ -1,16 +1,5 @@
 --[=[
-	Cryptography library: SHA512 (Optimized for Ed25519)
-	
-	Return type: buffer
-	Example usage:
-		local Message = buffer.fromstring("Hello World")
-		
-		--------Usage Case 1--------
-		local Result = SHA512(Message)
-		
-		--------Usage Case 2--------
-		local OptionalSalt = buffer.fromstring("Salty")
-		local Result = SHA512(Message, OptionalSalt)
+	Cryptography library: SHA512 (Optimized for EdDSA)
 --]=]
 
 --!strict

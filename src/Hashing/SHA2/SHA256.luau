@@ -1,5 +1,8 @@
 --[=[
 	Cryptography library: SHA256
+
+	Sizes:
+		Digest: 32 bytes
 	
 	Return type: string
 	Example usage:
@@ -16,6 +19,8 @@
 --!strict
 --!optimize 2
 --!native
+
+local FORMAT_STRING = string.rep("%08x", 8)
 
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
@@ -37,8 +42,7 @@ end
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
-	local Padding = (64 - ((ContentLength + 9) % 64)) % 64
-	--local Padding = -(ContentLength + 9) % 64
+	local Padding = -(ContentLength + 9) % 64
 
 	local NewContentLength = ContentLength + 1 + Padding + 8
 	local NewContent = buffer.create(NewContentLength)
@@ -105,7 +109,6 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 	return A, B, C, D, E, F, G, H
 end
 
-local FormatString = string.rep("%08x", 8)
 local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
@@ -130,7 +133,7 @@ local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 24, G)
 	buffer.writeu32(Digest, 28, H)
 
-	return string.format(FormatString, A, B, C, D, E, F, G, H), Digest
+	return string.format(FORMAT_STRING, A, B, C, D, E, F, G, H), Digest
 end
 
 return SHA256

@@ -1,5 +1,8 @@
 --[=[
 	Cryptography library: SHA512
+
+	Sizes:
+		Digest: 64 bytes
 	
 	Return type: string
 	Example usage:

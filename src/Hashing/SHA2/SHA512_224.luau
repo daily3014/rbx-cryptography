@@ -1,5 +1,8 @@
 --[=[
 	Cryptography library: SHA512/224
+
+	Sizes:
+		Digest: 28 bytes
 	
 	Return type: string
 	Example usage:
@@ -17,8 +20,13 @@
 --!optimize 2
 --!native
 
+local FORMAT_STRING = string.rep("%08x", 7)
+
 local FRONT_VALUES = buffer.create(32)
 local BACK_VALUES = buffer.create(32)
+
+local BLOCK_FRONT = table.create(80)
+local BLOCK_BACK = table.create(80)
 
 local FRONTK: {number}, BACKK: {number} do
 	FRONTK = {
@@ -72,11 +80,6 @@ do
 		buffer.writeu32(BACK_VALUES, (Index - 1) * 4, Value)
 	end
 end
-
-local BLOCK_FRONT = table.create(80)
-local BLOCK_BACK = table.create(80)
-
-local FORMAT_STRING = string.rep("%08x", 7)
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -237,19 +240,6 @@ local function DigestBlock(Blocks: buffer, Length: number, Digest: buffer)
 	buffer.writeu32(Digest, 20, H3B)
 
 	buffer.writeu32(Digest, 24, H4F)
-	buffer.writeu32(Digest, 28, H4B)
-
-	buffer.writeu32(Digest, 32, H5F)
-	buffer.writeu32(Digest, 36, H5B)
-
-	buffer.writeu32(Digest, 40, H6F)
-	buffer.writeu32(Digest, 44, H6B)
-
-	buffer.writeu32(Digest, 48, H7F)
-	buffer.writeu32(Digest, 52, H7B)
-
-	buffer.writeu32(Digest, 56, H8F)
-	buffer.writeu32(Digest, 60, H8B)
 end
 
 local function SHA512_224(Message: buffer, Salt: buffer?): (string, buffer)
@@ -262,11 +252,11 @@ local function SHA512_224(Message: buffer, Salt: buffer?): (string, buffer)
 
 	local ProcessedMessage, Length = PreProcess(Message)
 
-	local Digest = buffer.create(64)
+	local Digest = buffer.create(28)
 	DigestBlock(ProcessedMessage, Length, Digest)
 
 	local H1F, H2F, H3F, H4F = buffer.readu32(Digest, 0), buffer.readu32(Digest, 8), buffer.readu32(Digest, 16), buffer.readu32(Digest, 24)
-	local H1B, H2B, H3B, _ = buffer.readu32(Digest, 4), buffer.readu32(Digest, 12), buffer.readu32(Digest, 20), buffer.readu32(Digest, 28)
+	local H1B, H2B, H3B = buffer.readu32(Digest, 4), buffer.readu32(Digest, 12), buffer.readu32(Digest, 20)
 
 	return string.format(FORMAT_STRING, H1F, H1B, H2F, H2B, H3F, H3B, H4F), Digest
 end

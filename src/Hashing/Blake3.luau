@@ -2,8 +2,8 @@
 	Cryptography library: Blake3
 	
 	Sizes:
-		Key: 32 bytes (for keyed hash)
-		Output: Variable length (default 32 bytes)
+		Key: 32 bytes
+		Output: variable
 	
 	Return type: string (hex)
 	Example usage:
@@ -26,7 +26,8 @@
 --!optimize 2
 --!native
 
-local DWORD = 4
+local Blake3 = {}
+
 local BLOCK_SIZE = 64
 local CV_SIZE = 32
 local EXTENDED_CV_SIZE = 64
@@ -54,7 +55,7 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 		0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 	}
 	for Index, Value in ipairs(IV) do
-		buffer.writeu32(INITIAL_VECTORS, (Index - 1) * DWORD, Value)
+		buffer.writeu32(INITIAL_VECTORS, (Index - 1) * 4, Value)
 	end
 end
 
@@ -340,8 +341,6 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 
 	return Output
 end
-
-local Blake3 = {}
 
 function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 	if Message == nil then

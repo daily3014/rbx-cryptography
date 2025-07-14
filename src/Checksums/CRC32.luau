@@ -8,15 +8,12 @@
 		
 		--------Usage Case 1--------
 		local Hash = CRC32(Message)
-		ISO-HDLC by default
-		
+
 		--------Usage Case 2--------
 		local Hash = CRC32(Message, "Jam")
-		JAM Version
 		
 		--------Usage Case 3--------
 		local Hash = CRC32(Message, "Jam", true)
-		Hash is returned as the hexadecimal representation (string)
 --]=]
 
 --!strict

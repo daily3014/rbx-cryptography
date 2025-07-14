@@ -1,6 +1,14 @@
 --[=[
 	Cryptography library: Keccak/SHA-3
 	
+	Sizes:
+		SHA3-224 Digest: 28 bytes
+		SHA3-256 Digest: 32 bytes
+		SHA3-384 Digest: 48 bytes
+		SHA3-512 Digest: 64 bytes
+		SHAKE128 Digest: variable
+		SHAKE256 Digest: variable
+
 	Return type: string
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
@@ -12,6 +20,8 @@
 --!strict
 --!optimize 2
 --!native
+
+local SHA3 = {}
 
 local OUTPUT_BUFFER = buffer.create(64)
 local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
@@ -196,7 +206,7 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 	end
 end
 
-local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): string
+local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): (string, buffer)
 	local RateBytes = (1600 - CapacityBits) // 8
 	local LanesLow = buffer.create(100)
 	local LanesHigh = buffer.create(100)
@@ -266,32 +276,30 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 		buffer.writestring(Hex, Index * 2, string.format("%02x", buffer.readu8(Output, Index)))
 	end
 
-	return buffer.tostring(Hex)
+	return buffer.tostring(Hex), Output
 end
 
-local SHA3 = {}
-
-function SHA3.SHA3_224(Message: buffer): string
+function SHA3.SHA3_224(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 448, 28, 0x06)
 end
 
-function SHA3.SHA3_256(Message: buffer): string
+function SHA3.SHA3_256(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-function SHA3.SHA3_384(Message: buffer): string
+function SHA3.SHA3_384(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 768, 48, 0x06)
 end
 
-function SHA3.SHA3_512(Message: buffer): string
+function SHA3.SHA3_512(Message: buffer): (string, buffer)
 	return ProcessSponge(Message, 1024, 64, 0x06)
 end
 
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): string
+function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
 	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
-function SHA3.SHAKE256(Message: buffer, OutputBytes: number): string
+function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
 	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
 end
 

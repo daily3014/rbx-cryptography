@@ -1,13 +1,16 @@
 --[=[
 	Cryptography library: Simon Cipher 64-bit
 
-	⚠️ WARNING: Speck is not very secure!
+	⚠️ WARNING: Simon is not very secure!
 	For security, use AES or CHACHA20. ⚠️
+
+	Sizes:
+		Key: 16 bytes
 
 	Return type: buffer
 	Example Usage:
 		local Message = buffer.fromstring("Hello World")
-		local Key = buffer.fromstring("MySecretKey12345") -- 16 bytes for 128-bit key
+		local Key = buffer.fromstring("MySecretKey12345")
 		
 		local Encrypted = Encrypt(Message, Key)
 		local Decrypted = Decrypt(Encrypted, Key)

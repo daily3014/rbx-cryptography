@@ -4,6 +4,9 @@
 	⚠️ WARNING: SHA1 is cryptographically broken!
 	Only use for legacy compatibility, checksums, or non-security purposes.
 	For security, use SHA256 or higher. ⚠️
+
+	Sizes:
+		Digest: 20 bytes
 	
 	Return type: string
 	Example usage:
@@ -17,9 +20,13 @@
 		local Result = SHA1(Message, OptionalSalt)
 --]=]
 
---!strict
---!optimize 2
 --!native
+--!optimize 2
+--!strict
+
+local FORMAT_STRING = string.rep("%08x", 5)
+
+local OFFSETS = buffer.create(320)
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -40,17 +47,13 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return NewContent, NewContentLength
 end
 
-local OFFSETS = buffer.create(320)
 local function DigestBlocks(Blocks: buffer, Length: number): (number, number, number, number, number)
 	local A, B, C, D, E = 0x67452301, 0xefcdaB89, 0x98badcfe, 0x10325476, 0xc3d2e1f0
 	local Offsets = OFFSETS
 
 	for Offset = 0, Length - 1, 64 do
 		for BlockIndex = 0, 60, 4 do
-			local BlockBufferIndex = Offset + BlockIndex
-			local Word = bit32.byteswap(buffer.readu32(Blocks, BlockBufferIndex))
-
-			buffer.writeu32(Offsets, BlockIndex, Word)
+			buffer.writeu32(Offsets, BlockIndex, bit32.byteswap(buffer.readu32(Blocks, Offset + BlockIndex)))
 		end
 
 		for Index = 64, 316, 4 do
@@ -59,33 +62,46 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 				buffer.readu32(Offsets, Index - 32),
 				buffer.readu32(Offsets, Index - 56),
 				buffer.readu32(Offsets, Index - 64)
-				), 1))
+			), 1))
 		end
 
 		local H1, H2, H3, H4, H5 = A, B, C, D, E
-
-		local F, K = 0, 0
-		for Round = 0, 79 do
-			if Round <= 19 then
-				F = bit32.bor(bit32.band(H2, H3), bit32.band(-1 - H2, H4))
-				K = 0x5a827999
-			elseif Round <= 39 then
-				F = bit32.bxor(H2, H3, H4)
-				K = 0x6ed9eba1
-			elseif Round <= 59 then
-				F = bit32.bor(bit32.band(H2, H3), bit32.band(H2, H4), bit32.band(H3, H4))
-				K = 0x8f1bbcdc
-			else
-				F = bit32.bxor(H2, H3, H4)
-				K = 0xca62c1d6
-			end
-
-			local Temp = bit32.lrotate(H1, 5) + F + H5 + K + buffer.readu32(Offsets, Round * 4)
-			H5 = H4
-			H4 = H3
-			H3 = bit32.lrotate(H2, 30)
-			H2 = H1
-			H1 = bit32.bor(Temp, 0)
+		
+		local Temp
+		for Round = 0, 19 do
+			Temp = bit32.lrotate(H1, 5) +
+				bit32.band(H2, H3) + bit32.band(-1 - H2, H4) +
+				H5 + 0x5a827999 +
+				buffer.readu32(Offsets, Round * 4)
+			
+			H5, H4, H3, H2, H1 = H4, H3, bit32.lrotate(H2, 30), H1, Temp
+		end
+		
+		for Round = 20, 39 do
+			Temp = bit32.lrotate(H1, 5) +
+				bit32.bxor(H2, H3, H4) +
+				H5 + 0x6ed9eba1 +
+				buffer.readu32(Offsets, Round * 4)
+			
+			H5, H4, H3, H2, H1 = H4, H3, bit32.lrotate(H2, 30), H1, Temp
+		end
+		
+		for Round = 40, 59 do
+			Temp = bit32.lrotate(H1, 5) +
+				bit32.band(H4, H3) + bit32.band(H2, bit32.bxor(H4, H3)) +
+				H5 + 0x8f1bbcdc +
+				buffer.readu32(Offsets, Round * 4)
+			
+			H5, H4, H3, H2, H1 = H4, H3, bit32.lrotate(H2, 30), H1, Temp
+		end
+		
+		for Round = 60, 79 do
+			Temp = bit32.lrotate(H1, 5) +
+				bit32.bxor(H2, H3, H4) +
+				H5 + 0xca62c1d6 +
+				buffer.readu32(Offsets, Round * 4)
+			
+			H5, H4, H3, H2, H1 = H4, H3, bit32.lrotate(H2, 30), H1, Temp
 		end
 
 		A = bit32.bor(A + H1, 0)
@@ -98,8 +114,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 	return A, B, C, D, E
 end
 
-local FormatString = string.rep("%08x", 5)
-local function SHA1(Message: buffer, Salt: buffer?): (string, buffer)
+local function SHA1(Message: buffer, Salt: buffer?): string
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
 
@@ -110,16 +125,7 @@ local function SHA1(Message: buffer, Salt: buffer?): (string, buffer)
 	end
 
 	local ProcessedMessage, Length = PreProcess(Message)
-	local A, B, C, D, E = DigestBlocks(ProcessedMessage, Length)
-	local Digest = buffer.create(20)
-
-	buffer.writeu32(Digest, 0, A)
-	buffer.writeu32(Digest, 4, B)
-	buffer.writeu32(Digest, 8, C)
-	buffer.writeu32(Digest, 12, D)
-	buffer.writeu32(Digest, 16, E)
-
-	return string.format(FormatString, A, B, C, D, E), Digest
+	return string.format(FORMAT_STRING, DigestBlocks(ProcessedMessage, Length))
 end
 
 return SHA1

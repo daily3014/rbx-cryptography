@@ -1,24 +1,21 @@
 --[=[
 	Cryptography library: BLAKE2b
+
+	Sizes:
+		Digest: 2-64 bytes
+		Key: 0-128 bytes
 	
 	Return type: string
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		
-		-- BLAKE2b-128 (128-bit output)
-		local Result128 = BLAKE2b(Message, 16)
+		--------Usage Case 1--------
+		local Result = BLAKE2b(Message)
 		
-		-- BLAKE2b-256 (256-bit output)
-		local Result256 = BLAKE2b(Message, 32)
+		--------Usage Case 2--------
+		local Result = BLAKE2b(Message, 64)
 		
-		-- BLAKE2b-384 (384-bit output)
-		local Result384 = BLAKE2b(Message, 48)
-		
-		-- BLAKE2b-512 (512-bit output, default)
-		local Result512 = BLAKE2b(Message, 64)
-		-- or simply: local Result512 = BLAKE2b(Message)
-		
-		-- With optional key
+		--------Usage Case 3--------
 		local OptionalKey = buffer.fromstring("MyKey")
 		local Result = BLAKE2b(Message, 64, OptionalKey)
 --]=]

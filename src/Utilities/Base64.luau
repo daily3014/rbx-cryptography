@@ -5,10 +5,7 @@
 	Example Usage:
 		local Message = buffer.fromstring("Hello World")
 		
-		--------Usage Case 1--------
 		local Encoded = Base64.Encode(Message)
-		
-		--------Usage Case 2--------
 		local Decoded = Base64.Decode("SGVsbG8gV29ybGQ=")
 --]=]
 
