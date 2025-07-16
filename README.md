@@ -1,13 +1,14 @@
-# Luau Cryptography
+## Luau Cryptography
 A tested, high performance cryptography library for Roblox built in Luau. 
 Has over 30+ cryptographic functions including modern algorithms like SHA-3, BLAKE3, ChaCha20-Poly1305, and EdDSA alongside classic implementations. 
 Through alot of optimizations, the implementations are **200-900% faster** than alternatives while having actual readable code.
+
+**Discord**: https://discord.gg/Fg3sM8qKPp
 
 **Links:**
 - [DevForum Documentation](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271)
 - [Wally Package](https://wally.run/package/daily3014/cryptography)
 - [Pesde Package](https://pesde.dev/packages/daily3014/cryptography)
-- [Discord](https://discord.gg/Fg3sM8qKPp)
 
 ## Features
 
