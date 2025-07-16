@@ -8,6 +8,9 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 - [Wally Package](https://wally.run/package/daily3014/cryptography)
 - [Pesde Package](https://pesde.dev/packages/daily3014/cryptography)
 
+**Discord:**
+https://discord.gg/Fg3sM8qKPp
+
 ## Features
 
 - **High Performance**: 2x-8.7x faster than alternative implementations
