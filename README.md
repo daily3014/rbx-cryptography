@@ -7,9 +7,7 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 - [DevForum Documentation](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271)
 - [Wally Package](https://wally.run/package/daily3014/cryptography)
 - [Pesde Package](https://pesde.dev/packages/daily3014/cryptography)
-
-**Discord:**
-https://discord.gg/Fg3sM8qKPp
+- [Discord](https://discord.gg/Fg3sM8qKPp)
 
 ## Features
 
