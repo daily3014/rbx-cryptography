@@ -298,10 +298,10 @@ Verification.EdDSA.MaskedX25519.PublicKey(MaskedKey: buffer) -> buffer
 -- Generates a 32-byte public key from a 64-byte masked key.
 
 Verification.EdDSA.MaskedX25519.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer) -> (buffer, buffer)
--- Performs double key exchange returning (StaticSecret, EphemeralSecret).
+-- Performs double key exchange returning (PrimarySecret, MaskSecret).
 
-Verification.EdDSA.MaskedX25519.EphemeralSecretKey(MaskedKey: buffer) -> buffer
--- Extracts the 32-byte ephemeral secret from a 64-byte masked key.
+Verification.EdDSA.MaskedX25519.MaskComponent(MaskedKey: buffer) -> buffer
+-- Extracts the 32-byte random mask component from a 64-byte masked key.
 ```
 
 ### Utility Functions
