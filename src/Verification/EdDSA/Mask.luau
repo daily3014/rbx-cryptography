@@ -1,6 +1,10 @@
 --[=[
 	Cryptography library: Masked X25519 (Double Key Exchange)
 
+	Provides plausible deniability through dual-key ECDH exchange.
+	Each exchange produces TWO valid shared secrets - one primary, one mask-derived.
+	Under coercion, you can claim either secret was the "real" one used.
+
 	Return type: varies by function
 	Example usage:
 		local MaskedX25519 = require("MaskedX25519")
@@ -10,11 +14,15 @@
 		local MaskedKey = MaskedX25519.Mask(SecretKey)
 		local PublicKey = MaskedX25519.PublicKey(MaskedKey)
 
-		--------Usage Case 2: Double key exchange--------
-		local StaticSecret, EphemeralSecret = MaskedX25519.Exchange(MaskedKey, TheirPublicKey)
+		--------Usage Case 2: Deniable key exchange--------
+		local PrimarySecret, MaskSecret = MaskedX25519.Exchange(MaskedKey, TheirPublicKey)
+		
+		-- Both secrets are cryptographically valid
+		-- Use for deniable communication or plausible deniability
 
-		--------Usage Case 3: Refresh masking--------
+		--------Usage Case 3: Refresh masking (new mask component)--------
 		local RemaskedKey = MaskedX25519.Remask(MaskedKey)
+		-- Public key stays the same, but mask component changes
 --]=]
 
 --!strict
@@ -120,7 +128,7 @@ function Mask.Remask(MaskedKey: buffer): buffer
 	return RemaskedKey
 end
 
-function Mask.EphemeralSecretKey(MaskedKey: buffer): buffer
+function Mask.MaskComponent(MaskedKey: buffer): buffer
 	if MaskedKey == nil then
 		error("MaskedKey cannot be nil", 2)
 	end
@@ -134,10 +142,10 @@ function Mask.EphemeralSecretKey(MaskedKey: buffer): buffer
 		error(`MaskedKey must be exactly {X25519_MASKED_KEY_SIZE} bytes long, got {MaskedKeyLength} bytes`, 2)
 	end
 
-	local EphemeralKey = buffer.create(32)
-	buffer.copy(EphemeralKey, 0, MaskedKey, 32, 32)
+	local MaskKey = buffer.create(32)
+	buffer.copy(MaskKey, 0, MaskedKey, 32, 32)
 	
-	return EphemeralKey
+	return MaskKey
 end
 
 local function ExchangeOnPoint(MaskedSecretKey: buffer, CurvePoint: buffer): (buffer, buffer)
@@ -247,4 +255,4 @@ function Mask.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer): (buffer
 	return ExchangeOnPoint(MaskedSecretKey, Curve25519.Decode(TheirPublicKey))
 end
 
-return Mask 
+return Mask
