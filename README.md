@@ -3,12 +3,27 @@ A tested, high performance cryptography library for Roblox built in Luau.
 Has over 30+ cryptographic functions including modern algorithms like SHA-3, BLAKE3, ChaCha20-Poly1305, and EdDSA alongside classic implementations. 
 Through alot of optimizations, the implementations are **200-900% faster** than alternatives while having actual readable code.
 
+**I can't believe I have to spell this out, but this cryptography library was NOT made for users to exploit, harass, or engage in any illegal activities whatsoever.**
+**If I had known what sick things people were going to use this for, I wouldn't have released it in the first place.**
+**If you see this being used for explicit content, illegal purposes, harassment, or any other disgusting misuse REPORT IT. This kind of abuse is absolutely unacceptable.**
+
 **Discord**: https://discord.gg/Fg3sM8qKPp
 
 **Links:**
 - [DevForum Documentation](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271)
 - [Wally Package](https://wally.run/package/daily3014/cryptography)
 - [Pesde Package](https://pesde.dev/packages/daily3014/cryptography)
+
+## Authors
+
+**daily3014** - Developer - [@daily3014](https://github.com/daily3014)  
+**Xoifail** - Developer - [@xoifail](https://github.com/xoifaii)
+
+### Acknowledgments
+
+- Thanks to those who gave feedback and testing
+- Special thanks to all contributors and bug reporters
+- AES was originally made by @RobloxGamerPro200007
 
 ## Features
 
@@ -403,21 +418,6 @@ Please read the [CONTRIBUTING.md file](CONTRIBUTING.md).
 
 This project is licensed under the MIT License. See the LICENSE file for details.
 
----
-
-## Authors
-
-**daily3014** - Developer - [@daily3014](https://github.com/daily3014)  
-**xoifail** - Developer - [@xoifail](https://github.com/xoifaii)
-
-### Acknowledgments
-
-- Thanks to those who gave feedback and testing
-- Special thanks to all contributors and bug reporters
-- AES was originally made by @RobloxGamerPro200007
-
----
-
 ## FAQ
 
 ### Will you add other algorithms?
@@ -432,3 +432,4 @@ Through many optimizations including buffer operations, algorithm tuning and Lua
 - **Signatures**: Ed25519 for digital signatures and key exchange
 
 ---
+
