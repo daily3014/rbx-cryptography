@@ -16,6 +16,7 @@ export type SimpleModeStruct2 = {
 local ZeroesInitializationVector = buffer.create(16)
 
 local CipherModes = {}
+local CSPRNG = require("./CSPRNG")
 
 local function ValidateBlockData(DataBuffer: buffer, BlockSize: number): number
 	return buffer.len(DataBuffer) - BlockSize
@@ -318,8 +319,7 @@ do
 			return {
 				ForwardMode = CounterMode,
 				InverseMode = CounterMode,
-				InitValue = string.pack("I2I2I2I2I2I2I2I2", math.random(0, 65535), math.random(0, 65535), math.random(0, 65535),
-					math.random(0, 65535), math.random(0, 65535), math.random(0, 65535), math.random(0, 65535), math.random(0, 65535)),
+				InitValue = CSPRNG.RandomBytes(16),
 				Prefix = "", 
 				Suffix = "", 
 				Step = 1, 
