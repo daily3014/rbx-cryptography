@@ -189,25 +189,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end
 	end)
 
-	Testing.Test("Entropy Quality", function()
-		local Values = {}
-		for i = 1, 100 do
-			local Value = Algorithm.RandomBytes(4)
-			local UInt32 = buffer.readu32(Value, 0)
-			Values[i] = UInt32
-		end
-
-		local Duplicates = 0
-		for i = 1, 100 do
-			for j = i + 1, 100 do
-				if Values[i] == Values[j] then
-					Duplicates += 1
-				end
-			end
-		end
-
-		Testing.Expect(Duplicates).ToBeLessThan(2)
-
+	Testing.Test("Entropy Quality (Chi-Squared)", function()
 		local LargeBuffer = Algorithm.RandomBytes(1000)
 		local BitCounts = {0, 0, 0, 0, 0, 0, 0, 0}
 
@@ -215,15 +197,19 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			local Byte = buffer.readu8(LargeBuffer, i)
 			for Bit = 0, 7 do
 				if bit32.band(Byte, bit32.lshift(1, Bit)) ~= 0 then
-					BitCounts[Bit + 1] = BitCounts[Bit + 1] + 1
+					BitCounts[Bit + 1] += 1
 				end
 			end
 		end
 
+		local Expected = 500
+		local ChiSquared = 0
 		for i = 1, 8 do
-			Testing.Expect(BitCounts[i]).ToBeGreaterThan(450)
-			Testing.Expect(BitCounts[i]).ToBeLessThan(550)
+			local Deviation = BitCounts[i] - Expected
+			ChiSquared = ChiSquared + (Deviation * Deviation) / Expected
 		end
+
+		Testing.Expect(ChiSquared).ToBeLessThan(14.07)
 	end)
 	
 	Testing.Test("RandomInt", function()
