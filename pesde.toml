@@ -1,5 +1,5 @@
 name = "daily3014/cryptography"
-version = "1.9.1"
+version = "1.9.2"
 description = "Luau implementations of popular hashing/encryption algorithms"
 authors = ["daily3014", "xoifail"]
 repository = "https://github.com/daily3014/rbx-cryptography"
