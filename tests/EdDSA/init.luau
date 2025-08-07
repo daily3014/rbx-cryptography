@@ -101,7 +101,7 @@ end
 local function Exchange(SecretKey: buffer, PublicKey: buffer): buffer
 	local MaskedSecretKey = MaskedX25519.Mask(SecretKey)
 	MaskedSecretKey = MaskedX25519.Remask(MaskedSecretKey)
-	local SharedSecret, _ = MaskedX25519.Exchange(MaskedSecretKey, PublicKey)
+	local SharedSecret = MaskedX25519.Exchange(MaskedSecretKey, PublicKey)
 	
 	return SharedSecret
 end
@@ -250,20 +250,11 @@ Test("X25519 ECDH", function()
 end)
 
 Test("X25519 Base Point", function()
-	local BasePoint = FromHex("0900000000000000000000000000000000000000000000000000000000000000")
+	local PeerPublicKey = FromHex("e6db6867583030db3594c1a424b15f7c726624ec26b3353b10a903a6d0ab1c4c")
 	local Scalar = FromHex("a546e36bf0527c9d3b16154b82465edd62144c0ac1fc5a18506a2244ba449ac4")
+	local SharedSecret = Exchange(Scalar, PeerPublicKey)
 
-	local Result = Exchange(Scalar, BasePoint)
-
-	local AllZeros = true
-	for I = 0, 31 do
-		if buffer.readu8(Result, I) ~= 0 then
-			AllZeros = false
-			break
-		end
-	end
-
-	Expect(AllZeros).ToBe(false)
+	Expect(ToHex(SharedSecret)).ToBe("c3da55379de9c6908e94ea4df28d084f32eccf03491c71f754b4075577a28552")
 end)
 
 Test("X25519 Edge Cases", function()
