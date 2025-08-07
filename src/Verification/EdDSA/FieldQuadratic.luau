@@ -79,6 +79,22 @@ end
 
 local FieldQuadratic = {}
 
+function FieldQuadratic.IsValidScalar(ScalarBuffer: buffer): boolean
+	local CanonicalScalar = MultiPrecision.Carry(ScalarBuffer)
+	for LimbIndex = 10, 0, -1 do
+		local ScalarLimb = buffer.readf64(CanonicalScalar, LimbIndex * 8)
+		local OrderLimb = buffer.readf64(FIELD_ORDER, LimbIndex * 8)
+
+		if ScalarLimb > OrderLimb then
+			return false
+		elseif ScalarLimb < OrderLimb then
+			return true
+		end
+	end
+
+	return false
+end
+
 function FieldQuadratic.Add(ScalarA: buffer, ScalarB: buffer): buffer
 	return Reduce(MultiPrecision.Add(ScalarA, ScalarB))
 end
