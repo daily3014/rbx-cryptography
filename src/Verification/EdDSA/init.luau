@@ -71,7 +71,6 @@ function EDDSA.PublicKey(SecretKey: buffer): buffer
 	end
 
 	local Hash = SHA512(SecretKey)
-
 	local FirstHalf = buffer.create(32)
 	buffer.copy(FirstHalf, 0, Hash, 0, 32)
 
@@ -147,11 +146,11 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	if PublicKey == nil then
 		error("PublicKey cannot be nil", 2)
 	end
-	
+
 	if typeof(PublicKey) ~= "buffer" then
 		error(`PublicKey must be a buffer, got {typeof(PublicKey)}`, 2)
 	end
-	
+
 	local PublicKeyLength = buffer.len(PublicKey)
 	if PublicKeyLength ~= ED25519_PUBLIC_KEY_SIZE then
 		error(`PublicKey must be exactly {ED25519_PUBLIC_KEY_SIZE} bytes long, got {PublicKeyLength} bytes`, 2)
@@ -160,7 +159,7 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
-	
+
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
@@ -168,14 +167,19 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	if Signature == nil then
 		error("Signature cannot be nil", 2)
 	end
-	
+
 	if typeof(Signature) ~= "buffer" then
 		error(`Signature must be a buffer, got {typeof(Signature)}`, 2)
 	end
-	
+
 	local SignatureLength = buffer.len(Signature)
 	if SignatureLength ~= ED25519_SIGNATURE_SIZE then
 		error(`Signature must be exactly {ED25519_SIGNATURE_SIZE} bytes long, got {SignatureLength} bytes`, 2)
+	end
+
+	local LastByte = buffer.readu8(Signature, 63)
+	if bit32.band(LastByte, 0xE0) ~= 0x00 then
+		return false
 	end
 
 	local PublicPoint = Edwards25519.Decode(PublicKey)
@@ -189,11 +193,15 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	local ResponseString = buffer.create(32)
 	buffer.copy(ResponseString, 0, Signature, 32, 32)
 
+	local ResponseScalar = FieldQuadratic.Decode(ResponseString)
+	if not FieldQuadratic.IsValidScalar(ResponseScalar) then
+		return false
+	end
+
 	local ChallengeInput = ConcatBuffers(CommitmentString, PublicKey, Message)
 	local ChallengeHash = SHA512(ChallengeInput)
 	local ChallengeE = FieldQuadratic.DecodeWide(ChallengeHash)
 
-	local ResponseScalar = FieldQuadratic.Decode(ResponseString)
 	local ResponseBits, ResponseBitCount = FieldQuadratic.Bits(ResponseScalar)
 	local LeftSide = Edwards25519.MulG(ResponseBits, ResponseBitCount)
 
@@ -203,11 +211,10 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	local RightSideResult = Edwards25519.Sub(LeftSide, RightSideYENiels)
 
 	local VerificationR = Edwards25519.Encode(RightSideResult)
-
 	if buffer.len(VerificationR) ~= buffer.len(CommitmentString) then
 		return false
 	end
-	
+
 	for Index = 0, buffer.len(CommitmentString) - 1 do
 		if buffer.readu8(VerificationR, Index) ~= buffer.readu8(CommitmentString, Index) then
 			return false

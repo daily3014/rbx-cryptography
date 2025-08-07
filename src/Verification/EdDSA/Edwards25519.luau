@@ -47,7 +47,7 @@ end
 local function GetCoord(Point: buffer, Index: number): buffer
 	local Coord = buffer.create(COORD_SIZE)
 	buffer.copy(Coord, 0, Point, Index * COORD_SIZE, COORD_SIZE)
-	
+
 	return Coord
 end
 
@@ -88,7 +88,7 @@ function Edwards25519.Double(Point1: buffer, Storage: buffer?): buffer
 	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
-	
+
 	return Result
 end
 
@@ -138,7 +138,7 @@ function Edwards25519.Add(Point1: buffer, NielsPoint2: buffer, Storage: buffer?)
 	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
-	
+
 	return Result
 end
 
@@ -182,7 +182,7 @@ function Edwards25519.Sub(Point1: buffer, NielsPoint2: buffer, Storage: buffer?)
 	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
-	
+
 	return Result
 end
 
@@ -204,7 +204,7 @@ function Edwards25519.Niels(Point1: buffer, Storage: buffer?): buffer
 	buffer.copy(Result, 1 * COORD_SIZE, MinusN3, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, DoubledN3Z, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, ScaledN3T, 0, COORD_SIZE)
-	
+
 	return Result
 end
 
@@ -227,7 +227,7 @@ function Edwards25519.Scale(Point1: buffer): buffer
 	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
-	
+
 	return Result
 end
 
@@ -283,7 +283,7 @@ function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	buffer.copy(Result, 1 * COORD_SIZE, YCoord, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, ZCoord, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, TCoord, 0, COORD_SIZE)
-	
+
 	return Result
 end
 
@@ -303,19 +303,35 @@ local BASEPOINT_BYTES = buffer.create(32) do
 end
 
 local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWidth: number): (buffer, number)
+	if ScalarBitCount <= 0 or ScalarBitCount > 256 then
+		error("Invalid scalar bit  count", 2)
+	end
+
+	if RadixWidth <= 0 or RadixWidth > 8 then
+		error("Invalid Radix width", 2)
+	end
+
 	local RadixValue = 2 ^ RadixWidth
 	local HalfRadix = RadixValue / 2
-	local OutputDigits = buffer.create(64 * 8)
-	local OutputLength = 0
-	local Accumulator = 0
+	local MaxOutputLength = ScalarBitCount + math.ceil(math.log(ScalarBitCount, 2)) + 1
+	local OutputDigits = buffer.create(MaxOutputLength * 8)
+	local OutputLength, Accumulator = 0, 0
 	local Multiplier = 1
 
 	for BitIndex = 1, ScalarBitCount do
+		if BitIndex > ScalarBitCount then
+			break
+		end
+
 		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
 		Accumulator += BitValue * Multiplier
 		Multiplier *= 2
 
 		while BitIndex == ScalarBitCount and Accumulator > 0 or Multiplier > RadixValue do
+			if OutputLength >= MaxOutputLength then
+				error("Output overflow in SignedRadixW")
+			end
+
 			local Remainder = Accumulator % RadixValue
 			if Remainder >= HalfRadix then
 				Remainder -= RadixValue
@@ -331,6 +347,14 @@ local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWid
 end
 
 local function RadixWTable(BasePoint: buffer, RadixWidth: number): buffer
+	if RadixWidth <= 0 or RadixWidth > 8 then
+		error("Invalid Radix width", 2)
+	end
+
+	if buffer.len(BasePoint) ~= POINT_SIZE then
+		error("Invalid Basepoint", 2)
+	end
+
 	local PointSize = POINT_SIZE
 	local MaxWindows = math.ceil(256 / RadixWidth)
 	local MaxRowSize = 2 ^ RadixWidth / 2
@@ -377,7 +401,7 @@ local function GetBasePointTableEntry(WindowIndex: number, Multiple: number, Sto
 
 	local NielsPoint = Storage or buffer.create(POINT_SIZE)
 	buffer.copy(NielsPoint, 0, BASEPOINT_TABLE, Offset, POINT_SIZE)
-	
+
 	return NielsPoint
 end
 
