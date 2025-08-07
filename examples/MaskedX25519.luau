@@ -1,6 +1,6 @@
 --[=[
 	Cryptography library: MaskedX25519 (Double Key Exchange)
-	Deniable Encryption - Client to Server Key Exchange with Plausible Deniability
+	Deniable Encryption: Client to Server Key Exchange with Plausible Deniability
 
 	This library provides plausible deniability by generating two valid shared secrets.
 	Under coercion, you can claim either secret was the "real" one used for communication.
@@ -8,84 +8,105 @@
 --!strict
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
--- Get the library
 local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
 
--- Create variables for easy access
-local Blake2b = Cryptography.Hashing.Blake2b
-local FromHex = Cryptography.Utilities.Conversions.FromHex
-local EdDSA = Cryptography.Verification.EdDSA
-local MaskedX25519 = EdDSA.MaskedX25519
+local MaskedX25519 = Cryptography.Verification.EdDSA.MaskedX25519
+local AEAD = Cryptography.Encryption.AEAD
+local Blake3 = Cryptography.Hashing.Blake3
+local Random = Cryptography.Verification.EdDSA.CSPRNG.RandomBytes
 
--- Client
-local ClientPrivate = EdDSA.CSPRNG.RandomBytes(32)
-local ClientMasked = MaskedX25519.Mask(ClientPrivate)
-local ClientMaskedPublic = MaskedX25519.PublicKey(ClientMasked)
+-- Alice generates keys
+local AlicePrivate = Random(32)
+local AliceMasked = MaskedX25519.Mask(AlicePrivate)
+local AlicePublic = MaskedX25519.PublicKey(AliceMasked)
 
--- Server  
-local ServerPrivate = EdDSA.CSPRNG.RandomBytes(32)
-local ServerMasked = MaskedX25519.Mask(ServerPrivate)
-local ServerMaskedPublic = MaskedX25519.PublicKey(ServerMasked)
+-- Bob generates keys
+local BobPrivate = Random(32)
+local BobMasked = MaskedX25519.Mask(BobPrivate)
+local BobPublic = MaskedX25519.PublicKey(BobMasked)
 
--- *Client and server exchange keys through RemoteEvents, Attributes, StringValues, etc.*
+-- Exchange public keys (send these)
+-- Both parties get two outputs from the exchange
+local AliceShared, AliceMaskSecret = MaskedX25519.Exchange(AliceMasked, BobPublic)
+local BobShared, BobMaskSecret = MaskedX25519.Exchange(BobMasked, AlicePublic)
 
--- Client derives TWO secrets from their masked private key and server's public key
--- The mask secret provides plausible deniability - both secrets are cryptographically valid
-local ClientPrimary, ClientMask = MaskedX25519.Exchange(ClientMasked, ServerMaskedPublic)
+-- Primary shared secrets match
+assert(buffer.tostring(AliceShared) == buffer.tostring(BobShared))
+-- Mask secrets are different but both are valid
+assert(buffer.tostring(AliceMaskSecret) ~= buffer.tostring(BobMaskSecret))
 
--- Server derives the SAME two secrets from their masked private key and client's public key
-local ServerPrimary, ServerMask = MaskedX25519.Exchange(ServerMasked, ClientMaskedPublic)
+local function DeriveSharedKey(Secret1: buffer, Secret2: buffer, Context: string): buffer
+	local combined = buffer.create(64 + #Context)
+	buffer.copy(combined, 0, Secret1, 0, 32)
+	buffer.copy(combined, 32, Secret2, 0, 32)
+	buffer.copy(combined, 64, buffer.fromstring(Context), 0, #Context)
 
-local function GetSymmetricKey(ClientSecret: buffer, ServerSecret: buffer, ClientPub: buffer, ServerPub: buffer)
-	local CombinedInput = buffer.create(128)
-
-	buffer.copy(CombinedInput, 0, ClientSecret, 0, 32)
-	buffer.copy(CombinedInput, 32, ServerSecret, 0, 32)
-	buffer.copy(CombinedInput, 64, ClientPub, 0, 32)
-	buffer.copy(CombinedInput, 96, ServerPub, 0, 32)
-
-	local KeyMaterial = Blake2b(CombinedInput, 32)
-	return FromHex(KeyMaterial)
+	return select(2, Blake3.Digest(combined, 32))
 end
 
--- Both sides can derive symmetric keys from EITHER secret pair
-local PrimaryKey = GetSymmetricKey(ClientPrimary, ServerPrimary, ClientMaskedPublic, ServerMaskedPublic)
-local MaskKey = GetSymmetricKey(ClientMask, ServerMask, ClientMaskedPublic, ServerMaskedPublic)
+-- Primary channel (uses main shared secret from both parties)
+local AlicePrimaryKey = DeriveSharedKey(AliceShared, BobShared, "primary")
+local BobPrimaryKey = DeriveSharedKey(AliceShared, BobShared, "primary")
 
--- Usage Case 1: Deniable Communication (send both real and cover messages)
-local RealMessage = buffer.fromstring("Attack at dawn")
-local CoverMessage = buffer.fromstring("Remember homework")
+-- Both should have same primary key
+assert(buffer.tostring(AlicePrimaryKey) == buffer.tostring(BobPrimaryKey))
 
-local RealEncrypted = Cryptography.Encryption.AEAD.ChaCha20(RealMessage, PrimaryKey, buffer.fromstring("Nonce12Bytes"))
-local CoverEncrypted = Cryptography.Encryption.AEAD.ChaCha20(CoverMessage, MaskKey, buffer.fromstring("Nonce12Byte2"))
+-- Cover channel, combines mask secrets from both parties
+-- Alice and Bob need to exchange their mask secrets first
+--(send AliceMaskSecret to Bob, Bob sends BobMaskSecret to Alice)
+-- Derivation makes sure both get same key even with different secrets
+local AliceCoverKey = DeriveSharedKey(AliceMaskSecret, BobMaskSecret, "cover")
+local BobCoverKey = DeriveSharedKey(AliceMaskSecret, BobMaskSecret, "cover")
 
--- Send both messages, observer cannot tell which is real
--- Under interrogation: "I was using the mask key for homework discussion!"
+-- Now both have the same cover key
+assert(buffer.tostring(AliceCoverKey) == buffer.tostring(BobCoverKey))
 
--- Usage Case 2: Single Message Deniability
-local SensitiveData = buffer.fromstring("Secret information")
-local Encrypted = Cryptography.Encryption.AEAD.ChaCha20(SensitiveData, PrimaryKey, buffer.fromstring("Nonce12Bytes"))
+-- Encrypt messages on both channels with AEAD
+local SensitiveMessage = buffer.fromstring("Critical information")
+local CoverMessage = buffer.fromstring("Normal conversation")
 
--- Under coercion: "I was actually using the mask secret, not the primary secret!"
--- Attacker cannot prove which key was really used
+-- AEAD encryption includes authentication tag
+local Nonce1 = Random(12)
+local Nonce2 = Random(12)
+local AAD = buffer.fromstring("metadata")  -- Additional authenticated data
 
------ Remask example (changes the mask component for new deniability scenarios)
--- Remasking changes the mask component but keeps the same public key
-ClientMasked = MaskedX25519.Remask(ClientMasked)
-ServerMasked = MaskedX25519.Remask(ServerMasked)
+local SensitiveCiphertext, SensitiveTag = AEAD.Encrypt(SensitiveMessage, AlicePrimaryKey, Nonce1, AAD)
+local CoverCiphertext, CoverTag = AEAD.Encrypt(CoverMessage, AliceCoverKey, Nonce2, AAD)
 
-local _, ClientNewMask = MaskedX25519.Exchange(ClientMasked, ServerMaskedPublic)
-local _, ServerNewMask = MaskedX25519.Exchange(ServerMasked, ClientMaskedPublic)
+-- Send ciphertext + tag + nonce
+-- Sniffer sees two active encrypted channels
 
--- We now have a NEW mask secret while keeping the same public keys
--- The primary secret remains the same for ongoing communication
-local NewMaskKey = GetSymmetricKey(ClientNewMask, ServerNewMask, ClientMaskedPublic, ServerMaskedPublic)
+-- Decryption with authentication (returns nil if authentication fails)
+local DecryptedSensitive = AEAD.Decrypt(SensitiveCiphertext, BobPrimaryKey, Nonce1, SensitiveTag, AAD)
+local DecryptedCover = AEAD.Decrypt(CoverCiphertext, BobCoverKey, Nonce2, CoverTag, AAD)
+if not DecryptedSensitive then
+	error("Primary channel authentication failed")
+end
 
--- To sign messages, you use the original private key (not the masked one)
-local ClientSigningPublic = EdDSA.PublicKey(ClientPrivate)
-local ClientSignature = EdDSA.Sign(ClientPrivate, ClientSigningPublic, SensitiveData)
+if not DecryptedCover then
+	error("Cover channel authentication failed")
+end
 
--- Server verifies the signature with client's public key
-assert(EdDSA.Verify(ClientSigningPublic, SensitiveData, ClientSignature))
+assert(buffer.tostring(DecryptedSensitive) == buffer.tostring(SensitiveMessage))
+assert(buffer.tostring(DecryptedCover) == buffer.tostring(CoverMessage))
 
-print("Deniable encryption setup complete")
+-- Deniability scenario:
+--Under coercion, reveal only the mask secrets and cover key
+--Claim the primary channel is old/test data
+--Both channels are cryptographically valid
+
+-- Remasking: Rotate the cover channel while keeping primary unchanged
+local AliceRemasked = MaskedX25519.Remask(AliceMasked)
+local NewShared, NewMaskSecret = MaskedX25519.Exchange(AliceRemasked, BobPublic)
+
+assert(buffer.tostring(AliceShared) == buffer.tostring(NewShared)) -- Primary unchanged
+assert(buffer.tostring(AliceMaskSecret) ~= buffer.tostring(NewMaskSecret)) -- Mask changed
+
+-- Exchange new mask secrets to start new cover channel
+-- This allows rotating cover traffic without changing the primary channel
+
+-- For stronger deniability, use with:
+--OTR style MAC revelation
+--Ephemeral session keys
+--Traffic padding
+print("MaskedX25519 completed")
