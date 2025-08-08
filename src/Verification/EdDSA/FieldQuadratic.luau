@@ -23,15 +23,33 @@
 local MultiPrecision = require("./MultiPrecision")
 
 local CONSTANT_ZERO = MultiPrecision.Num(0)
-local FIELD_ORDER = buffer.create(96) do
-	local Values = {
-		16110573, 06494812, 14047250, 10680220, 14612958,
-		00000020, 00000000, 00000000, 00000000, 00000000,
-		00004096
+local FIELD_ORDER_BYTES = buffer.create(32) do
+	local Bytes = {
+		0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
+		0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10
 	}
-	for Index = 1, 11 do
-		buffer.writef64(FIELD_ORDER, (Index - 1) * 8, Values[Index])
+	for Index = 1, 32 do
+		buffer.writeu8(FIELD_ORDER_BYTES, Index - 1, Bytes[Index])
 	end
+end
+
+local FIELD_ORDER = buffer.create(96) do
+	local ByteIndex = 0
+
+	for LimbIndex = 0, 9 do
+		local Value = buffer.readu8(FIELD_ORDER_BYTES, ByteIndex)
+			+ buffer.readu8(FIELD_ORDER_BYTES, ByteIndex + 1) * 256
+			+ buffer.readu8(FIELD_ORDER_BYTES, ByteIndex + 2) * 65536
+
+		buffer.writef64(FIELD_ORDER, LimbIndex * 8, Value)
+		ByteIndex += 3
+	end
+
+	local LastValue = buffer.readu8(FIELD_ORDER_BYTES, 30)
+		+ buffer.readu8(FIELD_ORDER_BYTES, 31) * 256
+	buffer.writef64(FIELD_ORDER, 10 * 8, LastValue)
 end
 
 local MONTGOMERY_T0 = buffer.create(96) do
@@ -79,15 +97,14 @@ end
 
 local FieldQuadratic = {}
 
-function FieldQuadratic.IsValidScalar(ScalarBuffer: buffer): boolean
-	local CanonicalScalar = MultiPrecision.Carry(ScalarBuffer)
-	for LimbIndex = 10, 0, -1 do
-		local ScalarLimb = buffer.readf64(CanonicalScalar, LimbIndex * 8)
-		local OrderLimb = buffer.readf64(FIELD_ORDER, LimbIndex * 8)
+function FieldQuadratic.IsValidScalar(ScalarBytes: buffer): boolean
+	for Index = 31, 0, -1 do
+		local ScalarByte = buffer.readu8(ScalarBytes, Index)
+		local OrderByte = buffer.readu8(FIELD_ORDER_BYTES, Index)
 
-		if ScalarLimb > OrderLimb then
+		if ScalarByte > OrderByte then
 			return false
-		elseif ScalarLimb < OrderLimb then
+		elseif ScalarByte < OrderByte then
 			return true
 		end
 	end
@@ -139,12 +156,12 @@ function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 		buffer.writeu8(EncodedBuffer, ByteIndex + 2, Value % 256)
 		ByteIndex += 3
 	end
-	
+
 	local LastValue = buffer.readf64(DemontResult, 10 * 8)
 	buffer.writeu8(EncodedBuffer, 30, LastValue % 256)
 	LastValue = LastValue // 256
 	buffer.writeu8(EncodedBuffer, 31, LastValue % 256)
-	
+
 	return EncodedBuffer
 end
 
