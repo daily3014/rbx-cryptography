@@ -182,21 +182,22 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 		return false
 	end
 
-	local PublicPoint = Edwards25519.Decode(PublicKey)
-	if not PublicPoint then
-		return false
-	end
-
 	local CommitmentString = buffer.create(32)
 	buffer.copy(CommitmentString, 0, Signature, 0, 32)
 
 	local ResponseString = buffer.create(32)
 	buffer.copy(ResponseString, 0, Signature, 32, 32)
 
-	local ResponseScalar = FieldQuadratic.Decode(ResponseString)
-	if not FieldQuadratic.IsValidScalar(ResponseScalar) then
+	if not FieldQuadratic.IsValidScalar(ResponseString) then
 		return false
 	end
+
+	local PublicPoint = Edwards25519.Decode(PublicKey)
+	if not PublicPoint then
+		return false
+	end
+
+	local ResponseScalar = FieldQuadratic.Decode(ResponseString)
 
 	local ChallengeInput = ConcatBuffers(CommitmentString, PublicKey, Message)
 	local ChallengeHash = SHA512(ChallengeInput)
