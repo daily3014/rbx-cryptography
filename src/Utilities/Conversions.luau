@@ -102,6 +102,10 @@ end
 function Conversions.FromHex(Hex: string | buffer): buffer
 	local BufferHex = if type(Hex) == "string" then buffer.fromstring(Hex) else Hex
 	local Length = buffer.len(BufferHex)
+	if Length % 2 ~= 0 then
+		error(`Length must be even, got {Length}`)
+	end
+	
 	local Buffer = buffer.create(bit32.rshift(Length, 1))
 	local Leftover = Length % 16
 	local BufferCursor = 0
