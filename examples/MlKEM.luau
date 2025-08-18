@@ -12,14 +12,13 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 		Module-Lattice-based
 		Key Encapsulation Mechanism
 
-	ML-KEM is a post-quantum key encapsulation mechanism standardized 
-	in NIST FIPS 203. It allows two parties to start a shared 
-	32-byte secret that can be used for symmetric encryption.
+	ML-KEM is a post-quantum key encapsulation method from NIST FIPS 203. 
+	It allows two parties to start a shared 32 byte secret 
+	that can be used for symmetric encryption.
 
-	ML-KEM requires two 32-byte seeds for key generation and performs
-	encapsulation with a 32-byte message to produce a ciphertext and
-	shared secret. The recipient uses their secret key to decapsulate
-	and recover the same shared secret.
+	ML-KEM neds two 32 byte seeds for key generation and does
+	encapsulation with a 32 byte message to create a ciphertext and shared secret. 
+	The recipient uses their secret key to decapsulate and recover the same shared secret.
 --]]
 
 -- Generate keypair using required seeds
