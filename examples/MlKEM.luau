@@ -16,7 +16,7 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 	It allows two parties to start a shared 32 byte secret 
 	that can be used for symmetric encryption.
 
-	ML-KEM neds two 32 byte seeds for key generation and does
+	ML-KEM needs two 32 byte seeds for key generation and does
 	encapsulation with a 32 byte message to create a ciphertext and shared secret. 
 	The recipient uses their secret key to decapsulate and recover the same shared secret.
 --]]
