@@ -1,35 +1,22 @@
 --[=[
-	Cryptography library: Masked X25519 (Double Key Exchange with Cofactor Clearing)
-
-	Provides plausible deniability through dual key ECDH exchange with X25519c security protections.
-	Each exchange produces TWO valid shared secrets: one primary, one mask derived.
-	Under coercion, you can claim either secret was the "real" one used.
-
-	Security features:
-	- Cofactor clearing: All operations work in the prime order subgroup (stops all small subgroup attacks)
-	- Twist protection: Makes sure points are on the main curve, not the twist
-	- Proper scalar clamping: Uses standard X25519 bit clearing for security
+	Cryptography library: X25519 with cofactor clearing
 
 	Return type: varies by function
 	Example usage:
-		local MaskedX25519 = require("MaskedX25519")
+		local AlicePrivate = CSPRNG.Ed25519Random()
+		local BobPrivate = CSPRNG.Ed25519Random()
 
-		--------Usage Case 1: Create masked key--------
-		local SecretKey = RandomBytes.Generate(32) -- Your random generator or CSPRNG
-		local MaskedKey = MaskedX25519.Mask(SecretKey)
-		local PublicKey = MaskedX25519.PublicKey(MaskedKey)
+		local AliceMasked = X25519.Mask(AlicePrivate)
+		local BobMasked = X25519.Mask(BobPrivate)
 
-		--------Usage Case 2: Deniable key exchange with cofactor clearing--------
-		local PrimarySecret, MaskSecret = MaskedX25519.Exchange(MaskedKey, TheirPublicKey)
-		
-		-- Both secrets are cryptographically valid and cofactor-cleared
-		-- Use for deniable communication with strong security guarantees
-		-- All shared secrets guaranteed to be in the prime-order subgroup
+		local AlicePublic = X25519.PublicKey(AliceMasked)
+		local BobPublic = X25519.PublicKey(BobMasked)
 
-		--------Usage Case 3: Refresh masking (new mask component)--------
-		local RemaskedKey = MaskedX25519.Remask(MaskedKey)
-		-- Public key stays the same, but mask component changes
-		-- Maintains cofactor clearing properties
+		local AliceSharedPrimary, AliceEphemeralSecret = X25519.Exchange(AliceMasked, BobPublic)
+		local BobSharedPrimary, BobEphemeralSecret = X25519.Exchange(BobMasked, AlicePublic)
+
+		Expect(ToHex(AliceSharedPrimary)).ToBe(ToHex(BobSharedPrimary))
+		Expect(ToHex(AliceEphemeralSecret)).Never.ToBe(ToHex(BobEphemeralSecret))
 --]=]
 
 --!strict
