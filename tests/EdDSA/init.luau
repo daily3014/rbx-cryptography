@@ -44,7 +44,7 @@ type SmallOrderInputs = {
 type InvalidPublicKeys = { Key: string }
 
 local Algorithm = require("../Verification/EdDSA")
-local MaskedX25519 = Algorithm.MaskedX25519
+local X25519 = Algorithm.X25519
 local CSPRNG = Algorithm.CSPRNG
 
 local function FromHex(Hex: string): buffer
@@ -127,9 +127,9 @@ local function IsValidX25519Key(Key: buffer): (boolean, string)
 end
 
 local function Exchange(SecretKey: buffer, PublicKey: buffer): buffer
-	local MaskedSecretKey = MaskedX25519.Mask(SecretKey)
-	MaskedSecretKey = MaskedX25519.Remask(MaskedSecretKey)
-	local SharedSecret = MaskedX25519.Exchange(MaskedSecretKey, PublicKey)
+	local MaskedSecretKey = X25519.Mask(SecretKey)
+	MaskedSecretKey = X25519.Remask(MaskedSecretKey)
+	local SharedSecret = X25519.Exchange(MaskedSecretKey, PublicKey)
 
 	return SharedSecret
 end
@@ -917,10 +917,10 @@ Test("X25519 ECDH", function()
 
 	local ExpectedShared = "4a5d9d5ba4ce2de1728e3bf480350f25e07e21c947d19e3376f09b3c1e161742"
 
-	local AliceGeneratedPublic = MaskedX25519.PublicKey(MaskedX25519.Mask(AlicePrivate))
+	local AliceGeneratedPublic = X25519.PublicKey(X25519.Mask(AlicePrivate))
 	Expect(ToHex(AliceGeneratedPublic)).ToBe(ToHex(AlicePublic))
 
-	local BobGeneratedPublic = MaskedX25519.PublicKey(MaskedX25519.Mask(BobPrivate))
+	local BobGeneratedPublic = X25519.PublicKey(X25519.Mask(BobPrivate))
 	Expect(ToHex(BobGeneratedPublic)).ToBe(ToHex(BobPublic))
 
 	local AliceShared = Exchange(AlicePrivate, BobPublic)
@@ -1016,28 +1016,28 @@ Test("X25519 Roundtrip", function()
 		local AlicePrivate = CSPRNG.Ed25519Random()
 		local BobPrivate = CSPRNG.Ed25519Random()
 
-		local AliceMasked = MaskedX25519.Mask(AlicePrivate)
-		local BobMasked = MaskedX25519.Mask(BobPrivate)
+		local AliceMasked = X25519.Mask(AlicePrivate)
+		local BobMasked = X25519.Mask(BobPrivate)
 
-		local AlicePublic = MaskedX25519.PublicKey(AliceMasked)
-		local BobPublic = MaskedX25519.PublicKey(BobMasked)
+		local AlicePublic = X25519.PublicKey(AliceMasked)
+		local BobPublic = X25519.PublicKey(BobMasked)
 
-		local AliceSharedPrimary, AliceSharedMask = MaskedX25519.Exchange(AliceMasked, BobPublic)
-		local BobSharedPrimary, BobSharedMask = MaskedX25519.Exchange(BobMasked, AlicePublic)
+		local AliceSharedPrimary, AliceEphemeralSecret = X25519.Exchange(AliceMasked, BobPublic)
+		local BobSharedPrimary, BobEphemeralSecret = X25519.Exchange(BobMasked, AlicePublic)
 
 		Expect(ToHex(AliceSharedPrimary)).ToBe(ToHex(BobSharedPrimary))
-		Expect(ToHex(AliceSharedMask)).Never.ToBe(ToHex(BobSharedMask))
+		Expect(ToHex(AliceEphemeralSecret)).Never.ToBe(ToHex(BobEphemeralSecret))
 	end
 end)
 
 Test("X25519 Keygen", function()
 	for I = 1, 100 do
 		local PrivateKey = CSPRNG.Ed25519Random()
-		local MaskedKey = MaskedX25519.Mask(PrivateKey)
-		local PublicKey1 = MaskedX25519.PublicKey(MaskedKey)
+		local MaskedKey = X25519.Mask(PrivateKey)
+		local PublicKey1 = X25519.PublicKey(MaskedKey)
 
-		local RemaskedKey = MaskedX25519.Remask(MaskedKey)
-		local PublicKey2 = MaskedX25519.PublicKey(RemaskedKey)
+		local RemaskedKey = X25519.Remask(MaskedKey)
+		local PublicKey2 = X25519.PublicKey(RemaskedKey)
 
 		Expect(ToHex(PublicKey1)).ToBe(ToHex(PublicKey2))
 	end
@@ -1045,36 +1045,36 @@ end)
 
 Test("X25519 Masking", function()
 	local OriginalKey = CSPRNG.Ed25519Random()
-	local MaskedKey1 = MaskedX25519.Mask(OriginalKey)
-	local MaskedKey2 = MaskedX25519.Mask(OriginalKey)
+	local MaskedKey1 = X25519.Mask(OriginalKey)
+	local MaskedKey2 = X25519.Mask(OriginalKey)
 
-	local PublicKey1 = MaskedX25519.PublicKey(MaskedKey1)
-	local PublicKey2 = MaskedX25519.PublicKey(MaskedKey2)
+	local PublicKey1 = X25519.PublicKey(MaskedKey1)
+	local PublicKey2 = X25519.PublicKey(MaskedKey2)
 
 	Expect(ToHex(PublicKey1)).ToBe(ToHex(PublicKey2))
 
-	local MaskComponent1 = MaskedX25519.MaskComponent(MaskedKey1)
-	local MaskComponent2 = MaskedX25519.MaskComponent(MaskedKey2)
+	local MaskComponent1 = X25519.MaskComponent(MaskedKey1)
+	local MaskComponent2 = X25519.MaskComponent(MaskedKey2)
 
 	Expect(ToHex(MaskComponent1)).Never.ToBe(ToHex(MaskComponent2))
 end)
 
 Test("X25519 Sign Masking", function()
 	local SignatureSecretKey = CSPRNG.Ed25519Random()
-	local MaskedSignatureKey = MaskedX25519.MaskSignature(SignatureSecretKey)
+	local MaskedSignatureKey = X25519.MaskSignature(SignatureSecretKey)
 
 	Expect(buffer.len(MaskedSignatureKey)).ToBe(64)
 
-	local PublicKey = MaskedX25519.PublicKey(MaskedSignatureKey)
+	local PublicKey = X25519.PublicKey(MaskedSignatureKey)
 	Expect(buffer.len(PublicKey)).ToBe(32)
 end)
 
 Test("X25519 Invalid Inputs", function()
-	local ValidMaskedKey = MaskedX25519.Mask(CSPRNG.Ed25519Random())
+	local ValidMaskedKey = X25519.Mask(CSPRNG.Ed25519Random())
 
 	for _, Table in InvalidPublicKeys do
 		local TestFunction = function()
-			MaskedX25519.Exchange(ValidMaskedKey, FromHex(Table.Key))
+			X25519.Exchange(ValidMaskedKey, FromHex(Table.Key))
 		end
 		Expect(TestFunction).ToThrow()
 	end
@@ -1088,14 +1088,14 @@ Test("X25519 Wycheproof", function()
 
 		if Vector.ShouldFail then
 			local TestFunction = function()
-				local MaskedKey = MaskedX25519.Mask(SecretBytes)
-				MaskedX25519.Exchange(MaskedKey, CounterKeyBytes)
+				local MaskedKey = X25519.Mask(SecretBytes)
+				X25519.Exchange(MaskedKey, CounterKeyBytes)
 			end
 			Expect(TestFunction).ToThrow("Invalid public key")
 		else
 			local TestFunction = function()
-				local MaskedKey = MaskedX25519.Mask(SecretBytes)
-				local Result, _ = MaskedX25519.Exchange(MaskedKey, CounterKeyBytes)
+				local MaskedKey = X25519.Mask(SecretBytes)
+				local Result, _ = X25519.Exchange(MaskedKey, CounterKeyBytes)
 				local ResultHex = ToHex(Result)
 				Expect(ResultHex).ToBe(ExpectedK:lower())
 			end
