@@ -2,8 +2,8 @@
 	Cryptography library: Blake3
 	
 	Sizes:
-		Key: 32 bytes (for keyed hash)
-		Output: Variable length (default 32 bytes)
+		Key: 32 bytes
+		Output: variable
 	
 	Return type: string (hex)
 	Example usage:
@@ -22,19 +22,15 @@
 		local DerivedKey = KeyDeriver(Message, 32)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
-local DWORD = 4
 local BLOCK_SIZE = 64
 local CV_SIZE = 32
 local EXTENDED_CV_SIZE = 64
 local MAX_STACK_DEPTH = 64
 local STACK_BUFFER_SIZE = MAX_STACK_DEPTH * CV_SIZE
-
-local XOR = bit32.bxor
-local LEFT_ROTATE = bit32.lrotate
 
 local CHUNK_START = 0x01
 local CHUNK_END = 0x02
@@ -47,36 +43,8 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 		0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
 	}
 	for Index, Value in ipairs(IV) do
-		buffer.writeu32(INITIAL_VECTORS, (Index - 1) * DWORD, Value)
+		buffer.writeu32(INITIAL_VECTORS, (Index - 1) * 4, Value)
 	end
-end
-
-local function ReadCV(Data: buffer, Offset: number): buffer
-	local Result = buffer.create(CV_SIZE)
-	buffer.copy(Result, 0, Data, Offset, CV_SIZE)
-	return Result
-end
-
-local function WriteCV(Target: buffer, Offset: number, Source: buffer)
-	buffer.copy(Target, Offset, Source, 0, CV_SIZE)
-end
-
-local function CreateCVStack(): (buffer, number)
-	return buffer.create(STACK_BUFFER_SIZE), 0
-end
-
-local function PushCV(StackBuffer: buffer, StackSize: number, CV: buffer): number
-	WriteCV(StackBuffer, StackSize * CV_SIZE, CV)
-	return StackSize + 1
-end
-
-local function PopCV(StackBuffer: buffer, StackSize: number): (buffer, number)
-	local NewSize = StackSize - 1
-	return ReadCV(StackBuffer, NewSize * CV_SIZE), NewSize
-end
-
-local function PeekCV(StackBuffer: buffer, StackSize: number, Index: number): buffer
-	return ReadCV(StackBuffer, (Index - 1) * CV_SIZE)
 end
 
 local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14: number, V15: number, IsFull: boolean?): buffer
@@ -113,47 +81,50 @@ local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14
 	local M14 = buffer.readu32(MessageBlock, 56)
 	local M15 = buffer.readu32(MessageBlock, 60)
 
+	local XOR = bit32.bxor
+	local LEFTROTATE = bit32.lrotate
+
 	local Temp
 	for Index = 1, 7 do
-		V00 += V04 + M00; V12 = LEFT_ROTATE(XOR(V12, V00), 16)
-		V08 += V12; V04 = LEFT_ROTATE(XOR(V04, V08), 20)
-		V00 += V04 + M01; V12 = LEFT_ROTATE(XOR(V12, V00), 24)
-		V08 += V12; V04 = LEFT_ROTATE(XOR(V04, V08), 25)
+		V00 += V04 + M00; V12 = LEFTROTATE(XOR(V12, V00), 16)
+		V08 += V12; V04 = LEFTROTATE(XOR(V04, V08), 20)
+		V00 += V04 + M01; V12 = LEFTROTATE(XOR(V12, V00), 24)
+		V08 += V12; V04 = LEFTROTATE(XOR(V04, V08), 25)
 
-		V01 += V05 + M02; V13 = LEFT_ROTATE(XOR(V13, V01), 16)
-		V09 += V13; V05 = LEFT_ROTATE(XOR(V05, V09), 20)
-		V01 += V05 + M03; V13 = LEFT_ROTATE(XOR(V13, V01), 24)
-		V09 += V13; V05 = LEFT_ROTATE(XOR(V05, V09), 25)
+		V01 += V05 + M02; V13 = LEFTROTATE(XOR(V13, V01), 16)
+		V09 += V13; V05 = LEFTROTATE(XOR(V05, V09), 20)
+		V01 += V05 + M03; V13 = LEFTROTATE(XOR(V13, V01), 24)
+		V09 += V13; V05 = LEFTROTATE(XOR(V05, V09), 25)
 
-		V02 += V06 + M04; V14 = LEFT_ROTATE(XOR(V14, V02), 16)
-		V10 += V14; V06 = LEFT_ROTATE(XOR(V06, V10), 20)
-		V02 += V06 + M05; V14 = LEFT_ROTATE(XOR(V14, V02), 24)
-		V10 += V14; V06 = LEFT_ROTATE(XOR(V06, V10), 25)
+		V02 += V06 + M04; V14 = LEFTROTATE(XOR(V14, V02), 16)
+		V10 += V14; V06 = LEFTROTATE(XOR(V06, V10), 20)
+		V02 += V06 + M05; V14 = LEFTROTATE(XOR(V14, V02), 24)
+		V10 += V14; V06 = LEFTROTATE(XOR(V06, V10), 25)
 
-		V03 += V07 + M06; V15 = LEFT_ROTATE(XOR(V15, V03), 16)
-		V11 += V15; V07 = LEFT_ROTATE(XOR(V07, V11), 20)
-		V03 += V07 + M07; V15 = LEFT_ROTATE(XOR(V15, V03), 24)
-		V11 += V15; V07 = LEFT_ROTATE(XOR(V07, V11), 25)
+		V03 += V07 + M06; V15 = LEFTROTATE(XOR(V15, V03), 16)
+		V11 += V15; V07 = LEFTROTATE(XOR(V07, V11), 20)
+		V03 += V07 + M07; V15 = LEFTROTATE(XOR(V15, V03), 24)
+		V11 += V15; V07 = LEFTROTATE(XOR(V07, V11), 25)
 
-		V00 += V05 + M08; V15 = LEFT_ROTATE(XOR(V15, V00), 16)
-		V10 += V15; V05 = LEFT_ROTATE(XOR(V05, V10), 20)
-		V00 += V05 + M09; V15 = LEFT_ROTATE(XOR(V15, V00), 24)
-		V10 += V15; V05 = LEFT_ROTATE(XOR(V05, V10), 25)
+		V00 += V05 + M08; V15 = LEFTROTATE(XOR(V15, V00), 16)
+		V10 += V15; V05 = LEFTROTATE(XOR(V05, V10), 20)
+		V00 += V05 + M09; V15 = LEFTROTATE(XOR(V15, V00), 24)
+		V10 += V15; V05 = LEFTROTATE(XOR(V05, V10), 25)
 
-		V01 += V06 + M10; V12 = LEFT_ROTATE(XOR(V12, V01), 16)
-		V11 += V12; V06 = LEFT_ROTATE(XOR(V06, V11), 20)
-		V01 += V06 + M11; V12 = LEFT_ROTATE(XOR(V12, V01), 24)
-		V11 += V12; V06 = LEFT_ROTATE(XOR(V06, V11), 25)
+		V01 += V06 + M10; V12 = LEFTROTATE(XOR(V12, V01), 16)
+		V11 += V12; V06 = LEFTROTATE(XOR(V06, V11), 20)
+		V01 += V06 + M11; V12 = LEFTROTATE(XOR(V12, V01), 24)
+		V11 += V12; V06 = LEFTROTATE(XOR(V06, V11), 25)
 
-		V02 += V07 + M12; V13 = LEFT_ROTATE(XOR(V13, V02), 16)
-		V08 += V13; V07 = LEFT_ROTATE(XOR(V07, V08), 20)
-		V02 += V07 + M13; V13 = LEFT_ROTATE(XOR(V13, V02), 24)
-		V08 += V13; V07 = LEFT_ROTATE(XOR(V07, V08), 25)
+		V02 += V07 + M12; V13 = LEFTROTATE(XOR(V13, V02), 16)
+		V08 += V13; V07 = LEFTROTATE(XOR(V07, V08), 20)
+		V02 += V07 + M13; V13 = LEFTROTATE(XOR(V13, V02), 24)
+		V08 += V13; V07 = LEFTROTATE(XOR(V07, V08), 25)
 
-		V03 += V04 + M14; V14 = LEFT_ROTATE(XOR(V14, V03), 16)
-		V09 += V14; V04 = LEFT_ROTATE(XOR(V04, V09), 20)
-		V03 += V04 + M15; V14 = LEFT_ROTATE(XOR(V14, V03), 24)
-		V09 += V14; V04 = LEFT_ROTATE(XOR(V04, V09), 25)
+		V03 += V04 + M14; V14 = LEFTROTATE(XOR(V14, V03), 16)
+		V09 += V14; V04 = LEFTROTATE(XOR(V04, V09), 20)
+		V03 += V04 + M15; V14 = LEFTROTATE(XOR(V14, V03), 24)
+		V09 += V14; V04 = LEFTROTATE(XOR(V04, V09), 25)
 
 		if Index ~= 7 then
 			Temp = M02
@@ -214,17 +185,12 @@ local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14
 	end
 end
 
-local function Merge(LeftCv: buffer, RightCv: buffer): buffer
-	local Result = buffer.create(EXTENDED_CV_SIZE)
-	WriteCV(Result, 0, LeftCv)
-	WriteCV(Result, CV_SIZE, RightCv)
-	return Result
-end
-
 local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message: buffer, Length: number): buffer
 	local MessageLength = buffer.len(Message)
-	local StateCvs, StackSize = CreateCVStack()
-	local StateCv = ReadCV(InitialHashVector, 0)
+	local StateCvs = buffer.create(STACK_BUFFER_SIZE)
+	local StackSize = 0
+	local StateCv = buffer.create(CV_SIZE)
+	buffer.copy(StateCv, 0, InitialHashVector, 0, CV_SIZE)
 
 	local StateCounter = 0
 	local StateChunkNumber = 0
@@ -248,15 +214,21 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 			local MergeAmount = StateCounter + 1
 
 			while MergeAmount % 2 == 0 do
-				local PopCV, NewStackSize = PopCV(StateCvs, StackSize)
-				StackSize = NewStackSize
-				local Block = Merge(PopCV, MergeCv)
+				StackSize = StackSize - 1
+				local PopCv = buffer.create(CV_SIZE)
+				buffer.copy(PopCv, 0, StateCvs, StackSize * CV_SIZE, CV_SIZE)
+
+				local Block = buffer.create(EXTENDED_CV_SIZE)
+				buffer.copy(Block, 0, PopCv, 0, CV_SIZE)
+				buffer.copy(Block, CV_SIZE, MergeCv, 0, CV_SIZE)
+
 				MergeCv = Compress(InitialHashVector, Block, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
 				MergeAmount = MergeAmount / 2
 			end
 
-			StackSize = PushCV(StateCvs, StackSize, MergeCv)
-			StateCv = ReadCV(InitialHashVector, 0)
+			buffer.copy(StateCvs, StackSize * CV_SIZE, MergeCv, 0, CV_SIZE)
+			StackSize = StackSize + 1
+			buffer.copy(StateCv, 0, InitialHashVector, 0, CV_SIZE)
 			StateStartFlag = CHUNK_START
 
 			StateCounter += 1
@@ -282,14 +254,24 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 		local MergeCv = Compress(StateCv, PaddedMessage, StateCounter, LastLength, StateFlags)
 
 		for Index = StackSize, 2, -1 do
-			local StackCV = PeekCV(StateCvs, StackSize, Index)
-			local Block = Merge(StackCV, MergeCv)
+			local StackCv = buffer.create(CV_SIZE)
+			buffer.copy(StackCv, 0, StateCvs, (Index - 1) * CV_SIZE, CV_SIZE)
+
+			local Block = buffer.create(EXTENDED_CV_SIZE)
+			buffer.copy(Block, 0, StackCv, 0, CV_SIZE)
+			buffer.copy(Block, CV_SIZE, MergeCv, 0, CV_SIZE)
+
 			MergeCv = Compress(InitialHashVector, Block, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
 		end
 
 		OutputCv = InitialHashVector
-		local FirstStackCV = PeekCV(StateCvs, StackSize, 1)
-		OutputBlock = Merge(FirstStackCV, MergeCv)
+		local FirstStackCv = buffer.create(CV_SIZE)
+		buffer.copy(FirstStackCv, 0, StateCvs, 0, CV_SIZE)
+
+		OutputBlock = buffer.create(EXTENDED_CV_SIZE)
+		buffer.copy(OutputBlock, 0, FirstStackCv, 0, CV_SIZE)
+		buffer.copy(OutputBlock, CV_SIZE, MergeCv, 0, CV_SIZE)
+
 		OutputLength = BLOCK_SIZE
 		OutputFlags = Flags + ROOT_FLAG + PARENT_FLAG
 	else
