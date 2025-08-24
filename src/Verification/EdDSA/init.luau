@@ -24,7 +24,7 @@
 local FieldQuadratic = require("@self/FieldQuadratic")
 local SHA512 = require("@self/SHA512")
 local Edwards25519 = require("@self/Edwards25519")
-local Mask = require("@self/Mask")
+local X25519 = require("@self/X25519")
 local CSPRNG = require("@self/CSPRNG")
 
 local ED25519_SECRET_KEY_SIZE = 32
@@ -53,7 +53,7 @@ end
 
 local EDDSA = {
 	CSPRNG = CSPRNG,
-	MaskedX25519 = Mask
+	X25519 = X25519
 }
 
 function EDDSA.PublicKey(SecretKey: buffer): buffer
