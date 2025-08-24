@@ -21,7 +21,6 @@
 --!optimize 2
 --!strict
 
-local SHA256 = require("@self/SHA256")
 local Conversions = require("@self/Conversions")
 local ChaCha20 = require("@self/ChaCha20")
 local Blake3 = require("@self/Blake3")
@@ -302,15 +301,8 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 		end
 	end
 
-	local EntropyHash = SHA256(EntropyBuffers)
-	local EntropyHashBuffer = Conversions.FromHex(EntropyHash)
-
-	local KeySeed = buffer.readu32(EntropyHashBuffer, 28)
-	local KeyMaterial = buffer.create(KEY_SIZE + NONCE_SIZE)
-	for Index = 0, (KEY_SIZE + NONCE_SIZE) - 4, 4 do
-		KeySeed *= 1664525 + 1013904223
-		buffer.writeu32(KeyMaterial, Index, KeySeed)
-	end
+	local EntropyHashBuffer = Blake3(EntropyBuffers)
+	local KeyMaterial = Blake3(EntropyHashBuffer, KEY_SIZE + NONCE_SIZE)
 
 	self.Key = buffer.create(KEY_SIZE)
 	buffer.copy(self.Key, 0, KeyMaterial, 0, KEY_SIZE)
@@ -343,8 +335,7 @@ function CSPRNGClass:ReKey(): ()
 	local RandomData = self:GetBytes(KEY_SIZE + NONCE_SIZE)
 	buffer.copy(NewKeyMaterial, 0, RandomData, 0, KEY_SIZE + NONCE_SIZE)
 
-	local HashedMaterial = SHA256(NewKeyMaterial)
-	local HashedBuffer = Conversions.FromHex(HashedMaterial)
+	local HashedBuffer = Blake3(NewKeyMaterial)
 
 	buffer.copy(self.Key, 0, HashedBuffer, 0, KEY_SIZE)
 	self:GatherEntropy()
