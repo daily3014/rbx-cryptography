@@ -25,7 +25,6 @@ local ENCODE_LOOKUP = buffer.create(256 * 2) do
 	end
 end
 
-
 local DECODE_LOOKUP = buffer.create(65536 * 2) do
 	for High = 0, 255 do
 		for Low = 0, 255 do
@@ -65,18 +64,20 @@ function Conversions.ToHex(Buffer: buffer): string
 	local Length = buffer.len(Buffer)
 	local Hex = buffer.create(Length * 2)
 
+	local Lookup = ENCODE_LOOKUP
+
 	local Leftover = Length % 8
 	local HexCursor = 0
 
 	for Index = 0, Length - Leftover - 1, 8 do
-		local Hex1 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index) * 2)
-		local Hex2 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 1) * 2)
-		local Hex3 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 2) * 2)
-		local Hex4 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 3) * 2)
-		local Hex5 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 4) * 2)
-		local Hex6 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 5) * 2)
-		local Hex7 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 6) * 2)
-		local Hex8 = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index + 7) * 2)
+		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
+		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2)
+		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2)
+		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2)
+		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2)
+		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2)
+		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2)
+		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2)
 
 		buffer.writeu16(Hex, HexCursor, Hex1)
 		buffer.writeu16(Hex, HexCursor + 2, Hex2)
@@ -91,7 +92,7 @@ function Conversions.ToHex(Buffer: buffer): string
 	end
 
 	for Index = Length - Leftover, Length - 1 do
-		local HexPair = buffer.readu16(ENCODE_LOOKUP, buffer.readu8(Buffer, Index) * 2)
+		local HexPair = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
 		buffer.writeu16(Hex, HexCursor, HexPair)
 		HexCursor += 2
 	end
@@ -102,9 +103,14 @@ end
 function Conversions.FromHex(Hex: string | buffer): buffer
 	local BufferHex = if type(Hex) == "string" then buffer.fromstring(Hex) else Hex
 	local Length = buffer.len(BufferHex)
+	if Length % 2 ~= 0 then
+		error(`Length must be even, got {Length}`)
+	end
+
 	local Buffer = buffer.create(bit32.rshift(Length, 1))
 	local Leftover = Length % 16
 	local BufferCursor = 0
+	local Lookup = DECODE_LOOKUP
 
 	for Index = 0, Length - Leftover - 1, 16 do
 		local Pair1 = buffer.readu16(BufferHex, Index)
@@ -116,14 +122,14 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 		local Pair7 = buffer.readu16(BufferHex, Index + 12)
 		local Pair8 = buffer.readu16(BufferHex, Index + 14)
 
-		local Byte1 = buffer.readu16(DECODE_LOOKUP, Pair1 * 2)
-		local Byte2 = buffer.readu16(DECODE_LOOKUP, Pair2 * 2)
-		local Byte3 = buffer.readu16(DECODE_LOOKUP, Pair3 * 2)
-		local Byte4 = buffer.readu16(DECODE_LOOKUP, Pair4 * 2)
-		local Byte5 = buffer.readu16(DECODE_LOOKUP, Pair5 * 2)
-		local Byte6 = buffer.readu16(DECODE_LOOKUP, Pair6 * 2)
-		local Byte7 = buffer.readu16(DECODE_LOOKUP, Pair7 * 2)
-		local Byte8 = buffer.readu16(DECODE_LOOKUP, Pair8 * 2)
+		local Byte1 = buffer.readu16(Lookup, Pair1 * 2)
+		local Byte2 = buffer.readu16(Lookup, Pair2 * 2)
+		local Byte3 = buffer.readu16(Lookup, Pair3 * 2)
+		local Byte4 = buffer.readu16(Lookup, Pair4 * 2)
+		local Byte5 = buffer.readu16(Lookup, Pair5 * 2)
+		local Byte6 = buffer.readu16(Lookup, Pair6 * 2)
+		local Byte7 = buffer.readu16(Lookup, Pair7 * 2)
+		local Byte8 = buffer.readu16(Lookup, Pair8 * 2)
 
 		local Chunk1 = bit32.lshift(Byte4, 24) + bit32.lshift(Byte3, 16) + 
 			bit32.lshift(Byte2, 8) + Byte1
@@ -137,7 +143,7 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 
 	for Index = Length - Leftover, Length - 1, 2 do
 		local Pair = buffer.readu16(BufferHex, Index)
-		local Byte = buffer.readu16(DECODE_LOOKUP, Pair * 2)
+		local Byte = buffer.readu16(Lookup, Pair * 2)
 		buffer.writeu8(Buffer, BufferCursor, Byte)
 		BufferCursor += 1
 	end
