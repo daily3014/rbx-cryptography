@@ -29,7 +29,7 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 
 - **High Performance**: 2x-8.7x faster than alternative implementations
 - **Algorithm Support**: 30+ cryptographic functions covering all major use cases
-- **Modern Cryptography**: Latest algorithms including SHA-3, BLAKE3, ChaCha20-Poly1305, and EdDSA
+- **Modern Cryptography**: Latest algorithms including SHA-3, BLAKE3, ChaCha20-Poly1305, EdDSA and post quantum cryptography
 - **Easy Integration**: Clean modular API designed for Roblox environments
 - **Multiple Package Managers**: Available on both Wally and Pesde
 - **Buffer Based**: Efficient buffer usage for everything
@@ -52,8 +52,13 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 - **Additive Cipher**: XOR
 - **Authenticated Encryption**: ChaCha20-Poly1305 AEAD
 
-**Digital Signatures (3):**
-- **EdDSA**: Ed25519 key generation, signing, and verification with masking and double key exchange
+**Digital Signatures (2):**
+- **EdDSA**: Ed25519 key generation, signing, and verification
+- **ML-DSA**: Post-quantum digital signature scheme (Dilithium-based), secure against quantum attacks, standardized in NIST PQC
+
+**Key Encapsulation (2):**
+- ML-KEM: Post-quantum key encapsulation mechanism (Kyber-based), used for secure key exchange and hybrid encryption
+- X25519: Elliptic curve Diffie–Hellman (ECDH) over Curve25519 with cofactor clearing
   
 **Utility Functions (10+):**
 - **Encoding**: Base64 encode/decode
@@ -169,11 +174,10 @@ local AAD = buffer.fromstring("additional data")
 local Ciphertext, Tag = Encryption.AEAD.Encrypt(PlainText, Key, Nonce, AAD)
 local DecryptedText = Encryption.AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD)
 ```
-### EdDsa Usage
+### Verification/CSPRNG Usage
 ```lua
--- *Moved to examples/MaskedX25519.luau*
+print("Check examples.")
 ```
-
 ---
 
 ## API Reference
@@ -319,6 +323,67 @@ Verification.EdDSA.MaskedX25519.MaskComponent(MaskedKey: buffer) -> buffer
 -- Extracts the 32-byte random mask component from a 64-byte masked key.
 ```
 
+**MlDSA):**
+```lua
+Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-DSA-44 keypair (128-bit security).
+
+Mldsa.ML_DSA_44.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Sign a message with ML-DSA-44. Returns true if signing succeeded.
+
+Mldsa.ML_DSA_44.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Verify a ML-DSA-44 signature. Returns true if valid.
+
+Mldsa.ML_DSA_65.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-DSA-65 keypair (192-bit security).
+
+Mldsa.ML_DSA_65.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Sign a message with ML-DSA-65.
+
+Mldsa.ML_DSA_65.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Verify a ML-DSA-65 signature.
+
+Mldsa.ML_DSA_87.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-DSA-87 keypair (256-bit security).
+
+Mldsa.ML_DSA_87.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Sign a message with ML-DSA-87.
+
+Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Verify a ML-DSA-87 signature.
+```
+
+**(MlKEM):**
+```lua
+Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-DSA-44 keypair (128-bit security).
+
+Mldsa.ML_DSA_44.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Sign a message with ML-DSA-44. Returns true if signing succeeded.
+
+Mldsa.ML_DSA_44.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Verify a ML-DSA-44 signature. Returns true if valid.
+
+Mldsa.ML_DSA_65.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-DSA-65 keypair (192-bit security).
+
+Mldsa.ML_DSA_65.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Sign a message with ML-DSA-65.
+
+Mldsa.ML_DSA_65.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Verify a ML-DSA-65 signature.
+
+Mldsa.ML_DSA_87.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-DSA-87 keypair (256-bit security).
+
+Mldsa.ML_DSA_87.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Sign a message with ML-DSA-87.
+
+Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+-- Verify a ML-DSA-87 signature.
+
+```
+
 ### Utility Functions
 
 **Encoding:**
@@ -427,9 +492,10 @@ Maybe! Depends if its possible in Luau without needing really expensive calculat
 Through many optimizations including buffer operations, algorithm tuning and Luau specific optimizations.
 
 ### Which algorithms should I use?
-- **Hashing**: SHA-256 for general use, XXHASH32 for speed, SHA3-256 for latest standards
-- **Encryption**: ChaCha20-Poly1305 AEAD for secure communication, AES for compatibility
-- **Signatures**: Ed25519 for digital signatures and key exchange
+- **Hashing**: SHA-256 for general use, XXHASH32 for speed, Blake3 for speed and security, SHA3-256 for latest standards
+- **Encryption**: ChaCha20-Poly1305 AEAD for speed, AES for compatibility and security
+- **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
 
 ---
+
 
