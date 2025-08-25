@@ -355,33 +355,41 @@ Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Sign
 
 **(MlKEM):**
 ```lua
-Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-DSA-44 keypair (128-bit security).
+MlKem.MLKEM_512.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-KEM-512 keypair (128-bit security). Uses cryptographically secure random number generation.
 
-Mldsa.ML_DSA_44.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Sign a message with ML-DSA-44. Returns true if signing succeeded.
+MlKem.MLKEM_512.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-KEM-512 keypair using provided entropy. D and Z must be 32-byte buffers.
 
-Mldsa.ML_DSA_44.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Verify a ML-DSA-44 signature. Returns true if valid.
+MlKem.MLKEM_512.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
+-- Encapsulate a message using ML-KEM-512. Returns ciphertext and shared secret, or nil on failure.
 
-Mldsa.ML_DSA_65.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-DSA-65 keypair (192-bit security).
+MlKem.MLKEM_512.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
+-- Decapsulate a ciphertext using ML-KEM-512. Returns the shared secret.
 
-Mldsa.ML_DSA_65.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Sign a message with ML-DSA-65.
+MlKem.MLKEM_768.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-KEM-768 keypair (192-bit security). Uses cryptographically secure random number generation.
 
-Mldsa.ML_DSA_65.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Verify a ML-DSA-65 signature.
+MlKem.MLKEM_768.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-KEM-768 keypair using provided entropy. D and Z must be 32-byte buffers.
 
-Mldsa.ML_DSA_87.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-DSA-87 keypair (256-bit security).
+MlKem.MLKEM_768.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
+-- Encapsulate a message using ML-KEM-768. Returns ciphertext and shared secret, or nil on failure.
 
-Mldsa.ML_DSA_87.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Sign a message with ML-DSA-87.
+MlKem.MLKEM_768.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
+-- Decapsulate a ciphertext using ML-KEM-768. Returns the shared secret.
 
-Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Verify a ML-DSA-87 signature.
+MlKem.MLKEM_1024.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-KEM-1024 keypair (256-bit security). Uses cryptographically secure random number generation.
 
+MlKem.MLKEM_1024.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
+-- Generate a ML-KEM-1024 keypair using provided entropy. D and Z must be 32-byte buffers.
+
+MlKem.MLKEM_1024.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
+-- Encapsulate a message using ML-KEM-1024. Returns ciphertext and shared secret, or nil on failure.
+
+MlKem.MLKEM_1024.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
+-- Decapsulate a ciphertext using ML-KEM-1024. Returns the shared secret.
 ```
 
 ### Utility Functions
@@ -497,5 +505,6 @@ Through many optimizations including buffer operations, algorithm tuning and Lua
 - **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
 
 ---
+
 
 
