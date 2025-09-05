@@ -35,30 +35,30 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 - **Buffer Based**: Efficient buffer usage for everything
 - **Fully Testing**: Every algorithm is tested with NIST test vectors
 - **Type Safe**: Complete type definitions
-- **Well Documented**: Good documentation and examples (website soon) 
+- **Well Documented**: Good documentation and examples
 
 ### Supported Algorithms
 
 **Hashing Functions (20):**
 - **SHA-2 Family**: SHA-224, 256, 384, 512, 512_224, 512_256 (optional salt support)
-- **SHA-3 Family**: SHA3-224, 256,3 84, 512, Shake128, Shake256 (latest NIST standard)
+- **SHA-3 Family**: SHA3-224, 256, 384, 512, Shake128, Shake256 (latest NIST standard)
 - **BLAKE Family**: BLAKE3 (fastest available), BLAKE3-Keyed
 - **Authentication**: HMAC (works with any hash function)
 - **Fast Hashing**: XXH32 (ultra-fast non-cryptographic)
 
 **Encryption Functions (6):**
 - **Stream Cipher**: ChaCha20 (stream cipher)
-- **Block Cipher**: AES with multiple modes (CBC, ECB, etc.) and padding schemes, Simon, Speck
+- **Block Cipher**: AES-GCM, Simon, Speck
 - **Additive Cipher**: XOR
-- **Authenticated Encryption**: ChaCha20-Poly1305 AEAD
+- **Authenticated Encryption**: ChaCha20-Poly1305 AEAD, AES-GCM
 
 **Digital Signatures (2):**
 - **EdDSA**: Ed25519 key generation, signing, and verification
 - **ML-DSA**: Post-quantum digital signature scheme (Dilithium-based), secure against quantum attacks, standardized in NIST PQC
 
 **Key Encapsulation (2):**
-- ML-KEM: Post-quantum key encapsulation mechanism (Kyber-based), used for secure key exchange and hybrid encryption
-- X25519: Elliptic curve Diffie–Hellman (ECDH) over Curve25519 with cofactor clearing
+- **ML-KEM**: Post-quantum key encapsulation mechanism (Kyber-based), used for secure key exchange and hybrid encryption
+- **X25519**: Elliptic curve Diffie–Hellman (ECDH) over Curve25519 with cofactor clearing
   
 **Utility Functions (10+):**
 - **Encoding**: Base64 encode/decode
@@ -92,8 +92,8 @@ Every implementation is faster than all alternatives
 | Simon (Roundtrip)    | 20k       | **0.85 ms**  | -                               | -               | -                            |
 | Speck (Encrypt)      | 20k       | **0.48 ms**  | -                               | -               | -                            |
 | Speck (Roundtrip)    | 20k       | **0.98 ms**  | -                               | -               | -                            |
-| AES (Encrypt)        | 20k       | **0.87 ms**  | 1.13 ms (@RobloxGamerPro200007) | -               | **1.3x faster**              |
-| AES (Roundtrip)      | 20k       | **2.40 ms**  | 2.91 ms (@RobloxGamerPro200007) | -               | **1.2x faster**              |
+| AES-GCM (Encrypt)    | 20k       | **16.41 ms** | -                               | -               | -                            |
+| AES-GCM (Roundtrip)  | 20k       | **32.40 ms** | -                               | -               | -                            |
 
 *Benchmarks performed in Roblox Studio on an Intel Core i7-12700*\
 *Plugin used: Benchmarker by @boatbomber*\
@@ -247,23 +247,11 @@ Encryption.XOR(Data: buffer, Key: buffer) -> buffer
 
 **Block Cipher: AES**
 ```lua
--- Modes are found in AES.Modes
--- Pads are found in AES.Pads
+AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): (buffer, buffer)
+-- AES-GCM Encryption Mode. Returns the result and tag.
 
-Encryption.AES.New(Key: buffer, Mode: AESMode, Padding: AESPadding) -> AesCipher
--- Create AES encryption profile with specified mode and padding scheme.
-
--- Example AES usage:
-local AESProfile = Encryption.AES.New(
-    buffer.fromstring("A24ByteEncryptionKeyHere"),
-    Encryption.AES.Modes.CBC,
-    Encryption.AES.Pads.Pkcs7
-)
-
-local Message = "Can be a buffer too!"
-
-local Encrypted = AESProfile:Encrypt(Message, nil, InitVector)
-local Decrypted = AESProfile:Decrypt(Encrypted, nil, InitVector)
+AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, AAD: buffer?, Tag: buffer): (boolean, buffer?)
+-- AES-GCM Decryption Mode. Returns false on tag failure, true and result buffer on success.
 ```
 
 **Block Cipher: Simon and Speck**
@@ -323,7 +311,7 @@ Verification.EdDSA.MaskedX25519.MaskComponent(MaskedKey: buffer) -> buffer
 -- Extracts the 32-byte random mask component from a 64-byte masked key.
 ```
 
-**MlDSA):**
+**MlDSA:**
 ```lua
 Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
 -- Generate a ML-DSA-44 keypair (128-bit security).
@@ -353,7 +341,7 @@ Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Sign
 -- Verify a ML-DSA-87 signature.
 ```
 
-**(MlKEM):**
+**MlKEM:**
 ```lua
 MlKem.MLKEM_512.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
 -- Generate a ML-KEM-512 keypair (128-bit security). Uses cryptographically secure random number generation.
@@ -451,7 +439,7 @@ Utilities.CSPRNG.Reseed(CustomEntropy: buffer?)
 -- Add new entropy to the CSPRNG with up to 1024 bytes of custom entropy (in most cases it will be less)
 ```
 
-### Checksum Functions
+### Checksum Functions:
 
 ```lua
 Checksums.CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?) -> number
@@ -505,6 +493,7 @@ Through many optimizations including buffer operations, algorithm tuning and Lua
 - **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
 
 ---
+
 
 
 
