@@ -1,18 +1,17 @@
 --!strict
 local Testing = require("./")
+
 type TestVector = {
 	Description: string,
 	Key: string,
 	Input: string,
 	Expected: string,
-	Mode: any?,
-	IV: string?,
-	Padding: any?
+	IV: string,
+	AAD: string?,
+	Tag: string
 }
 
-type TestVectors = {[string]: TestVector}
-
-local Algorithm = require("../Encryption/AES")
+local AES_GCM = require("../Encryption/AES")
 
 local function HexToBuf(Hex: string): buffer
 	local Length = #Hex
@@ -29,134 +28,126 @@ local function BufToHex(Buffer: buffer): string
 	for Index = 0, buffer.len(Buffer) - 1 do
 		Hex ..= string.format("%02x", buffer.readu8(Buffer, Index))
 	end
-	
+
 	return Hex
 end
 
-local TestVectors: TestVectors = {
-	["AES128_Block_Encrypt"] = {
-		Description = "AES-128 Single Block Encryption",
-		Key = "b2e231d5c056db0f58f1d87a7da1610d",
-		Input = "a4e25a670d18a86fed98b8f1c0d2da5b",
-		Expected = "898df1706c354123f7e08762290e4e42"
+local TestVectors = {
+	{
+		Description = "AES-128 GCM Test Case 1 Empty plaintext and AAD (NIST SP 800-38D)",
+		Key = "00000000000000000000000000000000",
+		Input = "",
+		Expected = "",
+		IV = "000000000000000000000000",
+		AAD = "",
+		Tag = "58e2fccefa7e3061367f1d57a4e7455a"
 	},
-
-	["ECB_256_Encrypt"] = {
-		Description = "AES-256 ECB Mode Encryption",
-		Key = "c47b0294dbbbee0fec4757f22ffeee3587ca4730c3d33b691df38bab076bc558",
+	{
+		Description = "AES-128 GCM Test Case 2 Single block plaintext (NIST SP 800-38D)",
+		Key = "00000000000000000000000000000000",
 		Input = "00000000000000000000000000000000",
-		Expected = "46f2fb342d6f0ab477476fc501242c5f",
-		Mode = "ECB",
-		Padding = "None"
+		Expected = "0388dace60b6a392f328c2b971b2fe78",
+		IV = "000000000000000000000000",
+		AAD = "",
+		Tag = "ab6e47d42cec13bdf53a67b21257bddf"
 	},
-
-	["CBC_256_Encrypt"] = {
-		Description = "AES-256 CBC Mode Encryption",
-		Key = "8000000000000000000000000000000000000000000000000000000000000000",
-		Input = "0000000000000000000000000000000000000000000000000000000000000001",
-		Expected = "e35a6dcb19b201a01ebcfa8aa22b575925feaa2c9229b2a308ec4d68efeffd9f",
-		Mode = "CBC",
-		Padding = "None"
+	{
+		Description = "AES-128 GCM Test Case 3 (NIST SP 800-38D)",
+		Key = "feffe9928665731c6d6a8f9467308308",
+		Input = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
+		Expected = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091473f5985",
+		IV = "cafebabefacedbaddecaf888",
+		AAD = "",
+		Tag = "4d5c2af327cd64a62cf35abd2ba6fab4"
 	},
-
-	["PCBC_128_Encrypt"] = {
-		Description = "AES-128 PCBC Mode Encryption",
-		Key = "42424242424242424242424242424242",
-		Input = "68656c6c6f20776f726c64212074686973206973206d7920706c61696e746578",
-		Expected = "c7fe247ef97b21f07cbdd26cb5d346bfab13156d0b2f05f91c4837db5157bad5",
-		Mode = "PCBC",
-		IV = "24242424242424242424242424242424",
-		Padding = "None"
+	{
+		Description = "AES-192 GCM Test Case 1 (NIST SP 800-38D)",
+		Key = "000000000000000000000000000000000000000000000000",
+		Input = "00000000000000000000000000000000",
+		Expected = "98e7247c07f0fe411c267e4384b0f600",
+		IV = "000000000000000000000000",
+		AAD = "",
+		Tag = "2ff58d80033927ab8ef4d4587514f0fb"
 	},
-
-	["CFB_192_Encrypt"] = {
-		Description = "AES-192 CFB Mode Encryption",
-		Key = "110e52b230ff77250a178734ce6917665871d8ace6233728",
-		Input = "1000000000000000000000000000000000000000000000000000000000000000",
-		Expected = "c2a36abc7e7cdbe2eb078f1a2c3f777d06c9cf5731d501daaa5fe5d606a33d85",
-		Mode = "CFB",
-		Padding = "None"
+	{
+		Description = "AES-256 GCM Test Case 1 (NIST SP 800-38D)",
+		Key = "0000000000000000000000000000000000000000000000000000000000000000",
+		Input = "00000000000000000000000000000000",
+		Expected = "cea7403d4d606b6e074ec5d3baf39d18",
+		IV = "000000000000000000000000",
+		AAD = "",
+		Tag = "d0d1c8a799996bf0265b98b5d48ab919"
 	},
-
-	["OFB_128_Encrypt"] = {
-		Description = "AES-128 OFB Mode Encryption",
-		Key = "ff000000000000000000000000000000",
-		Input = "66428ac6a7b5ae282a0088a053c31b0ffdeca92fdbb660dc82419829877a8aee",
-		Expected = "d795d2e3cc9d53ad20d41ce25b0c0a5a6e2ea001b77ff16a2e06c1e07b53faee",
-		Mode = "OFB",
-		Padding = "None"
-	},
-
-	["CTR_128_Encrypt"] = {
-		Description = "AES-128 CTR Mode Encryption (Little Endian)",
-		Key = "42424242424242424242424242424242",
-		Input = "68656c6c6f20776f726c64212074686973206973206d7920706c61696e746578",
-		Expected = "3357121ebb5a29468bd861467596ce3da59bdee42dcc0614dea955368d8a5dc0",
-		Mode = "CTR",
-		IV = "24242424242424242424242424242424",
-		Padding = "None"
+	{
+		Description = "AES-128 GCM Test Case 4 96-bit IV (NIST SP 800-38D)",
+		Key = "feffe9928665731c6d6a8f9467308308",
+		Input = "d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39",
+		Expected = "42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091",
+		IV = "cafebabefacedbaddecaf888",
+		AAD = "feedfacedeadbeeffeedfacedeadbeefabaddad2",
+		Tag = "5bc94fbc3221a5db94fae95ae7121a47"
 	}
 }
 
-Testing.Describe("AES Encryption Algorithm Tests", function()
-	Testing.Test("Key Expansion", function()
-		local TestKey = HexToBuf("b2e231d5c056db0f58f1d87a7da1610d")
-		local Cipher = Algorithm.New(TestKey, Algorithm.Modes.ECB, Algorithm.Pads.None)
-		local ExpandedKey = Cipher:ExpandKey(TestKey)
-		Testing.Expect(Cipher.RoundKeys).ToBe(buffer.tostring(ExpandedKey))
-	end)
+local function RunGCMTest(TestVector: TestVector)
+	local KeyBuf = HexToBuf(TestVector.Key)
+	local InputBuf = HexToBuf(TestVector.Input)
+	local IVBuf = HexToBuf(TestVector.IV)
+	local AADBuf = HexToBuf(TestVector.AAD or "")
+	local ExpectedTagBuf = HexToBuf(TestVector.Tag)
 
-	Testing.Test("Key Expansion Consistency", function()
-		local TestKey = HexToBuf("b2e231d5c056db0f58f1d87a7da1610d")
-		local Cipher1 = Algorithm.New(TestKey, Algorithm.Modes.ECB, Algorithm.Pads.None)
-		local ExpandedKey = Cipher1:ExpandKey(TestKey)
-		Testing.Expect(Cipher1.RoundKeys).ToBe(buffer.tostring(ExpandedKey))
-	end)
+	local Ciphertext, Tag = AES_GCM.Encrypt(KeyBuf, IVBuf, InputBuf, AADBuf)
 
-	for TestName, TestVector in TestVectors do
+	local CiphertextHex = BufToHex(Ciphertext)
+	Testing.Expect(CiphertextHex).ToBe(TestVector.Expected)
+
+	local TagHex = BufToHex(Tag)
+	Testing.Expect(TagHex).ToBe(TestVector.Tag)
+
+	local Success, Decrypted = AES_GCM.Decrypt(KeyBuf, IVBuf, Ciphertext, AADBuf, Tag)
+	if not Success or not Decrypted then
+		error("Decryption failed")
+	end
+	
+	local DecryptedHex = BufToHex(Decrypted)
+	Testing.Expect(DecryptedHex).ToBe(TestVector.Input)
+end
+
+Testing.Describe("AES-GCM Encryption Tests", function()
+	for Index, TestVector in TestVectors do
 		Testing.Test(TestVector.Description, function()
-			local KeyBuf = HexToBuf(TestVector.Key)
-			local InputBuf = HexToBuf(TestVector.Input)
-			local Cipher
-			local Result
-			local ResultHex
-
-			if TestVector.Mode and TestVector.Padding then
-				local Mode = Algorithm.Modes[TestVector.Mode]
-				local Padding = Algorithm.Pads[TestVector.Padding]
-
-				if TestVector.Mode == "CTR" and TestVector.IV then
-					Mode = Algorithm.Modes.CTR
-					Mode.InitValue = string.rep("\36", 16)
-					Mode.LittleEndian = true
-				end
-
-				Cipher = Algorithm.New(KeyBuf, Mode, Padding)
-
-				if TestVector.IV and TestVector.Mode ~= "CTR" then
-					local IVBuf = HexToBuf(TestVector.IV)
-					Result = Cipher:Encrypt(InputBuf, nil, IVBuf)
-					ResultHex = BufToHex(Result)
-				else
-					Result = Cipher:Encrypt(InputBuf)
-					ResultHex = BufToHex(Result)
-				end
-			else
-				Cipher = Algorithm.New(KeyBuf, Algorithm.Modes.ECB, Algorithm.Pads.None)
-				Cipher:EncryptBlock(InputBuf, 0)
-				ResultHex = BufToHex(InputBuf)
-			end
-
-			Testing.Expect(ResultHex).ToBe(TestVector.Expected)
+			RunGCMTest(TestVector)
 		end)
 	end
 
-	Testing.Test("Block Decryption", function()
-		local TestKey = HexToBuf("b2e231d5c056db0f58f1d87a7da1610d")
-		local TestBlock = HexToBuf("898df1706c354123f7e08762290e4e42")
-		local Cipher = Algorithm.New(TestKey, Algorithm.Modes.ECB, Algorithm.Pads.None)
-		Cipher:DecryptBlock(TestBlock, 0)
-		Testing.Expect(BufToHex(TestBlock)).ToBe("a4e25a670d18a86fed98b8f1c0d2da5b")
+	Testing.Test("GCM Authentication Failure Test", function()
+		local KeyBuf = HexToBuf("feffe9928665731c6d6a8f9467308308")
+		local InputBuf = HexToBuf("d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39")
+		local IVBuf = HexToBuf("cafebabefacedbaddecaf888")
+		local AADBuf = HexToBuf("feedfacedeadbeeffeedfacedeadbeefabaddad2")
+		local WrongTag = HexToBuf("00000000000000000000000000000000")
+
+		local Ciphertext, CorrectTag = AES_GCM.Encrypt(KeyBuf, IVBuf, InputBuf, AADBuf)
+
+		local Succes = AES_GCM.Decrypt(KeyBuf, IVBuf, Ciphertext, AADBuf, WrongTag)
+		Testing.Expect(Succes).ToBe(false)
+	end)
+
+	Testing.Test("Invalid Key Size Test", function()
+		local InvalidKeyBuf = HexToBuf("2b7e151628aed2a6abf7158809cf4f")
+		local IVBuf = HexToBuf("000000000000000000000000")
+		local InputBuf = HexToBuf("00000000000000000000000000000000")
+
+		Testing.Expect(function()
+			AES_GCM.Encrypt(InvalidKeyBuf, IVBuf, InputBuf)
+		end).ToThrow("Key must be 16, 24, or 32 bytes")
+	end)
+
+	Testing.Test("Missing buffer Params Test", function()
+		Testing.Expect(function()
+			local N = nil
+			AES_GCM.Encrypt(N, N, N)
+		end).ToThrow("Key must be a buffer")
 	end)
 end)
 
