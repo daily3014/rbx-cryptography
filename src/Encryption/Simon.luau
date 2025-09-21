@@ -34,72 +34,76 @@ local Z_SEQUENCE: {number} = {
 local Simon = {}
 
 local function GenerateKeySchedule(KeyBuffer: buffer): buffer
-	local XOR, ReadWord, WriteWord = bit32.bxor, buffer.readu32, buffer.writeu32
-
 	local Key = buffer.create(176)
-	local Sequence = Z_SEQUENCE
 
-	for Index = 0, (KEY_WORDS - 1) * 4, 4 do
-		WriteWord(Key, Index, ReadWord(KeyBuffer, Index))
-	end
+	buffer.writeu32(Key, 0, buffer.readu32(KeyBuffer, 0))
+	buffer.writeu32(Key, 4, buffer.readu32(KeyBuffer, 4))
+	buffer.writeu32(Key, 8, buffer.readu32(KeyBuffer, 8))
+	buffer.writeu32(Key, 12, buffer.readu32(KeyBuffer, 12))
 
 	for Index = KEY_WORDS, ROUNDS - 1 do
-		local Temp = XOR(bit32.rrotate(ReadWord(Key, (Index - 1) * 4), 3), ReadWord(Key, (Index - 3) * 4))
+		local PrevKey = buffer.readu32(Key, (Index - 1) * 4)
+		local Temp = bit32.bxor(bit32.rrotate(PrevKey, 3), buffer.readu32(Key, (Index - 3) * 4))
+		local TempRotated = bit32.rrotate(Temp, 1)
 
-		local C = Sequence[((Index - KEY_WORDS) % #Sequence) + 1]
-		WriteWord(Key, Index * 4, XOR(XOR(ReadWord(Key, (Index - KEY_WORDS) * 4), XOR(Temp, bit32.rrotate(Temp, 1))), XOR(3, C)))
+		local C = Z_SEQUENCE[((Index - KEY_WORDS) % 62) + 1]
+		buffer.writeu32(Key, Index * 4, bit32.bxor(bit32.bxor(buffer.readu32(Key, (Index - KEY_WORDS) * 4), bit32.bxor(Temp, TempRotated)), bit32.bxor(3, C)))
 	end
 
 	return Key
 end
 
 local function EncryptBlocks(CipherBuffer: buffer, PlaintextBuffer: buffer, RoundKeys: buffer, Length: number): ()
-	local LeftRotate, XOR, AND, ReadWord, WriteWord = bit32.lrotate, bit32.bxor, bit32.band, buffer.readu32, buffer.writeu32
-
 	for Offset = 0, Length - 1, BLOCK_SIZE do
-		local X = ReadWord(PlaintextBuffer, Offset)
-		local Y = ReadWord(PlaintextBuffer, Offset + 4)
+		local X = buffer.readu32(PlaintextBuffer, Offset)
+		local Y = buffer.readu32(PlaintextBuffer, Offset + 4)
 
 		for Round = 0, (ROUNDS - 1) * 4, 16 do
-			X, Y = XOR(Y, XOR(XOR(AND(LeftRotate(X, 1), LeftRotate(X, 8)), LeftRotate(X, 2)), ReadWord(RoundKeys, Round))), X
-			X, Y = XOR(Y, XOR(XOR(AND(LeftRotate(X, 1), LeftRotate(X, 8)), LeftRotate(X, 2)), ReadWord(RoundKeys, Round + 4))), X
-			X, Y = XOR(Y, XOR(XOR(AND(LeftRotate(X, 1), LeftRotate(X, 8)), LeftRotate(X, 2)), ReadWord(RoundKeys, Round + 8))), X
-			X, Y = XOR(Y, XOR(XOR(AND(LeftRotate(X, 1), LeftRotate(X, 8)), LeftRotate(X, 2)), ReadWord(RoundKeys, Round + 12))), X
+			X, Y = bit32.bxor(Y, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(X, 1), bit32.lrotate(X, 8)), bit32.lrotate(X, 2)), buffer.readu32(RoundKeys, Round))), X
+			X, Y = bit32.bxor(Y, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(X, 1), bit32.lrotate(X, 8)), bit32.lrotate(X, 2)), buffer.readu32(RoundKeys, Round + 4))), X
+			X, Y = bit32.bxor(Y, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(X, 1), bit32.lrotate(X, 8)), bit32.lrotate(X, 2)), buffer.readu32(RoundKeys, Round + 8))), X
+			X, Y = bit32.bxor(Y, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(X, 1), bit32.lrotate(X, 8)), bit32.lrotate(X, 2)), buffer.readu32(RoundKeys, Round + 12))), X
 		end
 
-		WriteWord(CipherBuffer, Offset, X)
-		WriteWord(CipherBuffer, Offset + 4, Y)
+		buffer.writeu32(CipherBuffer, Offset, X)
+		buffer.writeu32(CipherBuffer, Offset + 4, Y)
 	end
 end
 
 local function DecryptBlocks(PlaintextBuffer: buffer, CipherBuffer: buffer, RoundKeys: buffer, Length: number): ()
-	local LeftRotate, XOR, AND, ReadWord, WriteWord = bit32.lrotate, bit32.bxor, bit32.band, buffer.readu32, buffer.writeu32
-
 	for Offset = 0, Length - 1, BLOCK_SIZE do
-		local X = ReadWord(CipherBuffer, Offset)
-		local Y = ReadWord(CipherBuffer, Offset + 4)
+		local X = buffer.readu32(CipherBuffer, Offset)
+		local Y = buffer.readu32(CipherBuffer, Offset + 4)
 
 		for Round = (ROUNDS - 1) * 4, 0, -16 do
-			Y, X = XOR(X, XOR(XOR(AND(LeftRotate(Y, 1), LeftRotate(Y, 8)), LeftRotate(Y, 2)), ReadWord(RoundKeys, Round))), Y
-			Y, X = XOR(X, XOR(XOR(AND(LeftRotate(Y, 1), LeftRotate(Y, 8)), LeftRotate(Y, 2)), ReadWord(RoundKeys, Round - 4))), Y
-			Y, X = XOR(X, XOR(XOR(AND(LeftRotate(Y, 1), LeftRotate(Y, 8)), LeftRotate(Y, 2)), ReadWord(RoundKeys, Round - 8))), Y
-			Y, X = XOR(X, XOR(XOR(AND(LeftRotate(Y, 1), LeftRotate(Y, 8)), LeftRotate(Y, 2)), ReadWord(RoundKeys, Round - 12))), Y
+			Y, X = bit32.bxor(X, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(Y, 1), bit32.lrotate(Y, 8)), bit32.lrotate(Y, 2)), buffer.readu32(RoundKeys, Round))), Y
+			Y, X = bit32.bxor(X, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(Y, 1), bit32.lrotate(Y, 8)), bit32.lrotate(Y, 2)), buffer.readu32(RoundKeys, Round - 4))), Y
+			Y, X = bit32.bxor(X, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(Y, 1), bit32.lrotate(Y, 8)), bit32.lrotate(Y, 2)), buffer.readu32(RoundKeys, Round - 8))), Y
+			Y, X = bit32.bxor(X, bit32.bxor(bit32.bxor(bit32.band(bit32.lrotate(Y, 1), bit32.lrotate(Y, 8)), bit32.lrotate(Y, 2)), buffer.readu32(RoundKeys, Round - 12))), Y
 		end
 
-		WriteWord(PlaintextBuffer, Offset, X)
-		WriteWord(PlaintextBuffer, Offset + 4, Y)
+		buffer.writeu32(PlaintextBuffer, Offset, X)
+		buffer.writeu32(PlaintextBuffer, Offset + 4, Y)
 	end
 end
 
 local function PadBuffer(InputBuffer: buffer): buffer
 	local Length = buffer.len(InputBuffer)
 	local Amount = BLOCK_SIZE - (Length % BLOCK_SIZE)
-
 	local PaddedBuffer = buffer.create(Length + Amount)
+
 	buffer.copy(PaddedBuffer, 0, InputBuffer, 0, Length)
 
-	for Index = Length, Length + Amount - 1 do
-		buffer.writeu8(PaddedBuffer, Index, Amount)
+	if Amount == 1 then
+		buffer.writeu8(PaddedBuffer, Length, Amount)
+	elseif Amount == 2 then
+		buffer.writeu16(PaddedBuffer, Length, Amount * 0x0101)
+	elseif Amount == 4 then
+		buffer.writeu32(PaddedBuffer, Length, Amount * 0x01010101)
+	else
+		for Index = Length, Length + Amount - 1 do
+			buffer.writeu8(PaddedBuffer, Index, Amount)
+		end
 	end
 
 	return PaddedBuffer
@@ -112,8 +116,8 @@ local function UnpadBuffer(InputBuffer: buffer): buffer
 	end
 
 	local Amount = buffer.readu8(InputBuffer, Length - 1)
-
 	local UnpaddedBuffer = buffer.create(Length - Amount)
+
 	buffer.copy(UnpaddedBuffer, 0, InputBuffer, 0, Length - Amount)
 
 	return UnpaddedBuffer
@@ -124,11 +128,22 @@ local function PrepareKey(KeyBuffer: buffer): buffer
 	local PreparedKey = buffer.create(16)
 
 	if KeyLength >= 16 then
-		buffer.copy(PreparedKey, 0, KeyBuffer, 0, 16)
+		buffer.writeu32(PreparedKey, 0, buffer.readu32(KeyBuffer, 0))
+		buffer.writeu32(PreparedKey, 4, buffer.readu32(KeyBuffer, 4))
+		buffer.writeu32(PreparedKey, 8, buffer.readu32(KeyBuffer, 8))
+		buffer.writeu32(PreparedKey, 12, buffer.readu32(KeyBuffer, 12))
 	else
 		buffer.copy(PreparedKey, 0, KeyBuffer, 0, KeyLength)
-		for Index = KeyLength, 15 do
-			buffer.writeu8(PreparedKey, Index, 0)
+
+		for ZeroStart = KeyLength, 15, 4 do
+			if ZeroStart + 3 < 16 then
+				buffer.writeu32(PreparedKey, ZeroStart, 0)
+			else
+				for ByteIndex = ZeroStart, 15 do
+					buffer.writeu8(PreparedKey, ByteIndex, 0)
+				end
+				break
+			end
 		end
 	end
 
