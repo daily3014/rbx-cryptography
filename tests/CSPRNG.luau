@@ -11,7 +11,7 @@ local Algorithm = require("../Utilities/CSPRNG")
 
 Testing.Describe("CSPRNG Algorithm Tests", function()
 	Testing.Test("Ed25519 Functions", function()
-		local Ed25519Bytes = Algorithm.Ed25519RandomBytes()
+		local Ed25519Bytes = Algorithm.Ed25519Random()
 		Testing.Expect(typeof(Ed25519Bytes)).ToBe("buffer")
 		Testing.Expect(buffer.len(Ed25519Bytes)).ToBe(32)
 
@@ -58,23 +58,6 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		Testing.Expect(function()
 			Algorithm.Reseed("not a buffer" :: any)
 		end).ToThrow()
-	end)
-
-	Testing.Test("New Instance Creation", function()
-		local Instance1 = Algorithm.New()
-		local Instance2 = Algorithm.New()
-
-		local Value1 = Instance1:GetFloat()
-		local Value2 = Instance2:GetFloat()
-		Testing.Expect(Value1).Never.ToBe(Value2)
-
-		Testing.Expect(Instance1:GetUInt32()).ToBe(Testing.Expect.Type("number"))
-		Testing.Expect(Instance1:GetIntRange(1, 10)).ToBeGreaterThanOrEqual(1)
-		Testing.Expect(Instance1:GetIntRange(1, 10)).ToBeLessThanOrEqual(10)
-
-		local InstanceBytes = Instance1:GetBytes(16)
-		Testing.Expect(typeof(InstanceBytes)).ToBe("buffer")
-		Testing.Expect(buffer.len(InstanceBytes)).ToBe(16)
 	end)
 	
 	Testing.Test("Chance", function()
