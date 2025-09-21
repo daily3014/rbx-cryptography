@@ -20,18 +20,14 @@
 --!optimize 2
 --!native
 
-local CSPRNG = require("@self/CSPRNG")
-
-export type AESModule = {
-	Encrypt: (Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?) -> (buffer, buffer),
-	Decrypt: (Key: buffer, IV: buffer, Ciphertext: buffer, AAD: buffer?, Tag: buffer) -> buffer
-}
-
 type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number) -> ()
+
+local AES = {}
 
 local SBOX_16BIT = buffer.create(131072) 
 local SMIX_TABLE0 = buffer.create(65536)
 local SMIX_TABLE1 = buffer.create(65536)
+
 local INVS_XOR_TABLE = buffer.create(65536)
 local INVMIX_TABLE0 = buffer.create(65536)
 local INVMIX_TABLE1 = buffer.create(65536)
@@ -113,130 +109,104 @@ local SUBSTITUTION_BOX, INVERSE_SUBSTITUTION_BOX = buffer.create(256), buffer.cr
 	end
 end
 
-local function ExpandKeySchedule(Key: buffer | string, KeyLength: number, OutputBuffer: buffer, IsRawBuffer: boolean): buffer
-	if IsRawBuffer then
-		buffer.copy(OutputBuffer, 0, Key :: buffer, 0, KeyLength)
-	else
-		buffer.writestring(OutputBuffer, 0, Key :: string, KeyLength)
-	end
+local function ExpandKeySchedule(Key: buffer, KeyLength: number, OutputBuffer: buffer): buffer
+	buffer.copy(OutputBuffer, 0, Key, 0, KeyLength)
 
 	local Word = bit32.rrotate(buffer.readu32(OutputBuffer, KeyLength - 4), 8)
 	local RoundConstant = 0.5
-
 	local SBox_16 = SBOX_16BIT
 
 	if KeyLength == 32 then
 		for KeyOffset = 32, 192, 32 do
 			RoundConstant = RoundConstant * 2 % 229
-			Word = bit32.bxor(
-				buffer.readu32(OutputBuffer, KeyOffset - 32),
-				buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2),
-				RoundConstant
-			)
+			local SBoxLookup = buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 32), SBoxLookup, RoundConstant)
 			buffer.writeu32(OutputBuffer, KeyOffset, Word)
 
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 28), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 4, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 24), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 8, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 20), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 12, Word)
+			local W1 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 28), Word)
+			buffer.writeu32(OutputBuffer, KeyOffset + 4, W1)
+			local W2 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 24), W1)
+			buffer.writeu32(OutputBuffer, KeyOffset + 8, W2)
+			local W3 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 20), W2)
+			buffer.writeu32(OutputBuffer, KeyOffset + 12, W3)
 
-			Word = bit32.bxor(
-				buffer.readu32(OutputBuffer, KeyOffset - 16),
-				buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
-			)
+			SBoxLookup = buffer.readu16(SBox_16, W3 // 65536 * 2) * 65536 + buffer.readu16(SBox_16, W3 % 65536 * 2)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 16), SBoxLookup)
 			buffer.writeu32(OutputBuffer, KeyOffset + 16, Word)
 
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 12), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 20, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 8), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 24, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 4), Word)
+			W1 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 12), Word)
+			buffer.writeu32(OutputBuffer, KeyOffset + 20, W1)
+			W2 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 8), W1)
+			buffer.writeu32(OutputBuffer, KeyOffset + 24, W2)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 4), W2)
 			buffer.writeu32(OutputBuffer, KeyOffset + 28, Word)
 			Word = bit32.rrotate(Word, 8)
 		end
 
-		Word = bit32.bxor(
-			buffer.readu32(OutputBuffer, 192),
-			buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2),
-			64
-		)
+		local SBoxLookup = buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
+		Word = bit32.bxor(buffer.readu32(OutputBuffer, 192), SBoxLookup, 64)
 		buffer.writeu32(OutputBuffer, 224, Word)
 
-		Word = bit32.bxor(buffer.readu32(OutputBuffer, 196), Word)
-		buffer.writeu32(OutputBuffer, 228, Word)
-		Word = bit32.bxor(buffer.readu32(OutputBuffer, 200), Word)
-		buffer.writeu32(OutputBuffer, 232, Word)
-		buffer.writeu32(OutputBuffer, 236, bit32.bxor(buffer.readu32(OutputBuffer, 204), Word))
+		local W1 = bit32.bxor(buffer.readu32(OutputBuffer, 196), Word)
+		buffer.writeu32(OutputBuffer, 228, W1)
+		local W2 = bit32.bxor(buffer.readu32(OutputBuffer, 200), W1)
+		buffer.writeu32(OutputBuffer, 232, W2)
+		buffer.writeu32(OutputBuffer, 236, bit32.bxor(buffer.readu32(OutputBuffer, 204), W2))
 
 	elseif KeyLength == 24 then
 		for KeyOffset = 24, 168, 24 do
 			RoundConstant = RoundConstant * 2 % 229
-			Word = bit32.bxor(
-				buffer.readu32(OutputBuffer, KeyOffset - 24),
-				buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2),
-				RoundConstant
-			)
+			local SBoxLookup = buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 24), SBoxLookup, RoundConstant)
 			buffer.writeu32(OutputBuffer, KeyOffset, Word)
 
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 20), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 4, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 16), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 8, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 12), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 12, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 8), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 16, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 4), Word)
+			local W1 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 20), Word)
+			buffer.writeu32(OutputBuffer, KeyOffset + 4, W1)
+			local W2 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 16), W1)
+			buffer.writeu32(OutputBuffer, KeyOffset + 8, W2)
+			local W3 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 12), W2)
+			buffer.writeu32(OutputBuffer, KeyOffset + 12, W3)
+			local W4 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 8), W3)
+			buffer.writeu32(OutputBuffer, KeyOffset + 16, W4)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 4), W4)
 			buffer.writeu32(OutputBuffer, KeyOffset + 20, Word)
 			Word = bit32.rrotate(Word, 8)
 		end
 
-		Word = bit32.bxor(
-			buffer.readu32(OutputBuffer, 168),
-			buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2),
-			128
-		)
+		local SBoxLookup = buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
+		Word = bit32.bxor(buffer.readu32(OutputBuffer, 168), SBoxLookup, 128)
 		buffer.writeu32(OutputBuffer, 192, Word)
 
-		Word = bit32.bxor(buffer.readu32(OutputBuffer, 172), Word)
-		buffer.writeu32(OutputBuffer, 196, Word)
-		Word = bit32.bxor(buffer.readu32(OutputBuffer, 176), Word)
-		buffer.writeu32(OutputBuffer, 200, Word)
-		buffer.writeu32(OutputBuffer, 204, bit32.bxor(buffer.readu32(OutputBuffer, 180), Word))
-
+		local W1 = bit32.bxor(buffer.readu32(OutputBuffer, 172), Word)
+		buffer.writeu32(OutputBuffer, 196, W1)
+		local W2 = bit32.bxor(buffer.readu32(OutputBuffer, 176), W1)
+		buffer.writeu32(OutputBuffer, 200, W2)
+		buffer.writeu32(OutputBuffer, 204, bit32.bxor(buffer.readu32(OutputBuffer, 180), W2))
 	else
 		for KeyOffset = 16, 144, 16 do
 			RoundConstant = RoundConstant * 2 % 229
-			Word = bit32.bxor(
-				buffer.readu32(OutputBuffer, KeyOffset - 16),
-				buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2),
-				RoundConstant
-			)
+			local SBoxLookup = buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 16), SBoxLookup, RoundConstant)
 			buffer.writeu32(OutputBuffer, KeyOffset, Word)
 
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 12), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 4, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 8), Word)
-			buffer.writeu32(OutputBuffer, KeyOffset + 8, Word)
-			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 4), Word)
+			local W1 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 12), Word)
+			buffer.writeu32(OutputBuffer, KeyOffset + 4, W1)
+			local W2 = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 8), W1)
+			buffer.writeu32(OutputBuffer, KeyOffset + 8, W2)
+			Word = bit32.bxor(buffer.readu32(OutputBuffer, KeyOffset - 4), W2)
 			buffer.writeu32(OutputBuffer, KeyOffset + 12, Word)
 			Word = bit32.rrotate(Word, 8)
 		end
 
-		Word = bit32.bxor(
-			buffer.readu32(OutputBuffer, 144),
-			buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2),
-			54
-		)
+		local SBoxLookup = buffer.readu16(SBox_16, Word // 65536 * 2) * 65536 + buffer.readu16(SBox_16, Word % 65536 * 2)
+		Word = bit32.bxor(buffer.readu32(OutputBuffer, 144), SBoxLookup, 54)
 		buffer.writeu32(OutputBuffer, 160, Word)
 
-		Word = bit32.bxor(buffer.readu32(OutputBuffer, 148), Word)
-		buffer.writeu32(OutputBuffer, 164, Word)
-		Word = bit32.bxor(buffer.readu32(OutputBuffer, 152), Word)
-		buffer.writeu32(OutputBuffer, 168, Word)
-		buffer.writeu32(OutputBuffer, 172, bit32.bxor(buffer.readu32(OutputBuffer, 156), Word))
+		local W1 = bit32.bxor(buffer.readu32(OutputBuffer, 148), Word)
+		buffer.writeu32(OutputBuffer, 164, W1)
+		local W2 = bit32.bxor(buffer.readu32(OutputBuffer, 152), W1)
+		buffer.writeu32(OutputBuffer, 168, W2)
+		buffer.writeu32(OutputBuffer, 172, bit32.bxor(buffer.readu32(OutputBuffer, 156), W2))
 	end
 
 	return OutputBuffer
@@ -641,6 +611,7 @@ local function Gctr(EncryptionProcessor: Processor, ICB: buffer, X: buffer, XLen
 		buffer.writeu8(Y, YPos + 7, bit32.bxor(buffer.readu8(X, XPos + 7), buffer.readu8(Tmp, 7)))
 		buffer.writeu8(Y, YPos + 8, bit32.bxor(buffer.readu8(X, XPos + 8), buffer.readu8(Tmp, 8)))
 		buffer.writeu8(Y, YPos + 9, bit32.bxor(buffer.readu8(X, XPos + 9), buffer.readu8(Tmp, 9)))
+		
 		buffer.writeu8(Y, YPos + 10, bit32.bxor(buffer.readu8(X, XPos + 10), buffer.readu8(Tmp, 10)))
 		buffer.writeu8(Y, YPos + 11, bit32.bxor(buffer.readu8(X, XPos + 11), buffer.readu8(Tmp, 11)))
 		buffer.writeu8(Y, YPos + 12, bit32.bxor(buffer.readu8(X, XPos + 12), buffer.readu8(Tmp, 12)))
@@ -861,7 +832,7 @@ local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, Cr
 	end
 end
 
-local function GCMEncrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): (buffer, buffer)
+function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): (buffer, buffer)
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
@@ -877,7 +848,7 @@ local function GCMEncrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffe
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
-	local RoundKeysBuffer = ExpandKeySchedule(Key, KeyLength, buffer.create(KEY_CONFIGS[KeyLength].ExpandedLength), true)
+	local RoundKeysBuffer = ExpandKeySchedule(Key, KeyLength, buffer.create(KEY_CONFIGS[KeyLength].ExpandedLength))
 	local KeyMaterialLength = KEY_CONFIGS[KeyLength].MaterialLength
 
 	local function EncryptionProcessor(PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number)
@@ -896,7 +867,6 @@ local function GCMEncrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffe
 	local J0 = buffer.create(16)
 	local S = buffer.create(16)
 
-
 	EncryptionProcessor(H, 0, H, 0)
 	PrepareJ0(IV, IVLen, H, J0)
 	GcmGctr(EncryptionProcessor, J0, Plaintext, PlainLen, OutputBuffer)
@@ -906,7 +876,7 @@ local function GCMEncrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffe
 	return OutputBuffer, OutputTag
 end
 
-local function GCMDecrypt(Key: buffer, IV: buffer, Ciphertext: buffer, AAD: buffer?, Tag: buffer): (boolean, buffer?)
+function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, AAD: buffer?): (boolean, buffer?)
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
@@ -925,7 +895,7 @@ local function GCMDecrypt(Key: buffer, IV: buffer, Ciphertext: buffer, AAD: buff
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
-	local RoundKeysBuffer = ExpandKeySchedule(Key, KeyLength, buffer.create(KEY_CONFIGS[KeyLength].ExpandedLength), true)
+	local RoundKeysBuffer = ExpandKeySchedule(Key, KeyLength, buffer.create(KEY_CONFIGS[KeyLength].ExpandedLength))
 	local KeyMaterialLength = KEY_CONFIGS[KeyLength].MaterialLength
 
 	local function EncryptionProcessor(PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number)
@@ -958,7 +928,4 @@ local function GCMDecrypt(Key: buffer, IV: buffer, Ciphertext: buffer, AAD: buff
 	return true, OutputBuffer
 end
 
-return {
-	Encrypt = GCMEncrypt,
-	Decrypt = GCMDecrypt
-}
+return AES
