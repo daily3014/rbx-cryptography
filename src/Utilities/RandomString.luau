@@ -1,6 +1,9 @@
 --[=[
 	Cryptography library: Random String Generator
-
+	
+	⚠️WARNING: This is not using cryptographically secure random numbers. 
+	For Security use CSPRNG.⚠️
+	
 	Return type: string
 	Example Usage:
 		local String = RandomString(500)
@@ -12,7 +15,6 @@
 
 local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 	local FixedLength = if Length % 36 ~= 0 then Length + (4 - Length % 4) else Length
-	
 	local Characters = buffer.create(FixedLength)
 	local Packs = bit32.rshift(FixedLength, 2)
 	
