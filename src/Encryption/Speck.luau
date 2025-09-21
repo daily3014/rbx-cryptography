@@ -30,44 +30,44 @@ local function EncryptBlocks(CipherBuffer: buffer, PlaintextBuffer: buffer, KeyB
 		local B = buffer.readu32(KeyBuffer, 0)
 		local A = buffer.readu32(KeyBuffer, 4)
 
-		X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+		X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 		Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
 		for RoundIndex = 0, 27, 4 do
-			A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), RoundIndex)
+			A = bit32.bxor(bit32.rrotate(A, 8) + B, RoundIndex)
 			B = bit32.bxor(bit32.lrotate(B, 3), A)
-			X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+			X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 			Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
-			A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), RoundIndex + 1)
+			A = bit32.bxor(bit32.rrotate(A, 8) + B, RoundIndex + 1)
 			B = bit32.bxor(bit32.lrotate(B, 3), A)
-			X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+			X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 			Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
-			A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), RoundIndex + 2)
+			A = bit32.bxor(bit32.rrotate(A, 8) + B, RoundIndex + 2)
 			B = bit32.bxor(bit32.lrotate(B, 3), A)
-			X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+			X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 			Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
-			A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), RoundIndex + 3)
+			A = bit32.bxor(bit32.rrotate(A, 8) + B, RoundIndex + 3)
 			B = bit32.bxor(bit32.lrotate(B, 3), A)
-			X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+			X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 			Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 		end
 
-		A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), 28)
+		A = bit32.bxor(bit32.rrotate(A, 8) + B, 28)
 		B = bit32.bxor(bit32.lrotate(B, 3), A)
-		X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+		X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 		Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
-		A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), 29)
+		A = bit32.bxor(bit32.rrotate(A, 8) + B, 29)
 		B = bit32.bxor(bit32.lrotate(B, 3), A)
-		X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+		X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 		Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
-		A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), 30)
+		A = bit32.bxor(bit32.rrotate(A, 8) + B, 30)
 		B = bit32.bxor(bit32.lrotate(B, 3), A)
-		X = bit32.bxor(bit32.band(bit32.rrotate(X, 8) + Y, 0xFFFFFFFF), B)
+		X = bit32.bxor(bit32.rrotate(X, 8) + Y, B)
 		Y = bit32.bxor(bit32.lrotate(Y, 3), X)
 
 		buffer.writeu32(CipherBuffer, Offset, Y)
@@ -82,29 +82,29 @@ local function DecryptBlocks(PlaintextBuffer: buffer, CipherBuffer: buffer, Roun
 
 		for RoundIndex = 27, 0, -4 do
 			Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-			X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 4) * 4)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+			X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 4) * 4)) - Y, 8)
 
 			Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-			X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 3) * 4)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+			X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 3) * 4)) - Y, 8)
 
 			Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-			X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 2) * 4)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+			X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 2) * 4)) - Y, 8)
 
 			Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-			X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 1) * 4)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+			X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, (RoundIndex + 1) * 4)) - Y, 8)
 		end
 
 		Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-		X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, 12)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+		X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, 12)) - Y, 8)
 
 		Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-		X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, 8)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+		X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, 8)) - Y, 8)
 
 		Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-		X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, 4)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+		X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, 4)) - Y, 8)
 
 		Y = bit32.rrotate(bit32.bxor(Y, X), 3)
-		X = bit32.lrotate(bit32.band(bit32.bxor(X, buffer.readu32(RoundKeys, 0)) - Y + 0x100000000, 0xFFFFFFFF), 8)
+		X = bit32.lrotate(bit32.bxor(X, buffer.readu32(RoundKeys, 0)) - Y, 8)
 
 		buffer.writeu32(PlaintextBuffer, Offset, Y)
 		buffer.writeu32(PlaintextBuffer, Offset + 4, X)
@@ -114,12 +114,19 @@ end
 local function PadBuffer(InputBuffer: buffer): buffer
 	local Length = buffer.len(InputBuffer)
 	local Amount = 8 - (Length % 8)
-
 	local PaddedBuffer = buffer.create(Length + Amount)
+
 	buffer.copy(PaddedBuffer, 0, InputBuffer, 0, Length)
 
-	for Index = Length, Length + Amount - 1 do
-		buffer.writeu8(PaddedBuffer, Index, Amount)
+	if Amount == 8 then
+		buffer.writeu32(PaddedBuffer, Length, 0x08080808)
+		buffer.writeu32(PaddedBuffer, Length + 4, 0x08080808)
+	elseif Amount == 4 then
+		buffer.writeu32(PaddedBuffer, Length, Amount * 0x01010101)
+	else
+		for Index = Length, Length + Amount - 1 do
+			buffer.writeu8(PaddedBuffer, Index, Amount)
+		end
 	end
 
 	return PaddedBuffer
@@ -143,7 +150,8 @@ local function PadKey(KeyBuffer: buffer): buffer
 	local PreparedKey = buffer.create(8)
 
 	if KeyLength >= 8 then
-		buffer.copy(PreparedKey, 0, KeyBuffer, 0, 8)
+		buffer.writeu32(PreparedKey, 0, buffer.readu32(KeyBuffer, 0))
+		buffer.writeu32(PreparedKey, 4, buffer.readu32(KeyBuffer, 4))
 	else
 		buffer.copy(PreparedKey, 0, KeyBuffer, 0, KeyLength)
 		for Index = KeyLength, 7 do
@@ -162,16 +170,16 @@ local function ExpandKey(KeyBuffer: buffer): buffer
 	buffer.writeu32(RoundKeys, 0, B)
 
 	for RoundIndex = 0, 29, 2 do
-		A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), RoundIndex)
+		A = bit32.bxor(bit32.rrotate(A, 8) + B, RoundIndex)
 		B = bit32.bxor(bit32.lrotate(B, 3), A)
 		buffer.writeu32(RoundKeys, (RoundIndex + 1) * 4, B)
 
-		A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), RoundIndex + 1)
+		A = bit32.bxor(bit32.rrotate(A, 8) + B, RoundIndex + 1)
 		B = bit32.bxor(bit32.lrotate(B, 3), A)
 		buffer.writeu32(RoundKeys, (RoundIndex + 2) * 4, B)
 	end
 
-	A = bit32.bxor(bit32.band(bit32.rrotate(A, 8) + B, 0xFFFFFFFF), 30)
+	A = bit32.bxor(bit32.rrotate(A, 8) + B, 30)
 	B = bit32.bxor(bit32.lrotate(B, 3), A)
 	buffer.writeu32(RoundKeys, 124, B)
 
