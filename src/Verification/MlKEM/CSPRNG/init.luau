@@ -10,7 +10,6 @@
 		local FastString = CSPRNG.RandomString(16, false)
 		local FastBuffer = CSPRNG.RandomString(32, true)
 		
-		local Ed25519Bytes = CSPRNG.Ed25519RandomBytes()
 		local Ed25519Clamped = CSPRNG.Ed25519ClampedBytes(SomeBuffer)
 		local Ed25519Random = CSPRNG.Ed25519Random()
 		
@@ -25,114 +24,76 @@ local Conversions = require("@self/Conversions")
 local ChaCha20 = require("@self/ChaCha20")
 local Blake3 = require("@self/Blake3")
 
-type CSPRNGClass = {
-	__index: CSPRNGClass,
-	
-	New: () -> CSPRNGInstance,
-	
-	GatherEntropy: (self: CSPRNGInstance, CustomEntropy: buffer?) -> (),
-	GenerateBlock: (self: CSPRNGInstance) -> (),
-	
-	ReKey: (self: CSPRNGInstance) -> (),
-	Reset: (self: CSPRNGInstance) -> (),
-	
-	GetBytes: (self: CSPRNGInstance, Count: number) -> buffer,
-	GetUInt32: (self: CSPRNGInstance) -> number,
-	GetFloat: (self: CSPRNGInstance) -> number,
-	GetIntRange: (self: CSPRNGInstance, Min: number, Max: number) -> number,
-	GetNumberRange: (self: CSPRNGInstance, Min: number, Max: number) -> number,
-	GetRandomString: (self: CSPRNGInstance, Length: number, AsBuffer: boolean?) -> string | buffer,
-	GetEd25519RandomBytes: (self: CSPRNGInstance) -> buffer,
-	GetEd25519ClampedBytes: (self: CSPRNGInstance, Input: buffer) -> buffer,
-	GetEd25519Random: (self: CSPRNGInstance) -> buffer,
-	GetHexString: (self: CSPRNGInstance, Length: number) -> string,
-}
-
-type CSPRNGInstance = typeof(setmetatable({} :: {
-	Key: buffer,
-	Nonce: buffer,
-	Counter: number,
-	Buffer: buffer,
-	BufferPosition: number,
-	BufferSize: number,
-}, {} :: CSPRNGClass))
-
 type CSPRNGModule = {
-	Instance: CSPRNGInstance,
-	New: () -> CSPRNGInstance,
-	Test: () -> boolean?,
-	
 	BlockExpansion: boolean,
+
 	SizeTarget: number,
 	RekeyAfter: number,
-	
+
+	Key: buffer,
+	Nonce: buffer,
+	Buffer: buffer,
+
+	Counter: number,
+	BufferPosition: number,
+	BufferSize: number,
+
+	EntropyProviders: { () -> buffer? },
+
 	Reseed: (CustomEntropy: buffer?) -> (),
-	
+	AddEntropyProvider: (ProviderFunction: () -> buffer?) -> (),
+	RemoveEntropyProvider: (ProviderFunction: () -> buffer?) -> (),
+
 	Random: () -> number,
 	RandomInt: (Min: number, Max: number?) -> number,
 	RandomNumber: (Min: number, Max: number?) -> number,
 	RandomBytes: (Count: number) -> buffer,
 	RandomString: (Length: number, AsBuffer: boolean?) -> string | buffer,
 	RandomHex: (Length: number) -> string,
-	Ed25519RandomBytes: () -> buffer,
 	Ed25519ClampedBytes: (Input: buffer) -> buffer,
 	Ed25519Random: () -> buffer,
 }
-
-local CSPRNG: CSPRNGModule = {
-	BlockExpansion = false,
-	SizeTarget = 2048,
-	RekeyAfter = 1024
-} :: CSPRNGModule
-
-local CSPRNGClass = {} :: CSPRNGClass
-CSPRNGClass.__index = CSPRNGClass
 
 local BLOCK_SIZE = 64
 local KEY_SIZE = 32
 local NONCE_SIZE = 12
 
-function CSPRNGClass:Reset()
-	self.Key = buffer.create(0)
-	self.Nonce = buffer.create(0)
-	self.Counter = 0
-	self.Buffer = buffer.create(0)
-	self.BufferPosition = 0
-	self.BufferSize = 0
+local CSPRNG: CSPRNGModule = {
+	BlockExpansion = true,
+	SizeTarget = 2048,
+	RekeyAfter = 1024,
+
+	Key = buffer.create(0),
+	Nonce = buffer.create(0),
+	Buffer = buffer.create(0),
+
+	Counter = 0,
+	BufferPosition = 0,
+	BufferSize = 0,
+
+	EntropyProviders = {}
+} :: CSPRNGModule
+
+local function Reset()
+	CSPRNG.Key = buffer.create(0)
+	CSPRNG.Nonce = buffer.create(0)
+	CSPRNG.Buffer = buffer.create(0)
+
+	CSPRNG.Counter = 0
+	CSPRNG.BufferPosition = 0
+	CSPRNG.BufferSize = 0
 end
 
-function CSPRNGClass.New(): CSPRNGInstance
-	local self = setmetatable({
-		Key = buffer.create(0),
-		Nonce = buffer.create(0),
-		Counter = 0,
-		Buffer = buffer.create(0),
-		BufferPosition = 0,
-		BufferSize = 0,
-	}, CSPRNGClass)
-
-	self:GatherEntropy()
-	self.Counter = 0
-	self.Buffer = buffer.create(0)
-	self.BufferPosition = 0
-	self.BufferSize = 0
-	self:GenerateBlock()
-
-	self:GetBytes(32)
-
-	return self
-end
-
-function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
+local function GatherEntropy(CustomEntropy: buffer?)
 	local EntropyBuffers = buffer.create(1024)
 	local Offset = 0
 
-	local function WriteToBuffer(Source: buffer): ()
+	local function WriteToBuffer(Source: buffer)
 		local Size = buffer.len(Source)
 		buffer.copy(EntropyBuffers, Offset, Source, 0, Size)
 		Offset += Size
 	end
-	
+
 	local CurrentTime = 1.234
 	if tick then
 		CurrentTime = tick()
@@ -158,7 +119,7 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 		local DateTimeBuffer = buffer.create(8)
 		buffer.writef64(DateTimeBuffer, 0, DateTimeMillis)
 		WriteToBuffer(DateTimeBuffer)
-		
+
 		local DateTimePrecisionBuffer = buffer.create(16)
 		buffer.writef32(DateTimePrecisionBuffer, 0, DateTimeMillis / 1000)
 		buffer.writef32(DateTimePrecisionBuffer, 4, (DateTimeMillis % 1000) / 100)
@@ -269,14 +230,14 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 		for AddrIndex = 1, #TableAddr do
 			TableHash = bit32.bxor(TableHash, string.byte(TableAddr, AddrIndex)) * 31
 		end
-		
+
 		if coroutine then
 			local ThreadAddr = string.gsub(tostring(coroutine.create(function() end)), "thread: ", "")
 			for AddrIndex = 1, #ThreadAddr do
 				ThreadHash = bit32.bxor(ThreadHash, string.byte(ThreadAddr, AddrIndex)) * 31
 			end
 		end
-		
+
 		for AddrIndex = 1, #FuncAddr do
 			FuncHash = bit32.bxor(FuncHash, string.byte(FuncAddr, AddrIndex)) * 37
 		end
@@ -293,7 +254,17 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 		buffer.writeu32(AddressEntropy, Index * 16 + 12, bit32.bxor(BufferHash, UserdataHash))
 	end
 	WriteToBuffer(AddressEntropy)
-	
+
+	for _, Provider in CSPRNG.EntropyProviders do
+		local BytesLeft = 1024 - Offset
+		if BytesLeft > 0 then
+			local Success: boolean, ExtraEntropy: buffer? = pcall(Provider)
+			if Success and ExtraEntropy then
+				buffer.copy(EntropyBuffers, Offset, ExtraEntropy, 0, math.min(BytesLeft, buffer.len(ExtraEntropy)))
+			end
+		end
+	end
+
 	if CustomEntropy then
 		local BytesLeft = 1024 - Offset
 		if BytesLeft > 0 then
@@ -304,45 +275,29 @@ function CSPRNGClass:GatherEntropy(CustomEntropy: buffer?): ()
 	local EntropyHashBuffer = Blake3(EntropyBuffers)
 	local KeyMaterial = Blake3(EntropyHashBuffer, KEY_SIZE + NONCE_SIZE)
 
-	self.Key = buffer.create(KEY_SIZE)
-	buffer.copy(self.Key, 0, KeyMaterial, 0, KEY_SIZE)
+	CSPRNG.Key = buffer.create(KEY_SIZE)
+	buffer.copy(CSPRNG.Key, 0, KeyMaterial, 0, KEY_SIZE)
 
-	self.Nonce = buffer.create(NONCE_SIZE)
-	buffer.copy(self.Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
+	CSPRNG.Nonce = buffer.create(NONCE_SIZE)
+	buffer.copy(CSPRNG.Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
 end
 
-function CSPRNGClass:GenerateBlock(): ()
+local function GenerateBlock()
 	local InputBuffer = buffer.create(BLOCK_SIZE)
-	local ChaChaOutput = ChaCha20(InputBuffer, self.Key, self.Nonce, self.Counter, 20)
-	
+	local ChaChaOutput = ChaCha20(InputBuffer, CSPRNG.Key, CSPRNG.Nonce, CSPRNG.Counter, 20)
+
 	if CSPRNG.BlockExpansion then
-		self.Buffer = Blake3(ChaChaOutput, math.clamp(math.floor(CSPRNG.SizeTarget), 64, 2^32 - 1))
+		CSPRNG.Buffer = Blake3(ChaChaOutput, math.clamp(math.floor(CSPRNG.SizeTarget), 64, 2^32 - 1))
 	else
-		self.Buffer = ChaChaOutput
+		CSPRNG.Buffer = ChaChaOutput
 	end
-	
-	self.BufferPosition = 0
-	self.BufferSize = buffer.len(self.Buffer)
 
-	self.Counter += 1
-	if self.Counter % math.max(math.floor(CSPRNG.RekeyAfter), 2) == 0 then
-		self:ReKey()
-	end
+	CSPRNG.BufferPosition = 0
+	CSPRNG.BufferSize = buffer.len(CSPRNG.Buffer)
+	CSPRNG.Counter += 1
 end
 
-function CSPRNGClass:ReKey(): ()
-	local NewKeyMaterial = buffer.create(KEY_SIZE + NONCE_SIZE)
-	local RandomData = self:GetBytes(KEY_SIZE + NONCE_SIZE)
-	buffer.copy(NewKeyMaterial, 0, RandomData, 0, KEY_SIZE + NONCE_SIZE)
-
-	local HashedBuffer = Blake3(NewKeyMaterial)
-
-	buffer.copy(self.Key, 0, HashedBuffer, 0, KEY_SIZE)
-	self:GatherEntropy()
-	self.Counter = 0
-end
-
-function CSPRNGClass:GetBytes(Count: number): buffer
+local function GetBytes(Count: number): buffer
 	local Result = buffer.create(Count)
 	local ResultPosition = 0
 
@@ -353,31 +308,48 @@ function CSPRNGClass:GetBytes(Count: number): buffer
 			break
 		end
 
-		if self.BufferPosition >= self.BufferSize then
-			self:GenerateBlock()
+		if CSPRNG.BufferPosition >= CSPRNG.BufferSize then
+			GenerateBlock()
 		end
 
 		local BytesNeeded = Count - ResultPosition
-		local BytesAvailable = self.BufferSize - self.BufferPosition
+		local BytesAvailable = CSPRNG.BufferSize - CSPRNG.BufferPosition
 		local BytesToCopy = math.min(BytesNeeded, BytesAvailable)
 
-		buffer.copy(Result, ResultPosition, self.Buffer, self.BufferPosition, BytesToCopy)
+		buffer.copy(Result, ResultPosition, CSPRNG.Buffer, CSPRNG.BufferPosition, BytesToCopy)
 
 		ResultPosition += BytesToCopy
-		self.BufferPosition += BytesToCopy
+		CSPRNG.BufferPosition += BytesToCopy
+
+		if CSPRNG.Counter % math.max(math.floor(CSPRNG.RekeyAfter), 2) == 0 then
+			local NewKeyMaterial = buffer.create(KEY_SIZE + NONCE_SIZE)
+			buffer.copy(NewKeyMaterial, 0, Result, math.max(0, ResultPosition - (KEY_SIZE + NONCE_SIZE)), math.min(KEY_SIZE + NONCE_SIZE, ResultPosition))
+
+			local HashedBuffer = Blake3(NewKeyMaterial)
+
+			buffer.copy(CSPRNG.Key, 0, HashedBuffer, 0, KEY_SIZE)
+			GatherEntropy()
+			CSPRNG.Counter = 0
+		end
 	end
 
 	return Result
 end
 
-function CSPRNGClass:GetUInt32(): number
-	local Bytes: buffer = self:GetBytes(4)
-	return buffer.readu32(Bytes, 0)
+local function GetUInt32(): number
+	if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
+		local Bytes: buffer = GetBytes(4)
+		return buffer.readu32(Bytes, 0)
+	end
+
+	local Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
+	CSPRNG.BufferPosition += 4
+	return Value
 end
 
-function CSPRNGClass:GetFloat(): number
-	local Value1 = self:GetUInt32()
-	local Value2 = self:GetUInt32()
+local function GetFloat(): number
+	local Value1 = GetUInt32()
+	local Value2 = GetUInt32()
 
 	local High = bit32.rshift(Value1, 5)
 	local Low = bit32.rshift(Value2, 6)
@@ -385,7 +357,7 @@ function CSPRNGClass:GetFloat(): number
 	return (High * 67108864.0 + Low) / 9007199254740992.0
 end
 
-function CSPRNGClass:GetIntRange(Min: number, Max: number): number
+local function GetIntRange(Min: number, Max: number): number
 	if Min > Max then
 		Min, Max = Max, Min
 	end
@@ -396,24 +368,24 @@ function CSPRNGClass:GetIntRange(Min: number, Max: number): number
 	end
 
 	if Range <= 256 then
-		local Value = self:GetUInt32()
+		local Value = GetUInt32()
 		return Min + (Value % Range)
 	end
 
 	local MaxValid = math.floor(0x100000000 / Range) * Range - 1
 
 	for Attempt = 1, 16 do
-		local Value = self:GetUInt32()
+		local Value = GetUInt32()
 		if Value <= MaxValid then
 			return Min + (Value % Range)
 		end
 	end
 
-	local FallbackValue = self:GetUInt32()
+	local FallbackValue = GetUInt32()
 	return Min + (FallbackValue % Range)
 end
 
-function CSPRNGClass:GetNumberRange(Min: number, Max: number): number
+local function GetNumberRange(Min: number, Max: number): number
 	if Min > Max then
 		Min, Max = Max, Min
 	end
@@ -423,10 +395,10 @@ function CSPRNGClass:GetNumberRange(Min: number, Max: number): number
 		return Min
 	end
 
-	return Min + (self:GetFloat() * Range)
+	return Min + (GetFloat() * Range)
 end
 
-function CSPRNGClass:GetRandomString(Length: number, AsBuffer: boolean?): string | buffer
+local function GetRandomString(Length: number, AsBuffer: boolean?): string | buffer
 	local FixedLength = if Length % 4 ~= 0 then Length + (4 - Length % 4) else Length
 
 	local Characters = buffer.create(FixedLength)
@@ -434,10 +406,10 @@ function CSPRNGClass:GetRandomString(Length: number, AsBuffer: boolean?): string
 
 	for Index = 0, Packs * 4 - 1, 4 do
 		local U32 = bit32.bor(
-			bit32.lshift(self:GetIntRange(36, 122), 0),
-			bit32.lshift(self:GetIntRange(36, 122), 8),
-			bit32.lshift(self:GetIntRange(36, 122), 16),
-			bit32.lshift(self:GetIntRange(36, 122), 24)
+			bit32.lshift(GetIntRange(36, 122), 0),
+			bit32.lshift(GetIntRange(36, 122), 8),
+			bit32.lshift(GetIntRange(36, 122), 16),
+			bit32.lshift(GetIntRange(36, 122), 24)
 		)
 		buffer.writeu32(Characters, Index, U32)
 	end
@@ -455,21 +427,21 @@ function CSPRNGClass:GetRandomString(Length: number, AsBuffer: boolean?): string
 	return buffer.readstring(Characters, 0, Length)
 end
 
-function CSPRNGClass:GetEd25519RandomBytes(): buffer
+local function GetEd25519RandomBytes(): buffer
 	local Output = buffer.create(32)
 	for Index = 0, 31, 4 do
 		buffer.writeu32(Output, Index, bit32.bor(
-			bit32.lshift(self:GetIntRange(0, 255), 0),
-			bit32.lshift(self:GetIntRange(0, 255), 8),
-			bit32.lshift(self:GetIntRange(0, 255), 16),
-			bit32.lshift(self:GetIntRange(0, 255), 24)
+			bit32.lshift(GetIntRange(0, 255), 0),
+			bit32.lshift(GetIntRange(0, 255), 8),
+			bit32.lshift(GetIntRange(0, 255), 16),
+			bit32.lshift(GetIntRange(0, 255), 24)
 			))
 	end
 
 	return Output
 end
 
-function CSPRNGClass:GetEd25519ClampedBytes(Input: buffer): buffer
+local function GetEd25519ClampedBytes(Input: buffer): buffer
 	local Output = buffer.create(32)
 	buffer.copy(Output, 0, Input, 0, 32)
 
@@ -498,41 +470,48 @@ function CSPRNGClass:GetEd25519ClampedBytes(Input: buffer): buffer
 	return Output
 end
 
-function CSPRNGClass:GetEd25519Random(): buffer
-	return self:GetEd25519ClampedBytes(self:GetEd25519RandomBytes())
-end
-
-function CSPRNGClass:GetHexString(Length)
+local function GetHexString(Length: number): string
 	local BytesNeeded = Length / 2
-	local Bytes = self:GetBytes(BytesNeeded)
+	local Bytes = GetBytes(BytesNeeded)
 	local Hex = Conversions.ToHex(Bytes)
 
 	return Hex
 end
 
-CSPRNG.Instance = CSPRNGClass.New()
+function CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
+	table.insert(CSPRNG.EntropyProviders, ProviderFunction)
+end
+
+function CSPRNG.RemoveEntropyProvider(ProviderFunction: () -> buffer?)
+	for Index = #CSPRNG.EntropyProviders, 1, -1 do
+		if CSPRNG.EntropyProviders[Index] == ProviderFunction then
+			table.remove(CSPRNG.EntropyProviders, Index)
+			break
+		end
+	end
+end
 
 function CSPRNG.Random(): number
-	return CSPRNG.Instance:GetFloat()
+	return GetFloat()
 end
 
 function CSPRNG.RandomInt(Min: number, Max: number?): number
 	if Max and type(Max) ~= "number" then
 		error(`Max must be a number or nil, got {typeof(Max)}`, 2)
 	end
-	
+
 	if type(Min) ~= "number" then
 		error(`Min must be a number, got {typeof(Min)}`, 2)
 	end
-	
+
 	if Max and Max < Min then
 		error(`Max ({Max}) can't be less than Min ({Min})`, 2)
 	end
-	
+
 	if Max and Max == Min then
 		error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
 	end
-	
+
 	local ActualMax: number
 	local ActualMin: number
 
@@ -544,7 +523,7 @@ function CSPRNG.RandomInt(Min: number, Max: number?): number
 		ActualMin = Min
 	end
 
-	return CSPRNG.Instance:GetIntRange(ActualMin, ActualMax)
+	return GetIntRange(ActualMin, ActualMax)
 end
 
 function CSPRNG.RandomNumber(Min: number, Max: number?): number
@@ -555,15 +534,15 @@ function CSPRNG.RandomNumber(Min: number, Max: number?): number
 	if type(Min) ~= "number" then
 		error(`Min must be a number, got {typeof(Min)}`, 2)
 	end
-	
+
 	if Max and Max < Min then
 		error(`Max ({Max}) must be bigger than Min ({Min})`, 2)
 	end
-	
+
 	if Max and Max == Min then
 		error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
 	end
-	
+
 	local ActualMax: number
 	local ActualMin: number
 
@@ -575,90 +554,87 @@ function CSPRNG.RandomNumber(Min: number, Max: number?): number
 		ActualMin = Min
 	end
 
-	return CSPRNG.Instance:GetNumberRange(ActualMin, ActualMax)
+	return GetNumberRange(ActualMin, ActualMax)
 end
 
 function CSPRNG.RandomBytes(Count: number): buffer
 	if type(Count) ~= "number" then
 		error(`Count must be a number, got {typeof(Count)}`, 2)
 	end
-	
+
 	if Count <= 0 then
 		error(`Count must be bigger than 0, got {Count}`, 2)
 	end
-	
+
 	if Count % 1 ~= 0 then
 		error("Count must be an integer", 2)
 	end
-	
-	return CSPRNG.Instance:GetBytes(Count)
+
+	return GetBytes(Count)
 end
 
 function CSPRNG.RandomString(Length: number, AsBuffer: boolean?): string | buffer
 	if type(Length) ~= "number" then
 		error(`Length must be a number, got {typeof(Length)}`, 2)
 	end
-	
+
 	if Length <= 0 then
 		error(`Length must be bigger than 0, got {Length}`, 2)
 	end
-	
+
 	if Length % 1 ~= 0 then
 		error("Length must be an integer", 2)
 	end
-	
+
 	if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
 		error(`AsBuffer must be a boolean or nil, got {typeof(AsBuffer)}`, 2)
 	end
-	
-	return CSPRNG.Instance:GetRandomString(Length, AsBuffer)
+
+	return GetRandomString(Length, AsBuffer)
 end
 
 function CSPRNG.RandomHex(Length: number): string
 	if type(Length) ~= "number" then
 		error(`Length must be a number, got {typeof(Length)}`, 2)
 	end
-	
+
 	if Length <= 0 then
 		error(`Length must be bigger than 0, got {Length}`, 2)
 	end
-	
+
 	if Length % 1 ~= 0 then
 		error("Length must be an integer", 2)
 	end
-	
+
 	if Length % 2 ~= 0 then
 		error(`Length must be even, got {Length}`, 2)
 	end
-	
-	return CSPRNG.Instance:GetHexString(Length)
-end
 
-function CSPRNG.Ed25519RandomBytes(): buffer
-	return CSPRNG.Instance:GetEd25519RandomBytes()
+	return GetHexString(Length)
 end
 
 function CSPRNG.Ed25519ClampedBytes(Input: buffer): buffer
 	if type(Input) ~= "buffer" then
 		error(`Input must be a buffer, got {typeof(Input)}`, 2)
 	end
-	
-	return CSPRNG.Instance:GetEd25519ClampedBytes(Input)
+
+	return GetEd25519ClampedBytes(Input)
 end
 
 function CSPRNG.Ed25519Random(): buffer
-	return CSPRNG.Instance:GetEd25519Random()
+	return GetEd25519ClampedBytes(GetEd25519RandomBytes())
 end
 
-function CSPRNG.Reseed(CustomEntropy: buffer?): ()
+function CSPRNG.Reseed(CustomEntropy: buffer?)
 	if CustomEntropy ~= nil and type(CustomEntropy) ~= "buffer" then
 		error(`CustomEntropy must be a buffer or nil, got {typeof(CustomEntropy)}`, 2)
 	end
-	
-	CSPRNG.Instance:Reset()
-	CSPRNG.Instance:GatherEntropy(CustomEntropy)
+
+	Reset()
+	GatherEntropy(CustomEntropy)
 end
 
-CSPRNG.New = CSPRNGClass.New
+GatherEntropy()
+GenerateBlock()
 
 return CSPRNG
