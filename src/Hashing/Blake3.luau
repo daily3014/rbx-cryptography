@@ -56,6 +56,20 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	end
 end
 
+local ENCODE_LOOKUP = buffer.create(256 * 2) do
+	local HexChars = "0123456789abcdef"
+	for Byte = 0, 255 do
+		local HighNibble = bit32.rshift(Byte, 4)
+		local LowNibble = Byte % 16
+
+		local HighChar = string.byte(HexChars, HighNibble + 1)
+		local LowChar = string.byte(HexChars, LowNibble + 1)
+
+		local Combined = HighChar + bit32.lshift(LowChar, 8)
+		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, Combined)
+	end
+end
+
 local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14: number, V15: number, IsFull: boolean?): buffer
 	local Hash00 = buffer.readu32(Hash, 0)
 	local Hash01 = buffer.readu32(Hash, 4)
@@ -197,58 +211,69 @@ end
 local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message: buffer, Length: number): buffer
 	local MessageLength = buffer.len(Message)
 	local StateCvs = buffer.create(STACK_BUFFER_SIZE)
-	local StackSize = 0
 	local StateCv = buffer.create(CV_SIZE)
-	buffer.copy(StateCv, 0, InitialHashVector, 0, CV_SIZE)
 
+	local StackSize = 0
 	local StateCounter = 0
+
 	local StateChunkNumber = 0
 	local StateEndFlag = 0
+
+	local BlockSize = BLOCK_SIZE
+	local CvSize = CV_SIZE
+	local ExtendedCvSize = EXTENDED_CV_SIZE
+
 	local StateStartFlag = CHUNK_START
+	local ChunkStart = CHUNK_START
+	local ChunkEnd = CHUNK_END
 
-	local BlockBuffer = buffer.create(BLOCK_SIZE)
+	local ParentFlag = PARENT_FLAG
+	local RootFlag = ROOT_FLAG
+	local FlagsParent = Flags + ParentFlag
 
-	for BlockOffset = 0, MessageLength - BLOCK_SIZE - 1, BLOCK_SIZE do
-		buffer.copy(BlockBuffer, 0, Message, BlockOffset, BLOCK_SIZE)
+	local BlockBuffer = buffer.create(BlockSize)
+	local PopCv = buffer.create(CvSize)
+	local MergeBlock = buffer.create(ExtendedCvSize)
+	local StackCv = buffer.create(CvSize)
+	local Block = buffer.create(ExtendedCvSize)
+
+	buffer.copy(StateCv, 0, InitialHashVector, 0, CvSize)
+
+	for BlockOffset = 0, MessageLength - BlockSize - 1, BlockSize do
+		buffer.copy(BlockBuffer, 0, Message, BlockOffset, BlockSize)
 		local StateFlags = Flags + StateStartFlag + StateEndFlag
-
-		StateCv = Compress(StateCv, BlockBuffer, StateCounter, BLOCK_SIZE, StateFlags)
+		StateCv = Compress(StateCv, BlockBuffer, StateCounter, BlockSize, StateFlags)
 		StateStartFlag = 0
 		StateChunkNumber += 1
 
 		if StateChunkNumber == 15 then
-			StateEndFlag = CHUNK_END
+			StateEndFlag = ChunkEnd
 		elseif StateChunkNumber == 16 then
 			local MergeCv = StateCv
 			local MergeAmount = StateCounter + 1
 
 			while MergeAmount % 2 == 0 do
-				StackSize = StackSize - 1
-				local PopCv = buffer.create(CV_SIZE)
-				buffer.copy(PopCv, 0, StateCvs, StackSize * CV_SIZE, CV_SIZE)
-
-				local Block = buffer.create(EXTENDED_CV_SIZE)
-				buffer.copy(Block, 0, PopCv, 0, CV_SIZE)
-				buffer.copy(Block, CV_SIZE, MergeCv, 0, CV_SIZE)
-
-				MergeCv = Compress(InitialHashVector, Block, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
-				MergeAmount = MergeAmount / 2
+				StackSize -= 1
+				buffer.copy(PopCv, 0, StateCvs, StackSize * CvSize, CvSize)
+				buffer.copy(MergeBlock, 0, PopCv, 0, CvSize)
+				buffer.copy(MergeBlock, CvSize, MergeCv, 0, CvSize)
+				MergeCv = Compress(InitialHashVector, MergeBlock, 0, BlockSize, FlagsParent)
+				MergeAmount /= 2
 			end
 
-			buffer.copy(StateCvs, StackSize * CV_SIZE, MergeCv, 0, CV_SIZE)
-			StackSize = StackSize + 1
-			buffer.copy(StateCv, 0, InitialHashVector, 0, CV_SIZE)
-			StateStartFlag = CHUNK_START
+			buffer.copy(StateCvs, StackSize * CvSize, MergeCv, 0, CvSize)
+			StackSize += 1
 
+			buffer.copy(StateCv, 0, InitialHashVector, 0, CvSize)
+			StateStartFlag = ChunkStart
 			StateCounter += 1
 			StateChunkNumber = 0
 			StateEndFlag = 0
 		end
 	end
 
-	local LastLength = MessageLength == 0 and 0 or ((MessageLength - 1) % BLOCK_SIZE + 1)
-	local PaddedMessage = buffer.create(BLOCK_SIZE)
-
+	local LastLength = MessageLength == 0 and 0 or ((MessageLength - 1) % BlockSize + 1)
+	local PaddedMessage = buffer.create(BlockSize)
 	if LastLength > 0 then
 		buffer.copy(PaddedMessage, 0, Message, MessageLength - LastLength, LastLength)
 	end
@@ -259,53 +284,85 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	local OutputFlags: number
 
 	if StateCounter > 0 then
-		local StateFlags = Flags + StateStartFlag + CHUNK_END
+		local StateFlags = Flags + StateStartFlag + ChunkEnd
 		local MergeCv = Compress(StateCv, PaddedMessage, StateCounter, LastLength, StateFlags)
-
 		for Index = StackSize, 2, -1 do
-			local StackCv = buffer.create(CV_SIZE)
-			buffer.copy(StackCv, 0, StateCvs, (Index - 1) * CV_SIZE, CV_SIZE)
-
-			local Block = buffer.create(EXTENDED_CV_SIZE)
-			buffer.copy(Block, 0, StackCv, 0, CV_SIZE)
-			buffer.copy(Block, CV_SIZE, MergeCv, 0, CV_SIZE)
-
-			MergeCv = Compress(InitialHashVector, Block, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
+			buffer.copy(StackCv, 0, StateCvs, (Index - 1) * CvSize, CvSize)
+			buffer.copy(Block, 0, StackCv, 0, CvSize)
+			buffer.copy(Block, CvSize, MergeCv, 0, CvSize)
+			MergeCv = Compress(InitialHashVector, Block, 0, BlockSize, FlagsParent)
 		end
 
 		OutputCv = InitialHashVector
-		local FirstStackCv = buffer.create(CV_SIZE)
-		buffer.copy(FirstStackCv, 0, StateCvs, 0, CV_SIZE)
+		local FirstStackCv = buffer.create(CvSize)
+		buffer.copy(FirstStackCv, 0, StateCvs, 0, CvSize)
+		OutputBlock = buffer.create(ExtendedCvSize)
 
-		OutputBlock = buffer.create(EXTENDED_CV_SIZE)
-		buffer.copy(OutputBlock, 0, FirstStackCv, 0, CV_SIZE)
-		buffer.copy(OutputBlock, CV_SIZE, MergeCv, 0, CV_SIZE)
+		buffer.copy(OutputBlock, 0, FirstStackCv, 0, CvSize)
+		buffer.copy(OutputBlock, CvSize, MergeCv, 0, CvSize)
 
-		OutputLength = BLOCK_SIZE
-		OutputFlags = Flags + ROOT_FLAG + PARENT_FLAG
+		OutputLength = BlockSize
+		OutputFlags = Flags + RootFlag + ParentFlag
 	else
 		OutputCv = StateCv
 		OutputBlock = PaddedMessage
 		OutputLength = LastLength
-		OutputFlags = Flags + StateStartFlag + CHUNK_END + ROOT_FLAG
+		OutputFlags = Flags + StateStartFlag + ChunkEnd + RootFlag
 	end
 
 	local Output = buffer.create(Length)
 	local OutputOffset = 0
-
-	for Index = 0, Length // BLOCK_SIZE do
+	for Index = 0, Length // BlockSize do
 		local MessageDigest = Compress(OutputCv, OutputBlock, Index, OutputLength, OutputFlags, true)
-
-		local BytesToCopy = math.min(BLOCK_SIZE, Length - OutputOffset)
+		local BytesToCopy = math.min(BlockSize, Length - OutputOffset)
 		buffer.copy(Output, OutputOffset, MessageDigest, 0, BytesToCopy)
 		OutputOffset += BytesToCopy
-
 		if OutputOffset >= Length then
 			break
 		end
 	end
 
 	return Output
+end
+
+local function ToHex(Buffer: buffer): string
+	local Length = buffer.len(Buffer)
+	local Hex = buffer.create(Length * 2)
+
+	local Lookup = ENCODE_LOOKUP
+
+	local Leftover = Length % 8
+	local HexCursor = 0
+
+	for Index = 0, Length - Leftover - 1, 8 do
+		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
+		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2)
+		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2)
+		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2)
+		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2)
+		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2)
+		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2)
+		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2)
+
+		buffer.writeu16(Hex, HexCursor, Hex1)
+		buffer.writeu16(Hex, HexCursor + 2, Hex2)
+		buffer.writeu16(Hex, HexCursor + 4, Hex3)
+		buffer.writeu16(Hex, HexCursor + 6, Hex4)
+		buffer.writeu16(Hex, HexCursor + 8, Hex5)
+		buffer.writeu16(Hex, HexCursor + 10, Hex6)
+		buffer.writeu16(Hex, HexCursor + 12, Hex7)
+		buffer.writeu16(Hex, HexCursor + 14, Hex8)
+
+		HexCursor += 16
+	end
+
+	for Index = Length - Leftover, Length - 1 do
+		local HexPair = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
+		buffer.writeu16(Hex, HexCursor, HexPair)
+		HexCursor += 2
+	end
+
+	return buffer.tostring(Hex)
 end
 
 function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
@@ -337,19 +394,7 @@ function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 
 	local Result = ProcessMessage(INITIAL_VECTORS, 0, Message, Length or 32)
 
-	local ResultLength = buffer.len(Result)
-	local Hex = buffer.create(ResultLength * 2)
-	local Leftover = ResultLength % 4
-
-	for Index = 0, ResultLength - Leftover - 1, 4 do
-		buffer.writestring(Hex, Index * 2, string.format("%08x", bit32.byteswap(buffer.readu32(Result, Index))))
-	end
-
-	for Index = ResultLength - Leftover, ResultLength - 1 do
-		buffer.writestring(Hex, Index * 2, string.format("%02x", buffer.readu8(Result, Index)))
-	end
-
-	return buffer.tostring(Hex), Result
+	return ToHex(Result), Result
 end
 
 function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): (string, buffer)
@@ -390,19 +435,7 @@ function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): (str
 
 	local Result = ProcessMessage(Key, HASH_FLAG, Message, Length or 32)
 
-	local ResultLength = buffer.len(Result)
-	local Hex = buffer.create(ResultLength * 2)
-	local Leftover = ResultLength % 4
-
-	for Index = 0, ResultLength - Leftover - 1, 4 do
-		buffer.writestring(Hex, Index * 2, string.format("%08x", bit32.byteswap(buffer.readu32(Result, Index))))
-	end
-
-	for Index = ResultLength - Leftover, ResultLength - 1 do
-		buffer.writestring(Hex, Index * 2, string.format("%02x", buffer.readu8(Result, Index)))
-	end
-
-	return buffer.tostring(Hex), Result
+	return ToHex(Result), Result
 end
 
 function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
@@ -445,19 +478,7 @@ function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer
 
 		local Result = ProcessMessage(ContextHash, DERIVE_MATERIAL_FLAG, Material, Length or 32)
 
-		local ResultLength = buffer.len(Result)
-		local Hex = buffer.create(ResultLength * 2)
-		local Leftover = ResultLength % 4
-
-		for Index = 0, ResultLength - Leftover - 1, 4 do
-			buffer.writestring(Hex, Index * 2, string.format("%08x", bit32.byteswap(buffer.readu32(Result, Index))))
-		end
-
-		for Index = ResultLength - Leftover, ResultLength - 1 do
-			buffer.writestring(Hex, Index * 2, string.format("%02x", buffer.readu8(Result, Index)))
-		end
-
-		return buffer.tostring(Hex), Result
+		return ToHex(Result), Result
 	end
 end
 
