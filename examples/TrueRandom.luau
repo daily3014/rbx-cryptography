@@ -41,31 +41,39 @@ local function Retry(Func: () -> any, MaxAttempts: number): (boolean, buffer?)
 		end
 	end
 
-	return false, nil
+	return false
 end
 
 -- Quantum random numbers -> https://qrng.anu.edu.au
 local function FetchRandom(): buffer?
+	--[[
+		Since I can't find any error codes i'm going off by the length given
+		if its wrong it throws an error which will travel upward into the retry
+	]]
 	local Response = HttpService:GetAsync(`https://qrng.anu.edu.au/wp-content/plugins/colours-plugin/get_block_hex.php?_={DateTime.now().UnixTimestampMillis}`)
+	if Response and #Response  ~= 2048 then
+		error(`Unexpected reponse size, got {#Response} expected 2048`)
+	end
+	
 	return Conversions.FromHex(Response)
 end
 
 local function GetEntropyBuffer(): buffer?
-	local Success, EntropyBuffer = Retry(FetchRandom, MAX_RETRY_ATTEMPTS)
-	if Success and EntropyBuffer then
-		print(`Added {buffer.len(EntropyBuffer)} bytes to CSPRNG`)
-		return EntropyBuffer
+	local Success, Result = Retry(FetchRandom, MAX_RETRY_ATTEMPTS)
+	if Success and Result then
+		print(`Added {buffer.len(Result)} bytes to CSPRNG`)
+		return Result
 	else
-		warn("Failed to fetch Random.org entropy", EntropyBuffer)
+		warn("Failed to fetch Random.org entropy")
 		return nil
 	end
 end
+
 -- AddEntropyProvider will only be called once its used up all the entropy from init
 -- So you need to do `CSPRNG.Reseed(GetEntropyBuffer())` if you want it from the gecko
 CSPRNG.AddEntropyProvider(function()
 	return GetEntropyBuffer()
 end)
-
 CSPRNG.Reseed(GetEntropyBuffer())
 
 -- Use up the entropy
