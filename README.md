@@ -426,9 +426,6 @@ Utilities.CSPRNG.RandomHex(Length: number): string
 Utilities.CSPRNG.RandomString(Length: number, AsBuffer: boolean?): buffer | string
 -- Generate a random string / buffer
 
-Utilities.CSPRNG.Ed25519RandomBytes(): buffer
--- Generate a buffer with random bytes for use with EdDSA
-
 Utilities.CSPRNG.Ed25519ClampedBytes(Input: buffer): buffer
 -- Clamp the bytes to always work with EdDSA
 
@@ -437,6 +434,13 @@ Utilities.CSPRNG.Ed25519Random(): buffer
 
 Utilities.CSPRNG.Reseed(CustomEntropy: buffer?)
 -- Add new entropy to the CSPRNG with up to 1024 bytes of custom entropy (in most cases it will be less)
+
+CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
+-- Option to pass a custom function that supplies the entropy, only called once its used up all the entropy from init
+-- So you need to do `CSPRNG.Reseed(CustomEntropy())` if you want it from the gecko
+
+RemoveEntropyProvider(ProviderFunction: () -> buffer?)
+-- Removes the given provider for CSPRNG
 ```
 
 ### Checksum Functions:
@@ -493,6 +497,7 @@ Through many optimizations including buffer operations, algorithm tuning and Lua
 - **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
 
 ---
+
 
 
 
