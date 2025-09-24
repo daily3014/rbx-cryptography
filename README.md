@@ -439,7 +439,7 @@ CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
 -- Option to pass a custom function that supplies the entropy, only called once its used up all the entropy from init
 -- So you need to do `CSPRNG.Reseed(CustomEntropy())` if you want it from the gecko
 
-RemoveEntropyProvider(ProviderFunction: () -> buffer?)
+CSPRNG.RemoveEntropyProvider(ProviderFunction: () -> buffer?)
 -- Removes the given provider for CSPRNG
 ```
 
@@ -497,6 +497,7 @@ Through many optimizations including buffer operations, algorithm tuning and Lua
 - **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
 
 ---
+
 
 
 
