@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Get the library
 local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
 local CSPRNG = Cryptography.Utilities.CSPRNG
--- Also accessible through EdDSA: Verification.EdDSA.CSPRNG
+-- Also accessible through EdDSA, MLKEM andMLDSA: Verification.EdDSA/MLKEM/MLDSA.CSPRNG
 
 --[[
 	CSPRNG stands for:
@@ -24,7 +24,7 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 	The generated block can be extended to an arbitrary length
 	with Blake3 by enabling CSPRNG.BlockExpansion
 
-	Developers can renew the state and add their own entropy by passing it as a buffer in CSRNG.Reseed
+	Developers can renew the state and add their own entropy by passing it as a buffer in CSRNG.Reseed/CSPRNG.AddEntropyProvider
 
 	CSPRNG will also automatically renew the state after a certain amount of calls controlled
 	by CSRNG.RekeyAfter (by default 1024, so 64 * 1024 bytes without block expansion)
@@ -42,24 +42,24 @@ print(CSPRNG.RandomNumber(100))
 -- Generate a random key for EdDSA
 local PrivateKey = CSPRNG.Ed25519Random()
 
--- Reseed the CSPRNG instance with custom entropy for extra security
+--[[
+	Reseed the CSPRNG instance with custom entropy for extra security
+	You can pass any buffer as long as it's 1024 bytes or less, althought not all of it
+	may be used as the normal entropy is added first, custom has last priority
+	You can also use CSPRNG.AddEntropyProvider to add a function that returns a buffer
+	AddEntropyProvider will only be called once its used up all the entropy from init
+	So you need to do `CSPRNG.Reseed(CustomEntropy())` if you want it from the gecko
+]]
 local LastPlayerWeaponUse = 12317127.123
 local AmountOfRemoteCalls = 1282
-local CustomEntropy = buffer.create(8 + 4) -- You can pass a buffer as big as 1024 bytes!
+local CustomEntropy = buffer.create(8 + 4)
 buffer.writef64(CustomEntropy, 0, LastPlayerWeaponUse) -- 8 bytes
 buffer.writeu32(CustomEntropy, 8, AmountOfRemoteCalls) -- 4 bytes
+
+local Provider = function()
+	return CustomEntropy
+end
+
+CSPRNG.AddEntropyProvider(Provider)
+CSPRNG.RemoveEntropyProvider(Provider)
 CSPRNG.Reseed(CustomEntropy)
-
--- Create a custom CSRPNG instance
-local NewInstance = CSPRNG.New() -- This instance has an independent state
-
--- Reseed the custom instance
-NewInstance:Reset() -- Resetting the instance is optional, it will just set the internal counter back to 0
-NewInstance:GatherEntropy(CustomEntropy)
-
-NewInstance:GetIntRange(1, 100)
-
--- Enable block expansion
-CSPRNG.BlockExpansion = true -- Random blocks of data will be generated less often now to improve performance
-print(CSPRNG.RandomString(1024))
-
