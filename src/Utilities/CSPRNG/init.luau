@@ -74,6 +74,10 @@ local CSPRNG: CSPRNGModule = {
 	EntropyProviders = {}
 } :: CSPRNGModule
 
+local INPUT_BUFFER = buffer.create(BLOCK_SIZE)
+local REKEY_THRESHOLD = math.max(math.floor(CSPRNG.RekeyAfter), 2)
+local SIZE_TARGET_CLAMPED = math.clamp(math.floor(CSPRNG.SizeTarget), 64, 4294967295)
+
 local function Reset()
 	CSPRNG.Key = buffer.create(0)
 	CSPRNG.Nonce = buffer.create(0)
@@ -272,8 +276,7 @@ local function GatherEntropy(CustomEntropy: buffer?)
 		end
 	end
 
-	local EntropyHashBuffer = Blake3(EntropyBuffers)
-	local KeyMaterial = Blake3(EntropyHashBuffer, KEY_SIZE + NONCE_SIZE)
+	local KeyMaterial = Blake3(EntropyBuffers, KEY_SIZE + NONCE_SIZE)
 
 	CSPRNG.Key = buffer.create(KEY_SIZE)
 	buffer.copy(CSPRNG.Key, 0, KeyMaterial, 0, KEY_SIZE)
@@ -283,31 +286,25 @@ local function GatherEntropy(CustomEntropy: buffer?)
 end
 
 local function GenerateBlock()
-	local InputBuffer = buffer.create(BLOCK_SIZE)
-	local ChaChaOutput = ChaCha20(InputBuffer, CSPRNG.Key, CSPRNG.Nonce, CSPRNG.Counter, 20)
+	buffer.fill(INPUT_BUFFER, 0, 0, BLOCK_SIZE)
+	local ChaChaOutput = ChaCha20(INPUT_BUFFER, CSPRNG.Key, CSPRNG.Nonce, CSPRNG.Counter, 20)
 
-	if CSPRNG.BlockExpansion then
-		CSPRNG.Buffer = Blake3(ChaChaOutput, math.clamp(math.floor(CSPRNG.SizeTarget), 64, 2^32 - 1))
-	else
-		CSPRNG.Buffer = ChaChaOutput
-	end
-
+	CSPRNG.Buffer = if CSPRNG.BlockExpansion then Blake3(ChaChaOutput, SIZE_TARGET_CLAMPED) else ChaChaOutput
 	CSPRNG.BufferPosition = 0
 	CSPRNG.BufferSize = buffer.len(CSPRNG.Buffer)
 	CSPRNG.Counter += 1
+
+	if CSPRNG.Counter % REKEY_THRESHOLD == 0 then
+		GatherEntropy() 
+		CSPRNG.Counter = 0
+	end
 end
 
 local function GetBytes(Count: number): buffer
 	local Result = buffer.create(Count)
 	local ResultPosition = 0
 
-	local MaxChunks = math.ceil(Count / BLOCK_SIZE) + 1
-
-	for Chunk = 1, MaxChunks do
-		if ResultPosition >= Count then
-			break
-		end
-
+	while ResultPosition < Count do
 		if CSPRNG.BufferPosition >= CSPRNG.BufferSize then
 			GenerateBlock()
 		end
@@ -317,39 +314,21 @@ local function GetBytes(Count: number): buffer
 		local BytesToCopy = math.min(BytesNeeded, BytesAvailable)
 
 		buffer.copy(Result, ResultPosition, CSPRNG.Buffer, CSPRNG.BufferPosition, BytesToCopy)
-
 		ResultPosition += BytesToCopy
 		CSPRNG.BufferPosition += BytesToCopy
-
-		if CSPRNG.Counter % math.max(math.floor(CSPRNG.RekeyAfter), 2) == 0 then
-			local NewKeyMaterial = buffer.create(KEY_SIZE + NONCE_SIZE)
-			buffer.copy(NewKeyMaterial, 0, Result, math.max(0, ResultPosition - (KEY_SIZE + NONCE_SIZE)), math.min(KEY_SIZE + NONCE_SIZE, ResultPosition))
-
-			local HashedBuffer = Blake3(NewKeyMaterial)
-
-			buffer.copy(CSPRNG.Key, 0, HashedBuffer, 0, KEY_SIZE)
-			GatherEntropy()
-			CSPRNG.Counter = 0
-		end
 	end
 
 	return Result
 end
 
-local function GetUInt32(): number
-	if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
-		local Bytes: buffer = GetBytes(4)
-		return buffer.readu32(Bytes, 0)
+local function GetFloat(): number
+	if CSPRNG.BufferPosition + 8 > CSPRNG.BufferSize then
+		GenerateBlock()
 	end
 
-	local Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
-	CSPRNG.BufferPosition += 4
-	return Value
-end
-
-local function GetFloat(): number
-	local Value1 = GetUInt32()
-	local Value2 = GetUInt32()
+	local Value1 = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
+	local Value2 = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition + 4)
+	CSPRNG.BufferPosition += 8
 
 	local High = bit32.rshift(Value1, 5)
 	local Low = bit32.rshift(Value2, 6)
@@ -358,31 +337,30 @@ local function GetFloat(): number
 end
 
 local function GetIntRange(Min: number, Max: number): number
-	if Min > Max then
-		Min, Max = Max, Min
+	local Range = Max - Min + 1
+	local MaxUInt32 = 0xFFFFFFFF
+	local Limit = MaxUInt32 - (MaxUInt32 % Range)
+	
+	if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
+		GenerateBlock()
 	end
 
-	local Range: number = Max - Min + 1
-	if Range <= 0 then
-		return Min
-	end
+	local Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
+	CSPRNG.BufferPosition += 4
 
-	if Range <= 256 then
-		local Value = GetUInt32()
+	if bit32.band(Range, Range - 1) == 0 then
+		return Min + bit32.band(Value, Range - 1)
+	else
+		while Value > Limit do
+			if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
+				GenerateBlock()
+			end
+			Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
+			CSPRNG.BufferPosition += 4
+		end
+		
 		return Min + (Value % Range)
 	end
-
-	local MaxValid = math.floor(0x100000000 / Range) * Range - 1
-
-	for Attempt = 1, 16 do
-		local Value = GetUInt32()
-		if Value <= MaxValid then
-			return Min + (Value % Range)
-		end
-	end
-
-	local FallbackValue = GetUInt32()
-	return Min + (FallbackValue % Range)
 end
 
 local function GetNumberRange(Min: number, Max: number): number
