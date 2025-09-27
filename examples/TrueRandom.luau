@@ -64,7 +64,7 @@ local function GetEntropyBuffer(): buffer?
 		print(`Added {buffer.len(Result)} bytes to CSPRNG`)
 		return Result
 	else
-		warn("Failed to fetch Random.org entropy")
+		warn("Failed to fetch entropy")
 		return nil
 	end
 end
