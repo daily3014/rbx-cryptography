@@ -40,9 +40,9 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 ### Supported Algorithms
 
 **Hashing Functions (20):**
-- **SHA-2 Family**: SHA-224, 256, 384, 512, 512_224, 512_256 (optional salt support)
+- **SHA-2 Family**: SHA-224, 256, 384, 512 (optional salt support)
 - **SHA-3 Family**: SHA3-224, 256, 384, 512, Shake128, Shake256 (latest NIST standard)
-- **BLAKE Family**: BLAKE3 (fastest available), BLAKE3-Keyed
+- **BLAKE Family**: BLAKE3 (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey
 - **Authentication**: HMAC (works with any hash function)
 - **Fast Hashing**: XXH32 (ultra-fast non-cryptographic)
 
@@ -497,6 +497,7 @@ Through many optimizations including buffer operations, algorithm tuning and Lua
 - **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
 
 ---
+
 
 
 
