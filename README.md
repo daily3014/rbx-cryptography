@@ -1,18 +1,12 @@
-## Luau Cryptography
-A tested, high performance cryptography library for Roblox built in Luau. 
-Has over 30+ cryptographic functions including modern algorithms like SHA-3, BLAKE3, ChaCha20-Poly1305, and EdDSA alongside classic implementations. 
-Through alot of optimizations, the implementations are **200-900% faster** than alternatives while having actual readable code.
+# Luau Cryptography
 
-**I can't believe I have to spell this out, but this cryptography library was NOT made for users to exploit, harass, or engage in any illegal activities whatsoever.**
-**If I had known what sick things people were going to use this for, I wouldn't have released it in the first place.**
-**If you see this being used for explicit content, illegal purposes, harassment, or any other disgusting misuse REPORT IT. This kind of abuse is absolutely unacceptable.**
+<p align="center">
+  <a href="https://discord.gg/Fg3sM8qKPp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://wally.run/package/daily3014/cryptography"><img src="https://img.shields.io/badge/Wally-Package-orange" alt="Wally"></a>
+  <a href="https://pesde.dev/packages/daily3014/cryptography"><img src="https://img.shields.io/badge/Pesde-Package-blue" alt="Pesde"></a>
+</p>
 
-**Discord**: https://discord.gg/Fg3sM8qKPp
-
-**Links:**
-- [DevForum Documentation](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271)
-- [Wally Package](https://wally.run/package/daily3014/cryptography)
-- [Pesde Package](https://pesde.dev/packages/daily3014/cryptography)
+**Luau Cryptography** is a library of cryptographic algorithims written in Luau. It supports Post-Quantum (PQ), Elliptic Curve Cryptography (ECC), authenticated encryption and CSPRNG with many utilities.
 
 ## Authors
 
@@ -25,160 +19,142 @@ Through alot of optimizations, the implementations are **200-900% faster** than 
 - Special thanks to all contributors and bug reporters
 - AES was originally made by @RobloxGamerPro200007
 
-## Features
+## Disclaimer
 
-- **High Performance**: 2x-8.7x faster than alternative implementations
-- **Algorithm Support**: 30+ cryptographic functions covering all major use cases
-- **Modern Cryptography**: Latest algorithms including SHA-3, BLAKE3, ChaCha20-Poly1305, EdDSA and post quantum cryptography
-- **Easy Integration**: Clean modular API designed for Roblox environments
-- **Multiple Package Managers**: Available on both Wally and Pesde
-- **Buffer Based**: Efficient buffer usage for everything
-- **Fully Testing**: Every algorithm is tested with NIST test vectors
-- **Type Safe**: Complete type definitions
-- **Well Documented**: Good documentation and examples
-
-### Supported Algorithms
-
-**Hashing Functions (20):**
-- **SHA-2 Family**: SHA-224, 256, 384, 512 (optional salt support)
-- **SHA-3 Family**: SHA3-224, 256, 384, 512, Shake128, Shake256 (latest NIST standard)
-- **BLAKE Family**: BLAKE3 (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey
-- **Authentication**: HMAC (works with any hash function)
-- **Fast Hashing**: XXH32 (ultra-fast non-cryptographic)
-
-**Encryption Functions (6):**
-- **Stream Cipher**: ChaCha20 (stream cipher)
-- **Block Cipher**: AES-GCM, Simon, Speck
-- **Additive Cipher**: XOR
-- **Authenticated Encryption**: ChaCha20-Poly1305 AEAD, AES-GCM
-
-**Digital Signatures (2):**
-- **EdDSA**: Ed25519 key generation, signing, and verification
-- **ML-DSA**: Post-quantum digital signature scheme (Dilithium-based), secure against quantum attacks, standardized in NIST PQC
-
-**Key Encapsulation (2):**
-- **ML-KEM**: Post-quantum key encapsulation mechanism (Kyber-based), used for secure key exchange and hybrid encryption
-- **X25519**: Elliptic curve Diffie–Hellman (ECDH) over Curve25519 with cofactor clearing
-  
-**Utility Functions (10+):**
-- **Encoding**: Base64 encode/decode
-- **Conversions**: Hex to/from buffer, string utilities
-- **Random Generation**: Generates random strings
-- **Checksums**: CRC32 (JAM/ISO modes), Adler
-
----
-
-## Performance
-(Only some of the algorithms are present!)\
-Every implementation is faster than all alternatives
-
-### Hashing / Checksum
-| Algorithm            | Data Size | This Library | HashLib  | Alternative                    | Other Libraries   | Improvement                  |
-|----------------------|-----------|--------------|----------|--------------------------------|-------------------|------------------------------|
-| Adler32              | 200k      | **190 us**   | -        | 1.65 ms (Naive Approach)       | -                 | **8.7x faster**              |
-| SHA256               | 20k       | **370 μs**   | 2058 μs  | 493 μs (Old Version)           | 596 μs (Dekkonot) | **5.5x faster** than HashLib |
-| SHA512               | 20k       | **822 μs**   | 4348 μs  | 1066 μs (Dekkonot)             | -                 | **5.6x faster** than HashLib |
-| Keccak/SHA3-512      | 20k       | **1.74 ms**  | 10.60 ms | -                              | -                 | **6.1x faster** than HashLib |
-| CRC32                | 200k      | **2.01 ms**  | -        | 6.26 ms (DevForum)             | -                 | **3.1x faster**              |
-
-### Encryption
-| Algorithm            | Data Size | This Library | Alternative                     | Other Libraries | Improvement                  |
-|----------------------|-----------|--------------|---------------------------------|-----------------|------------------------------|
-| XOR (Encrypt)        | 1 million | **1.10 ms**  | ~49.5 ms (@TwiistedRoyalty)     | 4000ms (daily)  | **64.3x faster**             |
-| XOR (Roundtrip)      | 1 million | **2.20 ms**  | 98.9 ms (@TwiistedRoyalty)      | ~8000ms (daily) | **64.3x faster**             |
-| ChaCha20 (Encrypt)   | 20k       | **0.31 ms**  | 7.87 ms (EncryptedNet)          | -               | **25.3x faster**             |
-| ChaCha20 (Roundtrip) | 20k       | **0.64 ms**  |  ~15 ms (EncryptedNet)          | -               | **25.3x faster**             |
-| Simon (Encrypt)      | 20k       | **0.42 ms**  | -                               | -               | -                            |
-| Simon (Roundtrip)    | 20k       | **0.85 ms**  | -                               | -               | -                            |
-| Speck (Encrypt)      | 20k       | **0.48 ms**  | -                               | -               | -                            |
-| Speck (Roundtrip)    | 20k       | **0.98 ms**  | -                               | -               | -                            |
-| AES-GCM (Encrypt)    | 20k       | **16.41 ms** | -                               | -               | -                            |
-| AES-GCM (Roundtrip)  | 20k       | **32.40 ms** | -                               | -               | -                            |
-
-*Benchmarks performed in Roblox Studio on an Intel Core i7-12700*\
-*Plugin used: Benchmarker by @boatbomber*\
-Roundtrip: Encrypt and Decrypt
-
----
+While this library has extensive testing, it's always recommended that you do your own tests. Keep in mind that there may be timing vulnerabilities that cannot be fixed due to how Luau compiles functions. **This library is NOT intended for exploitation, harassment, illegal activities, or explicit content.** All security issues should be reported in the Discord server.
 
 ## Installation
 
 ### Wally
-https://wally.run/package/daily3014/cryptography
+
+```toml
+[dependencies]
+cryptography = "daily3014/cryptography@2.3.0"
+```
 
 ### Pesde
-https://pesde.dev/packages/daily3014/cryptography
+
+```yaml
+pesde add daily3014/cryptography
+```
 
 ### Manual Installation
-1. Download the latest release from GitHub
-2. Drag the rbxm/rbxmx file into studio
-3. Require the module in your scripts
 
----
+Download the latest release from GitHub and place it in your Roblox Studio project.
 
-## Quick Start
+## List of Algorithms
 
-### Basic Setup
-```lua
--- Require the library
-local Cryptography = require(game:GetService("ReplicatedStorage").Cryptography)
+### Elliptic Curve Cryptography
 
--- Module shortcuts
-local Hashing = Cryptography.Hashing
-local Encryption = Cryptography.Encryption
-local Utilities = Cryptography.Utilities
-local Verification = Cryptography.Verification
-local Checksums = Cryptography.Checksums
-```
+**Digital Signature Schemes**
 
-### Hash Something Quickly
-```lua
--- Hash a message with SHA-256
-local MessageBuffer = buffer.fromstring("Hello World!")
-local Hash = Hashing.SHA2.SHA256(MessageBuffer)
-print("SHA256:", Hash) -- Output is already in hex format
-```
+- [Ed25519](https://github.com/daily3014/rbx-cryptography/blob/main/src/Verification/EdDSA) signatures with masked operations for side-channel protection
 
-### Secure Password Hashing
-```lua
--- Hash a password with salt
-local function HashPassword(Password, Salt)
-    local PasswordBuffer = buffer.fromstring(Password)
-    local SaltBuffer = buffer.fromstring(Salt or "defaultsalt")
+**Key Exchange**
 
-    return Hashing.SHA2.SHA256(PasswordBuffer, SaltBuffer)
-end
+- [X25519](https://github.com/daily3014/rbx-cryptography/blob/main/src/Verification/EdDSA/X25519.luau): Elliptic curve Diffie-Hellman over Curve25519
 
--- Example usage
-local UserPassword = "MySecurePassword123"
-local HashedPassword = HashPassword(UserPassword, "randomsalt")
-print("Hashed password:", HashedPassword)
+### Post-Quantum Cryptography
 
--- Verify password by comparing hashes
-local function VerifyPassword(InputPassword, StoredHash, Salt)
-    local InputHash = HashPassword(InputPassword, Salt)
-    return InputHash == StoredHash
-end
+**KEM: Key Encapsulation Methods**
 
-local IsValid = VerifyPassword("MySecurePassword123", HashedPassword, "randomsalt")
-print("Password is valid:", IsValid)
-```
+- [ML-KEM](https://github.com/daily3014/rbx-cryptography/tree/main/src/Verification/MlKEM): modes 512, 768, 1024 (Kyber-based, NIST standardized)
 
-### Authenticated Encryption (AEAD)
-```lua
-local PlainText = buffer.fromstring("Hello World")
-local Key = buffer.fromstring(string.rep("k", 32))
-local Nonce = buffer.fromstring(string.rep("n", 12))
-local AAD = buffer.fromstring("additional data")
+**Digital Signature Schemes**
 
-local Ciphertext, Tag = Encryption.AEAD.Encrypt(PlainText, Key, Nonce, AAD)
-local DecryptedText = Encryption.AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD)
-```
-### Verification/CSPRNG Usage
-```lua
-print("Check examples.")
-```
----
+- [ML-DSA](https://github.com/daily3014/rbx-cryptography/tree/main/src/Verification/MlDSA): modes 44, 65, 87 (Dilithium-based, [FIPS 204](https://doi.org/10.6028/NIST.FIPS.204))
+
+### Symmetric Cryptography
+
+**Hash Functions**
+
+- **SHA-2 Family**: SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256 with optional salt support
+- **SHA-3 Family**: SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE-128, SHAKE-256 ([FIPS 202](https://doi.org/10.6028/NIST.FIPS.202))
+- **BLAKE Family**: [BLAKE3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake2b.luau)
+
+**Message Authentication**
+
+- [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
+
+**Authenticated Encryption**
+
+- [ChaCha20-Poly1305](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AEAD): AEAD construction ([RFC 8439](https://doi.org/10.17487/RFC8439))
+- [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES): Galois/Counter Mode
+
+**Stream & Block Ciphers**
+
+- [ChaCha20](https://github.com/daily3014/rbx-cryptography/tree/main/src/Encryption/AEAD): Stream cipher ([RFC 8439](https://doi.org/10.17487/RFC8439))
+- [AES](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES): Advanced Encryption Standard
+- [Simon](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/Simon.luau): Lightweight block cipher
+- [Speck](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/Speck.luau): Lightweight block cipher
+- [XOR](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/XOR.luau): Simple additive cipher
+
+**Checksums**
+
+- [CRC32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Checksums/CRC32.luau): Cyclic Redundancy Check (JAM/ISO modes)
+- [Adler-32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Checksums/Adler.luau): Checksum algorithm
+- [XXH32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/XXH32.luau): Ultra-fast non-cryptographic hash
+
+### Utilities
+
+**Encoding & Conversion**
+
+- [Base64](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/Base64.luau): Encode and decode
+- [Hexadecimal](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/Conversions.luau): Buffer to/from hex string conversion
+
+**Random Generation**
+
+- [CSPRNG](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/CSPRNG): Cryptographically Secure Pseudo-Random Number Generator with entropy management
+- Random strings and bytes generation
+
+## Performance
+
+Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using Benchmarker by @boatbomber.
+
+### Hashing / Checksum
+
+| Algorithm | Data Size | This Library | HashLib | Alternative | Other Libraries | Improvement |
+|-----------|-----------|--------------|---------|-------------|-----------------|-------------|
+| SHA-256 | 20k | **370 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **5.5x faster** than HashLib |
+| SHA-512 | 20k | **766 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **5.7x faster** than HashLib |
+| SHA3-512 | 20k | **1.38 ms** | 10.60 ms | - | - | **7.7x faster** than HashLib |
+| BLAKE3 | 20k | **168 μs** | - | - | - | - |
+| HMAC-BLAKE3 | 20k | **165 μs** | - | - | - | - |
+| Adler-32 | 200k | **190 μs** | - | 1.65 ms (Naive Approach) | - | **8.7x faster** |
+| CRC32 | 200k | **2.01 ms** | - | 6.26 ms (DevForum) | - | **3.1x faster** |
+
+### Encryption
+
+| Algorithm | Data Size | This Library | Alternative | Other Libraries | Improvement |
+|-----------|-----------|--------------|-------------|-----------------|-------------|
+| ChaCha20 (Encrypt) | 20k | **266 μs** | 7.87 ms (EncryptedNet) | - | **29.6x faster** |
+| ChaCha20 (Roundtrip) | 20k | **538 μs** | ~15 ms (EncryptedNet) | - | **27.9x faster** |
+| ChaCha20-Poly1305 (Encrypt) | 20k | **310 μs** | - | - | - |
+| ChaCha20-Poly1305 (Roundtrip) | 20k | **642 μs** | - | - | - |
+| Simon (Encrypt) | 20k | **395 μs** | - | - | - |
+| Simon (Roundtrip) | 20k | **790 μs** | - | - | - |
+| Speck (Encrypt) | 20k | **350 μs** | - | - | - |
+| Speck (Roundtrip) | 20k | **700 μs** | - | - | - |
+| AES-GCM (Encrypt) | 20k | **16.25 ms** | - | - | - |
+| AES-GCM (Roundtrip) | 20k | **32.47 ms** | - | - | - |
+| XOR (Encrypt) | 1 million | **1.10 ms** | ~49.5 ms (@TwiistedRoyalty) | 4000 ms (daily) | **64.3x faster** |
+| XOR (Roundtrip) | 1 million | **2.20 ms** | 98.9 ms (@TwiistedRoyalty) | ~8000 ms (daily) | **64.3x faster** |
+
+### Digital Signatures & Key Exchange
+
+| Algorithm | Operation | Time | Alternative | Improvement |
+|-----------|-----------|------|-------------|-------------|
+| EdDSA (Roundtrip) | Sign+Verify | **1.4 ms** | - | - |
+| ML-DSA-44 (Roundtrip) | Sign+Verify | **9.59 ms** | - | - |
+| ML-KEM-512 (Roundtrip) | Encap+Decap | **1.19 ms** | - | - |
+
+### Utilities
+
+| Algorithm | Data Size | Time | Alternative | Improvement |
+|-----------|-----------|------|-------------|-------------|
+| Base64 (Encode/Decode) | 20k | **181 μs** | - | - |
+
+*Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
 
 ## API Reference
 
@@ -190,9 +166,6 @@ Hashing.SHA2.SHA224(Message: buffer, Salt?: buffer) -> string
 Hashing.SHA2.SHA256(Message: buffer, Salt?: buffer) -> string
 Hashing.SHA2.SHA384(Message: buffer, Salt?: buffer) -> string
 Hashing.SHA2.SHA512(Message: buffer, Salt?: buffer) -> string
-Hashing.SHA2.SHA512_224(Message: buffer, Salt?: buffer) -> string
-Hashing.SHA2.SHA512_256(Message: buffer, Salt?: buffer) -> string
--- Computes SHA2-xxx hash with optional salt. Most commonly used cryptographic hash function.
 ```
 
 **SHA-3 Family:**
@@ -201,34 +174,28 @@ Hashing.SHA3.SHA3_224(Message: buffer) -> string
 Hashing.SHA3.SHA3_256(Message: buffer) -> string
 Hashing.SHA3.SHA3_384(Message: buffer) -> string
 Hashing.SHA3.SHA3_512(Message: buffer) -> string
--- Modern SHA3-xxx hash function.
 
 Hashing.SHA3.SHAKE_128(Message: buffer) -> string
 Hashing.SHA3.SHAKE_256(Message: buffer) -> string
--- Modern SHAKE-xxx hash function.
 ```
 
 **BLAKE Family:**
 ```lua
 Hashing.Blake3.Digest(Message: buffer, Length?: number) -> string
--- Fastest cryptographic hash function available. Optimized for performance.
 Hashing.Blake3.DigestKeyed(Key: buffer, Message: buffer, Length?: number) -> string
--- Keyed Blake3 hash for authenticated hashing scenarios.
+Hashing.Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
 
 Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> string
--- Secure cryptographic hash function with optional keying (1-64 byte output, 0-64 byte key).
 ```
 
 **Authentication:**
 ```lua
 Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number) -> string
--- Hash based message authentication code. Works with any underlying hash function.
 ```
 
 **Fast Hashing:**
 ```lua
 Hashing.XXH32(Message: buffer, Seed?: number) -> number
--- Fast non cryptographic hash function. Perfect for hash tables and checksums.
 ```
 
 ### Encryption Functions
@@ -236,47 +203,32 @@ Hashing.XXH32(Message: buffer, Seed?: number) -> number
 **Stream Cipher:**
 ```lua
 Encryption.AEAD.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter?: number, Rounds?: number) -> buffer
--- ChaCha20 stream cipher encryption/decryption.
-```
-
-**Additive Cipher:**
-```lua
-Encryption.XOR(Data: buffer, Key: buffer) -> buffer
--- XOR additive cipher encryption/decryption.
-```
-
-**Block Cipher: AES**
-```lua
-AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): (buffer, buffer)
--- AES-GCM Encryption Mode. Returns the result and tag.
-
-AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, AAD: buffer?, Tag: buffer): (boolean, buffer?)
--- AES-GCM Decryption Mode. Returns false on tag failure, true and result buffer on success.
-```
-
-**Block Cipher: Simon and Speck**
-```lua
-
-Encryption.Simon.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
--- Simon cipher encryption. Recommended key size is 16 bytes
-
-Encryption.Simon.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
--- Simon cipher decryption. Recommended key size is 16 bytes
-
-Encryption.Speck.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
--- Speck cipher encryption. Recommended key size is 8 bytes
-
-Encryption.Speck.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
--- Speck cipher decryption. Recommended key size is 8 bytes
 ```
 
 **Authenticated Encryption:**
 ```lua
 Encryption.AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AAD?: buffer, Rounds?: number) -> (buffer, buffer)
--- ChaCha20-Poly1305 authenticated encryption. Returns ciphertext and authentication tag.
-
 Encryption.AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AAD?: buffer, Rounds?: number) -> buffer?
--- ChaCha20-Poly1305 authenticated decryption. Returns plaintext or nil if authentication fails.
+```
+
+**Block Ciphers:**
+```lua
+-- AES-GCM
+AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?) -> (buffer, buffer)
+AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, AAD: buffer?) -> (boolean, buffer?)
+
+-- Simon
+Encryption.Simon.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
+Encryption.Simon.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
+
+-- Speck
+Encryption.Speck.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
+Encryption.Speck.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
+```
+
+**Simple Cipher:**
+```lua
+Encryption.XOR(Data: buffer, Key: buffer) -> buffer
 ```
 
 ### Digital Signatures
@@ -284,100 +236,53 @@ Encryption.AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buf
 **EdDSA (Ed25519):**
 ```lua
 Verification.EdDSA.PublicKey(SecretKey: buffer) -> buffer
--- Generate public key from secret key using Ed25519 algorithm.
-
 Verification.EdDSA.Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer) -> buffer
--- Create digital signature for a message using Ed25519.
-
 Verification.EdDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer) -> boolean
--- Returns true if signature is valid.
-
-Verification.EdDSA.MaskedX25519.Mask(SecretKey: buffer) -> buffer
--- Creates a 64-byte masked key from a 32-byte secret key for side-channel attack protection.
-
-Verification.EdDSA.MaskedX25519.MaskSignature(SignatureSecretKey: buffer) -> buffer
--- Creates a masked key from an EdDSA signature secret key (applies SHA512 then masking).
-
-Verification.EdDSA.MaskedX25519.Remask(MaskedKey: buffer) -> buffer
--- Refreshes the masking on a 64-byte masked key with new randomness.
-
-Verification.EdDSA.MaskedX25519.PublicKey(MaskedKey: buffer) -> buffer
--- Generates a 32-byte public key from a 64-byte masked key.
-
-Verification.EdDSA.MaskedX25519.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer) -> (buffer, buffer)
--- Performs double key exchange returning (PrimarySecret, MaskSecret).
-
-Verification.EdDSA.MaskedX25519.MaskComponent(MaskedKey: buffer) -> buffer
--- Extracts the 32-byte random mask component from a 64-byte masked key.
 ```
 
-**MlDSA:**
+**Masked X25519:**
+```lua
+Verification.EdDSA.X25519.Mask(SecretKey: buffer) -> buffer
+Verification.EdDSA.X25519.MaskSignature(SignatureSecretKey: buffer) -> buffer
+Verification.EdDSA.X25519.Remask(MaskedKey: buffer) -> buffer
+Verification.EdDSA.X25519.PublicKey(MaskedKey: buffer) -> buffer
+Verification.EdDSA.X25519.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer) -> (buffer, buffer)
+Verification.EdDSA.X25519.MaskComponent(MaskedKey: buffer) -> buffer
+```
+
+**ML-DSA (Post-Quantum):**
 ```lua
 Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-DSA-44 keypair (128-bit security).
-
 Mldsa.ML_DSA_44.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Sign a message with ML-DSA-44. Returns true if signing succeeded.
-
 Mldsa.ML_DSA_44.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Verify a ML-DSA-44 signature. Returns true if valid.
 
 Mldsa.ML_DSA_65.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-DSA-65 keypair (192-bit security).
-
 Mldsa.ML_DSA_65.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Sign a message with ML-DSA-65.
-
 Mldsa.ML_DSA_65.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Verify a ML-DSA-65 signature.
 
 Mldsa.ML_DSA_87.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-DSA-87 keypair (256-bit security).
-
 Mldsa.ML_DSA_87.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Sign a message with ML-DSA-87.
-
 Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
--- Verify a ML-DSA-87 signature.
 ```
 
-**MlKEM:**
+### Key Encapsulation
+
+**ML-KEM (Post-Quantum):**
 ```lua
 MlKem.MLKEM_512.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-KEM-512 keypair (128-bit security). Uses cryptographically secure random number generation.
-
 MlKem.MLKEM_512.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-KEM-512 keypair using provided entropy. D and Z must be 32-byte buffers.
-
 MlKem.MLKEM_512.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
--- Encapsulate a message using ML-KEM-512. Returns ciphertext and shared secret, or nil on failure.
-
 MlKem.MLKEM_512.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
--- Decapsulate a ciphertext using ML-KEM-512. Returns the shared secret.
 
 MlKem.MLKEM_768.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-KEM-768 keypair (192-bit security). Uses cryptographically secure random number generation.
-
 MlKem.MLKEM_768.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-KEM-768 keypair using provided entropy. D and Z must be 32-byte buffers.
-
 MlKem.MLKEM_768.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
--- Encapsulate a message using ML-KEM-768. Returns ciphertext and shared secret, or nil on failure.
-
 MlKem.MLKEM_768.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
--- Decapsulate a ciphertext using ML-KEM-768. Returns the shared secret.
 
 MlKem.MLKEM_1024.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-KEM-1024 keypair (256-bit security). Uses cryptographically secure random number generation.
-
 MlKem.MLKEM_1024.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
--- Generate a ML-KEM-1024 keypair using provided entropy. D and Z must be 32-byte buffers.
-
 MlKem.MLKEM_1024.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
--- Encapsulate a message using ML-KEM-1024. Returns ciphertext and shared secret, or nil on failure.
-
 MlKem.MLKEM_1024.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
--- Decapsulate a ciphertext using ML-KEM-1024. Returns the shared secret.
 ```
 
 ### Utility Functions
@@ -385,122 +290,95 @@ MlKem.MLKEM_1024.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSec
 **Encoding:**
 ```lua
 Utilities.Base64.Encode(Input: buffer) -> buffer
--- Encode buffer data to Base64 string representation.
-
 Utilities.Base64.Decode(Input: buffer) -> string
--- Decode Base64 string.
 ```
 
 **Conversions:**
 ```lua
 Utilities.Conversions.ToHex(Buffer: buffer) -> string
--- Convert buffer to hexadecimal string representation.
-
 Utilities.Conversions.FromHex(Hex: string) -> buffer
--- Convert hexadecimal string to buffer.
 ```
 
 **Random Generation:**
 ```lua
 Utilities.RandomString(Length: number) -> string
--- Generate random string of specified length.
 ```
 
 **CSPRNG:**
 ```lua
-Utilities.CSPRNG.Random()
--- Generate a random number between 0 and 1
-
-Utilities.CSPRNG.RandomInt(Min: number, Max: number?): number
--- Generate a random integer between Min and Max or 0 - Min
-
-Utilities.CSPRNG.RandomNumber(Min: number, Max: number?): number
--- Generate a random number between Min and Max or 0 - Min
-
-Utilities.CSPRNG.RandomBytes(Count: number): buffer
--- Generate a buffer with random bytes of length Count
-
-Utilities.CSPRNG.RandomHex(Length: number): string
--- Generate a random hexadecimal string
-
-Utilities.CSPRNG.RandomString(Length: number, AsBuffer: boolean?): buffer | string
--- Generate a random string / buffer
-
-Utilities.CSPRNG.Ed25519ClampedBytes(Input: buffer): buffer
--- Clamp the bytes to always work with EdDSA
-
-Utilities.CSPRNG.Ed25519Random(): buffer
--- Generate a clamped buffer with random bytes for use with EdDSA
-
+Utilities.CSPRNG.Random() -> number
+Utilities.CSPRNG.RandomInt(Min: number, Max: number?) -> number
+Utilities.CSPRNG.RandomNumber(Min: number, Max: number?) -> number
+Utilities.CSPRNG.RandomBytes(Count: number) -> buffer
+Utilities.CSPRNG.RandomHex(Length: number) -> string
+Utilities.CSPRNG.RandomString(Length: number, AsBuffer: boolean?) -> buffer | string
+Utilities.CSPRNG.Ed25519ClampedBytes(Input: buffer) -> buffer
+Utilities.CSPRNG.Ed25519Random() -> buffer
 Utilities.CSPRNG.Reseed(CustomEntropy: buffer?)
--- Add new entropy to the CSPRNG with up to 1024 bytes of custom entropy (in most cases it will be less)
-
-CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
--- Option to pass a custom function that supplies the entropy, only called once its used up all the entropy from init
--- So you need to do `CSPRNG.Reseed(CustomEntropy())` if you want it from the gecko
-
-CSPRNG.RemoveEntropyProvider(ProviderFunction: () -> buffer?)
--- Removes the given provider for CSPRNG
+Utilities.CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
+Utilities.CSPRNG.RemoveEntropyProvider(ProviderFunction: () -> buffer?)
 ```
 
-### Checksum Functions:
+### Checksum Functions
 
 ```lua
 Checksums.CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?) -> number
--- Calculate CRC32 checksum with optional mode and output format.
-
 Checksums.Adler(Message: buffer) -> number
--- Calculate Adler checksum.
 ```
 
-## Testing
+## Testing and Benchmarking
 
 ### Running Tests
 
 To run the complete test suite:
+
 ```bash
 bash scripts/test.sh
 ```
+
 This will launch Roblox Studio, execute all tests, and display results in your terminal.
 
 ### Development Testing
 
 For continuous testing during development:
+
 ```bash
 bash scripts/dev.sh
 ```
-This starts a Rojo server. Open Roblox Studio and sync Rojo into a Baseplate. Whenever you run the game server, the test suites will run and results will show in the Output widget.
 
----
+This starts a Rojo server. Open Roblox Studio and sync Rojo into a Baseplate. Whenever you run the game server, the test suites will run and results will show in the Output widget.
 
 ## Contributing
 
-Please read the [CONTRIBUTING.md file](CONTRIBUTING.md).
+To contribute, fork this repository and make your changes, and then make a Pull Request. A Pull Request needs approval.
 
----
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+Please read the [CONTRIBUTING.md file](CONTRIBUTING.md) for detailed guidelines.
 
 ## FAQ
 
 ### Will you add other algorithms?
-Maybe! Depends if its possible in Luau without needing really expensive calculations like RSA.
+
+Maybe! It depends on whether the algorithm is feasible to implement in Luau without requiring extremely expensive calculations like RSA/Argon.
 
 ### How is this library faster?
-Through many optimizations including buffer operations, algorithm tuning and Luau specific optimizations.
+
+Through extensive optimizations including efficient buffer operations, algorithm tuning, and Luau-specific optimizations.
 
 ### Which algorithms should I use?
-- **Hashing**: SHA-256 for general use, XXHASH32 for speed, Blake3 for speed and security, SHA3-256 for latest standards
-- **Encryption**: ChaCha20-Poly1305 AEAD for speed, AES for compatibility and security
-- **Signatures**: Ed25519 for fast digital signatures and key exchange, MlDSA if you need security.
+
+- **Hashing**: SHA-256 for general use, XXH32 for speed, BLAKE3 for speed and security, SHA3-256 for latest standards
+- **Encryption**: ChaCha20-Poly1305 AEAD for authenticated encryption, AES-GCM for compatibility and security
+- **Signatures**: Ed25519 for fast digital signatures and key exchange, ML-DSA for post-quantum security
+- **Key Exchange**: ML-KEM for post-quantum key encapsulation, X25519 for compatibility
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
 
 ---
 
+<div align="center">
 
+[DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271) • [Discord](https://discord.gg/Fg3sM8qKPp) • [Wally](https://wally.run/package/daily3014/cryptography) • [Pesde](https://pesde.dev/packages/daily3014/cryptography)
 
-
-
-
-
+</div>
