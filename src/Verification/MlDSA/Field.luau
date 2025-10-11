@@ -1,7 +1,7 @@
 --[=[
 	Finite field arithmetic modulo Q = 8380417
 	
-	 Arithmetic operations over the prime field Z_q where q = 2^23 - 2^13 + 1.
+	Arithmetic operations over the prime field Z_q where q = 2^23 - 2^13 + 1.
 	All operations maintain elements in canonical form [0, Q).
 
 	Example usage:
@@ -19,19 +19,12 @@
 --!native
 
 local Q = 8380417
-local POW_24 = 2^24
-local POW_24_M1 = 2^24-1
-local POW_24_INV = 2^-24
+local Q_INV_32 = 58728449
 
 local Field = {}
 
-function Field.FromNonReduced(Value: number): number
-	return Value % Q
-end
-
 function Field.Add(A: number, B: number): number
 	local Sum = A + B
-	
 	return if Sum >= Q then Sum - Q else Sum
 end
 
@@ -40,27 +33,19 @@ function Field.Negate(A: number): number
 end
 
 function Field.Subtract(A: number, B: number): number
-	return if A >= B then A - B else A - B + Q
+	local Diff = A - B
+	return if Diff < 0 then Diff + Q else Diff
 end
 
 function Field.Multiply(A: number, B: number): number
-	if A < 4096 and B < 4096 then
-		return (A * B) % Q
-	end
-
-	local Product = A * B
-	local Low0 = bit32.band(Product, POW_24_M1)
-	local High = (Product - Low0) * POW_24_INV
-	local Low1 = bit32.band(High, POW_24_M1)
-
-	return (Low0 + Low1 * POW_24) % Q
+	return (A * B) % Q
 end
 
 function Field.Power(Base: number, Exponent: number): number
 	if Exponent == 0 then
 		return 1
 	end
-	
+
 	if Exponent == 1 then
 		return Base % Q
 	end
@@ -73,7 +58,7 @@ function Field.Power(Base: number, Exponent: number): number
 		if bit32.band(Exp, 1) == 1 then
 			Result = Field.Multiply(Result, CurrentBase)
 		end
-		
+
 		CurrentBase = Field.Multiply(CurrentBase, CurrentBase)
 		Exp = bit32.rshift(Exp, 1)
 	end
@@ -87,11 +72,6 @@ end
 
 function Field.Divide(A: number, B: number): number
 	return Field.Multiply(A, Field.Inverse(B))
-end
-
-function Field.LeftShift(A: number, L: number): number
-	local Shifted = bit32.lshift(A, L)
-	return if Shifted >= Q then Shifted % Q else Shifted
 end
 
 return Field

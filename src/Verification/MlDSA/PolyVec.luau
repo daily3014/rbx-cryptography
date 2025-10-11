@@ -18,6 +18,7 @@
 
 local Field = require("./Field")
 local NTT = require("./NTT")
+local Poly = require("./Poly")
 local BitPacking = require("./Pack")
 
 local LOG2N = 8
@@ -48,24 +49,30 @@ end
 local PolyVec = {}
 
 function PolyVec.ForwardNTT(Vec: buffer, K: number)
+	local Num = N
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 		NTT.ForwardNTTWithOffset(Vec, Offset)
 	end
 end
 
 function PolyVec.InverseNTT(Vec: buffer, K: number)
+	local Zeta = ZETA_NEG_EXP
+	local InvN = INV_N
+	local Num = N
+	local Modulus = Q
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
 		for L = 0, 7 do
 			local Len = bit32.lshift(1, L)
 			local LenX2 = bit32.lshift(Len, 1)
-			local KBeg = bit32.rshift(N, L) - 1
+			local KBeg = bit32.rshift(Num, L) - 1
 
-			for Start = 0, N - 1, LenX2 do
+			for Start = 0, Num - 1, LenX2 do
 				local KNow = KBeg - bit32.rshift(Start, L + 1)
-				local NegZetaExpValue = buffer.readu32(ZETA_NEG_EXP, KNow * 4)
+				local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
 				for J = Start, Start + Len - 1 do
 					local JOffset = Offset + J * 4
@@ -75,10 +82,10 @@ function PolyVec.InverseNTT(Vec: buffer, K: number)
 					local PolyJLen = buffer.readu32(Vec, JLenOffset)
 
 					local Sum = PolyJ + PolyJLen
-					Sum = if Sum >= Q then Sum - Q else Sum
+					Sum = if Sum >= Modulus then Sum - Modulus else Sum
 
-					local Diff = if PolyJ >= PolyJLen then PolyJ - PolyJLen else PolyJ - PolyJLen + Q
-					local Product = (Diff * NegZetaExpValue) % Q
+					local Diff = if PolyJ >= PolyJLen then PolyJ - PolyJLen else PolyJ - PolyJLen + Modulus
+					local Product = (Diff * NegZetaExpValue) % Modulus
 
 					buffer.writeu32(Vec, JOffset, Sum)
 					buffer.writeu32(Vec, JLenOffset, Product)
@@ -86,11 +93,10 @@ function PolyVec.InverseNTT(Vec: buffer, K: number)
 			end
 		end
 
-		local InvN = INV_N
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
-			local Result = (PolyValue * InvN) % Q
+			local Result = (PolyValue * InvN) % Modulus
 			buffer.writeu32(Vec, JOffset, Result)
 		end
 	end
@@ -98,11 +104,13 @@ end
 
 function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K: number, D: number)
 	local Max = bit32.lshift(1, D - 1)
-
+	local Num = N
+	local Modulus = Q
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(PolyVec, JOffset)
 
@@ -111,7 +119,7 @@ function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K:
 			local T3 = bit32.lshift(T2, D)
 
 			local Hi = T2
-			local Lo = if R >= T3 then R - T3 else R - T3 + Q
+			local Lo = if R >= T3 then R - T3 else R - T3 + Modulus
 
 			buffer.writeu32(PolyHi, JOffset, Hi)
 			buffer.writeu32(PolyLo, JOffset, Lo)
@@ -120,26 +128,29 @@ function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K:
 end
 
 function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number, BCols: number)
+	local Num = N
+	local Modulus = Q
+	
 	buffer.fill(C, 0, 0, ARows * BCols * N * 4)
 
 	for I = 0, ARows - 1 do
 		for J = 0, BCols - 1 do
-			local COffset = (I * BCols + J) * N * 4
+			local COffset = (I * BCols + J) * Num * 4
 
 			for K = 0, ACols - 1 do
-				local AOffset = (I * ACols + K) * N * 4
-				local BOffset = (K * BCols + J) * N * 4
+				local AOffset = (I * ACols + K) * Num * 4
+				local BOffset = (K * BCols + J) * Num * 4
 
-				for L = 0, N - 1 do
+				for L = 0, Num - 1 do
 					local ElementOffset = L * 4
 					local AValue = buffer.readu32(A, AOffset + ElementOffset)
 					local BValue = buffer.readu32(B, BOffset + ElementOffset)
 
-					local Product = (AValue * BValue) % Q
+					local Product = (AValue * BValue) % Modulus
 
 					local CValue = buffer.readu32(C, COffset + ElementOffset)
 					local Sum = CValue + Product
-					Sum = if Sum >= Q then Sum - Q else Sum
+					Sum = if Sum >= Modulus then Sum - Modulus else Sum
 
 					buffer.writeu32(C, COffset + ElementOffset, Sum)
 				end
@@ -150,14 +161,15 @@ end
 
 function PolyVec.AddTo(Src: buffer, Dst: buffer, K: number)
 	local TotalElements = K * N
-
+	local Modulus = Q
+	
 	for I = 0, TotalElements - 1 do
 		local Offset = I * 4
 		local SrcValue = buffer.readu32(Src, Offset)
 		local DstValue = buffer.readu32(Dst, Offset)
 
 		local Sum = DstValue + SrcValue
-		Sum = if Sum >= Q then Sum - Q else Sum
+		Sum = if Sum >= Modulus then Sum - Modulus else Sum
 
 		buffer.writeu32(Dst, Offset, Sum)
 	end
@@ -165,25 +177,28 @@ end
 
 function PolyVec.Negate(Vec: buffer, K: number)
 	local TotalElements = K * N
-
+	local Modulus = Q
+	
 	for I = 0, TotalElements - 1 do
 		local Offset = I * 4
 		local Value = buffer.readu32(Vec, Offset)
-		local Negated = if Value == 0 then 0 else Q - Value
+		local Negated = if Value == 0 then 0 else Modulus - Value
 
 		buffer.writeu32(Vec, Offset, Negated)
 	end
 end
 
 function PolyVec.SubFromX(Vec: buffer, K: number, X: number)
+	local Modulus = Q
+	local Num = N
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
 
-			local Result = if X >= PolyValue then X - PolyValue else X - PolyValue + Q
+			local Result = if X >= PolyValue then X - PolyValue else X - PolyValue + Modulus
 
 			buffer.writeu32(Vec, JOffset, Result)
 		end
@@ -196,11 +211,13 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 	local PolyBuffer = buffer.create(N * 4)
 	local ByteBuffer = buffer.create(PolyByteLength)
 
+	local Num = N
+
 	for I = 0, K - 1 do
-		local SrcOffset = I * N * 4
+		local SrcOffset = I * Num * 4
 		local DstOffset = I * PolyByteLength
 
-		buffer.copy(PolyBuffer, 0, Src, SrcOffset, N * 4)
+		buffer.copy(PolyBuffer, 0, Src, SrcOffset, Num * 4)
 		BitPacking.Encode(PolyBuffer, ByteBuffer, Sbw)
 		buffer.copy(Dst, DstOffset, ByteBuffer, 0, PolyByteLength)
 	end
@@ -212,24 +229,28 @@ function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 	local ByteBuffer = buffer.create(PolyByteLength)
 	local PolyBuffer = buffer.create(N * 4)
 
+	local Num = N
+
 	for I = 0, K - 1 do
 		local SrcOffset = I * PolyByteLength
-		local DstOffset = I * N * 4
+		local DstOffset = I * Num * 4
 
 		buffer.copy(ByteBuffer, 0, Src, SrcOffset, PolyByteLength)
 		BitPacking.Decode(ByteBuffer, PolyBuffer, Sbw)
-		buffer.copy(Dst, DstOffset, PolyBuffer, 0, N * 4)
+		buffer.copy(Dst, DstOffset, PolyBuffer, 0, Num * 4)
 	end
 end
 
 function PolyVec.HighBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
 	local T1 = Q - 1
-
+	local Modulus = Q
+	local Num = N
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(Src, JOffset)
 
@@ -237,8 +258,8 @@ function PolyVec.HighBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 			local T3 = math.floor(T2 / Alpha)
 			local T4 = T3 * Alpha
 
-			local R0 = if R >= T4 then R - T4 else R - T4 + Q
-			local T5 = if R >= R0 then R - R0 else R - R0 + Q
+			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
+			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
 
 			local Flag = (T5 == T1)
 			local R1 = if Flag then 0 else T3
@@ -251,11 +272,14 @@ end
 function PolyVec.LowBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
 	local T1 = Q - 1
-
+	
+	local Modulus = Q
+	local Num = N
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(Src, JOffset)
 
@@ -263,11 +287,11 @@ function PolyVec.LowBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 			local T3 = math.floor(T2 / Alpha)
 			local T4 = T3 * Alpha
 
-			local R0 = if R >= T4 then R - T4 else R - T4 + Q
-			local T5 = if R >= R0 then R - R0 else R - R0 + Q
+			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
+			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
 
 			local Flag = (T5 == T1)
-			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Q) else R0
+			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Modulus) else R0
 
 			buffer.writeu32(Dst, JOffset, R0_)
 		end
@@ -275,15 +299,18 @@ function PolyVec.LowBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 end
 
 function PolyVec.MultiplyByPoly(PolyBuffer: buffer, SrcVec: buffer, DstVec: buffer, K: number)
+	local Modulus = Q
+	local Num = N
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(PolyBuffer, J * 4)
 			local SrcValue = buffer.readu32(SrcVec, JOffset)
 
-			local Product = (PolyValue * SrcValue) % Q
+			local Product = (PolyValue * SrcValue) % Modulus
 
 			buffer.writeu32(DstVec, JOffset, Product)
 		end
@@ -293,15 +320,17 @@ end
 function PolyVec.InfinityNorm(Vec: buffer, K: number): number
 	local Result = 0
 	local QBy2 = math.floor(Q / 2)
-
+	local Modulus = Q
+	local Num = N
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
 
-			local CurrentValue = if PolyValue > QBy2 then (if PolyValue == 0 then 0 else Q - PolyValue) else PolyValue
+			local CurrentValue = if PolyValue > QBy2 then (if PolyValue == 0 then 0 else Modulus - PolyValue) else PolyValue
 			if CurrentValue > Result then
 				Result = CurrentValue
 			end
@@ -315,10 +344,13 @@ function PolyVec.MakeHint(PolyA: buffer, PolyB: buffer, PolyC: buffer, K: number
 	local T0 = bit32.rshift(Alpha, 1)
 	local T1 = Q - 1
 
+	local Num = N
+	local Modulus = Q
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local Z = buffer.readu32(PolyA, JOffset)
 			local R = buffer.readu32(PolyB, JOffset)
@@ -326,19 +358,19 @@ function PolyVec.MakeHint(PolyA: buffer, PolyB: buffer, PolyC: buffer, K: number
 			local T2_R = R + T0 - 1
 			local T3_R = math.floor(T2_R / Alpha)
 			local T4_R = T3_R * Alpha
-			local R0_R = if R >= T4_R then R - T4_R else R - T4_R + Q
-			local T5_R = if R >= R0_R then R - R0_R else R - R0_R + Q
+			local R0_R = if R >= T4_R then R - T4_R else R - T4_R + Modulus
+			local T5_R = if R >= R0_R then R - R0_R else R - R0_R + Modulus
 			local Flag_R = (T5_R == T1)
 			local R1 = if Flag_R then 0 else T3_R
 
 			local Sum = R + Z
-			Sum = if Sum >= Q then Sum - Q else Sum
+			Sum = if Sum >= Modulus then Sum - Modulus else Sum
 
 			local T2_V = Sum + T0 - 1
 			local T3_V = math.floor(T2_V / Alpha)
 			local T4_V = T3_V * Alpha
-			local R0_V = if Sum >= T4_V then Sum - T4_V else Sum - T4_V + Q
-			local T5_V = if Sum >= R0_V then Sum - R0_V else Sum - R0_V + Q
+			local R0_V = if Sum >= T4_V then Sum - T4_V else Sum - T4_V + Modulus
+			local T5_V = if Sum >= R0_V then Sum - R0_V else Sum - R0_V + Modulus
 			local Flag_V = (T5_V == T1)
 			local V1 = if Flag_V then 0 else T3_V
 
@@ -354,10 +386,13 @@ function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number
 	local T1 = Q - T0
 	local T1_Q = Q - 1
 
-	for I = 0, K - 1 do
-		local Offset = I * N * 4
+	local Num = N
+	local Modulus = Q
 
-		for J = 0, N - 1 do
+	for I = 0, K - 1 do
+		local Offset = I * Num * 4
+
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local H = buffer.readu32(PolyH, JOffset)
 			local R = buffer.readu32(PolyR, JOffset)
@@ -365,11 +400,11 @@ function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number
 			local T2 = R + T0 - 1
 			local T3 = math.floor(T2 / Alpha)
 			local T4 = T3 * Alpha
-			local R0 = if R >= T4 then R - T4 else R - T4 + Q
-			local T5 = if R >= R0 then R - R0 else R - R0 + Q
+			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
+			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
 			local Flag = (T5 == T1_Q)
 			local R1 = if Flag then 0 else T3
-			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Q) else R0
+			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Modulus) else R0
 
 			local Result
 			if H == 1 then
@@ -409,15 +444,18 @@ function PolyVec.Count1s(Vec: buffer, K: number): number
 end
 
 function PolyVec.LeftShift(Vec: buffer, K: number, D: number)
+	local Num = N
+	local Modulus = Q
+	
 	for I = 0, K - 1 do
-		local Offset = I * N * 4
+		local Offset = I * Num * 4
 
-		for J = 0, N - 1 do
+		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
 
 			local Shifted = bit32.lshift(PolyValue, D)
-			local Result = if Shifted >= Q then Shifted % Q else Shifted
+			local Result = if Shifted >= Modulus then Shifted % Modulus else Shifted
 
 			buffer.writeu32(Vec, JOffset, Result)
 		end
@@ -426,23 +464,6 @@ end
 
 function PolyVec.Copy(Src: buffer, Dst: buffer, K: number)
 	buffer.copy(Dst, 0, Src, 0, K * N * 4)
-end
-
-function PolyVec.Zero(Vec: buffer, K: number)
-	buffer.fill(Vec, 0, 0, K * N * 4)
-end
-
-function PolyVec.Equal(VecA: buffer, VecB: buffer, K: number): boolean
-	for I = 0, K * N - 1 do
-		local AValue = buffer.readu32(VecA, I * 4)
-		local BValue = buffer.readu32(VecB, I * 4)
-
-		if AValue ~= BValue then
-			return false
-		end
-	end
-
-	return true
 end
 
 return PolyVec

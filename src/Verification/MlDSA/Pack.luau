@@ -17,15 +17,13 @@
 --!optimize 2
 --!native
 
-local N = 256
-
 local BitPacking = {}
 
 function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 	buffer.fill(Arr, 0, 0, buffer.len(Arr))
 
 	if Sbw == 3 then
-		local ItrCnt = bit32.rshift(N, 3)
+		local ItrCnt = bit32.rshift(256, 3)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = bit32.lshift(I, 3)
@@ -66,7 +64,7 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			)
 		end
 	elseif Sbw == 4 then
-		local ItrCnt = bit32.rshift(N, 1)
+		local ItrCnt = bit32.rshift(256, 1)
 
 		for I = 0, ItrCnt - 1 do
 			local Off = bit32.lshift(I, 1)
@@ -76,7 +74,7 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			buffer.writeu8(Arr, I, bit32.bor(bit32.lshift(P1, 4), P0))
 		end
 	elseif Sbw == 6 then
-		local ItrCnt = bit32.rshift(N, 2)
+		local ItrCnt = bit32.rshift(256, 2)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = bit32.lshift(I, 2)
@@ -92,7 +90,7 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			buffer.writeu8(Arr, BOffset + 2, bit32.bor(bit32.lshift(P3, 2), bit32.rshift(P2, 4)))
 		end
 	elseif Sbw == 10 then
-		local ItrCnt = bit32.rshift(N, 2)
+		local ItrCnt = bit32.rshift(256, 2)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = I * 4
@@ -110,7 +108,7 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			buffer.writeu8(Arr, BOffset + 4, bit32.rshift(P3, 2))
 		end
 	elseif Sbw == 13 then
-		local ItrCnt = bit32.rshift(N, 3)
+		local ItrCnt = bit32.rshift(256, 3)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = bit32.lshift(I, 3)
@@ -148,7 +146,7 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			local AIdx = bit32.rshift(I, 3)
 			local AOffset = bit32.band(I, 7)
 
-			if PIdx < N then
+			if PIdx < 256 then
 				local PolyValue = bit32.band(buffer.readu32(Poly, PIdx * 4), Mask)
 				local Bit = bit32.band(bit32.rshift(PolyValue, POffset), 1)
 				local CurrentByte = buffer.readu8(Arr, AIdx)
@@ -159,10 +157,10 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 end
 
 function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
-	buffer.fill(Poly, 0, 0, N * 4)
+	buffer.fill(Poly, 0, 0, 256 * 4)
 
 	if Sbw == 3 then
-		local ItrCnt = bit32.rshift(N, 3)
+		local ItrCnt = bit32.rshift(256, 3)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = bit32.lshift(I, 3)
@@ -182,7 +180,7 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 			buffer.writeu32(Poly, (POffset + 7) * 4, bit32.rshift(B2, 5))
 		end
 	elseif Sbw == 4 then
-		local ItrCnt = bit32.rshift(N, 1)
+		local ItrCnt = bit32.rshift(256, 1)
 
 		for I = 0, ItrCnt - 1 do
 			local Off = bit32.lshift(I, 1)
@@ -192,7 +190,7 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 			buffer.writeu32(Poly, (Off + 1) * 4, bit32.rshift(Byte, 4))
 		end
 	elseif Sbw == 6 then
-		local ItrCnt = bit32.rshift(N, 2)
+		local ItrCnt = bit32.rshift(256, 2)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = bit32.lshift(I, 2)
@@ -208,7 +206,7 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 			buffer.writeu32(Poly, (POffset + 3) * 4, bit32.rshift(B2, 2))
 		end
 	elseif Sbw == 10 then
-		local ItrCnt = bit32.rshift(N, 2)
+		local ItrCnt = bit32.rshift(256, 2)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = I * 4
@@ -226,7 +224,7 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 			buffer.writeu32(Poly, (POffset + 3) * 4, bit32.bor(bit32.lshift(B4, 2), bit32.rshift(B3, 6)))
 		end
 	elseif Sbw == 13 then
-		local ItrCnt = bit32.rshift(N, 3)
+		local ItrCnt = bit32.rshift(256, 3)
 
 		for I = 0, ItrCnt - 1 do
 			local POffset = bit32.lshift(I, 3)
@@ -263,7 +261,7 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 			local PIdx = math.floor(I / Sbw)
 			local POffset = I % Sbw
 
-			if PIdx < N then
+			if PIdx < 256 then
 				local Bit = bit32.band(bit32.rshift(buffer.readu8(Arr, AIdx), AOffset), 1)
 				local CurrentPoly = buffer.readu32(Poly, PIdx * 4)
 				buffer.writeu32(Poly, PIdx * 4, bit32.bxor(CurrentPoly, bit32.lshift(Bit, POffset)))
@@ -278,9 +276,9 @@ function BitPacking.EncodeHintBits(H: buffer, Arr: buffer, K: number, Omega: num
 	local Idx = 0
 
 	for I = 0, K - 1 do
-		local Off = I * N
+		local Off = I * 256
 
-		for J = 0, N - 1 do
+		for J = 0, 256 - 1 do
 			local HValue = buffer.readu32(H, (Off + J) * 4)
 			if HValue ~= 0 then
 				buffer.writeu8(Arr, Idx, J)
@@ -293,13 +291,13 @@ function BitPacking.EncodeHintBits(H: buffer, Arr: buffer, K: number, Omega: num
 end
 
 function BitPacking.DecodeHintBits(Arr: buffer, H: buffer, K: number, Omega: number): boolean
-	buffer.fill(H, 0, 0, K * N * 4)
+	buffer.fill(H, 0, 0, K * 256 * 4)
 
 	local Idx = 0
 	local Failed = false
 
 	for I = 0, K - 1 do
-		local Off = I * N
+		local Off = I * 256
 		local Till = buffer.readu8(Arr, Omega + I)
 
 		if Till < Idx or Till > Omega then
@@ -321,7 +319,7 @@ function BitPacking.DecodeHintBits(Arr: buffer, H: buffer, K: number, Omega: num
 
 			if not Failed then
 				local Position = buffer.readu8(Arr, J)
-				if Position >= N then
+				if Position >= 256 then
 					Failed = true
 					break
 				end

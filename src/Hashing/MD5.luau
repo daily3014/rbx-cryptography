@@ -117,10 +117,10 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			OldA = Temp
 		end
 
-		A = bit32.bor(OldA + A)
-		B = bit32.bor(OldB + B)
-		C = bit32.bor(OldC + C)
-		D = bit32.bor(OldD + D)
+		A = bit32.bor(OldA + A, 0)
+		B = bit32.bor(OldB + B, 0)
+		C = bit32.bor(OldC + C, 0)
+		D = bit32.bor(OldD + D, 0)
 	end
 
 	return bit32.byteswap(A), bit32.byteswap(B), bit32.byteswap(C), bit32.byteswap(D)
