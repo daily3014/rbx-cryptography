@@ -1,22 +1,3 @@
---[=[
-	Cryptography library: Keccak/SHA-3
-	
-	Sizes:
-		SHA3-224 Digest: 28 bytes
-		SHA3-256 Digest: 32 bytes
-		SHA3-384 Digest: 48 bytes
-		SHA3-512 Digest: 64 bytes
-		SHAKE128 Digest: variable
-		SHAKE256 Digest: variable
-
-	Return type: string
-	Example usage:
-		local Message = buffer.fromstring("Hello World")
-		
-		local Result1 = SHA3_256(Message)
-		local Result2 = SHAKE128(Message, 32)
---]=]
-
 --!strict
 --!optimize 2
 --!native
@@ -297,5 +278,7 @@ end
 function SHA3.SHAKE256(Message: buffer, OutputBytes: number): buffer
 	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
 end
+
+SHA3.Keccack = Keccak
 
 return SHA3

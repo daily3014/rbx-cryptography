@@ -1,15 +1,46 @@
+--[=[
+	Stateful XOF (Extensible Output Function)
+	
+	Allows incremental squeezing without re-hashing.
+	For ML-KEM sampling functions that use rejection sampling.
+	
+	Example usage:
+		local Xof = XOF.NewSHAKE128()
+		
+		Xof:Absorb(message)
+		Xof:Finalize()
+		
+		local Chunk1 = Xof:Squeeze(168)
+		local Chunk2 = Xof:Squeeze(168)
+		local Chunk3 = Xof:Squeeze(336)
+--]=]
+
 --!strict
 --!optimize 2
 --!native
 
-local SHA3 = {}
+
+local XOF = {}
+XOF.__index = XOF
+
+export type XOFContext = {
+	LanesLow: buffer,
+	LanesHigh: buffer,
+	RateBytes: number,
+	SqueezeOffset: number,
+	Finalized: boolean,
+	PaddedMessage: buffer?,
+	Absorb: (self: XOFContext, Message: buffer) -> (),
+	Finalize: (self: XOFContext) -> (),
+	Squeeze: (self: XOFContext, OutputBytes: number) -> buffer,
+}
 
 local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	local HighFactorKeccak = 0
 	local ShiftRegister = 29
 	local function GetNextBit(): number
 		local Result = ShiftRegister % 2
-		ShiftRegister =  bit32.bxor((ShiftRegister - Result) // 2, 142 * Result)
+		ShiftRegister = bit32.bxor((ShiftRegister - Result) // 2, 142 * Result)
 
 		return Result
 	end
@@ -28,7 +59,7 @@ local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	end
 end
 
-local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number)
+local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RCHigh, RCLow = HIGH_ROUND, LOW_ROUND
 	local XOR = bit32.bxor
@@ -187,20 +218,43 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 	end
 end
 
-local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer
-	local RateBytes = (1600 - CapacityBits) // 8
-	local LanesLow = buffer.create(100)
-	local LanesHigh = buffer.create(100)
+function XOF.NewSHAKE128(): XOFContext
+	local self = setmetatable({}, XOF) :: any
 
-	buffer.fill(LanesLow, 0, 0, 100)
-	buffer.fill(LanesHigh, 0, 0, 100)
+	self.LanesLow = buffer.create(100)
+	self.LanesHigh = buffer.create(100)
 
-	local MessageLength: number = buffer.len(Message)
-	local PaddedLength: number = MessageLength + 1
+	self.RateBytes = 168
+	self.SqueezeOffset = 0
+	self.Finalized = false
 
-	local Remainder = PaddedLength % RateBytes
+	return self :: XOFContext
+end
+
+function XOF.NewSHAKE256(): XOFContext
+	local self = setmetatable({}, XOF) :: any
+
+	self.LanesLow = buffer.create(100)
+	self.LanesHigh = buffer.create(100)
+
+	self.RateBytes = 136
+	self.SqueezeOffset = 0
+	self.Finalized = false
+
+	return self :: XOFContext
+end
+
+function XOF:Absorb(Message: buffer): ()
+	if self.Finalized then
+		error("Cannot absorb after finalization")
+	end
+
+	local MessageLength = buffer.len(Message)
+	local PaddedLength = MessageLength + 1
+
+	local Remainder = PaddedLength % self.RateBytes
 	if Remainder ~= 0 then
-		PaddedLength += (RateBytes - Remainder)
+		PaddedLength += (self.RateBytes - Remainder)
 	end
 
 	local PaddedMessage = buffer.create(PaddedLength)
@@ -210,73 +264,66 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	end
 
 	if PaddedLength - MessageLength == 1 then
-		buffer.writeu8(PaddedMessage, MessageLength, bit32.bor(DomainSeparator, 0x80))
+		buffer.writeu8(PaddedMessage, MessageLength, bit32.bor(0x1F, 0x80))
 	else
-		buffer.writeu8(PaddedMessage, MessageLength, DomainSeparator)
+		buffer.writeu8(PaddedMessage, MessageLength, 0x1F)
 		if PaddedLength - MessageLength > 2 then
 			buffer.fill(PaddedMessage, MessageLength + 1, 0, PaddedLength - MessageLength - 2)
 		end
 		buffer.writeu8(PaddedMessage, PaddedLength - 1, 0x80)
 	end
 
-	Keccak(LanesLow, LanesHigh, PaddedMessage, 0, PaddedLength, RateBytes)
+	Keccak(self.LanesLow, self.LanesHigh, PaddedMessage, 0, PaddedLength, self.RateBytes)
+	self.PaddedMessage = PaddedMessage
+end
+
+function XOF:Finalize(): ()
+	if self.Finalized then
+		return
+	end
+
+	self.Finalized = true
+	self.SqueezeOffset = 0
+end
+
+function XOF:Squeeze(OutputBytes: number): buffer
+	if not self.Finalized then
+		error("Must call Finalize() before squeezing")
+	end
 
 	local Output = buffer.create(OutputBytes)
 	local OutputOffset = 0
 
-	local ZeroBuffer = buffer.create(RateBytes)
+	local ZeroBuffer = buffer.create(self.RateBytes)
+
 	while OutputOffset < OutputBytes do
-		local BytesThisRound = math.min(RateBytes, OutputBytes - OutputOffset)
+		if self.SqueezeOffset >= self.RateBytes then
+			Keccak(self.LanesLow, self.LanesHigh, ZeroBuffer, 0, self.RateBytes, self.RateBytes)
+			self.SqueezeOffset = 0
+		end
+
+		local BytesThisRound = math.min(self.RateBytes - self.SqueezeOffset, OutputBytes - OutputOffset)
 
 		for ByteIndex = 0, BytesThisRound - 1 do
-			local AbsoluteIndex = OutputOffset + ByteIndex
-			if AbsoluteIndex < OutputBytes then
-				local Lane = ByteIndex // 8
-				local ByteInLane = ByteIndex % 8
-				local LaneOffset = Lane * 4
+			local AbsoluteIndex = self.SqueezeOffset + ByteIndex
+			local Lane = AbsoluteIndex // 8
+			local ByteInLane = AbsoluteIndex % 8
+			local LaneOffset = Lane * 4
 
-				local Value
-				if ByteInLane < 4 then
-					Value = bit32.extract(buffer.readu32(LanesLow, LaneOffset), ByteInLane * 8, 8)
-				else
-					Value = bit32.extract(buffer.readu32(LanesHigh, LaneOffset), (ByteInLane - 4) * 8, 8)
-				end
-				buffer.writeu8(Output, AbsoluteIndex, Value)
+			local Value
+			if ByteInLane < 4 then
+				Value = bit32.extract(buffer.readu32(self.LanesLow, LaneOffset), ByteInLane * 8, 8)
+			else
+				Value = bit32.extract(buffer.readu32(self.LanesHigh, LaneOffset), (ByteInLane - 4) * 8, 8)
 			end
+			buffer.writeu8(Output, OutputOffset + ByteIndex, Value)
 		end
 
 		OutputOffset += BytesThisRound
-
-		if OutputOffset < OutputBytes then
-			Keccak(LanesLow, LanesHigh, ZeroBuffer, 0, RateBytes, RateBytes)
-		end
+		self.SqueezeOffset += BytesThisRound
 	end
 
 	return Output
 end
 
-function SHA3.SHA3_224(Message: buffer): buffer
-	return ProcessSponge(Message, 448, 28, 0x06)
-end
-
-function SHA3.SHA3_256(Message: buffer): buffer
-	return ProcessSponge(Message, 512, 32, 0x06)
-end
-
-function SHA3.SHA3_384(Message: buffer): buffer
-	return ProcessSponge(Message, 768, 48, 0x06)
-end
-
-function SHA3.SHA3_512(Message: buffer): buffer
-	return ProcessSponge(Message, 1024, 64, 0x06)
-end
-
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): buffer
-	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
-end
-
-function SHA3.SHAKE256(Message: buffer, OutputBytes: number): buffer
-	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
-end
-
-return SHA3
+return XOF

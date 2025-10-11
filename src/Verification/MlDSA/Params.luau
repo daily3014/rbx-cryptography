@@ -19,10 +19,6 @@ local Q = 8380417
 
 local Params = {}
 
-function Params.CheckSbw(Sbw: number): boolean
-	return Sbw <= Q_BIT_WIDTH
-end
-
 function Params.CheckEta(Eta: number): boolean
 	return Eta == 2 or Eta == 4
 end

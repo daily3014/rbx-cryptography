@@ -21,6 +21,12 @@ local Params = require("./Params")
 
 local LOG2N = 8
 local N = 2^LOG2N
+local POLY_SIZE = N * 2 
+
+local Q = 13 * 256 + 1
+local Q_BIT_WIDTH = 12
+local WIDTH = (2^(2 * Q_BIT_WIDTH))
+local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local Serialize = {}
 
@@ -31,7 +37,6 @@ function Serialize.Encode(Poly: buffer, L: number): buffer
 
 	local OutputSize = 32 * L
 	local Output = buffer.create(OutputSize)
-	buffer.fill(Output, 0, 0, OutputSize)
 
 	if L == 1 then
 		local IterCount = N / 8
@@ -291,8 +296,8 @@ function Serialize.Decode(Data: buffer, L: number): buffer
 				error("Invalid polynomial coefficient encoding")
 			end
 
-			buffer.writeu16(Poly, (PolyOffset + 0) * 2, Field.BarrettReduce(T0))
-			buffer.writeu16(Poly, (PolyOffset + 1) * 2, Field.BarrettReduce(T1))
+			buffer.writeu16(Poly, (PolyOffset + 0) * 2, T0)
+			buffer.writeu16(Poly, (PolyOffset + 1) * 2, T1)
 		end
 	end
 

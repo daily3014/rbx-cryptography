@@ -47,6 +47,9 @@ end
 local Ntt = {}
 
 function Ntt.ForwardNTT(Poly: buffer)
+	local Zeta = ZETA_EXP
+	local Modulus = Q
+	
 	for L = LOG2N - 1, 0, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
@@ -54,7 +57,7 @@ function Ntt.ForwardNTT(Poly: buffer)
 
 		for Start = 0, N - 1, LenX2 do
 			local KNow = KBeg + bit32.rshift(Start, L + 1)
-			local ZetaExpValue = buffer.readu32(ZETA_EXP, KNow * 4)
+			local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
 			for I = Start, Start + Len - 1 do
 				local IOffset = I * 4
@@ -63,11 +66,11 @@ function Ntt.ForwardNTT(Poly: buffer)
 				local PolyI = buffer.readu32(Poly, IOffset)
 				local PolyILen = buffer.readu32(Poly, ILenOffset)
 
-				local Tmp = (ZetaExpValue * PolyILen) % Q
+				local Tmp = (ZetaExpValue * PolyILen) % Modulus
 
-				local Sub = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Q
+				local Sub = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Modulus
 				local Add = PolyI + Tmp
-				Add = if Add >= Q then Add - Q else Add
+				Add = if Add >= Modulus then Add - Modulus else Add
 
 				buffer.writeu32(Poly, ILenOffset, Sub)
 				buffer.writeu32(Poly, IOffset, Add)
@@ -77,6 +80,9 @@ function Ntt.ForwardNTT(Poly: buffer)
 end
 
 function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
+	local Zeta = ZETA_EXP
+	local Modulus = Q
+	
 	for L = LOG2N - 1, 0, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
@@ -84,7 +90,7 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 
 		for Start = 0, N - 1, LenX2 do
 			local KNow = KBeg + bit32.rshift(Start, L + 1)
-			local ZetaExpValue = buffer.readu32(ZETA_EXP, KNow * 4)
+			local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
 			for I = Start, Start + Len - 1 do
 				local IOffset = BaseOffset + I * 4
@@ -93,11 +99,11 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 				local PolyI = buffer.readu32(Poly, IOffset)
 				local PolyILen = buffer.readu32(Poly, ILenOffset)
 
-				local Tmp = (ZetaExpValue * PolyILen) % Q
+				local Tmp = (ZetaExpValue * PolyILen) % Modulus
 
-				local Sub = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Q
+				local Sub = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Modulus
 				local Add = PolyI + Tmp
-				Add = if Add >= Q then Add - Q else Add
+				Add = if Add >= Modulus then Add - Modulus else Add
 
 				buffer.writeu32(Poly, ILenOffset, Sub)
 				buffer.writeu32(Poly, IOffset, Add)
@@ -107,6 +113,10 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 end
 
 function Ntt.InverseNTT(Poly: buffer)
+	local Zeta = ZETA_NEG_EXP
+	local Inv_n = INV_N
+	local Modulus = Q
+	
 	for L = 0, LOG2N - 1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
@@ -114,7 +124,7 @@ function Ntt.InverseNTT(Poly: buffer)
 
 		for Start = 0, N - 1, LenX2 do
 			local KNow = KBeg - bit32.rshift(Start, L + 1)
-			local NegZetaExpValue = buffer.readu32(ZETA_NEG_EXP, KNow * 4)
+			local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
 			for I = Start, Start + Len - 1 do
 				local IOffset = I * 4
@@ -124,11 +134,11 @@ function Ntt.InverseNTT(Poly: buffer)
 				local PolyILen = buffer.readu32(Poly, ILenOffset)
 
 				local Sum = PolyI + PolyILen
-				Sum = if Sum >= Q then Sum - Q else Sum
+				Sum = if Sum >= Modulus then Sum - Modulus else Sum
 
-				local Diff = if PolyI >= PolyILen then PolyI - PolyILen else PolyI - PolyILen + Q
+				local Diff = if PolyI >= PolyILen then PolyI - PolyILen else PolyI - PolyILen + Modulus
 
-				local Product = (Diff * NegZetaExpValue) % Q
+				local Product = (Diff * NegZetaExpValue) % Modulus
 
 				buffer.writeu32(Poly, IOffset, Sum)
 				buffer.writeu32(Poly, ILenOffset, Product)
@@ -139,18 +149,8 @@ function Ntt.InverseNTT(Poly: buffer)
 	for I = 0, N - 1 do
 		local Offset = I * 4
 		local PolyValue = buffer.readu32(Poly, Offset)
-		local Result = (PolyValue * INV_N) % Q
+		local Result = (PolyValue * Inv_n) % Modulus
 		buffer.writeu32(Poly, Offset, Result)
-	end
-end
-
-function Ntt.PointwiseMultiply(A: buffer, B: buffer, Result: buffer)
-	for I = 0, N - 1 do
-		local Offset = I * 4
-		local AValue = buffer.readu32(A, Offset)
-		local BValue = buffer.readu32(B, Offset)
-		local Product = (AValue * BValue) % Q
-		buffer.writeu32(Result, Offset, Product)
 	end
 end
 

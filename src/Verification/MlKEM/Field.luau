@@ -28,38 +28,34 @@ local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local Field = {}
 
-local function ReduceOnce(Value: number): number
-	local T0 = Value - Q
-	local T1 = if T0 >= 0 then 0 else 0xFFFFFFFF
-	local T2 = bit32.band(Q, T1)
-	local T3 = T0 + T2
-
-	return T3
+function Field.BarrettReduce(Value: number): number
+	return Value % Q
 end
 
-function Field.BarrettReduce(Value: number): number
-	local T0 = Value * R
-	local T1 = math.floor(T0 / WIDTH)
-	local T2 = T1 * Q
-	local T = Value - T2
+local function ReducedAdd(A: number, B: number): number
+	local Sum = A + B
+	return if Sum >= Q then Sum - Q else Sum
+end
 
-	return ReduceOnce(T)
+local function ReducedSub(A: number, B: number): number
+	local Diff = A - B
+	return if Diff < 0 then Diff + Q else Diff
 end
 
 function Field.Add(A: number, B: number): number
-	return ReduceOnce(A + B)
+	return ReducedAdd(A, B)
+end
+
+function Field.Subtract(A: number, B: number): number
+	return ReducedSub(A, B)
+end
+
+function Field.Multiply(A: number, B: number): number
+	return (A * B) % Q
 end
 
 function Field.Negate(A: number): number
 	return if A == 0 then 0 else Q - A
-end
-
-function Field.Subtract(A: number, B: number): number
-	return Field.Add(A, Field.Negate(B))
-end
-
-function Field.Multiply(A: number, B: number): number
-	return Field.BarrettReduce(A * B)
 end
 
 function Field.Power(Base: number, Exponent: number): number
@@ -92,17 +88,10 @@ function Field.Divide(A: number, B: number): number
 end
 
 function Field.BufferReduce(Buffer: buffer, Count: number)
+	local Modulus = Q
 	for Index = 0, Count - 1 do
 		local Value = buffer.readu16(Buffer, Index * 2)
-		buffer.writeu16(Buffer, Index * 2, (Value % Q))
-	end
-end
-
-function Field.BufferAdd(A: buffer, B: buffer, Result: buffer, Count: number)
-	for Index = 0, Count - 1 do
-		local AValue = buffer.readu16(A, Index * 2)
-		local BValue = buffer.readu16(B, Index * 2)
-		buffer.writeu16(Result, Index * 2, Field.Add(AValue, BValue))
+		buffer.writeu16(Buffer, Index * 2, (Value % Modulus))
 	end
 end
 
@@ -112,16 +101,6 @@ function Field.BufferSubtract(A: buffer, B: buffer, Result: buffer, Count: numbe
 		local BValue = buffer.readu16(B, Index * 2)
 		buffer.writeu16(Result, Index * 2, Field.Subtract(AValue, BValue))
 	end
-end
-
-function Field.BufferEquals(A: buffer, B: buffer, Count: number): boolean
-	for Index = 0, Count - 1 do
-		if buffer.readu16(A, Index * 2) ~= buffer.readu16(B, Index * 2) then
-			return false
-		end
-	end
-
-	return true
 end
 
 return Field

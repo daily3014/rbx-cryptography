@@ -133,12 +133,12 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	buffer.fill(V, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
-
+	local Num = N
 	for I = 0, K - 1 do
 		local TPolyOffset = I * PolySize
 		local RPolyOffset = I * PolySize
 		buffer.copy(SinglePoly, 0, TPrime, TPolyOffset, PolySize)
-		local RPoly = buffer.create(N * 2)
+		local RPoly = buffer.create(Num * 2)
 		buffer.copy(RPoly, 0, R, RPolyOffset, PolySize)
 		Ntt.PolyMul(SinglePoly, RPoly, TempV)
 		Ntt.PolyAdd(V, TempV, V)
@@ -201,12 +201,13 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	buffer.fill(T, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
+	local Num = N
 	for I = 0, K - 1 do
 		local SPolyOffset = I * PolySize
 		local UPolyOffset = I * PolySize
 
 		buffer.copy(SinglePoly, 0, SPrime, SPolyOffset, PolySize)
-		local UPoly = buffer.create(N * 2)
+		local UPoly = buffer.create(Num * 2)
 		buffer.copy(UPoly, 0, U, UPolyOffset, PolySize)
 
 		Ntt.PolyMul(SinglePoly, UPoly, TempT)

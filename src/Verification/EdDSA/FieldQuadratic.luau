@@ -98,9 +98,10 @@ end
 local FieldQuadratic = {}
 
 function FieldQuadratic.IsValidScalar(ScalarBytes: buffer): boolean
+	local FieldOrder = FIELD_ORDER_BYTES
 	for Index = 31, 0, -1 do
 		local ScalarByte = buffer.readu8(ScalarBytes, Index)
-		local OrderByte = buffer.readu8(FIELD_ORDER_BYTES, Index)
+		local OrderByte = buffer.readu8(FieldOrder, Index)
 
 		if ScalarByte > OrderByte then
 			return false
