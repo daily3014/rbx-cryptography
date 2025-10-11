@@ -24,44 +24,51 @@
 local PolyVec = require("./PolyVec")
 local MlKemParams = require("./Params")
 local SHA3 = require("./SHA3")
+local XOF  = require("./XOF")
 
 local LOG2N = 8
 local N = 2^LOG2N
 local POLY_SIZE = N * 2 
 
 local Q = 13 * 256 + 1
+local Q_BIT_WIDTH = 12
+local WIDTH = (2^(2 * Q_BIT_WIDTH))
+local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local Sampling = {}
 
 local function SampleNtt(XofInput: buffer, Poly: buffer)
 	local CoeffIndex = 0
+	local Xof = XOF.NewSHAKE128()
 
-	local ShakeOutput = SHA3.SHAKE128(XofInput, 4096)
-	local Offset = 0
+	Xof:Absorb(XofInput)
+	Xof:Finalize()
 
-	while CoeffIndex < N and Offset + 2 < buffer.len(ShakeOutput) do
-		local B0 = buffer.readu8(ShakeOutput, Offset)
-		local B1 = buffer.readu8(ShakeOutput, Offset + 1)
-		local B2 = buffer.readu8(ShakeOutput, Offset + 2)
+	while CoeffIndex < N do
+		local Chunk = Xof:Squeeze(168)
+		local ChunkLen = buffer.len(Chunk)
+		local Offset = 0
 
-		local D1 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
-		local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
+		while Offset + 2 < ChunkLen and CoeffIndex < N do
+			local B0 = buffer.readu8(Chunk, Offset)
+			local B1 = buffer.readu8(Chunk, Offset + 1)
+			local B2 = buffer.readu8(Chunk, Offset + 2)
 
-		if D1 < Q then
-			buffer.writeu16(Poly, CoeffIndex * 2, D1)
-			CoeffIndex += 1
+			local D1 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
+			local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
+
+			if D1 < Q then
+				buffer.writeu16(Poly, CoeffIndex * 2, D1)
+				CoeffIndex += 1
+			end
+
+			if D2 < Q and CoeffIndex < N then
+				buffer.writeu16(Poly, CoeffIndex * 2, D2)
+				CoeffIndex += 1
+			end
+
+			Offset += 3
 		end
-
-		if D2 < Q and CoeffIndex < N then
-			buffer.writeu16(Poly, CoeffIndex * 2, D2)
-			CoeffIndex += 1
-		end
-
-		Offset += 3
-	end
-
-	if CoeffIndex < N then
-		error("Invalid SHAKE128 output for rejection sampling")
 	end
 end
 
@@ -98,12 +105,9 @@ function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): bu
 end
 
 local function SamplePolyCbd2(Prf: buffer, Poly: buffer)
-	if buffer.len(Prf) ~= 128 then
-		error("PRF output must be 128 bytes for η=2")
-	end
-
 	local Mask2 = 0x03
-
+	local Modulus = Q
+	
 	for I = 0, 127 do
 		local PolyOffset = I * 2
 		local Word = buffer.readu8(Prf, I)
@@ -114,23 +118,13 @@ local function SamplePolyCbd2(Prf: buffer, Poly: buffer)
 
 		local A0 = bit32.band(T2, Mask2)
 		local B0 = bit32.band(bit32.rshift(T2, 2), Mask2)
-
-		local NegB0 = if B0 == 0 then 0 else Q - B0
-		local T3 = A0 + NegB0
-		local T4 = T3 - Q
-		local T5 = if T4 >= 0 then 0 else 0xFFFFFFFF
-		local T6 = bit32.band(Q, T5)
-		local Coeff0 = T4 + T6
+		local Diff0 = A0 - B0
+		local Coeff0 = if Diff0 < 0 then Diff0 + Modulus else Diff0
 
 		local A1 = bit32.band(bit32.rshift(T2, 4), Mask2)
 		local B1 = bit32.band(bit32.rshift(T2, 6), Mask2)
-
-		local NegB1 = if B1 == 0 then 0 else Q - B1
-		local T7 = A1 + NegB1
-		local T8 = T7 - Q
-		local T9 = if T8 >= 0 then 0 else 0xFFFFFFFF
-		local T10 = bit32.band(Q, T9)
-		local Coeff1 = T8 + T10
+		local Diff1 = A1 - B1
+		local Coeff1 = if Diff1 < 0 then Diff1 + Modulus else Diff1
 
 		buffer.writeu16(Poly, PolyOffset * 2, Coeff0)
 		buffer.writeu16(Poly, (PolyOffset + 1) * 2, Coeff1)
@@ -138,13 +132,10 @@ local function SamplePolyCbd2(Prf: buffer, Poly: buffer)
 end
 
 local function SamplePolyCbd3(Prf: buffer, Poly: buffer)
-	if buffer.len(Prf) ~= 192 then
-		error("PRF output must be 192 bytes for η=3")
-	end
-
 	local Mask24 = 0x249249
 	local Mask3 = 0x07
-
+	local Modulus = Q
+	
 	for I = 0, 63 do
 		local ByteOffset = I * 3
 		local PolyOffset = I * 4
@@ -163,13 +154,8 @@ local function SamplePolyCbd3(Prf: buffer, Poly: buffer)
 			local Offset = J * 6
 			local A = bit32.band(bit32.rshift(T3, Offset), Mask3)
 			local B = bit32.band(bit32.rshift(T3, Offset + 3), Mask3)
-
-			local NegB = if B == 0 then 0 else Q - B
-			local T4 = A + NegB
-			local T5 = T4 - Q
-			local T6 = if T5 >= 0 then 0 else 0xFFFFFFFF
-			local T7 = bit32.band(Q, T6)
-			local Coeff = T5 + T7
+			local Diff = A - B
+			local Coeff = if Diff < 0 then Diff + Modulus else Diff
 
 			buffer.writeu16(Poly, (PolyOffset + J) * 2, Coeff)
 		end
@@ -208,14 +194,15 @@ function Sampling.GenerateVector(K: number, Eta: number, Sigma: buffer, Nonce: n
 	buffer.copy(PrfInput, 0, Sigma, 0, 32)
 
 	local Shake = SHA3.SHAKE256
+	local PolySize = POLY_SIZE
 	for I = 0, K - 1 do
 		buffer.writeu8(PrfInput, 32, Nonce + I)
 
 		local PrfOutput = Shake(PrfInput, 64 * Eta)
 		local Poly = Sampling.SamplePolyCbd(PrfOutput, Eta)
-		
-		local Offset = I * POLY_SIZE
-		buffer.copy(Vec, Offset, Poly, 0, POLY_SIZE)
+
+		local Offset = I * PolySize
+		buffer.copy(Vec, Offset, Poly, 0, PolySize)
 	end
 
 	return Vec

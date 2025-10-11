@@ -28,7 +28,7 @@ local function BitWidth(Value: number): number
 	local TempValue = Value
 
 	while TempValue > 0 do
-		Width = Width + 1
+		Width += 1
 		TempValue = bit32.rshift(TempValue, 1)
 	end
 
@@ -57,7 +57,6 @@ function Utils.SigLen(K: number, L: number, Gamma1: number, Omega: number, Lambd
 end
 
 function Utils.BitWidth(Value: number): number
-	--return 32 - bit32.countlz(Value)
 	return BitWidth(Value)
 end
 
