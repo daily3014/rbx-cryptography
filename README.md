@@ -117,7 +117,7 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 |-----------|-----------|--------------|---------|-------------|-----------------|-------------|
 | SHA-256 | 20k | **370 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **5.5x faster** than HashLib |
 | SHA-512 | 20k | **766 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **5.7x faster** than HashLib |
-| SHA3-512 | 20k | **1.38 ms** | 10.60 ms | - | - | **7.7x faster** than HashLib |
+| SHA3-512 | 20k | **1.0 ms** | 10.60 ms | - | - | **10.6x faster** than HashLib |
 | BLAKE3 | 20k | **168 μs** | - | - | - | - |
 | HMAC-BLAKE3 | 20k | **165 μs** | - | - | - | - |
 | Adler-32 | 200k | **190 μs** | - | 1.65 ms (Naive Approach) | - | **8.7x faster** |
@@ -145,8 +145,8 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 | Algorithm | Operation | Time | Alternative | Improvement |
 |-----------|-----------|------|-------------|-------------|
 | EdDSA (Roundtrip) | Sign+Verify | **1.4 ms** | - | - |
-| ML-DSA-44 (Roundtrip) | Sign+Verify | **9.59 ms** | - | - |
-| ML-KEM-512 (Roundtrip) | Encap+Decap | **1.19 ms** | - | - |
+| ML-DSA-44 (Roundtrip) | Sign+Verify | **9.1 ms** | - | - |
+| ML-KEM-512 (Roundtrip) | Encap+Decap | **1.02 ms** | - | - |
 
 ### Utilities
 
