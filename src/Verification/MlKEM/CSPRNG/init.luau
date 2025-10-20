@@ -24,6 +24,8 @@ local Conversions = require("@self/Conversions")
 local ChaCha20 = require("@self/ChaCha20")
 local Blake3 = require("@self/Blake3")
 
+export type EntropyProvider = (BytesLeft: number) -> buffer?
+
 type CSPRNGModule = {
 	BlockExpansion: boolean,
 
@@ -38,11 +40,11 @@ type CSPRNGModule = {
 	BufferPosition: number,
 	BufferSize: number,
 
-	EntropyProviders: { () -> buffer? },
+	EntropyProviders: { EntropyProvider },
 
 	Reseed: (CustomEntropy: buffer?) -> (),
-	AddEntropyProvider: (ProviderFunction: () -> buffer?) -> (),
-	RemoveEntropyProvider: (ProviderFunction: () -> buffer?) -> (),
+	AddEntropyProvider: (ProviderFunction: EntropyProvider) -> (),
+	RemoveEntropyProvider: (ProviderFunction: EntropyProvider) -> (),
 
 	Random: () -> number,
 	RandomInt: (Min: number, Max: number?) -> number,
@@ -259,21 +261,35 @@ local function GatherEntropy(CustomEntropy: buffer?)
 	end
 	WriteToBuffer(AddressEntropy)
 
-	for _, Provider in CSPRNG.EntropyProviders do
+	local function AddExtraEntropy(Entropy: buffer?, Warn: boolean, Provider: string?)
+		if not Entropy then
+			return
+		end
+		
+		local BytesLeft = 1024 - Offset
+		
+		if BytesLeft > 0 then
+			local Extra = buffer.len(Entropy) - BytesLeft
+			local Truncated = math.min(BytesLeft, buffer.len(Entropy))
+			
+			if Extra > 0 and Warn and Provider then
+				warn(`CSPRNG: {Provider} returned {Extra} bytes more than available and was truncated to {Truncated} bytes`)
+			end
+			
+			buffer.copy(EntropyBuffers, Offset, Entropy, 0, Truncated)
+		end
+	end
+
+	for Index, Provider in CSPRNG.EntropyProviders do
 		local BytesLeft = 1024 - Offset
 		if BytesLeft > 0 then
-			local Success: boolean, ExtraEntropy: buffer? = pcall(Provider)
-			if Success and ExtraEntropy then
-				buffer.copy(EntropyBuffers, Offset, ExtraEntropy, 0, math.min(BytesLeft, buffer.len(ExtraEntropy)))
-			end
+			local Success: boolean, ExtraEntropy: buffer? = pcall(Provider, BytesLeft)
+			AddExtraEntropy(ExtraEntropy, true, `Entropy Provider #{Index}`)
 		end
 	end
 
 	if CustomEntropy then
-		local BytesLeft = 1024 - Offset
-		if BytesLeft > 0 then
-			buffer.copy(EntropyBuffers, Offset, CustomEntropy, 0, math.min(BytesLeft, buffer.len(CustomEntropy)))
-		end
+		AddExtraEntropy(CustomEntropy, false)
 	end
 
 	local KeyMaterial = Blake3(EntropyBuffers, KEY_SIZE + NONCE_SIZE)
@@ -340,7 +356,7 @@ local function GetIntRange(Min: number, Max: number): number
 	local Range = Max - Min + 1
 	local MaxUInt32 = 0xFFFFFFFF
 	local Limit = MaxUInt32 - (MaxUInt32 % Range)
-	
+
 	if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
 		GenerateBlock()
 	end
@@ -358,7 +374,7 @@ local function GetIntRange(Min: number, Max: number): number
 			Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
 			CSPRNG.BufferPosition += 4
 		end
-		
+
 		return Min + (Value % Range)
 	end
 end
@@ -456,11 +472,11 @@ local function GetHexString(Length: number): string
 	return Hex
 end
 
-function CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
+function CSPRNG.AddEntropyProvider(ProviderFunction: EntropyProvider)
 	table.insert(CSPRNG.EntropyProviders, ProviderFunction)
 end
 
-function CSPRNG.RemoveEntropyProvider(ProviderFunction: () -> buffer?)
+function CSPRNG.RemoveEntropyProvider(ProviderFunction: EntropyProvider)
 	for Index = #CSPRNG.EntropyProviders, 1, -1 do
 		if CSPRNG.EntropyProviders[Index] == ProviderFunction then
 			table.remove(CSPRNG.EntropyProviders, Index)
