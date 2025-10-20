@@ -79,7 +79,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 **Authenticated Encryption**
 
 - [ChaCha20-Poly1305](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AEAD): AEAD construction ([RFC 8439](https://doi.org/10.17487/RFC8439))
-- [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES): Galois/Counter Mode
+- [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES.luau): Galois/Counter Mode
 
 **Stream & Block Ciphers**
 
