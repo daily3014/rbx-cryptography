@@ -2,6 +2,13 @@
 	Cryptography library: True Random Number Generator
 	Addon to CSPRNG that uses http requests to add extra entropy that is truly random.
 	This example shows how to properly use the `AddEntropyProvider` api.
+	
+	BytesLeft Info:
+		CSPRNG.BytesLeft shows how many bytes are available for entropy providers.
+		On init, the default entropy sources use 312 bytes, leaving 712 bytes free.
+		When you call Reseed() it always uses 312 bytes (unless changed) for default entropy, leaving 712.
+		Your custom entropy providers get called with BytesLeft parameter to know the limit.
+		If you return more bytes than available, CSPRNG will truncate and scream at you.
 --]=]
 --!strict
 local HttpService = game:GetService("HttpService")
@@ -23,7 +30,7 @@ local function ValidateHex(HexString: string): (boolean, string?)
 	if not HexString then
 		return false, "Hex string is nil"
 	end
-	
+
 	-- Check if it is a string
 	if type(HexString) ~= "string" then
 		return false, "Hex string is not a string"
@@ -61,30 +68,12 @@ local function ValidateHex(HexString: string): (boolean, string?)
 		return false, `Hex string is all same character '{FirstChar}'`
 	end
 
-	-- Basic entropy check
-	local UniqueChars = {}
-	for i = 1, #HexString do
-		local Char = string.sub(HexString, i, i):lower()
-		UniqueChars[Char] = true
-	end
-
-	local UniqueCount = 0
-	for _ in pairs(UniqueChars) do
-		UniqueCount += 1
-	end
-
-	-- Should have different characters
-	if UniqueCount < 8 then
-		return false, `Low entropy, only {UniqueCount} unique hex characters`
-	end
-
 	return true, nil
 end
 
 --[=[
 	If the http request fails it will retry with an exponential backoff
-	If it does fail after max attempts it will return nil because it is 
-	extra entropy so a fallback isn't needed
+	If it does fail after max attempts, it will return nil because it is  extra entropy, so no fallback needed
 --]=]
 local function Retry(Func: () -> any, MaxAttempts: number): (boolean, buffer?)
 	local Attempts = 0
@@ -94,13 +83,13 @@ local function Retry(Func: () -> any, MaxAttempts: number): (boolean, buffer?)
 		if Success then
 			return true, Result
 		end
-		
+
 		if Attempts < MaxAttempts then
 			local WaitTime = RETRY_BASE_DELAY * (2 ^ (Attempts - 1))
 			task.wait(WaitTime)
 		end
 	end
-	
+
 	return false
 end
 
@@ -120,26 +109,45 @@ local function FetchRandom(): buffer?
 	return Result
 end
 
-local function GetEntropyBuffer(): buffer?
+local function GetEntropyBuffer(BytesLeft: number): buffer?
+	-- BytesLeft tells us how many bytes we can add without getting yelled at
+	-- CSPRNG uses 312 bytes (unless changed) for default entropy, leaving 712 bytes free
+	-- This function gets 1024 bytes from the API but we truncate it to BytesLeft
+	-- so CSPRNG doesn't scream at us about returning too much
+
 	local Success, Result = Retry(FetchRandom, MAX_RETRY_ATTEMPTS)
 	if Success and Result then
-		print(`Added {buffer.len(Result)} bytes of entropy to CSPRNG`)
+		local FetchedSize = buffer.len(Result)
+		local TruncatedSize = math.min(FetchedSize, BytesLeft)
+
+		-- Truncate to BytesLeft so we don't get warnings from CSPRNG
+		if FetchedSize > BytesLeft then
+			local Truncated = buffer.create(BytesLeft)
+			buffer.copy(Truncated, 0, Result, 0, BytesLeft)
+			print(`Added {TruncatedSize} bytes of entropy to CSPRNG ({FetchedSize} fetched, truncated to {BytesLeft} available)`)
+			return Truncated
+		end
+
+		print(`Added {TruncatedSize} bytes of entropy to CSPRNG`)
 		return Result
 	else
-		warn("Failed to fetch entropy after checks")
+		warn("Failed to fetch entropy after all retry attempts")
 		return nil
 	end
 end
 
--- AddEntropyProvider will only be called once its used up all the entropy from init
--- So you need to do `CSPRNG.Reseed(GetEntropyBuffer())` if you want it from the gecko
-CSPRNG.AddEntropyProvider(function()
-	return GetEntropyBuffer()
-end)
+-- Check how many bytes are available for custom entropy
+print(`CSPRNG has {CSPRNG.BytesLeft} bytes available for custom entropy providers`)
 
-CSPRNG.Reseed(GetEntropyBuffer())
+-- AddEntropyProvider will only be called once it uses up all the entropy from init
+-- So you need to manually reseed first if you want the extra entropy from the start
+CSPRNG.AddEntropyProvider(GetEntropyBuffer)
 
--- Use up the entropy
+-- Manual reseed to get the quantum entropy right away
+-- This uses the same 312 bytes for default entropy, leaving 712 for our custom entropy
+CSPRNG.Reseed(GetEntropyBuffer(CSPRNG.BytesLeft))
+
+-- Use up the entropy so you can see when AddEntropyProvider gets called again
 while task.wait() do
 	for i = 1, 32 do
 		CSPRNG.RandomHex(256)

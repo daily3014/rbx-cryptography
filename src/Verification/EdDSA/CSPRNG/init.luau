@@ -13,7 +13,11 @@
 		local Ed25519Clamped = CSPRNG.Ed25519ClampedBytes(SomeBuffer)
 		local Ed25519Random = CSPRNG.Ed25519Random()
 		
+		CSPRNG.AddEntropyProvider(function)
+		CSPRNG.RemoveEntropyProvider(function)
 		CSPRNG.Reseed()
+		
+		CSPRNG.BytesLeft
 --]=]
 
 --!native
@@ -39,7 +43,8 @@ type CSPRNGModule = {
 	Counter: number,
 	BufferPosition: number,
 	BufferSize: number,
-
+	BytesLeft: number,
+	
 	EntropyProviders: { EntropyProvider },
 
 	Reseed: (CustomEntropy: buffer?) -> (),
@@ -72,6 +77,7 @@ local CSPRNG: CSPRNGModule = {
 	Counter = 0,
 	BufferPosition = 0,
 	BufferSize = 0,
+	BytesLeft = 0,
 
 	EntropyProviders = {}
 } :: CSPRNGModule
@@ -90,7 +96,7 @@ local function Reset()
 	CSPRNG.BufferSize = 0
 end
 
-local function GatherEntropy(CustomEntropy: buffer?)
+local function GatherEntropy(CustomEntropy: buffer?): number
 	local EntropyBuffers = buffer.create(1024)
 	local Offset = 0
 
@@ -265,17 +271,17 @@ local function GatherEntropy(CustomEntropy: buffer?)
 		if not Entropy then
 			return
 		end
-		
+
 		local BytesLeft = 1024 - Offset
-		
+
 		if BytesLeft > 0 then
 			local Extra = buffer.len(Entropy) - BytesLeft
 			local Truncated = math.min(BytesLeft, buffer.len(Entropy))
-			
+
 			if Extra > 0 and Warn and Provider then
 				warn(`CSPRNG: {Provider} returned {Extra} bytes more than available and was truncated to {Truncated} bytes`)
 			end
-			
+
 			buffer.copy(EntropyBuffers, Offset, Entropy, 0, Truncated)
 		end
 	end
@@ -299,6 +305,8 @@ local function GatherEntropy(CustomEntropy: buffer?)
 
 	CSPRNG.Nonce = buffer.create(NONCE_SIZE)
 	buffer.copy(CSPRNG.Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
+	
+	return buffer.len(EntropyBuffers) - Offset
 end
 
 local function GenerateBlock()
@@ -628,7 +636,7 @@ function CSPRNG.Reseed(CustomEntropy: buffer?)
 	GatherEntropy(CustomEntropy)
 end
 
-GatherEntropy()
+CSPRNG.BytesLeft = GatherEntropy()
 GenerateBlock()
 
 return CSPRNG
