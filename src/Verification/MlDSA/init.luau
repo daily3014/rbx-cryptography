@@ -24,6 +24,7 @@
 local SHA3 = require("@self/SHA3")
 local NTT = require("@self/NTT")
 
+local Poly = require("@self/Poly")
 local PolyVec = require("@self/PolyVec")
 local BitPacking = require("@self/Pack")
 
@@ -39,34 +40,37 @@ local RND_BYTE_LEN = 32
 local N = 256
 local Q = 8380417
 
-local Mldsa = {}
+local Mldsa = {
+	CSPRNG = CSPRNG
+}
 
 local function CompareBufferSlices(A: buffer, AOffset: number, B: buffer, BOffset: number, Length: number): boolean
+	local Difference = 0
+
 	if Length == 32 then
-		return buffer.readu32(A, AOffset) == buffer.readu32(B, BOffset) and
-			buffer.readu32(A, AOffset + 4) == buffer.readu32(B, BOffset + 4) and
-			buffer.readu32(A, AOffset + 8) == buffer.readu32(B, BOffset + 8) and
-			buffer.readu32(A, AOffset + 12) == buffer.readu32(B, BOffset + 12) and
-			buffer.readu32(A, AOffset + 16) == buffer.readu32(B, BOffset + 16) and
-			buffer.readu32(A, AOffset + 20) == buffer.readu32(B, BOffset + 20) and
-			buffer.readu32(A, AOffset + 24) == buffer.readu32(B, BOffset + 24) and
-			buffer.readu32(A, AOffset + 28) == buffer.readu32(B, BOffset + 28)
+		Difference = bit32.bor(
+			bit32.bxor(buffer.readu32(A, AOffset), buffer.readu32(B, BOffset)),
+			bit32.bxor(buffer.readu32(A, AOffset + 4), buffer.readu32(B, BOffset + 4)),
+			bit32.bxor(buffer.readu32(A, AOffset + 8), buffer.readu32(B, BOffset + 8)),
+			bit32.bxor(buffer.readu32(A, AOffset + 12), buffer.readu32(B, BOffset + 12)),
+			bit32.bxor(buffer.readu32(A, AOffset + 16), buffer.readu32(B, BOffset + 16)),
+			bit32.bxor(buffer.readu32(A, AOffset + 20), buffer.readu32(B, BOffset + 20)),
+			bit32.bxor(buffer.readu32(A, AOffset + 24), buffer.readu32(B, BOffset + 24)),
+			bit32.bxor(buffer.readu32(A, AOffset + 28), buffer.readu32(B, BOffset + 28))
+		)
+		return Difference == 0
 	end
 
 	local AlignedLength = bit32.band(Length, bit32.bnot(3))
 	for I = 0, AlignedLength - 4, 4 do
-		if buffer.readu32(A, AOffset + I) ~= buffer.readu32(B, BOffset + I) then
-			return false
-		end
+		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu32(A, AOffset + I), buffer.readu32(B, BOffset + I)))
 	end
 
 	for I = AlignedLength, Length - 1 do
-		if buffer.readu8(A, AOffset + I) ~= buffer.readu8(B, BOffset + I) then
-			return false
-		end
+		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu8(A, AOffset + I), buffer.readu8(B, BOffset + I)))
 	end
 
-	return true
+	return Difference == 0
 end
 
 local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L: number, D: number, Eta: number)
@@ -334,7 +338,7 @@ local function Sign(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: 
 	return HasSigned
 end
 
-local function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
 	if not Params.CheckVerifyParams(K, L, D, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
 		error("Invalid verify parameters")
 	end
@@ -346,6 +350,17 @@ local function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: 
 	local T1Bw = Utils.BitWidth(Q) - D
 	local Gamma1Bw = Utils.BitWidth(Gamma1)
 	local CTildaSize = math.floor((2 * Lambda) / 8)
+
+	local ExpectedPkLen = Utils.PubKeyLen(K, D)
+	if buffer.len(PubKey) ~= ExpectedPkLen then
+		return false
+	end
+
+	local ExpectedSigLen = Utils.SigLen(K, L, Gamma1, Omega, Lambda)
+	if buffer.len(Sig) ~= ExpectedSigLen then
+		return false
+	end
+
 	local Alpha = bit32.lshift(Gamma2, 1)
 	local M = math.floor((Q - 1) / Alpha)
 	local W1Bw = Utils.BitWidth(M - 1)
@@ -364,16 +379,14 @@ local function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: 
 	buffer.copy(ZEncoded, 0, Sig, SigOff1, buffer.len(ZEncoded))
 	buffer.copy(HEncoded, 0, Sig, SigOff2, buffer.len(HEncoded))
 
+	local VerificationFailed = false
+
 	local H = buffer.create(K * N * 4)
 	local HintFailed = BitPacking.DecodeHintBits(HEncoded, H, K, Omega)
-	if HintFailed then
-		return false
-	end
+	VerificationFailed = VerificationFailed or HintFailed
 
 	local Count1s = PolyVec.Count1s(H, K)
-	if Count1s > Omega then
-		return false
-	end
+	VerificationFailed = VerificationFailed or (Count1s > Omega)
 
 	local C = buffer.create(N * 4)
 	Sampling.SampleInBall(CTilda, C, Tau, Lambda)
@@ -384,9 +397,7 @@ local function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: 
 	PolyVec.SubFromX(Z, L, Gamma1)
 
 	local ZNorm = PolyVec.InfinityNorm(Z, L)
-	if ZNorm >= (Gamma1 - Beta) then
-		return false
-	end
+	VerificationFailed = VerificationFailed or (ZNorm >= (Gamma1 - Beta))
 
 	local Rho = buffer.create(32)
 	local T1Encoded = buffer.create(buffer.len(PubKey) - PkOff1)
@@ -443,8 +454,11 @@ local function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: 
 	buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
 
 	local CTildaPrime = SHA3.SHAKE256(ChallengeInput, CTildaSize)
-
-	return CompareBufferSlices(CTilda, 0, CTildaPrime, 0, CTildaSize)
+	
+	local CompareResult = CompareBufferSlices(CTilda, 0, CTildaPrime, 0, CTildaSize)
+	VerificationFailed = VerificationFailed or (not CompareResult)
+	
+	return not VerificationFailed
 end
 
 Mldsa.ML_DSA_44 = {

@@ -219,9 +219,6 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	local LanesLow = buffer.create(100)
 	local LanesHigh = buffer.create(100)
 
-	buffer.fill(LanesLow, 0, 0, 100)
-	buffer.fill(LanesHigh, 0, 0, 100)
-
 	local MessageLength: number = buffer.len(Message)
 	local PaddedLength: number = MessageLength + 1
 

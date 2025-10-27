@@ -130,7 +130,6 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	local V = buffer.create(N * 2)
 	local TempV = buffer.create(N * 2)
 	local SinglePoly = buffer.create(N * 2)
-	buffer.fill(V, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
 	local Num = N
@@ -198,7 +197,6 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	local T = buffer.create(N * 2)
 	local TempT = buffer.create(N * 2)
 	local SinglePoly = buffer.create(N * 2)
-	buffer.fill(T, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
 	local Num = N

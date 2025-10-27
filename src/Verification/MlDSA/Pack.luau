@@ -20,6 +20,14 @@
 local BitPacking = {}
 
 function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
+	if buffer.len(Poly) ~= 256 * 4 then
+		error("Invalid poly size")
+	end
+	
+	if buffer.len(Arr) ~= math.floor(256 * Sbw / 8) then
+		error("Invalid arr size")
+	end
+	
 	buffer.fill(Arr, 0, 0, buffer.len(Arr))
 
 	if Sbw == 3 then
@@ -321,9 +329,11 @@ function BitPacking.DecodeHintBits(Arr: buffer, H: buffer, K: number, Omega: num
 				local Position = buffer.readu8(Arr, J)
 				if Position >= 256 then
 					Failed = true
-					break
 				end
-				buffer.writeu32(H, (Off + Position) * 4, 1)
+				
+				if not Failed then
+					buffer.writeu32(H, (Off + Position) * 4, 1)
+				end
 			end
 		end
 

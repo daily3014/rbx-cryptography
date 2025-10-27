@@ -27,12 +27,15 @@
 --!native
 
 local Pke = require("@self/PKE")
+local Polyvec = require("@self/PolyVec")
 local CSPRNG = require("@self/CSPRNG")
 local Params = require("@self/Params")
 local Utils = require("@self/Utils")
 local SHA3 = require("@self/SHA3")
 
-local MlKem = {}
+local MlKem = {
+	CSPRNG = CSPRNG
+}
 
 function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, buffer)
 	if not Params.CheckKeygenParams(K, Eta1) then
@@ -82,6 +85,18 @@ function MlKem.Encapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 	
 	if buffer.len(Message) ~= 32 then
 		error("Message must be 32 bytes")
+	end
+
+	local RhoOffset = K * 12 * 32
+	local EncodedTPrime = buffer.create(RhoOffset)
+	buffer.copy(EncodedTPrime, 0, PublicKey, 0, RhoOffset)
+
+	local TPrime = Polyvec.VecDecode(EncodedTPrime, K, 12)
+	local ReEncodedTPrime = Polyvec.VecEncode(TPrime, K, 12)
+
+	local IsValid = Utils.CtMemcmp(EncodedTPrime, ReEncodedTPrime)
+	if IsValid ~= 0xFFFFFFFF then
+		error("malformed public key encoding")
 	end
 
 	local PublicKeyHash = SHA3.SHA3_256(PublicKey)
