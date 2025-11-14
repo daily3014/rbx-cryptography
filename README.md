@@ -18,6 +18,8 @@
 - Thanks to those who gave feedback and testing
 - Special thanks to all contributors and bug reporters
 - AES was originally made by @RobloxGamerPro200007
+- XChaCha20 was originally made by @littleBitsman
+- Murmur3 hash was originally made by @kohltastrophe
 
 ## Disclaimer
 
@@ -84,7 +86,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 **Stream & Block Ciphers**
 
 - [ChaCha20](https://github.com/daily3014/rbx-cryptography/tree/main/src/Encryption/AEAD): Stream cipher ([RFC 8439](https://doi.org/10.17487/RFC8439))
-- [AES](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES): Advanced Encryption Standard
+- [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES.luau): Advanced Encryption Standard
 - [Simon](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/Simon.luau): Lightweight block cipher
 - [Speck](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/Speck.luau): Lightweight block cipher
 - [XOR](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/XOR.luau): Simple additive cipher
@@ -135,8 +137,8 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 | Simon (Roundtrip) | 20k | **790 μs** | - | - | - |
 | Speck (Encrypt) | 20k | **350 μs** | - | - | - |
 | Speck (Roundtrip) | 20k | **700 μs** | - | - | - |
-| AES-GCM (Encrypt) | 20k | **12.34 ms** | - | - | - |
-| AES-GCM (Roundtrip) | 20k | **21.92 ms** | - | - | - |
+| AES-GCM (Encrypt) | 20k | **11.41 ms** | - | - | - |
+| AES-GCM (Roundtrip) | 20k | **21.88 ms** | - | - | - |
 | XOR (Encrypt) | 1 million | **1.10 ms** | ~49.5 ms (@TwiistedRoyalty) | 4000 ms (daily) | **64.3x faster** |
 | XOR (Roundtrip) | 1 million | **2.20 ms** | 98.9 ms (@TwiistedRoyalty) | ~8000 ms (daily) | **64.3x faster** |
 
