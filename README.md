@@ -74,6 +74,11 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 - **SHA-3 Family**: SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE-128, SHAKE-256 ([FIPS 202](https://doi.org/10.6028/NIST.FIPS.202))
 - **BLAKE Family**: [BLAKE3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake2b.luau)
 
+**Non-cryptographic Hash Functions**
+
+- [XXH32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/XXH32.luau): Ultra-fast non-cryptographic hash
+- [Murmur3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Murmur.luau): Fast non-cryptographic hash
+
 **Message Authentication**
 
 - [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
@@ -95,7 +100,6 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [CRC32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Checksums/CRC32.luau): Cyclic Redundancy Check (JAM/ISO modes)
 - [Adler-32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Checksums/Adler.luau): Checksum algorithm
-- [XXH32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/XXH32.luau): Ultra-fast non-cryptographic hash
 
 ### Utilities
 
