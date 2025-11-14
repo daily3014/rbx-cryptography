@@ -196,7 +196,7 @@ function Base64.Encode(Input: buffer): buffer
 	return Output
 end
 
-function Base64.Decode(Input: buffer): string
+function Base64.Decode(Input: buffer): buffer
 	local Padding = PADDING_CHARACTER
 	local Lookup = DECODE_LOOKUP
 	local InputLength = buffer.len(Input)
@@ -292,7 +292,7 @@ function Base64.Decode(Input: buffer): string
 		end
 	end
 
-	return buffer.tostring(Output)
+	return Output
 end
 
 return Base64

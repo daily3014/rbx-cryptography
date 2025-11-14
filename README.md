@@ -296,7 +296,7 @@ MlKem.MLKEM_1024.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSec
 **Encoding:**
 ```lua
 Utilities.Base64.Encode(Input: buffer) -> buffer
-Utilities.Base64.Decode(Input: buffer) -> string
+Utilities.Base64.Decode(Input: buffer) -> buffer
 ```
 
 **Conversions:**
