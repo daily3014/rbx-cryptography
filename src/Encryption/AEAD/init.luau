@@ -5,6 +5,7 @@
 		Key: 16/32 bytes
 		Nonce: 12/24 bytes
 		Tag: 16 bytes
+		Rounds: even positive integer (default: 20)
 	
 	Return type: buffer, buffer (ciphertext, tag)
 	Example usage:
@@ -14,10 +15,10 @@
 		local AAD = buffer.fromstring("additional data")
 		
 		--------Usage Case 1--------
-		local Ciphertext, Tag = AEAD.Encrypt(Plaintext, Key, Nonce, AAD, UseXChaCha20)
+		local Ciphertext, Tag = AEAD.Encrypt(Plaintext, Key, Nonce, AAD, Rounds, UseXChaCha20)
 		
 		--------Usage Case 2--------
-		local DecryptedText = AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD, UseXChaCha20)
+		local DecryptedText = AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD, Rounds, UseXChaCha20)
 --]=]
 
 --!strict

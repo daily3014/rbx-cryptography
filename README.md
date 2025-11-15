@@ -199,9 +199,10 @@ Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> s
 Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number) -> string
 ```
 
-**Fast Hashing:**
+**Non-Cryptographic Hashing:**
 ```lua
 Hashing.XXH32(Message: buffer, Seed?: number) -> number
+Hashing.MurMur(Message: buffer, Seed: number?) -> number
 ```
 
 ### Encryption Functions
@@ -209,12 +210,13 @@ Hashing.XXH32(Message: buffer, Seed?: number) -> number
 **Stream Cipher:**
 ```lua
 Encryption.AEAD.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter?: number, Rounds?: number) -> buffer
+Encryption.AEAD.XChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?) -> buffer
 ```
 
 **Authenticated Encryption:**
 ```lua
-Encryption.AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AAD?: buffer, Rounds?: number) -> (buffer, buffer)
-Encryption.AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AAD?: buffer, Rounds?: number) -> buffer?
+Encryption.AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AAD?: buffer, Rounds?: number, UseXChaCha20: boolean?) -> (buffer, buffer)
+Encryption.AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AAD?: buffer, Rounds?: number, UseXChaCha20: boolean?) -> buffer?
 ```
 
 **Block Ciphers:**
