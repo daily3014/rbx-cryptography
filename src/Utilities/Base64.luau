@@ -14,8 +14,7 @@
 --!native
 
 local PADDING_CHARACTER = 61
-
-local ALPHABET_LOOKUP = {} do
+local ALPHABET_INDEX = buffer.create(64) do
 	local Characters = {
 		65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
 		81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
@@ -26,50 +25,47 @@ local ALPHABET_LOOKUP = {} do
 	}
 
 	for Index = 0, 63 do
-		ALPHABET_LOOKUP[Index] = Characters[Index + 1]
+		buffer.writeu8(ALPHABET_INDEX, Index, Characters[Index + 1])
 	end
 end
 
-local DIRECT_LOOKUP = {} do
+local DIRECT_LOOKUP = buffer.create(256) do
 	for Index = 0, 255 do
-		DIRECT_LOOKUP[Index] = ALPHABET_LOOKUP[bit32.band(Index, 63)]
+		buffer.writeu8(DIRECT_LOOKUP, Index, buffer.readu8(ALPHABET_INDEX, bit32.band(Index, 63)))
 	end
 end
 
-local DECODE_LOOKUP = {} do
+local DECODE_TABLE = buffer.create(256) do
 	for Index = 0, 255 do
-		DECODE_LOOKUP[Index] = 255
+		buffer.writeu8(DECODE_TABLE, Index, 255)
 	end
 
 	for Index = 65, 90 do
-		DECODE_LOOKUP[Index] = Index - 65
+		buffer.writeu8(DECODE_TABLE, Index, Index - 65)
 	end
 
 	for Index = 97, 122 do
-		DECODE_LOOKUP[Index] = Index - 97 + 26
+		buffer.writeu8(DECODE_TABLE, Index, Index - 97 + 26)
 	end
 
 	for Index = 48, 57 do
-		DECODE_LOOKUP[Index] = Index - 48 + 52
+		buffer.writeu8(DECODE_TABLE, Index, Index - 48 + 52)
 	end
 
-	DECODE_LOOKUP[43] = 62
-	DECODE_LOOKUP[47] = 63
+	buffer.writeu8(DECODE_TABLE, 43, 62)
+	buffer.writeu8(DECODE_TABLE, 47, 63)
 end
 
 local Base64 = {}
 
 function Base64.Encode(Input: buffer): buffer
 	local Padding = PADDING_CHARACTER
-	local Lookup = DIRECT_LOOKUP
 	local InputLength = buffer.len(Input)
-	if InputLength == 0 then
-		return buffer.create(0)
-	end
-
 	local Chunks = math.ceil(InputLength / 3)
 	local OutputLength = Chunks * 4
 	local Output = buffer.create(OutputLength)
+
+	local Lookup = DIRECT_LOOKUP
 
 	local DoubleChunks = math.floor((Chunks - 1) / 2)
 	for ChunkIndex = 1, DoubleChunks do
@@ -89,17 +85,17 @@ function Base64.Encode(Input: buffer): buffer
 		local Octet2_4 = bit32.rshift(Word2, 8)
 
 		buffer.writeu32(Output, OutputIndex, bit32.bor(
-			Lookup[bit32.band(Octet1_1, 255)],
-			Lookup[bit32.band(Octet1_2, 255)] * 256,
-			Lookup[bit32.band(Octet1_3, 255)] * 65536,
-			Lookup[bit32.band(Octet1_4, 255)] * 16777216
+			buffer.readu8(Lookup, bit32.band(Octet1_1, 255)),
+			buffer.readu8(Lookup, bit32.band(Octet1_2, 255)) * 256,
+			buffer.readu8(Lookup, bit32.band(Octet1_3, 255)) * 65536,
+			buffer.readu8(Lookup, bit32.band(Octet1_4, 255)) * 16777216
 			))
 
 		buffer.writeu32(Output, OutputIndex + 4, bit32.bor(
-			Lookup[bit32.band(Octet2_1, 255)],
-			Lookup[bit32.band(Octet2_2, 255)] * 256,
-			Lookup[bit32.band(Octet2_3, 255)] * 65536,
-			Lookup[bit32.band(Octet2_4, 255)] * 16777216
+			buffer.readu8(Lookup, bit32.band(Octet2_1, 255)),
+			buffer.readu8(Lookup, bit32.band(Octet2_2, 255)) * 256,
+			buffer.readu8(Lookup, bit32.band(Octet2_3, 255)) * 65536,
+			buffer.readu8(Lookup, bit32.band(Octet2_4, 255)) * 16777216
 			))
 	end
 
@@ -115,10 +111,10 @@ function Base64.Encode(Input: buffer): buffer
 		local Octet4 = bit32.rshift(Word, 8)
 
 		buffer.writeu32(Output, OutputIndex, bit32.bor(
-			Lookup[bit32.band(Octet1, 255)],
-			Lookup[bit32.band(Octet2, 255)] * 256,
-			Lookup[bit32.band(Octet3, 255)] * 65536,
-			Lookup[bit32.band(Octet4, 255)] * 16777216
+			buffer.readu8(Lookup, bit32.band(Octet1, 255)),
+			buffer.readu8(Lookup, bit32.band(Octet2, 255)) * 256,
+			buffer.readu8(Lookup, bit32.band(Octet3, 255)) * 65536,
+			buffer.readu8(Lookup, bit32.band(Octet4, 255)) * 16777216
 			))
 	end
 
@@ -137,10 +133,10 @@ function Base64.Encode(Input: buffer): buffer
 				local Octet4 = bit32.rshift(Word, 8)
 
 				buffer.writeu32(Output, LastOutputIndex, bit32.bor(
-					Lookup[bit32.band(Octet1, 255)],
-					Lookup[bit32.band(Octet2, 255)] * 256,
-					Lookup[bit32.band(Octet3, 255)] * 65536,
-					Lookup[bit32.band(Octet4, 255)] * 16777216
+					buffer.readu8(Lookup, bit32.band(Octet1, 255)),
+					buffer.readu8(Lookup, bit32.band(Octet2, 255)) * 256,
+					buffer.readu8(Lookup, bit32.band(Octet3, 255)) * 65536,
+					buffer.readu8(Lookup, bit32.band(Octet4, 255)) * 16777216
 					))
 			else
 				local Byte1 = buffer.readu8(Input, ProcessedBytes)
@@ -154,10 +150,10 @@ function Base64.Encode(Input: buffer): buffer
 				local Octet4 = bit32.band(Combined, 63)
 
 				buffer.writeu32(Output, LastOutputIndex, bit32.bor(
-					Lookup[Octet1],
-					Lookup[Octet2] * 256,
-					Lookup[Octet3] * 65536,
-					Lookup[Octet4] * 16777216
+					buffer.readu8(Lookup, Octet1),
+					buffer.readu8(Lookup, Octet2) * 256,
+					buffer.readu8(Lookup, Octet3) * 65536,
+					buffer.readu8(Lookup, Octet4) * 16777216
 					))
 			end
 
@@ -171,9 +167,9 @@ function Base64.Encode(Input: buffer): buffer
 			local Octet3 = bit32.rshift(Combined, 6)
 
 			buffer.writeu32(Output, LastOutputIndex, bit32.bor(
-				Lookup[bit32.band(Octet1, 255)],
-				Lookup[bit32.band(Octet2, 255)] * 256,
-				Lookup[bit32.band(Octet3, 255)] * 65536,
+				buffer.readu8(Lookup, bit32.band(Octet1, 255)),
+				buffer.readu8(Lookup, bit32.band(Octet2, 255)) * 256,
+				buffer.readu8(Lookup, bit32.band(Octet3, 255)) * 65536,
 				Padding * 16777216
 				))
 
@@ -185,8 +181,8 @@ function Base64.Encode(Input: buffer): buffer
 			local Octet2 = bit32.rshift(Combined, 12)
 
 			buffer.writeu32(Output, LastOutputIndex, bit32.bor(
-				Lookup[bit32.band(Octet1, 255)],
-				Lookup[bit32.band(Octet2, 255)] * 256,
+				buffer.readu8(Lookup, bit32.band(Octet1, 255)),
+				buffer.readu8(Lookup, bit32.band(Octet2, 255)) * 256,
 				Padding * 65536,
 				Padding * 16777216
 				))
@@ -197,12 +193,10 @@ function Base64.Encode(Input: buffer): buffer
 end
 
 function Base64.Decode(Input: buffer): buffer
-	local Padding = PADDING_CHARACTER
-	local Lookup = DECODE_LOOKUP
+	local Padding, DecodeLUT = PADDING_CHARACTER, DECODE_TABLE
 	local InputLength = buffer.len(Input)
-
 	if InputLength == 0 then
-		return ""
+		return buffer.create(0)
 	end
 
 	local PaddingCount = 0
@@ -216,16 +210,16 @@ function Base64.Decode(Input: buffer): buffer
 	local OutputLength = (InputLength / 4) * 3 - PaddingCount
 	local Output = buffer.create(OutputLength)
 	local InputChunks = InputLength // 4
-
+	
 	local DoubleChunks = (InputChunks - 1) // 2
 	for ChunkIndex = 1, DoubleChunks do
 		local InputIndex = (ChunkIndex - 1) * 8
 		local OutputIndex = (ChunkIndex - 1) * 6
 
-		local Value1_1 = Lookup[buffer.readu8(Input, InputIndex)]
-		local Value1_2 = Lookup[buffer.readu8(Input, InputIndex + 1)]
-		local Value1_3 = Lookup[buffer.readu8(Input, InputIndex + 2)]
-		local Value1_4 = Lookup[buffer.readu8(Input, InputIndex + 3)]
+		local Value1_1 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex))
+		local Value1_2 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 1))
+		local Value1_3 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 2))
+		local Value1_4 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 3))
 
 		local Combined1 = bit32.bor(
 			bit32.lshift(Value1_1, 18),
@@ -234,10 +228,10 @@ function Base64.Decode(Input: buffer): buffer
 			Value1_4
 		)
 
-		local Value2_1 = Lookup[buffer.readu8(Input, InputIndex + 4)]
-		local Value2_2 = Lookup[buffer.readu8(Input, InputIndex + 5)]
-		local Value2_3 = Lookup[buffer.readu8(Input, InputIndex + 6)]
-		local Value2_4 = Lookup[buffer.readu8(Input, InputIndex + 7)]
+		local Value2_1 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 4))
+		local Value2_2 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 5))
+		local Value2_3 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 6))
+		local Value2_4 = buffer.readu8(DecodeLUT, buffer.readu8(Input, InputIndex + 7))
 
 		local Combined2 = bit32.bor(
 			bit32.lshift(Value2_1, 18),
@@ -267,10 +261,10 @@ function Base64.Decode(Input: buffer): buffer
 		local Char3 = buffer.readu8(Input, InputIndex + 2)
 		local Char4 = buffer.readu8(Input, InputIndex + 3)
 
-		local Value1 = Lookup[Char1]
-		local Value2 = Lookup[Char2]
-		local Value3 = Char3 == Padding and 0 or Lookup[Char3]
-		local Value4 = Char4 == Padding and 0 or Lookup[Char4]
+		local Value1 = buffer.readu8(DecodeLUT, Char1)
+		local Value2 = buffer.readu8(DecodeLUT, Char2)
+		local Value3 = Char3 == Padding and 0 or buffer.readu8(DecodeLUT, Char3)
+		local Value4 = Char4 == Padding and 0 or buffer.readu8(DecodeLUT, Char4)
 
 		local Combined = bit32.bor(
 			bit32.lshift(Value1, 18),
