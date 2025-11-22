@@ -158,7 +158,7 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 
 | Algorithm | Data Size | Time | Alternative | Improvement |
 |-----------|-----------|------|-------------|-------------|
-| Base64 (Encode/Decode) | 20k | **181 μs** | - | - |
+| Base64 (Encode/Decode) | 1 million | **8.93ms** | - | - |
 
 *Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
 
