@@ -155,10 +155,9 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 | ML-KEM-512 (Roundtrip) | Encap+Decap | **1.02 ms** | - | - |
 
 ### Utilities
-
 | Algorithm | Data Size | Time | Alternative | Improvement |
 |-----------|-----------|------|-------------|-------------|
-| Base64 (Encode/Decode) | 1 million | **8.93ms** | - | - |
+| Base64 (Encode/Decode) | 1 million | **4.62ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **2.0x faster** than Lute<br>**2.6x faster** than Reselim |
 
 *Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
 
