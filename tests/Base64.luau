@@ -25,7 +25,7 @@ Testing.Describe("Base64 Algorithm Tests", function()
 		Testing.Test(Info.Description, function()
 			local Result
 			if Info.Algorithm == "Decode" then
-				Result = Algorithm.Decode(buffer.fromstring(TestString)) 
+				Result = buffer.tostring(Algorithm.Decode(buffer.fromstring(TestString)))
 			elseif Info.Algorithm == "Encode" then
 				Result = buffer.tostring(Algorithm.Encode(buffer.fromstring(TestString)))
 			end
