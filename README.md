@@ -195,7 +195,8 @@ Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> s
 
 **Authentication:**
 ```lua
-Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number) -> string
+Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number, BigEndian: boolean?) -> string
+-- SHA3/Blake family should have BigEndian = false
 ```
 
 **Non-Cryptographic Hashing:**
