@@ -9,7 +9,8 @@ local Algorithms = table.freeze({
 	XXH32 = require("@self/XXH32"),
 	Blake2b = require("@self/Blake2b"),
 	Blake3 = require("@self/Blake3"),
-	MurMur = require("@self/MurMur")
+	MurMur = require("@self/Murmur")
 })
+
 
 return Algorithms
