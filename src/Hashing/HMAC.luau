@@ -51,35 +51,35 @@ local function XORBuffer(LeftBuffer: buffer, RightBuffer: buffer)
 	return NewBuffer
 end
 
-local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): buffer
+local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number, BigEndian: boolean?): buffer
 	local KeyLength = buffer.len(Key)
-
 	if KeyLength > BlockSizeBytes then
 		local _, Digest = HashFunction(Key)
-		ToBigEndian(Digest)
-
+		if BigEndian ~= false then
+			ToBigEndian(Digest)
+		end
+		
 		local PaddedKey = buffer.create(BlockSizeBytes)
 		buffer.copy(PaddedKey, 0, Digest)
-
 		return PaddedKey
 	elseif KeyLength < BlockSizeBytes then
 		local PaddedKey = buffer.create(BlockSizeBytes)
 		buffer.copy(PaddedKey, 0, Key)
-
 		return PaddedKey
 	end
-
+	
 	return Key
 end
 
-local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): (string, buffer)
-	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes)
-
+local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number, BigEndian: boolean?): (string, buffer)
+	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes, BigEndian)
 	local OuterPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x5C, BlockSizeBytes))
 	local InnerPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x36, BlockSizeBytes))
-
 	local _, HashedMessageWithInnerKey = HashFunction(ConcatenateBuffers(InnerPaddedKey, Message))
-	ToBigEndian(HashedMessageWithInnerKey)
+
+	if BigEndian ~= false then
+		ToBigEndian(HashedMessageWithInnerKey)
+	end
 
 	local FinalMessage = ConcatenateBuffers(OuterPaddedKey, HashedMessageWithInnerKey)
 	return HashFunction(FinalMessage)
