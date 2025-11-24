@@ -146,32 +146,25 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	if PublicKey == nil then
 		error("PublicKey cannot be nil", 2)
 	end
-
 	if typeof(PublicKey) ~= "buffer" then
 		error(`PublicKey must be a buffer, got {typeof(PublicKey)}`, 2)
 	end
-
 	local PublicKeyLength = buffer.len(PublicKey)
 	if PublicKeyLength ~= ED25519_PUBLIC_KEY_SIZE then
 		error(`PublicKey must be exactly {ED25519_PUBLIC_KEY_SIZE} bytes long, got {PublicKeyLength} bytes`, 2)
 	end
-
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
-
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
-
 	if Signature == nil then
 		error("Signature cannot be nil", 2)
 	end
-
 	if typeof(Signature) ~= "buffer" then
 		error(`Signature must be a buffer, got {typeof(Signature)}`, 2)
 	end
-
 	local SignatureLength = buffer.len(Signature)
 	if SignatureLength ~= ED25519_SIGNATURE_SIZE then
 		error(`Signature must be exactly {ED25519_SIGNATURE_SIZE} bytes long, got {SignatureLength} bytes`, 2)
@@ -184,7 +177,6 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 
 	local CommitmentString = buffer.create(32)
 	buffer.copy(CommitmentString, 0, Signature, 0, 32)
-
 	local ResponseString = buffer.create(32)
 	buffer.copy(ResponseString, 0, Signature, 32, 32)
 
@@ -198,7 +190,6 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	end
 
 	local ResponseScalar = FieldQuadratic.Decode(ResponseString)
-
 	local ChallengeInput = ConcatBuffers(CommitmentString, PublicKey, Message)
 	local ChallengeHash = SHA512(ChallengeInput)
 	local ChallengeE = FieldQuadratic.DecodeWide(ChallengeHash)
@@ -212,17 +203,19 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	local RightSideResult = Edwards25519.Sub(LeftSide, RightSideYENiels)
 
 	local VerificationR = Edwards25519.Encode(RightSideResult)
+
 	if buffer.len(VerificationR) ~= buffer.len(CommitmentString) then
 		return false
 	end
 
+	local DifferenceAccumulator = 0
 	for Index = 0, buffer.len(CommitmentString) - 1 do
-		if buffer.readu8(VerificationR, Index) ~= buffer.readu8(CommitmentString, Index) then
-			return false
-		end
+		local VerificationByte = buffer.readu8(VerificationR, Index)
+		local CommitmentByte = buffer.readu8(CommitmentString, Index)
+		DifferenceAccumulator = bit32.bor(DifferenceAccumulator, bit32.bxor(VerificationByte, CommitmentByte))
 	end
 
-	return true
+	return DifferenceAccumulator == 0
 end
 
 return EDDSA

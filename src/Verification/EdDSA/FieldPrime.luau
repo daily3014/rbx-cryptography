@@ -279,14 +279,14 @@ end
 
 local function Eq(ElementA: buffer, ElementB: buffer): boolean
 	local Difference = FieldPrime.Canonicalize(FieldPrime.Sub(ElementA, ElementB))
-
+	local DifferenceAccumulator = 0
 	for LimbIndex = 0, 88, 8 do
-		if buffer.readf64(Difference, LimbIndex) ~= 0 then
-			return false
-		end
+		local LimbLow = buffer.readu32(Difference, LimbIndex)
+		local LimbHigh = buffer.readu32(Difference, LimbIndex + 4)
+		DifferenceAccumulator = bit32.bor(DifferenceAccumulator, LimbLow, LimbHigh)
 	end
-
-	return true
+	
+	return DifferenceAccumulator == 0
 end
 
 local CompoundV = (19 / 2 ^ 255)

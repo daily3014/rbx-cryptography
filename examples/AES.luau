@@ -47,7 +47,7 @@ print("Ciphertext length:", buffer.len(Ciphertext))
 print("Tag length:", buffer.len(Tag))
 
 -- Decrypt and verify (returns false on failure, true and buffer on success)
-local Success, DecryptedData = AES.Decrypt(Key, IV, Ciphertext, AAD, Tag)
+local Success, DecryptedData = AES.Decrypt(Key, IV, Ciphertext, Tag, AAD)
 if Success and DecryptedData then
 	local DecryptedMessage = buffer.tostring(DecryptedData)
 	print("Decryption successful!")

@@ -99,18 +99,16 @@ local FieldQuadratic = {}
 
 function FieldQuadratic.IsValidScalar(ScalarBytes: buffer): boolean
 	local FieldOrder = FIELD_ORDER_BYTES
-	for Index = 31, 0, -1 do
+	local Borrow = 0
+
+	for Index = 0, 31 do
 		local ScalarByte = buffer.readu8(ScalarBytes, Index)
 		local OrderByte = buffer.readu8(FieldOrder, Index)
-
-		if ScalarByte > OrderByte then
-			return false
-		elseif ScalarByte < OrderByte then
-			return true
-		end
+		local Diff = ScalarByte - OrderByte - Borrow
+		Borrow = 1 - bit32.rshift(Diff + 256, 8)
 	end
 
-	return false
+	return Borrow == 1
 end
 
 function FieldQuadratic.Add(ScalarA: buffer, ScalarB: buffer): buffer

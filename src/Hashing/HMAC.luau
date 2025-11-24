@@ -7,7 +7,7 @@
 		local Key = buffer.fromstring("Key")
 		local BlockSize = 64 -- SHA256 block length (= string.len(SHA256(...)))
 		
-		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize)
+		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize) -- SHA3/Blake family should have BigEndian = false
 --]=]
 
 --!strict

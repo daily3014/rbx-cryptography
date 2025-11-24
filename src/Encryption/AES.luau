@@ -291,15 +291,22 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		))
 end
 
-local function ConstantTimeEquals(Buffer1: buffer, Buffer2: buffer, Length: number): boolean
-	local Result = 0
-	for I = 0, Length - 1 do
-		local Byte1 = buffer.readu8(Buffer1, I)
-		local Byte2 = buffer.readu8(Buffer2, I)
-		Result = bit32.bor(Result, bit32.bxor(Byte1, Byte2))
+local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
+	local Length1 = buffer.len(Buffer1)
+	local Length2 = buffer.len(Buffer2)
+	if Length1 ~= Length2 then
+		return false
 	end
 
-	return Result == 0
+	local Difference = 0
+	for Index = 0, Length1 - 1 do
+		Difference = bit32.bor(Difference, bit32.bxor(
+			buffer.readu8(Buffer1, Index),
+			buffer.readu8(Buffer2, Index)
+			))
+	end
+
+	return Difference == 0
 end
 
 local function GfMult(X: buffer, Y: buffer, Z: buffer)
@@ -727,7 +734,7 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	GcmHash(H, AuthData, AADLen, Ciphertext, CryptLen, S)
 	Gctr(EncryptionProcessor, J0, S, 16, ComputedTag)
 
-	if not ConstantTimeEquals(Tag, ComputedTag, TagLength) then
+	if not ConstantTimeCompare(Tag, ComputedTag) then
 		return false
 	end
 
