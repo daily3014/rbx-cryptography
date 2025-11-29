@@ -309,7 +309,8 @@ Utilities.Conversions.FromHex(Hex: string) -> buffer
 
 **Random Generation:**
 ```lua
-Utilities.RandomString(Length: number) -> string
+Utilities.RandomString(Length: number, AsBuffer: false) -> string
+Utilities.RandomString(Length: number, AsBuffer: true) -> buffer
 ```
 
 **CSPRNG:**
