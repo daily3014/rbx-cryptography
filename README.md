@@ -31,7 +31,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@2.6.3"
+cryptography = "daily3014/cryptography@2.7.0"
 ```
 
 ### Pesde
@@ -167,35 +167,35 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 
 **SHA-2 Family:**
 ```lua
-Hashing.SHA2.SHA224(Message: buffer, Salt?: buffer) -> string
-Hashing.SHA2.SHA256(Message: buffer, Salt?: buffer) -> string
-Hashing.SHA2.SHA384(Message: buffer, Salt?: buffer) -> string
-Hashing.SHA2.SHA512(Message: buffer, Salt?: buffer) -> string
+Hashing.SHA2.SHA224(Message: buffer, Salt?: buffer) -> (string, buffer)
+Hashing.SHA2.SHA256(Message: buffer, Salt?: buffer) -> (string, buffer)
+Hashing.SHA2.SHA384(Message: buffer, Salt?: buffer) -> (string, buffer)
+Hashing.SHA2.SHA512(Message: buffer, Salt?: buffer) -> (string, buffer)
 ```
 
 **SHA-3 Family:**
 ```lua
-Hashing.SHA3.SHA3_224(Message: buffer) -> string
-Hashing.SHA3.SHA3_256(Message: buffer) -> string
-Hashing.SHA3.SHA3_384(Message: buffer) -> string
-Hashing.SHA3.SHA3_512(Message: buffer) -> string
+Hashing.SHA3.SHA3_224(Message: buffer) -> (string, buffer)
+Hashing.SHA3.SHA3_256(Message: buffer) -> (string, buffer)
+Hashing.SHA3.SHA3_384(Message: buffer) -> (string, buffer)
+Hashing.SHA3.SHA3_512(Message: buffer) -> (string, buffer)
 
-Hashing.SHA3.SHAKE_128(Message: buffer) -> string
-Hashing.SHA3.SHAKE_256(Message: buffer) -> string
+Hashing.SHA3.SHAKE_128(Message: buffer) -> (string, buffer)
+Hashing.SHA3.SHAKE_256(Message: buffer) -> (string, buffer)
 ```
 
 **BLAKE Family:**
 ```lua
-Hashing.Blake3.Digest(Message: buffer, Length?: number) -> string
-Hashing.Blake3.DigestKeyed(Key: buffer, Message: buffer, Length?: number) -> string
+Hashing.Blake3.Digest(Message: buffer, Length?: number) -> (string, buffer)
+Hashing.Blake3.DigestKeyed(Key: buffer, Message: buffer, Length?: number) -> (string, buffer)
 Hashing.Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
 
-Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> string
+Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> (string, buffer)
 ```
 
 **Authentication:**
 ```lua
-Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number, BigEndian: boolean?) -> string
+Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number, BigEndian: boolean?) -> (string, buffer)
 -- SHA3/Blake family should have BigEndian = false
 ```
 

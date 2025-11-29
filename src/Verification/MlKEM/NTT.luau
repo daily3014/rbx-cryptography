@@ -137,6 +137,103 @@ function Ntt.Intt(Poly: buffer)
 	end
 end
 
+function Ntt.NttAt(Poly: buffer, BaseOffset: number)
+	local Zeta = NTT_ZETA_EXP
+	local Powers = POWERS_OF_TWO
+	local Modulus = Q
+
+	for L = LOG2N - 1, 1, -1 do
+		local Len = Powers[L][1]
+		local LenX2 = Powers[L][2]
+		local KBeg = bit32.rshift(N, L + 1)
+
+		for Start = 0, N - 1, LenX2 do
+			local KNow = KBeg + bit32.rshift(Start, L + 1)
+			local ZetaExp = buffer.readu16(Zeta, KNow * 2)
+
+			for I = Start, Start + Len - 1 do
+				local OffsetI = BaseOffset + I * 2
+				local OffsetILen = BaseOffset + (I + Len) * 2
+
+				local PolyI = buffer.readu16(Poly, OffsetI)
+				local PolyILen = buffer.readu16(Poly, OffsetILen)
+
+				local Tmp = (ZetaExp * PolyILen) % Modulus
+
+				local SubResult = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Modulus
+				local Sum = PolyI + Tmp
+				local AddResult = if Sum >= Modulus then Sum - Modulus else Sum
+
+				buffer.writeu16(Poly, OffsetILen, SubResult)
+				buffer.writeu16(Poly, OffsetI, AddResult)
+			end
+		end
+	end
+end
+
+function Ntt.InttAt(Poly: buffer, BaseOffset: number)
+	local Zeta = INTT_ZETA_EXP
+	local InvN = INV_N
+	local Powers = POWERS_OF_TWO
+	local Modulus = Q
+
+	for L = 1, LOG2N - 1 do
+		local Len = Powers[L][1]
+		local LenX2 = Powers[L][2]
+		local KBeg = bit32.rshift(N, L) - 1
+
+		for Start = 0, N - 1, LenX2 do
+			local KNow = KBeg - bit32.rshift(Start, L + 1)
+			local NegZetaExp = buffer.readu16(Zeta, KNow * 2)
+
+			for I = Start, Start + Len - 1 do
+				local OffsetI = BaseOffset + I * 2
+				local OffsetILen = BaseOffset + (I + Len) * 2
+
+				local PolyI = buffer.readu16(Poly, OffsetI)
+				local PolyILen = buffer.readu16(Poly, OffsetILen)
+
+				local Sum = PolyI + PolyILen
+				local AddResult = if Sum >= Modulus then Sum - Modulus else Sum
+				local SubResult = if PolyI >= PolyILen then PolyI - PolyILen else PolyI - PolyILen + Modulus
+
+				local MulResult = (SubResult * NegZetaExp) % Modulus
+
+				buffer.writeu16(Poly, OffsetI, AddResult)
+				buffer.writeu16(Poly, OffsetILen, MulResult)
+			end
+		end
+	end
+
+	for I = 0, N - 1 do
+		local Offset = BaseOffset + I * 2
+		local Coeff = buffer.readu16(Poly, Offset)
+		buffer.writeu16(Poly, Offset, (Coeff * InvN) % Modulus)
+	end
+end
+
+function Ntt.PolyAddAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
+	local Modulus = Q
+	for Index = 0, 255 do
+		local Offset = Index * 2
+		local AValue = buffer.readu16(F, FOffset + Offset)
+		local BValue = buffer.readu16(G, GOffset + Offset)
+		local Sum = AValue + BValue
+		buffer.writeu16(H, HOffset + Offset, if Sum >= Modulus then Sum - Modulus else Sum)
+	end
+end
+
+function Ntt.PolySubAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
+	local Modulus = Q
+	for Index = 0, 255 do
+		local Offset = Index * 2
+		local AValue = buffer.readu16(F, FOffset + Offset)
+		local BValue = buffer.readu16(G, GOffset + Offset)
+		local Diff = AValue - BValue
+		buffer.writeu16(H, HOffset + Offset, if Diff < 0 then Diff + Modulus else Diff)
+	end
+end
+
 function Ntt.PolyMul(F: buffer, G: buffer, H: buffer)
 	local PolyZeta = POLY_MUL_ZETA_EXP
 	local Modulus = Q
@@ -165,6 +262,37 @@ function Ntt.PolyMul(F: buffer, G: buffer, H: buffer)
 
 		buffer.writeu16(H, Offset, H0)
 		buffer.writeu16(H, Offset + 2, H1)
+	end
+end
+
+function Ntt.PolyMulAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
+	local PolyZeta = POLY_MUL_ZETA_EXP
+	local Modulus = Q
+
+	for I = 0, 127 do
+		local LocalOffset = I * 4
+		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
+
+		local F0 = buffer.readu16(F, FOffset + LocalOffset)
+		local F1 = buffer.readu16(F, FOffset + LocalOffset + 2)
+		local G0 = buffer.readu16(G, GOffset + LocalOffset)
+		local G1 = buffer.readu16(G, GOffset + LocalOffset + 2)
+
+		local Mul1 = (F0 * G0) % Modulus
+		local Mul2 = (F1 * G1) % Modulus
+		local Mul3 = (Mul2 * ZetaExp) % Modulus
+
+		local Sum0 = Mul1 + Mul3
+		local H0 = if Sum0 >= Modulus then Sum0 - Modulus else Sum0
+
+		local Mul4 = (F0 * G1) % Modulus
+		local Mul5 = (F1 * G0) % Modulus
+
+		local Sum1 = Mul4 + Mul5
+		local H1 = if Sum1 >= Modulus then Sum1 - Modulus else Sum1
+
+		buffer.writeu16(H, HOffset + LocalOffset, H0)
+		buffer.writeu16(H, HOffset + LocalOffset + 2, H1)
 	end
 end
 

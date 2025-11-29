@@ -18,7 +18,6 @@
 
 local Field = require("./Field")
 local NTT = require("./NTT")
-local Poly = require("./Poly")
 local BitPacking = require("./Pack")
 
 local LOG2N = 8
@@ -207,37 +206,288 @@ end
 
 function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 	local PolyByteLength = math.floor((N * Sbw) / 8)
-
-	local PolyBuffer = buffer.create(N * 4)
-	local ByteBuffer = buffer.create(PolyByteLength)
-
 	local Num = N
 
 	for I = 0, K - 1 do
 		local SrcOffset = I * Num * 4
 		local DstOffset = I * PolyByteLength
 
-		buffer.copy(PolyBuffer, 0, Src, SrcOffset, Num * 4)
-		BitPacking.Encode(PolyBuffer, ByteBuffer, Sbw)
-		buffer.copy(Dst, DstOffset, ByteBuffer, 0, PolyByteLength)
+		if Sbw == 3 then
+			local ItrCnt = 32
+			for J = 0, ItrCnt - 1 do
+				local POffset = SrcOffset + J * 32
+				local BOffset = DstOffset + J * 3
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0x7)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0x7)
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x7)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x7)
+				local P4 = bit32.band(buffer.readu32(Src, POffset + 16), 0x7)
+				local P5 = bit32.band(buffer.readu32(Src, POffset + 20), 0x7)
+				local P6 = bit32.band(buffer.readu32(Src, POffset + 24), 0x7)
+				local P7 = bit32.band(buffer.readu32(Src, POffset + 28), 0x7)
+
+				buffer.writeu8(Dst, BOffset + 0, bit32.bor(bit32.lshift(bit32.band(P2, 0x3), 6), bit32.lshift(P1, 3), P0))
+				buffer.writeu8(Dst, BOffset + 1, bit32.bor(bit32.lshift(bit32.band(P5, 0x1), 7), bit32.lshift(P4, 4), bit32.lshift(P3, 1), bit32.rshift(P2, 2)))
+				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.lshift(P7, 5), bit32.lshift(P6, 2), bit32.rshift(P5, 1)))
+			end
+		elseif Sbw == 4 then
+			for J = 0, 127 do
+				local POffset = SrcOffset + J * 8
+				local P0 = bit32.band(buffer.readu32(Src, POffset), 0xF)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0xF)
+				buffer.writeu8(Dst, DstOffset + J, bit32.bor(bit32.lshift(P1, 4), P0))
+			end
+		elseif Sbw == 6 then
+			for J = 0, 63 do
+				local POffset = SrcOffset + J * 16
+				local BOffset = DstOffset + J * 3
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0x3F)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0x3F)
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x3F)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x3F)
+
+				buffer.writeu8(Dst, BOffset + 0, bit32.bor(bit32.lshift(bit32.band(P1, 0x3), 6), P0))
+				buffer.writeu8(Dst, BOffset + 1, bit32.bor(bit32.lshift(bit32.band(P2, 0xF), 4), bit32.rshift(P1, 2)))
+				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.lshift(P3, 2), bit32.rshift(P2, 4)))
+			end
+		elseif Sbw == 10 then
+			for J = 0, 63 do
+				local POffset = SrcOffset + J * 16
+				local BOffset = DstOffset + J * 5
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0x3FF)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0x3FF)
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x3FF)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x3FF)
+
+				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
+				buffer.writeu8(Dst, BOffset + 1, bit32.bor(bit32.lshift(bit32.band(P1, 0x3F), 2), bit32.rshift(P0, 8)))
+				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.lshift(bit32.band(P2, 0xF), 4), bit32.rshift(P1, 6)))
+				buffer.writeu8(Dst, BOffset + 3, bit32.bor(bit32.lshift(bit32.band(P3, 0x3), 6), bit32.rshift(P2, 4)))
+				buffer.writeu8(Dst, BOffset + 4, bit32.rshift(P3, 2))
+			end
+		elseif Sbw == 13 then
+			for J = 0, 31 do
+				local POffset = SrcOffset + J * 32
+				local BOffset = DstOffset + J * 13
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0x1FFF)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0x1FFF)
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x1FFF)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x1FFF)
+				local P4 = bit32.band(buffer.readu32(Src, POffset + 16), 0x1FFF)
+				local P5 = bit32.band(buffer.readu32(Src, POffset + 20), 0x1FFF)
+				local P6 = bit32.band(buffer.readu32(Src, POffset + 24), 0x1FFF)
+				local P7 = bit32.band(buffer.readu32(Src, POffset + 28), 0x1FFF)
+
+				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
+				buffer.writeu8(Dst, BOffset + 1, bit32.bor(bit32.lshift(bit32.band(P1, 0x7), 5), bit32.rshift(P0, 8)))
+				buffer.writeu8(Dst, BOffset + 2, bit32.rshift(P1, 3))
+				buffer.writeu8(Dst, BOffset + 3, bit32.bor(bit32.lshift(bit32.band(P2, 0x3F), 2), bit32.rshift(P1, 11)))
+				buffer.writeu8(Dst, BOffset + 4, bit32.bor(bit32.lshift(bit32.band(P3, 0x1), 7), bit32.rshift(P2, 6)))
+				buffer.writeu8(Dst, BOffset + 5, bit32.rshift(P3, 1))
+				buffer.writeu8(Dst, BOffset + 6, bit32.bor(bit32.lshift(bit32.band(P4, 0xF), 4), bit32.rshift(P3, 9)))
+				buffer.writeu8(Dst, BOffset + 7, bit32.rshift(P4, 4))
+				buffer.writeu8(Dst, BOffset + 8, bit32.bor(bit32.lshift(bit32.band(P5, 0x7F), 1), bit32.rshift(P4, 12)))
+				buffer.writeu8(Dst, BOffset + 9, bit32.bor(bit32.lshift(bit32.band(P6, 0x3), 6), bit32.rshift(P5, 7)))
+				buffer.writeu8(Dst, BOffset + 10, bit32.rshift(P6, 2))
+				buffer.writeu8(Dst, BOffset + 11, bit32.bor(bit32.lshift(bit32.band(P7, 0x1F), 3), bit32.rshift(P6, 10)))
+				buffer.writeu8(Dst, BOffset + 12, bit32.rshift(P7, 5))
+			end
+		elseif Sbw == 18 then
+			for J = 0, 63 do
+				local POffset = SrcOffset + J * 16
+				local BOffset = DstOffset + J * 9
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0x3FFFF)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0x3FFFF)
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x3FFFF)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x3FFFF)
+
+				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
+				buffer.writeu8(Dst, BOffset + 1, bit32.band(bit32.rshift(P0, 8), 0xFF))
+				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.rshift(P0, 16), bit32.lshift(bit32.band(P1, 0x3F), 2)))
+				buffer.writeu8(Dst, BOffset + 3, bit32.band(bit32.rshift(P1, 6), 0xFF))
+				buffer.writeu8(Dst, BOffset + 4, bit32.bor(bit32.rshift(P1, 14), bit32.lshift(bit32.band(P2, 0xF), 4)))
+				buffer.writeu8(Dst, BOffset + 5, bit32.band(bit32.rshift(P2, 4), 0xFF))
+				buffer.writeu8(Dst, BOffset + 6, bit32.bor(bit32.rshift(P2, 12), bit32.lshift(bit32.band(P3, 0x3), 6)))
+				buffer.writeu8(Dst, BOffset + 7, bit32.band(bit32.rshift(P3, 2), 0xFF))
+				buffer.writeu8(Dst, BOffset + 8, bit32.rshift(P3, 10))
+			end
+		elseif Sbw == 20 then
+			for J = 0, 63 do
+				local POffset = SrcOffset + J * 16
+				local BOffset = DstOffset + J * 10
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0xFFFFF)
+				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0xFFFFF)
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0xFFFFF)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0xFFFFF)
+
+				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
+				buffer.writeu8(Dst, BOffset + 1, bit32.band(bit32.rshift(P0, 8), 0xFF))
+				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.rshift(P0, 16), bit32.lshift(bit32.band(P1, 0xF), 4)))
+				buffer.writeu8(Dst, BOffset + 3, bit32.band(bit32.rshift(P1, 4), 0xFF))
+				buffer.writeu8(Dst, BOffset + 4, bit32.band(bit32.rshift(P1, 12), 0xFF))
+				buffer.writeu8(Dst, BOffset + 5, bit32.band(P2, 0xFF))
+				buffer.writeu8(Dst, BOffset + 6, bit32.band(bit32.rshift(P2, 8), 0xFF))
+				buffer.writeu8(Dst, BOffset + 7, bit32.bor(bit32.rshift(P2, 16), bit32.lshift(bit32.band(P3, 0xF), 4)))
+				buffer.writeu8(Dst, BOffset + 8, bit32.band(bit32.rshift(P3, 4), 0xFF))
+				buffer.writeu8(Dst, BOffset + 9, bit32.rshift(P3, 12))
+			end
+		else
+			-- Fallback for other bit widths
+			local PolyBuffer = buffer.create(N * 4)
+			local ByteBuffer = buffer.create(PolyByteLength)
+			buffer.copy(PolyBuffer, 0, Src, SrcOffset, N * 4)
+			BitPacking.Encode(PolyBuffer, ByteBuffer, Sbw)
+			buffer.copy(Dst, DstOffset, ByteBuffer, 0, PolyByteLength)
+		end
 	end
 end
 
 function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 	local PolyByteLength = math.floor((N * Sbw) / 8)
-
-	local ByteBuffer = buffer.create(PolyByteLength)
-	local PolyBuffer = buffer.create(N * 4)
-
 	local Num = N
 
 	for I = 0, K - 1 do
 		local SrcOffset = I * PolyByteLength
 		local DstOffset = I * Num * 4
 
-		buffer.copy(ByteBuffer, 0, Src, SrcOffset, PolyByteLength)
-		BitPacking.Decode(ByteBuffer, PolyBuffer, Sbw)
-		buffer.copy(Dst, DstOffset, PolyBuffer, 0, Num * 4)
+		if Sbw == 3 then
+			for J = 0, 31 do
+				local BOffset = SrcOffset + J * 3
+				local POffset = DstOffset + J * 32
+
+				local B0 = buffer.readu8(Src, BOffset + 0)
+				local B1 = buffer.readu8(Src, BOffset + 1)
+				local B2 = buffer.readu8(Src, BOffset + 2)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.band(B0, 0x7))
+				buffer.writeu32(Dst, POffset + 4, bit32.band(bit32.rshift(B0, 3), 0x7))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B0, 6), bit32.lshift(bit32.band(B1, 0x1), 2)))
+				buffer.writeu32(Dst, POffset + 12, bit32.band(bit32.rshift(B1, 1), 0x7))
+				buffer.writeu32(Dst, POffset + 16, bit32.band(bit32.rshift(B1, 4), 0x7))
+				buffer.writeu32(Dst, POffset + 20, bit32.bor(bit32.rshift(B1, 7), bit32.lshift(bit32.band(B2, 0x3), 1)))
+				buffer.writeu32(Dst, POffset + 24, bit32.band(bit32.rshift(B2, 2), 0x7))
+				buffer.writeu32(Dst, POffset + 28, bit32.rshift(B2, 5))
+			end
+		elseif Sbw == 4 then
+			for J = 0, 127 do
+				local B = buffer.readu8(Src, SrcOffset + J)
+				local POffset = DstOffset + J * 8
+				buffer.writeu32(Dst, POffset, bit32.band(B, 0xF))
+				buffer.writeu32(Dst, POffset + 4, bit32.rshift(B, 4))
+			end
+		elseif Sbw == 6 then
+			for J = 0, 63 do
+				local BOffset = SrcOffset + J * 3
+				local POffset = DstOffset + J * 16
+
+				local B0 = buffer.readu8(Src, BOffset + 0)
+				local B1 = buffer.readu8(Src, BOffset + 1)
+				local B2 = buffer.readu8(Src, BOffset + 2)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.band(B0, 0x3F))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B0, 6), bit32.lshift(bit32.band(B1, 0xF), 2)))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B1, 4), bit32.lshift(bit32.band(B2, 0x3), 4)))
+				buffer.writeu32(Dst, POffset + 12, bit32.rshift(B2, 2))
+			end
+		elseif Sbw == 10 then
+			for J = 0, 63 do
+				local BOffset = SrcOffset + J * 5
+				local POffset = DstOffset + J * 16
+
+				local B0 = buffer.readu8(Src, BOffset + 0)
+				local B1 = buffer.readu8(Src, BOffset + 1)
+				local B2 = buffer.readu8(Src, BOffset + 2)
+				local B3 = buffer.readu8(Src, BOffset + 3)
+				local B4 = buffer.readu8(Src, BOffset + 4)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x3), 8)))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B1, 2), bit32.lshift(bit32.band(B2, 0xF), 6)))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B2, 4), bit32.lshift(bit32.band(B3, 0x3F), 4)))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B3, 6), bit32.lshift(B4, 2)))
+			end
+		elseif Sbw == 13 then
+			for J = 0, 31 do
+				local BOffset = SrcOffset + J * 13
+				local POffset = DstOffset + J * 32
+
+				local B0 = buffer.readu8(Src, BOffset + 0)
+				local B1 = buffer.readu8(Src, BOffset + 1)
+				local B2 = buffer.readu8(Src, BOffset + 2)
+				local B3 = buffer.readu8(Src, BOffset + 3)
+				local B4 = buffer.readu8(Src, BOffset + 4)
+				local B5 = buffer.readu8(Src, BOffset + 5)
+				local B6 = buffer.readu8(Src, BOffset + 6)
+				local B7 = buffer.readu8(Src, BOffset + 7)
+				local B8 = buffer.readu8(Src, BOffset + 8)
+				local B9 = buffer.readu8(Src, BOffset + 9)
+				local B10 = buffer.readu8(Src, BOffset + 10)
+				local B11 = buffer.readu8(Src, BOffset + 11)
+				local B12 = buffer.readu8(Src, BOffset + 12)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x1F), 8)))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B1, 5), bit32.lshift(B2, 3), bit32.lshift(bit32.band(B3, 0x3), 11)))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B3, 2), bit32.lshift(bit32.band(B4, 0x7F), 6)))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B4, 7), bit32.lshift(B5, 1), bit32.lshift(bit32.band(B6, 0xF), 9)))
+				buffer.writeu32(Dst, POffset + 16, bit32.bor(bit32.rshift(B6, 4), bit32.lshift(B7, 4), bit32.lshift(bit32.band(B8, 0x1), 12)))
+				buffer.writeu32(Dst, POffset + 20, bit32.bor(bit32.rshift(B8, 1), bit32.lshift(bit32.band(B9, 0x3F), 7)))
+				buffer.writeu32(Dst, POffset + 24, bit32.bor(bit32.rshift(B9, 6), bit32.lshift(B10, 2), bit32.lshift(bit32.band(B11, 0x7), 10)))
+				buffer.writeu32(Dst, POffset + 28, bit32.bor(bit32.rshift(B11, 3), bit32.lshift(B12, 5)))
+			end
+		elseif Sbw == 18 then
+			for J = 0, 63 do
+				local BOffset = SrcOffset + J * 9
+				local POffset = DstOffset + J * 16
+
+				local B0 = buffer.readu8(Src, BOffset + 0)
+				local B1 = buffer.readu8(Src, BOffset + 1)
+				local B2 = buffer.readu8(Src, BOffset + 2)
+				local B3 = buffer.readu8(Src, BOffset + 3)
+				local B4 = buffer.readu8(Src, BOffset + 4)
+				local B5 = buffer.readu8(Src, BOffset + 5)
+				local B6 = buffer.readu8(Src, BOffset + 6)
+				local B7 = buffer.readu8(Src, BOffset + 7)
+				local B8 = buffer.readu8(Src, BOffset + 8)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0x3), 16)))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B2, 2), bit32.lshift(B3, 6), bit32.lshift(bit32.band(B4, 0xF), 14)))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B4, 4), bit32.lshift(B5, 4), bit32.lshift(bit32.band(B6, 0x3F), 12)))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B6, 6), bit32.lshift(B7, 2), bit32.lshift(B8, 10)))
+			end
+		elseif Sbw == 20 then
+			for J = 0, 63 do
+				local BOffset = SrcOffset + J * 10
+				local POffset = DstOffset + J * 16
+
+				local B0 = buffer.readu8(Src, BOffset + 0)
+				local B1 = buffer.readu8(Src, BOffset + 1)
+				local B2 = buffer.readu8(Src, BOffset + 2)
+				local B3 = buffer.readu8(Src, BOffset + 3)
+				local B4 = buffer.readu8(Src, BOffset + 4)
+				local B5 = buffer.readu8(Src, BOffset + 5)
+				local B6 = buffer.readu8(Src, BOffset + 6)
+				local B7 = buffer.readu8(Src, BOffset + 7)
+				local B8 = buffer.readu8(Src, BOffset + 8)
+				local B9 = buffer.readu8(Src, BOffset + 9)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0xF), 16)))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B2, 4), bit32.lshift(B3, 4), bit32.lshift(B4, 12)))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(B5, bit32.lshift(B6, 8), bit32.lshift(bit32.band(B7, 0xF), 16)))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B7, 4), bit32.lshift(B8, 4), bit32.lshift(B9, 12)))
+			end
+		else
+			-- Fallback for other bit widths
+			local ByteBuffer = buffer.create(PolyByteLength)
+			local PolyBuffer = buffer.create(N * 4)
+			buffer.copy(ByteBuffer, 0, Src, SrcOffset, PolyByteLength)
+			BitPacking.Decode(ByteBuffer, PolyBuffer, Sbw)
+			buffer.copy(Dst, DstOffset, PolyBuffer, 0, N * 4)
+		end
 	end
 end
 

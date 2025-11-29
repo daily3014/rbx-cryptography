@@ -20,6 +20,14 @@ local N = 2^LOG2N
 local Q = 3329
 local POLY_SIZE = N * 2
 
+local TEMP_POLY_A = buffer.create(N * 2)
+local TEMP_POLY_B = buffer.create(N * 2)
+local TEMP_POLY_MUL = buffer.create(N * 2)
+local TEMP_POLY_ACCUM = buffer.create(N * 2)
+local TEMP_POLY_NTT = buffer.create(N * 2)
+local TEMP_POLY_ENCODE = buffer.create(N * 2)
+local TEMP_POLY_COMPRESS = buffer.create(N * 2)
+
 local PolyVec = {}
 
 function PolyVec.VecCreate(K: number): buffer
@@ -38,83 +46,55 @@ function PolyVec.MatSetPoly(Mat: buffer, Row: number, Col: number, Cols: number,
 end
 
 function PolyVec.MatVecMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number)
-	if not MlKemParams.CheckMatrixDim(ACols, BRows) then
-		error("Incompatible matrix dimensions")
-	end
-
-	local TempPoly = buffer.create(N * 2)
-	local AccumPoly = buffer.create(N * 2)
-	local PolyA = buffer.create(N * 2)
-	local PolyB = buffer.create(N * 2)
-
 	local PolySize = POLY_SIZE
-
+	local AccumPoly = TEMP_POLY_ACCUM
+	local TempPoly = TEMP_POLY_MUL
+	
+	local PolyMul = Ntt.PolyMulAt
+	local PolyAdd = Ntt.PolyAddAt
+	
 	for I = 0, ARows - 1 do
-		buffer.fill(AccumPoly, 0, 0, N * 2)
+		local COffset = I * PolySize
+		buffer.fill(AccumPoly, 0, 0, PolySize)
 
 		for K = 0, ACols - 1 do
 			local AOffset = (I * ACols + K) * PolySize
 			local BOffset = K * PolySize
 
-			buffer.copy(PolyA, 0, A, AOffset, PolySize)
-			buffer.copy(PolyB, 0, B, BOffset, PolySize)
-
-			Ntt.PolyMul(PolyA, PolyB, TempPoly)
-			Ntt.PolyAdd(AccumPoly, TempPoly, AccumPoly)
+			PolyMul(A, AOffset, B, BOffset, TempPoly, 0)
+			PolyAdd(AccumPoly, 0, TempPoly, 0, AccumPoly, 0)
 		end
 
-		local COffset = I * PolySize
 		buffer.copy(C, COffset, AccumPoly, 0, PolySize)
 	end
 end
 
 function PolyVec.VecNtt(Vec: buffer, K: number)
-	if not (MlKemParams.CheckK(K) or K == 1) then
-		error("Invalid vector dimension K")
-	end
-
-	local Poly = buffer.create(N * 2)
 	local PolySize = POLY_SIZE
-	
+	local NttAt = Ntt.NttAt
 	for I = 0, K - 1 do
-		local Offset = I * PolySize
-		buffer.copy(Poly, 0, Vec, Offset, PolySize)
-		Ntt.Ntt(Poly)
-		buffer.copy(Vec, Offset, Poly, 0, PolySize)
+		NttAt(Vec, I * PolySize)
 	end
 end
 
 function PolyVec.VecIntt(Vec: buffer, K: number)
-	if not (MlKemParams.CheckK(K) or K == 1) then
-		error("Invalid vector dimension K")
-	end
-
-	local Poly = buffer.create(N * 2)
 	local PolySize = POLY_SIZE
+	local InttAt = Ntt.InttAt
 	
 	for I = 0, K - 1 do
-		local Offset = I * PolySize
-		buffer.copy(Poly, 0, Vec, Offset, PolySize)
-		Ntt.Intt(Poly)
-		buffer.copy(Vec, Offset, Poly, 0, PolySize)
+		InttAt(Vec, I * PolySize)
 	end
 end
 
 function PolyVec.VecAddTo(Src: buffer, Dst: buffer, K: number)
-	if not (MlKemParams.CheckK(K) or K == 1) then
-		error("Invalid vector dimension K")
-	end
-
-	local TotalCoeffs = K * N
 	local Modulus = Q
-	
-	for Index = 0, TotalCoeffs - 1 do
-		local Offset = Index * 2
+	local Total = K * N * 2
+
+	for Offset = 0, Total - 2, 2 do
 		local SrcValue = buffer.readu16(Src, Offset)
 		local DstValue = buffer.readu16(Dst, Offset)
 		local Sum = SrcValue + DstValue
-		local Result = if Sum >= Modulus then Sum - Modulus else Sum
-		buffer.writeu16(Dst, Offset, Result)
+		buffer.writeu16(Dst, Offset, if Sum >= Modulus then Sum - Modulus else Sum)
 	end
 end
 
@@ -136,65 +116,58 @@ function PolyVec.VecAdd(A: buffer, B: buffer, Result: buffer, K: number)
 end
 
 function PolyVec.VecEncode(Vec: buffer, K: number, L: number): buffer
-	if not MlKemParams.CheckK(K) then
-		error("Invalid vector dimension K")
-	end
-	if not MlKemParams.CheckL(L) then
-		error("Invalid encoding parameter L")
-	end
-
 	local OutputSize = K * 32 * L
 	local Output = buffer.create(OutputSize)
-	local Poly = buffer.create(N * 2)
 	local PolySize = POLY_SIZE
+	local ChunkSize = 32 * L
 	
-	for I = 0, K - 1 do
-		local PolyOffset = I * PolySize
-		local OutputOffset = I * 32 * L
-
-		buffer.copy(Poly, 0, Vec, PolyOffset, PolySize)
-		local EncodedPoly = MlKemSerialize.Encode(Poly, L)
-		buffer.copy(Output, OutputOffset, EncodedPoly, 0, 32 * L)
+	local EncodeAt = MlKemSerialize.EncodeAt
+	local Encode = MlKemSerialize.Encode
+	
+	if L == 12 then
+		for I = 0, K - 1 do
+			EncodeAt(Vec, I * PolySize, Output, I * ChunkSize, 12)
+		end
+	else
+		local Poly = TEMP_POLY_ENCODE
+		for I = 0, K - 1 do
+			buffer.copy(Poly, 0, Vec, I * PolySize, PolySize)
+			local EncodedPoly = Encode(Poly, L)
+			buffer.copy(Output, I * ChunkSize, EncodedPoly, 0, ChunkSize)
+		end
 	end
 
 	return Output
 end
 
 function PolyVec.VecDecode(Data: buffer, K: number, L: number): buffer
-	if not MlKemParams.CheckK(K) then
-		error("Invalid vector dimension K")
-	end
-	if not MlKemParams.CheckL(L) then
-		error("Invalid encoding parameter L")
-	end
-
 	local Vec = buffer.create(K * POLY_SIZE)
-	local PolyData = buffer.create(32 * L)
 	local PolySize = POLY_SIZE
+	local ChunkSize = 32 * L
 	
-	for I = 0, K - 1 do
-		local DataOffset = I * 32 * L
-		local VecOffset = I * PolySize
-
-		buffer.copy(PolyData, 0, Data, DataOffset, 32 * L)
-		local DecodedPoly = MlKemSerialize.Decode(PolyData, L)
-		buffer.copy(Vec, VecOffset, DecodedPoly, 0, PolySize)
+	local DecodeAt = MlKemSerialize.DecodeAt
+	local Decode = MlKemSerialize.Decode
+	
+	if L == 12 then
+		for I = 0, K - 1 do
+			DecodeAt(Data, I * ChunkSize, Vec, I * PolySize, 12)
+		end
+	else
+		local PolyData = buffer.create(ChunkSize)
+		for I = 0, K - 1 do
+			buffer.copy(PolyData, 0, Data, I * ChunkSize, ChunkSize)
+			local DecodedPoly = Decode(PolyData, L)
+			buffer.copy(Vec, I * PolySize, DecodedPoly, 0, PolySize)
+		end
 	end
 
 	return Vec
 end
 
 function PolyVec.VecCompress(Vec: buffer, K: number, D: number)
-	if not MlKemParams.CheckK(K) then
-		error("Invalid vector dimension K")
-	end
-	if not MlKemParams.CheckD(D) then
-		error("Invalid compression parameter D")
-	end
-
-	local Poly = buffer.create(N * 2)
+	local Poly = TEMP_POLY_COMPRESS
 	local PolySize = POLY_SIZE
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * PolySize
 		buffer.copy(Poly, 0, Vec, Offset, PolySize)
@@ -204,16 +177,9 @@ function PolyVec.VecCompress(Vec: buffer, K: number, D: number)
 end
 
 function PolyVec.VecDecompress(Vec: buffer, K: number, D: number)
-	if not MlKemParams.CheckK(K) then
-		error("Invalid vector dimension K")
-	end
-	if not MlKemParams.CheckD(D) then
-		error("Invalid compression parameter D")
-	end
-
-	local Poly = buffer.create(N * 2)
+	local Poly = TEMP_POLY_COMPRESS
 	local PolySize = POLY_SIZE
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * PolySize
 		buffer.copy(Poly, 0, Vec, Offset, PolySize)

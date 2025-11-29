@@ -24,7 +24,6 @@
 local SHA3 = require("@self/SHA3")
 local NTT = require("@self/NTT")
 
-local Poly = require("@self/Poly")
 local PolyVec = require("@self/PolyVec")
 local BitPacking = require("@self/Pack")
 

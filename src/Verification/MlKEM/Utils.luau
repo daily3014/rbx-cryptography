@@ -29,17 +29,22 @@ function Utils.CtMemcmp(Bytes0: buffer, Bytes1: buffer): number
 		return 0x00000000
 	end
 
-	local Flag = 0xFFFFFFFF
+	local Diff = 0
+	local Len4 = Len0 - (Len0 % 4)
 
-	for Index = 0, Len0 - 1 do
-		local Byte0 = buffer.readu8(Bytes0, Index)
-		local Byte1 = buffer.readu8(Bytes1, Index)
-
-		local Equal = if Byte0 == Byte1 then 0xFFFFFFFF else 0x00000000
-		Flag = bit32.band(Flag, Equal)
+	for Index = 0, Len4 - 4, 4 do
+		local Word0 = buffer.readu32(Bytes0, Index)
+		local Word1 = buffer.readu32(Bytes1, Index)
+		Diff = bit32.bor(Diff, bit32.bxor(Word0, Word1))
 	end
 
-	return Flag
+	for Index = Len4, Len0 - 1 do
+		local Byte0 = buffer.readu8(Bytes0, Index)
+		local Byte1 = buffer.readu8(Bytes1, Index)
+		Diff = bit32.bor(Diff, bit32.bxor(Byte0, Byte1))
+	end
+
+	return if Diff == 0 then 0xFFFFFFFF else 0x00000000
 end
 
 function Utils.CtSelect(Cond: number, A: number, B: number): number
@@ -53,18 +58,21 @@ end
 
 function Utils.CtCondMemcpy(Cond: number, Sink: buffer, Source0: buffer, Source1: buffer)
 	local SinkLen = buffer.len(Sink)
-	local Source0Len = buffer.len(Source0)
-	local Source1Len = buffer.len(Source1)
+	local Mask = bit32.band(Cond, 0xFFFFFFFF)
+	local InvMask = bit32.bnot(Mask)
+	local Len4 = SinkLen - (SinkLen % 4)
 
-	if not (SinkLen == Source0Len and SinkLen == Source1Len) then
-		error("Buffer lengths must match")
+	for Index = 0, Len4 - 4, 4 do
+		local Word0 = buffer.readu32(Source0, Index)
+		local Word1 = buffer.readu32(Source1, Index)
+		local Selected = bit32.bor(bit32.band(Word0, Mask), bit32.band(Word1, InvMask))
+		buffer.writeu32(Sink, Index, Selected)
 	end
 
-	for Index = 0, SinkLen - 1 do
+	for Index = Len4, SinkLen - 1 do
 		local Byte0 = buffer.readu8(Source0, Index)
 		local Byte1 = buffer.readu8(Source1, Index)
-
-		local Selected = Utils.CtSelect(Cond, Byte0, Byte1)
+		local Selected = bit32.bor(bit32.band(Byte0, Mask), bit32.band(Byte1, InvMask))
 		buffer.writeu8(Sink, Index, Selected)
 	end
 end

@@ -23,11 +23,11 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 	if buffer.len(Poly) ~= 256 * 4 then
 		error("Invalid poly size")
 	end
-	
+
 	if buffer.len(Arr) ~= math.floor(256 * Sbw / 8) then
 		error("Invalid arr size")
 	end
-	
+
 	buffer.fill(Arr, 0, 0, buffer.len(Arr))
 
 	if Sbw == 3 then
@@ -145,6 +145,51 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			buffer.writeu8(Arr, BOffset + 11, bit32.bor(bit32.lshift(bit32.band(P7, 0x1F), 3), bit32.rshift(P6, 10)))
 			buffer.writeu8(Arr, BOffset + 12, bit32.rshift(P7, 5))
 		end
+	elseif Sbw == 18 then
+		local ItrCnt = bit32.rshift(256, 2)
+
+		for I = 0, ItrCnt - 1 do
+			local POffset = bit32.lshift(I, 2)
+			local BOffset = I * 9
+
+			local P0 = bit32.band(buffer.readu32(Poly, (POffset + 0) * 4), 0x3FFFF)
+			local P1 = bit32.band(buffer.readu32(Poly, (POffset + 1) * 4), 0x3FFFF)
+			local P2 = bit32.band(buffer.readu32(Poly, (POffset + 2) * 4), 0x3FFFF)
+			local P3 = bit32.band(buffer.readu32(Poly, (POffset + 3) * 4), 0x3FFFF)
+
+			buffer.writeu8(Arr, BOffset + 0, bit32.band(P0, 0xFF))
+			buffer.writeu8(Arr, BOffset + 1, bit32.band(bit32.rshift(P0, 8), 0xFF))
+			buffer.writeu8(Arr, BOffset + 2, bit32.bor(bit32.lshift(bit32.band(P1, 0x3F), 2), bit32.rshift(P0, 16)))
+			buffer.writeu8(Arr, BOffset + 3, bit32.band(bit32.rshift(P1, 6), 0xFF))
+			buffer.writeu8(Arr, BOffset + 4, bit32.bor(bit32.lshift(bit32.band(P2, 0xF), 4), bit32.rshift(P1, 14)))
+			buffer.writeu8(Arr, BOffset + 5, bit32.band(bit32.rshift(P2, 4), 0xFF))
+			buffer.writeu8(Arr, BOffset + 6, bit32.bor(bit32.lshift(bit32.band(P3, 0x3), 6), bit32.rshift(P2, 12)))
+			buffer.writeu8(Arr, BOffset + 7, bit32.band(bit32.rshift(P3, 2), 0xFF))
+			buffer.writeu8(Arr, BOffset + 8, bit32.rshift(P3, 10))
+		end
+	elseif Sbw == 20 then
+		local ItrCnt = bit32.rshift(256, 2)
+
+		for I = 0, ItrCnt - 1 do
+			local POffset = bit32.lshift(I, 2)
+			local BOffset = I * 10
+
+			local P0 = bit32.band(buffer.readu32(Poly, (POffset + 0) * 4), 0xFFFFF)
+			local P1 = bit32.band(buffer.readu32(Poly, (POffset + 1) * 4), 0xFFFFF)
+			local P2 = bit32.band(buffer.readu32(Poly, (POffset + 2) * 4), 0xFFFFF)
+			local P3 = bit32.band(buffer.readu32(Poly, (POffset + 3) * 4), 0xFFFFF)
+
+			buffer.writeu8(Arr, BOffset + 0, bit32.band(P0, 0xFF))
+			buffer.writeu8(Arr, BOffset + 1, bit32.band(bit32.rshift(P0, 8), 0xFF))
+			buffer.writeu8(Arr, BOffset + 2, bit32.bor(bit32.lshift(bit32.band(P1, 0xF), 4), bit32.rshift(P0, 16)))
+			buffer.writeu8(Arr, BOffset + 3, bit32.band(bit32.rshift(P1, 4), 0xFF))
+			buffer.writeu8(Arr, BOffset + 4, bit32.rshift(P1, 12))
+			buffer.writeu8(Arr, BOffset + 5, bit32.band(P2, 0xFF))
+			buffer.writeu8(Arr, BOffset + 6, bit32.band(bit32.rshift(P2, 8), 0xFF))
+			buffer.writeu8(Arr, BOffset + 7, bit32.bor(bit32.lshift(bit32.band(P3, 0xF), 4), bit32.rshift(P2, 16)))
+			buffer.writeu8(Arr, BOffset + 8, bit32.band(bit32.rshift(P3, 4), 0xFF))
+			buffer.writeu8(Arr, BOffset + 9, bit32.rshift(P3, 12))
+		end
 	else
 		local Mask = bit32.lshift(1, Sbw) - 1
 		for I = 0, buffer.len(Arr) * 8 - 1 do
@@ -261,6 +306,51 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 			buffer.writeu32(Poly, (POffset + 6) * 4, bit32.bor(bit32.lshift(bit32.band(B11, 0x7), 10), bit32.lshift(B10, 2), bit32.rshift(B9, 6)))
 			buffer.writeu32(Poly, (POffset + 7) * 4, bit32.bor(bit32.lshift(B12, 5), bit32.rshift(B11, 3)))
 		end
+	elseif Sbw == 18 then
+		local ItrCnt = bit32.rshift(256, 2)
+
+		for I = 0, ItrCnt - 1 do
+			local POffset = bit32.lshift(I, 2)
+			local BOffset = I * 9
+
+			local B0 = buffer.readu8(Arr, BOffset + 0)
+			local B1 = buffer.readu8(Arr, BOffset + 1)
+			local B2 = buffer.readu8(Arr, BOffset + 2)
+			local B3 = buffer.readu8(Arr, BOffset + 3)
+			local B4 = buffer.readu8(Arr, BOffset + 4)
+			local B5 = buffer.readu8(Arr, BOffset + 5)
+			local B6 = buffer.readu8(Arr, BOffset + 6)
+			local B7 = buffer.readu8(Arr, BOffset + 7)
+			local B8 = buffer.readu8(Arr, BOffset + 8)
+
+			buffer.writeu32(Poly, (POffset + 0) * 4, bit32.bor(bit32.lshift(bit32.band(B2, 0x3), 16), bit32.lshift(B1, 8), B0))
+			buffer.writeu32(Poly, (POffset + 1) * 4, bit32.bor(bit32.lshift(bit32.band(B4, 0xF), 14), bit32.lshift(B3, 6), bit32.rshift(B2, 2)))
+			buffer.writeu32(Poly, (POffset + 2) * 4, bit32.bor(bit32.lshift(bit32.band(B6, 0x3F), 12), bit32.lshift(B5, 4), bit32.rshift(B4, 4)))
+			buffer.writeu32(Poly, (POffset + 3) * 4, bit32.bor(bit32.lshift(B8, 10), bit32.lshift(B7, 2), bit32.rshift(B6, 6)))
+		end
+	elseif Sbw == 20 then
+		local ItrCnt = bit32.rshift(256, 2)
+
+		for I = 0, ItrCnt - 1 do
+			local POffset = bit32.lshift(I, 2)
+			local BOffset = I * 10
+
+			local B0 = buffer.readu8(Arr, BOffset + 0)
+			local B1 = buffer.readu8(Arr, BOffset + 1)
+			local B2 = buffer.readu8(Arr, BOffset + 2)
+			local B3 = buffer.readu8(Arr, BOffset + 3)
+			local B4 = buffer.readu8(Arr, BOffset + 4)
+			local B5 = buffer.readu8(Arr, BOffset + 5)
+			local B6 = buffer.readu8(Arr, BOffset + 6)
+			local B7 = buffer.readu8(Arr, BOffset + 7)
+			local B8 = buffer.readu8(Arr, BOffset + 8)
+			local B9 = buffer.readu8(Arr, BOffset + 9)
+
+			buffer.writeu32(Poly, (POffset + 0) * 4, bit32.bor(bit32.lshift(bit32.band(B2, 0xF), 16), bit32.lshift(B1, 8), B0))
+			buffer.writeu32(Poly, (POffset + 1) * 4, bit32.bor(bit32.lshift(B4, 12), bit32.lshift(B3, 4), bit32.rshift(B2, 4)))
+			buffer.writeu32(Poly, (POffset + 2) * 4, bit32.bor(bit32.lshift(bit32.band(B7, 0xF), 16), bit32.lshift(B6, 8), B5))
+			buffer.writeu32(Poly, (POffset + 3) * 4, bit32.bor(bit32.lshift(B9, 12), bit32.lshift(B8, 4), bit32.rshift(B7, 4)))
+		end
 	else
 		for I = 0, buffer.len(Arr) * 8 - 1 do
 			local AIdx = bit32.rshift(I, 3)
@@ -330,7 +420,7 @@ function BitPacking.DecodeHintBits(Arr: buffer, H: buffer, K: number, Omega: num
 				if Position >= 256 then
 					Failed = true
 				end
-				
+
 				if not Failed then
 					buffer.writeu32(H, (Off + Position) * 4, 1)
 				end

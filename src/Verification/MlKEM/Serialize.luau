@@ -155,6 +155,22 @@ function Serialize.Encode(Poly: buffer, L: number): buffer
 	return Output
 end
 
+function Serialize.EncodeAt(Poly: buffer, PolyOffset: number, Output: buffer, OutOffset: number, L: number)
+	if L == 12 then
+		for I = 0, 127 do
+			local PolyIdx = PolyOffset + I * 4
+			local ByteIdx = OutOffset + I * 3
+
+			local T0 = buffer.readu16(Poly, PolyIdx)
+			local T1 = buffer.readu16(Poly, PolyIdx + 2)
+
+			buffer.writeu8(Output, ByteIdx, bit32.band(T0, 0xFF))
+			buffer.writeu8(Output, ByteIdx + 1, bit32.bor(bit32.rshift(T0, 8), bit32.lshift(bit32.band(T1, 0x0F), 4)))
+			buffer.writeu8(Output, ByteIdx + 2, bit32.rshift(T1, 4))
+		end
+	end
+end
+
 function Serialize.Decode(Data: buffer, L: number): buffer
 	if not Params.CheckL(L) then
 		error("Invalid encoding parameter l")
@@ -302,6 +318,29 @@ function Serialize.Decode(Data: buffer, L: number): buffer
 	end
 
 	return Poly
+end
+
+function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, PolyOffset: number, L: number)
+	if L == 12 then
+		for I = 0, 127 do
+			local ByteIdx = DataOffset + I * 3
+			local PolyIdx = PolyOffset + I * 4
+
+			local B0 = buffer.readu8(Data, ByteIdx)
+			local B1 = buffer.readu8(Data, ByteIdx + 1)
+			local B2 = buffer.readu8(Data, ByteIdx + 2)
+
+			local T0 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
+			local T1 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
+
+			if T0 >= 3329 or T1 >= 3329 then
+				error("Invalid polynomial coefficient encoding")
+			end
+
+			buffer.writeu16(Poly, PolyIdx, T0)
+			buffer.writeu16(Poly, PolyIdx + 2, T1)
+		end
+	end
 end
 
 return Serialize

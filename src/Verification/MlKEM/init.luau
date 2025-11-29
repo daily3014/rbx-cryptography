@@ -33,6 +33,15 @@ local Params = require("@self/Params")
 local Utils = require("@self/Utils")
 local SHA3 = require("@self/SHA3")
 
+local DECAP_G_INPUT = buffer.create(64)
+local DECAP_K_PRIME = buffer.create(32)
+local DECAP_R_PRIME = buffer.create(32)
+local DECAP_J_OUTPUT = buffer.create(32)
+
+local ENCAP_G_INPUT = buffer.create(64)
+local ENCAP_K_BYTES = buffer.create(32)
+local ENCAP_R = buffer.create(32)
+
 local MlKem = {
 	CSPRNG = CSPRNG
 }
@@ -101,14 +110,14 @@ function MlKem.Encapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 
 	local PublicKeyHash = SHA3.SHA3_256(PublicKey)
 
-	local GInput = buffer.create(64)
+	local GInput = ENCAP_G_INPUT
 	buffer.copy(GInput, 0, Message, 0, 32)
 	buffer.copy(GInput, 32, PublicKeyHash, 0, 32)
 
 	local GOutput = SHA3.SHA3_512(GInput)
 
 	local K_bytes = buffer.create(32)
-	local R = buffer.create(32)
+	local R = ENCAP_R
 	buffer.copy(K_bytes, 0, GOutput, 0, 32)
 	buffer.copy(R, 0, GOutput, 32, 32)
 
@@ -151,14 +160,14 @@ function MlKem.Decapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 
 	local MPrime = Pke.Decrypt(K, Du, Dv, KpkeSecretKey, Ciphertext)
 
-	local GInput = buffer.create(64)
+	local GInput = DECAP_G_INPUT
 	buffer.copy(GInput, 0, MPrime, 0, 32)
 	buffer.copy(GInput, 32, H, 0, 32)
 
 	local GOutput = SHA3.SHA3_512(GInput)
 
-	local KPrime = buffer.create(32)
-	local RPrime = buffer.create(32)
+	local KPrime = DECAP_K_PRIME
+	local RPrime = DECAP_R_PRIME
 	buffer.copy(KPrime, 0, GOutput, 0, 32)
 	buffer.copy(RPrime, 0, GOutput, 32, 32)
 
@@ -167,7 +176,7 @@ function MlKem.Decapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 	buffer.copy(JInput, 32, Ciphertext, 0, buffer.len(Ciphertext))
 
 	local JOutputBuffer = SHA3.SHAKE256(JInput, 32)
-	local JOutput = buffer.create(32)
+	local JOutput = DECAP_J_OUTPUT
 	buffer.copy(JOutput, 0, JOutputBuffer, 0, 32)
 
 	local CiphertextPrime = Pke.Encrypt(K, Eta1, Eta2, Du, Dv, KpkePublicKey, MPrime, RPrime)
@@ -185,6 +194,22 @@ function MlKem.SecretsEqual(Secret1: buffer, Secret2: buffer): boolean
 	end
 
 	return Utils.CtMemcmp(Secret1, Secret2) == 0xFFFFFFFF
+end
+
+function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
+	local KpkeSecretKeyLen = Utils.GetPkeSecretKeyLen(K)
+	local KpkePublicKeyLen = Utils.GetPkePublicKeyLen(K)
+
+	local EkOffset = KpkeSecretKeyLen
+	local HOffset = KpkeSecretKeyLen + KpkePublicKeyLen
+
+	local Ek = buffer.create(KpkePublicKeyLen)
+	local StoredH = buffer.create(32)
+	buffer.copy(Ek, 0, SecretKey, EkOffset, KpkePublicKeyLen)
+	buffer.copy(StoredH, 0, SecretKey, HOffset, 32)
+
+	local ComputedH = SHA3.SHA3_256(Ek)
+	return Utils.CtMemcmp(StoredH, ComputedH) == 0xFFFFFFFF
 end
 
 MlKem.MLKEM_512 = {
@@ -205,6 +230,10 @@ MlKem.MLKEM_512 = {
 		local Z = CSPRNG.RandomBytes(32)
 
 		return MlKem.MLKEM_512.KeyGen(D, Z)
+	end,
+	
+	ValidateDecapsulationKey = function(SecretKey: buffer): boolean
+		return MlKem.ValidateDecapsulationKey(2, SecretKey)
 	end
 }
 
@@ -226,6 +255,10 @@ MlKem.MLKEM_768 = {
 		local Z = CSPRNG.RandomBytes(32)
 
 		return MlKem.MLKEM_768.KeyGen(D, Z)
+	end,
+	
+	ValidateDecapsulationKey = function(SecretKey: buffer): boolean
+		return MlKem.ValidateDecapsulationKey(3, SecretKey)
 	end
 }
 
@@ -247,6 +280,10 @@ MlKem.MLKEM_1024 = {
 		local Z = CSPRNG.RandomBytes(32)
 
 		return MlKem.MLKEM_1024.KeyGen(D, Z)
+	end,
+	
+	ValidateDecapsulationKey = function(SecretKey: buffer): boolean
+		return MlKem.ValidateDecapsulationKey(4, SecretKey)
 	end
 }
 

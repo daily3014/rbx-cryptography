@@ -38,6 +38,18 @@ local LOG2N = 8
 local N = 2^LOG2N
 local POLY_SIZE = N * 2 
 
+local TEMP_V = buffer.create(N * 2)
+local TEMP_V2 = buffer.create(N * 2)
+local TEMP_SINGLE_POLY = buffer.create(N * 2)
+local TEMP_R_POLY = buffer.create(N * 2)
+local TEMP_T = buffer.create(N * 2)
+local TEMP_T2 = buffer.create(N * 2)
+local TEMP_U_POLY = buffer.create(N * 2)
+
+local KEYGEN_G_INPUT = buffer.create(33)
+local KEYGEN_RHO = buffer.create(32)
+local KEYGEN_SIGMA = buffer.create(32)
+
 local Pke = {}
 
 function Pke.KeyGen(K: number, Eta1: number, Seed: buffer): (buffer, buffer)
@@ -48,13 +60,13 @@ function Pke.KeyGen(K: number, Eta1: number, Seed: buffer): (buffer, buffer)
 		error("Seed must be 32 bytes")
 	end
 
-	local GInput = buffer.create(33)
+	local GInput = KEYGEN_G_INPUT
 	buffer.copy(GInput, 0, Seed, 0, 32)
 	buffer.writeu8(GInput, 32, K)
 
 	local GOutput = SHA3.SHA3_512(GInput)
-	local Rho = buffer.create(32)
-	local Sigma = buffer.create(32)
+	local Rho = KEYGEN_RHO
+	local Sigma = KEYGEN_SIGMA
 	buffer.copy(Rho, 0, GOutput, 0, 32)
 	buffer.copy(Sigma, 0, GOutput, 32, 32)
 
@@ -131,13 +143,17 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	local TempV = buffer.create(N * 2)
 	local SinglePoly = buffer.create(N * 2)
 
+	local V = TEMP_V
+	local TempV = TEMP_V2
+	local SinglePoly = TEMP_SINGLE_POLY
+	local RPoly = TEMP_R_POLY
+	buffer.fill(V, 0, 0, N * 2)
+
 	local PolySize = POLY_SIZE
-	local Num = N
 	for I = 0, K - 1 do
 		local TPolyOffset = I * PolySize
 		local RPolyOffset = I * PolySize
 		buffer.copy(SinglePoly, 0, TPrime, TPolyOffset, PolySize)
-		local RPoly = buffer.create(Num * 2)
 		buffer.copy(RPoly, 0, R, RPolyOffset, PolySize)
 		Ntt.PolyMul(SinglePoly, RPoly, TempV)
 		Ntt.PolyAdd(V, TempV, V)
@@ -198,14 +214,18 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	local TempT = buffer.create(N * 2)
 	local SinglePoly = buffer.create(N * 2)
 
+	local T = TEMP_T
+	local TempT = TEMP_T2
+	local SinglePoly = TEMP_SINGLE_POLY
+	local UPoly = TEMP_U_POLY
+	buffer.fill(T, 0, 0, N * 2)
+
 	local PolySize = POLY_SIZE
-	local Num = N
 	for I = 0, K - 1 do
 		local SPolyOffset = I * PolySize
 		local UPolyOffset = I * PolySize
 
 		buffer.copy(SinglePoly, 0, SPrime, SPolyOffset, PolySize)
-		local UPoly = buffer.create(Num * 2)
 		buffer.copy(UPoly, 0, U, UPolyOffset, PolySize)
 
 		Ntt.PolyMul(SinglePoly, UPoly, TempT)

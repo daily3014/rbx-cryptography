@@ -22,6 +22,7 @@ function Compression.Compress(Value: number, D: number): number
 	local Rounded = Shifted + QHalf
 	local Quotient = Rounded // Q
 	local Mask = (2^D) - 1
+	
 	return bit32.band(Quotient, Mask)
 end
 
@@ -80,9 +81,10 @@ function Compression.PolyCompress(Poly: buffer, D: number)
 			buffer.writeu16(Poly, Index * 2, bit32.band(Quotient, 2047))
 		end
 	else
+		local Compress = Compression.Compress
 		for Index = 0, N - 1 do
 			local Value = buffer.readu16(Poly, Index * 2)
-			local Compressed = Compression.Compress(Value, D)
+			local Compressed = Compress(Value, D)
 			buffer.writeu16(Poly, Index * 2, Compressed)
 		end
 	end
@@ -136,9 +138,10 @@ function Compression.PolyDecompress(Poly: buffer, D: number)
 			buffer.writeu16(Poly, Index * 2, Quotient + RoundBit)
 		end
 	else
+		local Decompress = Compression.Decompress
 		for Index = 0, N - 1 do
 			local Compressed = buffer.readu16(Poly, Index * 2)
-			local Decompressed = Compression.Decompress(Compressed, D)
+			local Decompressed = Decompress(Compressed, D)
 			buffer.writeu16(Poly, Index * 2, Decompressed)
 		end
 	end

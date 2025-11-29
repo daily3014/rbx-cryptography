@@ -139,13 +139,13 @@ end
 -- Check how many bytes are available for custom entropy
 print(`CSPRNG has {CSPRNG.BytesLeft} bytes available for custom entropy providers`)
 
--- AddEntropyProvider will only be called once it uses up all the entropy from init
--- So you need to manually reseed first if you want the extra entropy from the start
-CSPRNG.AddEntropyProvider(GetEntropyBuffer)
-
 -- Manual reseed to get the quantum entropy right away
 -- This uses the same 312 bytes for default entropy, leaving 712 for our custom entropy
 CSPRNG.Reseed(GetEntropyBuffer(CSPRNG.BytesLeft))
+
+-- AddEntropyProvider will only be called once it uses up all the entropy from init
+-- So you need to manually reseed first if you want the extra entropy from the start
+CSPRNG.AddEntropyProvider(GetEntropyBuffer)
 
 -- Use up the entropy so you can see when AddEntropyProvider gets called again
 while task.wait() do

@@ -19,7 +19,6 @@
 --!native
 
 local Q = 8380417
-local Q_INV_32 = 58728449
 
 local Field = {}
 
