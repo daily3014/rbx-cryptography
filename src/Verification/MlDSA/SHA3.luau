@@ -28,6 +28,9 @@ local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	end
 end
 
+local LANES_LOW = buffer.create(100)
+local LANES_HIGH = buffer.create(100)
+
 local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RCHigh, RCLow = HIGH_ROUND, LOW_ROUND
@@ -197,8 +200,11 @@ end
 
 local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer
 	local RateBytes = (1600 - CapacityBits) // 8
-	local LanesLow = buffer.create(100)
-	local LanesHigh = buffer.create(100)
+	buffer.fill(LANES_LOW, 0, 0, 100)
+	buffer.fill(LANES_HIGH, 0, 0, 100)
+
+	local LanesLow = LANES_LOW
+	local LanesHigh  = LANES_HIGH
 
 	local MessageLength: number = buffer.len(Message)
 	local PaddedLength: number = MessageLength + 1
