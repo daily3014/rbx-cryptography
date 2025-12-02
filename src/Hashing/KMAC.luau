@@ -1,27 +1,34 @@
 --[=[
-	Cryptography library: Keccak/SHA-3
+	Cryptography library: KMAC (Keccak Message Authentication Code)
 	
-	Sizes:
-		SHA3-224 Digest: 28 bytes
-		SHA3-256 Digest: 32 bytes
-		SHA3-384 Digest: 48 bytes
-		SHA3-512 Digest: 64 bytes
-		SHAKE128 Digest: variable
-		SHAKE256 Digest: variable
-
-	Return type: string
+	KMAC128 and KMAC256 are keyed hash functions based on cSHAKE128 and cSHAKE256.
+	They give variable length output and strong authentication.
+	
+	Unlike SHAKE and cSHAKE, changing the output length generates a new,
+	unrelated output. Both variants support up to 256 bits of security strength.
+	
+	Key Derivation Usage:
+		For key derivation, use information related to the derived keying material
+		as input data. Include identities and optionally a nonce.
+	
+	Return type: (string, buffer)
 	Example usage:
+		local Key = buffer.fromstring("my-secret-key")
 		local Message = buffer.fromstring("Hello World")
+		local Output = buffer.create(32)
 		
-		local Result1 = SHA3_256(Message)
-		local Result2 = SHAKE128(Message, 32)
+		-- KMAC128 with 32-byte output
+		local Hex, Digest = KMAC128(Message, Key, Output, buffer.create(0))
+		
+		-- KMAC256 with custom string
+		local Hex2, Digest2 = KMAC256(Message, Key, Output, buffer.fromstring("super-code"))
 --]=]
 
 --!strict
 --!optimize 2
 --!native
 
-local SHA3 = {}
+local KMAC = {}
 
 local ENCODE_LOOKUP = buffer.create(256 * 2) do
 	local HexChars = "0123456789abcdef"
@@ -63,6 +70,8 @@ end
 
 local LANES_LOW = buffer.create(100)
 local LANES_HIGH = buffer.create(100)
+local FUNCTION_NAME = buffer.fromstring("KMAC")
+local RESULT = buffer.create(2)
 
 local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
@@ -231,51 +240,179 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 	end
 end
 
-local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): (string, buffer)
-	local RateBytes = (1600 - CapacityBits) // 8
+local function LeftEncode(Value: number): buffer
+	if Value == 0 then
+		buffer.writeu8(RESULT, 0, 1)
+		buffer.writeu8(RESULT, 1, 0)
+		
+		return RESULT
+	end
+
+	local ByteLength = 1
+	if Value > 0xFF then
+		if Value > 0xFFFF then
+			if Value > 0xFFFFFF then
+				ByteLength = 4
+			else
+				ByteLength = 3
+			end
+		else
+			ByteLength = 2
+		end
+	end
+
+	local Result = buffer.create(ByteLength + 1)
+	buffer.writeu8(Result, 0, ByteLength)
+
+	if ByteLength == 1 then
+		buffer.writeu8(Result, 1, Value)
+	elseif ByteLength == 2 then
+		buffer.writeu8(Result, 1, bit32.rshift(Value, 8))
+		buffer.writeu8(Result, 2, bit32.band(Value, 0xFF))
+	elseif ByteLength == 3 then
+		buffer.writeu8(Result, 1, bit32.rshift(Value, 16))
+		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 8), 0xFF))
+		buffer.writeu8(Result, 3, bit32.band(Value, 0xFF))
+	else
+		buffer.writeu8(Result, 1, bit32.rshift(Value, 24))
+		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 16), 0xFF))
+		buffer.writeu8(Result, 3, bit32.band(bit32.rshift(Value, 8), 0xFF))
+		buffer.writeu8(Result, 4, bit32.band(Value, 0xFF))
+	end
+
+	return Result
+end
+
+local function RightEncode(Value: number): buffer
+	if Value == 0 then
+		buffer.writeu8(RESULT, 0, 0)
+		buffer.writeu8(RESULT, 1, 1)
+		
+		return RESULT
+	end
+
+	local ByteLength = 1
+	if Value > 0xFF then
+		if Value > 0xFFFF then
+			if Value > 0xFFFFFF then
+				ByteLength = 4
+			else
+				ByteLength = 3
+			end
+		else
+			ByteLength = 2
+		end
+	end
+
+	local Result = buffer.create(ByteLength + 1)
+	buffer.writeu8(Result, ByteLength, ByteLength)
+
+	if ByteLength == 1 then
+		buffer.writeu8(Result, 0, Value)
+	elseif ByteLength == 2 then
+		buffer.writeu8(Result, 0, bit32.rshift(Value, 8))
+		buffer.writeu8(Result, 1, bit32.band(Value, 0xFF))
+	elseif ByteLength == 3 then
+		buffer.writeu8(Result, 0, bit32.rshift(Value, 16))
+		buffer.writeu8(Result, 1, bit32.band(bit32.rshift(Value, 8), 0xFF))
+		buffer.writeu8(Result, 2, bit32.band(Value, 0xFF))
+	else
+		buffer.writeu8(Result, 0, bit32.rshift(Value, 24))
+		buffer.writeu8(Result, 1, bit32.band(bit32.rshift(Value, 16), 0xFF))
+		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 8), 0xFF))
+		buffer.writeu8(Result, 3, bit32.band(Value, 0xFF))
+	end
+
+	return Result
+end
+
+local function EncodeString(Data: buffer): buffer
+	local DataLength = buffer.len(Data)
+	
+	local LengthEncoding = LeftEncode(DataLength * 8)
+	local LengthEncodingSize = buffer.len(LengthEncoding)
+	
+	local Result = buffer.create(LengthEncodingSize + DataLength)
+
+	buffer.copy(Result, 0, LengthEncoding, 0, LengthEncodingSize)
+	buffer.copy(Result, LengthEncodingSize, Data, 0, DataLength)
+
+	return Result
+end
+
+local function Bytepad(Data: buffer, Rate: number): buffer
+	local DataLength = buffer.len(Data)
+	
+	local RateEncoding = LeftEncode(Rate)
+	local RateEncodingSize = buffer.len(RateEncoding)
+	
+	local TotalPrePadLength = RateEncodingSize + DataLength
+	local PadLength = Rate - (TotalPrePadLength % Rate)
+	if PadLength == Rate then
+		PadLength = 0
+	end
+
+	local Result = buffer.create(TotalPrePadLength + PadLength)
+	buffer.copy(Result, 0, RateEncoding, 0, RateEncodingSize)
+	buffer.copy(Result, RateEncodingSize, Data, 0, DataLength)
+
+	return Result
+end
+
+local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateBytes: number): ()	
 	buffer.fill(LANES_LOW, 0, 0, 100)
 	buffer.fill(LANES_HIGH, 0, 0, 100)
 
 	local LanesLow = LANES_LOW
-	local LanesHigh  = LANES_HIGH
+	local LanesHigh = LANES_HIGH
 
-	local MessageLength: number = buffer.len(Message)
-	local PaddedLength: number = MessageLength + 1
+	local OutputBytes = buffer.len(Output)
 
+	local EncodedFunctionName = EncodeString(FUNCTION_NAME)
+	local EncodedFunctionNameSize = buffer.len(EncodedFunctionName)
+
+	local PrefixData: buffer
+	if CustomBuffer then
+		local EncodedCustomization = EncodeString(CustomBuffer)
+		local EncodedCustomizationSize = buffer.len(EncodedCustomization)
+		PrefixData = buffer.create(EncodedFunctionNameSize + EncodedCustomizationSize)
+		buffer.copy(PrefixData, 0, EncodedFunctionName, 0, EncodedFunctionNameSize)
+		buffer.copy(PrefixData, EncodedFunctionNameSize, EncodedCustomization, 0, EncodedCustomizationSize)
+	else
+		PrefixData = EncodedFunctionName
+	end
+
+	local BytepaddedPrefix = Bytepad(PrefixData, RateBytes)
+	local BytepaddedPrefixSize = buffer.len(BytepaddedPrefix)
+	local DataSize = buffer.len(Data)
+	local TotalInputSize = BytepaddedPrefixSize + DataSize
+
+	local PaddedLength = TotalInputSize + 1
 	local Remainder = PaddedLength % RateBytes
 	if Remainder ~= 0 then
 		PaddedLength += (RateBytes - Remainder)
 	end
 
 	local PaddedMessage = buffer.create(PaddedLength)
+	buffer.copy(PaddedMessage, 0, BytepaddedPrefix, 0, BytepaddedPrefixSize)
+	buffer.copy(PaddedMessage, BytepaddedPrefixSize, Data, 0, DataSize)
 
-	if MessageLength > 0 then
-		buffer.copy(PaddedMessage, 0, Message, 0, MessageLength)
-	end
-
-	if PaddedLength - MessageLength == 1 then
-		buffer.writeu8(PaddedMessage, MessageLength, bit32.bor(DomainSeparator, 0x80))
+	local DomainSeparator = 0x04
+	if PaddedLength - TotalInputSize == 1 then
+		buffer.writeu8(PaddedMessage, TotalInputSize, bit32.bor(DomainSeparator, 0x80))
 	else
-		buffer.writeu8(PaddedMessage, MessageLength, DomainSeparator)
-		if PaddedLength - MessageLength > 2 then
-			buffer.fill(PaddedMessage, MessageLength + 1, 0, PaddedLength - MessageLength - 2)
+		buffer.writeu8(PaddedMessage, TotalInputSize, DomainSeparator)
+		if PaddedLength - TotalInputSize > 2 then
+			buffer.fill(PaddedMessage, TotalInputSize + 1, 0, PaddedLength - TotalInputSize - 2)
 		end
 		buffer.writeu8(PaddedMessage, PaddedLength - 1, 0x80)
 	end
 
 	Keccak(LanesLow, LanesHigh, PaddedMessage, 0, PaddedLength, RateBytes)
 
-	local Output = buffer.create(OutputBytes)
-	local Length = buffer.len(Output)
-	local Hex = buffer.create(Length * 2)
-
-	local Lookup = ENCODE_LOOKUP
-
-	local Leftover = Length % 8
-	local HexCursor = 0
 	local OutputOffset = 0
-
 	local ZeroBuffer = buffer.create(RateBytes)
+
 	while OutputOffset < OutputBytes do
 		local BytesThisRound = math.min(RateBytes, OutputBytes - OutputOffset)
 
@@ -302,8 +439,34 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 			Keccak(LanesLow, LanesHigh, ZeroBuffer, 0, RateBytes, RateBytes)
 		end
 	end
+end
 
-	for Index = 0, Length - Leftover - 1, 8 do
+function KMAC.KMAC128(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?): (string, buffer)
+	local OutputBytes = buffer.len(Output)
+
+	local EncodedKey = EncodeString(Key)
+	local BytepaddedKey = Bytepad(EncodedKey, 168)
+
+	local BytepaddedKeySize = buffer.len(BytepaddedKey)
+	local DataSize = buffer.len(Data)
+
+	local RightEncodedLength = RightEncode(OutputBytes * 8)
+	local RightEncodedLengthSize = buffer.len(RightEncodedLength)
+
+	local Hex = buffer.create(OutputBytes * 2)
+	local Lookup = ENCODE_LOOKUP
+
+	local Leftover = OutputBytes % 8
+	local HexCursor = 0
+
+	local CombinedData = buffer.create(BytepaddedKeySize + DataSize + RightEncodedLengthSize)
+	buffer.copy(CombinedData, 0, BytepaddedKey, 0, BytepaddedKeySize)
+	buffer.copy(CombinedData, BytepaddedKeySize, Data, 0, DataSize)
+	buffer.copy(CombinedData, BytepaddedKeySize + DataSize, RightEncodedLength, 0, RightEncodedLengthSize)
+
+	CSHAKE(Output, CustomBuffer, CombinedData, 168)
+
+	for Index = 0, OutputBytes - Leftover - 1, 8 do
 		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
 		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 1) * 2)
 		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 2) * 2)
@@ -325,37 +488,69 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 		HexCursor += 16
 	end
 
-	for Index = Length - Leftover, Length - 1 do
+	for Index = OutputBytes - Leftover, OutputBytes - 1 do
 		local HexPair = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
 		buffer.writeu16(Hex, HexCursor, HexPair)
 		HexCursor += 2
 	end
-	
+
 	return buffer.tostring(Hex), Output
 end
 
-function SHA3.SHA3_224(Message: buffer): (string, buffer)
-	return ProcessSponge(Message, 448, 28, 0x06)
+function KMAC.KMAC256(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?): (string, buffer)
+	local OutputBytes = buffer.len(Output)
+
+	local EncodedKey = EncodeString(Key)
+	local BytepaddedKey = Bytepad(EncodedKey, 136)
+
+	local BytepaddedKeySize = buffer.len(BytepaddedKey)
+	local DataSize = buffer.len(Data)
+
+	local RightEncodedLength = RightEncode(OutputBytes * 8)
+	local RightEncodedLengthSize = buffer.len(RightEncodedLength)
+
+	local Hex = buffer.create(OutputBytes * 2)
+	local Lookup = ENCODE_LOOKUP
+
+	local Leftover = OutputBytes % 8
+	local HexCursor = 0
+
+	local CombinedData = buffer.create(BytepaddedKeySize + DataSize + RightEncodedLengthSize)
+	buffer.copy(CombinedData, 0, BytepaddedKey, 0, BytepaddedKeySize)
+	buffer.copy(CombinedData, BytepaddedKeySize, Data, 0, DataSize)
+	buffer.copy(CombinedData, BytepaddedKeySize + DataSize, RightEncodedLength, 0, RightEncodedLengthSize)
+
+	CSHAKE(Output, CustomBuffer, CombinedData, 136)
+
+	for Index = 0, OutputBytes - Leftover - 1, 8 do
+		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
+		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 1) * 2)
+		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 2) * 2)
+		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 3) * 2)
+		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 4) * 2)
+		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 5) * 2)
+		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 6) * 2)
+		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 7) * 2)
+
+		buffer.writeu16(Hex, HexCursor, Hex1)
+		buffer.writeu16(Hex, HexCursor + 2, Hex2)
+		buffer.writeu16(Hex, HexCursor + 4, Hex3)
+		buffer.writeu16(Hex, HexCursor + 6, Hex4)
+		buffer.writeu16(Hex, HexCursor + 8, Hex5)
+		buffer.writeu16(Hex, HexCursor + 10, Hex6)
+		buffer.writeu16(Hex, HexCursor + 12, Hex7)
+		buffer.writeu16(Hex, HexCursor + 14, Hex8)
+
+		HexCursor += 16
+	end
+
+	for Index = OutputBytes - Leftover, OutputBytes - 1 do
+		local HexPair = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
+		buffer.writeu16(Hex, HexCursor, HexPair)
+		HexCursor += 2
+	end
+
+	return buffer.tostring(Hex), Output
 end
 
-function SHA3.SHA3_256(Message: buffer): (string, buffer)
-	return ProcessSponge(Message, 512, 32, 0x06)
-end
-
-function SHA3.SHA3_384(Message: buffer): (string, buffer)
-	return ProcessSponge(Message, 768, 48, 0x06)
-end
-
-function SHA3.SHA3_512(Message: buffer): (string, buffer)
-	return ProcessSponge(Message, 1024, 64, 0x06)
-end
-
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
-	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
-end
-
-function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
-	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
-end
-
-return SHA3
+return KMAC

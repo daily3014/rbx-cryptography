@@ -16,7 +16,7 @@
 		
 		--------Usage Case 2--------
 		local LongNonce = buffer.fromstring(string.rep("n", 24))
-		local Decrypted = ChaCha.XChaCha20(Encrypted, Key, LongNonce)
+		local Encrypted = ChaCha.XChaCha20(Data, Key, LongNonce)
 --]=]
 
 --!strict

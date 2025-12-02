@@ -83,6 +83,8 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
 
+- [KMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/KMAC.luau): Hash-based Message Authentication Code (uses Keccak)
+
 **Authenticated Encryption**
 
 - [ChaCha20-Poly1305](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AEAD): AEAD construction ([RFC 8439](https://doi.org/10.17487/RFC8439))
@@ -126,6 +128,8 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 | SHA3-512 | 20k | **1.0 ms** | 10.60 ms | - | - | **10.6x faster** than HashLib |
 | BLAKE3 | 20k | **168 μs** | - | - | - | - |
 | HMAC-BLAKE3 | 20k | **165 μs** | - | - | - | - |
+| KMAC-128 | 20k | **1.3 ms** | - | - | - | - |
+| KMAC-256 | 20k | **1.6 ms** | - | - | - | - |
 | Adler-32 | 200k | **190 μs** | - | 1.65 ms (Naive Approach) | - | **8.7x faster** |
 | CRC32 | 200k | **2.01 ms** | - | 6.26 ms (DevForum) | - | **3.1x faster** |
 
@@ -196,6 +200,8 @@ Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> (
 **Authentication:**
 ```lua
 Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number, BigEndian: boolean?) -> (string, buffer)
+Hashing.KMAC.KMAC128(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?) -> (string, buffer)
+Hashing.KMAC.KMAC256(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?) -> (string, buffer)
 -- SHA3/Blake family should have BigEndian = false
 ```
 

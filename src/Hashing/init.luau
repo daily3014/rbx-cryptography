@@ -2,6 +2,7 @@
 
 local Algorithms = table.freeze({
 	HMAC = require("@self/HMAC"),
+	KMAC = require("@self/KMAC"),
 	MD5 = require("@self/MD5"),
 	SHA1 = require("@self/SHA1"),
 	SHA2 = require("@self/SHA2"),
@@ -11,6 +12,5 @@ local Algorithms = table.freeze({
 	Blake3 = require("@self/Blake3"),
 	MurMur = require("@self/Murmur")
 })
-
 
 return Algorithms
