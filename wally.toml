@@ -1,7 +1,7 @@
 [package]
 name = "daily3014/cryptography"
 description = "Luau implementations of popular hashing/encryption algorithms"
-version = "2.7.2"
+version = "2.7.3"
 registry = "https://github.com/UpliftGames/wally-index"
 repository = "https://github.com/daily3014/rbx-cryptography"
 

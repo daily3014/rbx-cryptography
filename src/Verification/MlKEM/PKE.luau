@@ -139,10 +139,6 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	PolyVec.VecIntt(U, K)
 	PolyVec.VecAddTo(E1, U, K)
 
-	local V = buffer.create(N * 2)
-	local TempV = buffer.create(N * 2)
-	local SinglePoly = buffer.create(N * 2)
-
 	local V = TEMP_V
 	local TempV = TEMP_V2
 	local SinglePoly = TEMP_SINGLE_POLY

@@ -338,7 +338,6 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu8(Dst, BOffset + 9, bit32.rshift(P3, 12))
 			end
 		else
-			-- Fallback for other bit widths
 			local PolyBuffer = buffer.create(N * 4)
 			local ByteBuffer = buffer.create(PolyByteLength)
 			buffer.copy(PolyBuffer, 0, Src, SrcOffset, N * 4)
@@ -481,7 +480,6 @@ function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B7, 4), bit32.lshift(B8, 4), bit32.lshift(B9, 12)))
 			end
 		else
-			-- Fallback for other bit widths
 			local ByteBuffer = buffer.create(PolyByteLength)
 			local PolyBuffer = buffer.create(N * 4)
 			buffer.copy(ByteBuffer, 0, Src, SrcOffset, PolyByteLength)
@@ -635,14 +633,12 @@ function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number
 	local T0 = bit32.rshift(Alpha, 1)
 	local T1 = Q - T0
 	local T1_Q = Q - 1
-
-	local Num = N
 	local Modulus = Q
 
 	for I = 0, K - 1 do
-		local Offset = I * Num * 4
+		local Offset = I * N * 4
 
-		for J = 0, Num - 1 do
+		for J = 0, N - 1 do
 			local JOffset = Offset + J * 4
 			local H = buffer.readu32(PolyH, JOffset)
 			local R = buffer.readu32(PolyR, JOffset)
@@ -650,34 +646,24 @@ function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number
 			local T2 = R + T0 - 1
 			local T3 = math.floor(T2 / Alpha)
 			local T4 = T3 * Alpha
+			
 			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
+			
 			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
 			local Flag = (T5 == T1_Q)
+			
 			local R1 = if Flag then 0 else T3
 			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Modulus) else R0
 
-			local Result
 			if H == 1 then
 				if R0_ > 0 and R0_ < T1 then
-					if R1 == (M - 1) then
-						Result = 0
-					else
-						Result = R1 + 1
-					end
-				elseif R0_ >= T1 then
-					if R1 == 0 then
-						Result = M - 1
-					else
-						Result = R1 - 1
-					end
+					R1 += 1
 				else
-					Result = R1
+					R1 -= 1
 				end
-			else
-				Result = R1
 			end
 
-			buffer.writeu32(PolyRZ, JOffset, Result)
+			buffer.writeu32(PolyRZ, JOffset, (R1 % M + M) % M)
 		end
 	end
 end

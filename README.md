@@ -31,7 +31,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@2.7.2"
+cryptography = "daily3014/cryptography@2.7.3"
 ```
 
 ### Pesde
@@ -155,8 +155,8 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 | Algorithm | Operation | Time | Alternative | Improvement |
 |-----------|-----------|------|-------------|-------------|
 | EdDSA (Roundtrip) | Sign+Verify | **1.4 ms** | - | - |
-| ML-DSA-44 (Roundtrip) | Sign+Verify | **9.1 ms** | - | - |
-| ML-KEM-512 (Roundtrip) | Encap+Decap | **1.02 ms** | - | - |
+| ML-DSA-44 (Roundtrip) | Sign+Verify | **8.4 ms** | - | - |
+| ML-KEM-512 (Roundtrip) | Encap+Decap | **891 μs** | - | - |
 
 ### Utilities
 | Algorithm | Data Size | Time | Alternative | Improvement |
