@@ -62,7 +62,7 @@ function Ntt.Ntt(Poly: buffer)
 	local Zeta = NTT_ZETA_EXP
 	local Powers = POWERS_OF_TWO
 	local Modulus = Q
-	
+
 	for L = LOG2N - 1, 1, -1 do
 		local Len = Powers[L][1]
 		local LenX2 = Powers[L][2]
@@ -98,7 +98,7 @@ function Ntt.Intt(Poly: buffer)
 	local InvN = INV_N
 	local Powers = POWERS_OF_TWO
 	local Modulus = Q
-	
+
 	for L = 1, LOG2N - 1 do
 		local Len = Powers[L][1]
 		local LenX2 = Powers[L][2]
@@ -116,7 +116,7 @@ function Ntt.Intt(Poly: buffer)
 				local PolyILen = buffer.readu16(Poly, OffsetILen)
 
 				local Sum = PolyI + PolyILen
-				
+
 				local AddResult = if Sum >= Modulus then Sum - Modulus else Sum
 				local SubResult = if PolyI >= PolyILen then PolyI - PolyILen else PolyI - PolyILen + Modulus
 
@@ -237,7 +237,7 @@ end
 function Ntt.PolyMul(F: buffer, G: buffer, H: buffer)
 	local PolyZeta = POLY_MUL_ZETA_EXP
 	local Modulus = Q
-	
+
 	for I = 0, N / 2 - 1 do
 		local Offset = I * 4
 		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
@@ -315,7 +315,7 @@ function Ntt.PolySub(F: buffer, G: buffer, H: buffer)
 		local Offset = Index * 2
 		local AValue = buffer.readu16(F, Offset)
 		local BValue = buffer.readu16(G, Offset)
-		
+
 		local Diff = AValue - BValue
 		local Result = if Diff < 0 then Diff + Modulus else Diff
 		buffer.writeu16(H, Offset, Result)
