@@ -99,13 +99,12 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			bit32.bor(E + OldE, 0),
 			bit32.bor(F + OldF, 0),
 			bit32.bor(G + OldG, 0),
-			bit32.bor(H + OldH, 0)
+			bit32.bor(H + OldH, 0) :: number
 	end
 
 	return A, B, C, D, E, F, G, H
 end
 
-local FormatString = string.rep("%08x", 8)
 local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
@@ -130,7 +129,7 @@ local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 24, G)
 	buffer.writeu32(Digest, 28, H)
 
-	return string.format(FormatString, A, B, C, D, E, F, G, H), Digest
+	return string.format("%08x%08x%08x%08x%08x%08x%08x%08x", A, B, C, D, E, F, G, H), Digest
 end
 
 return SHA256
