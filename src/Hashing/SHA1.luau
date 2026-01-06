@@ -23,6 +23,7 @@
 --!strict
 --!optimize 2
 --!native
+
 local OFFSETS = buffer.create(320)
 
 local function PreProcess(Contents: buffer): (buffer, number)

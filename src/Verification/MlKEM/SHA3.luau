@@ -267,24 +267,12 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	return Output
 end
 
-function SHA3.SHA3_224(Message: buffer): buffer
-	return ProcessSponge(Message, 448, 28, 0x06)
-end
-
 function SHA3.SHA3_256(Message: buffer): buffer
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-function SHA3.SHA3_384(Message: buffer): buffer
-	return ProcessSponge(Message, 768, 48, 0x06)
-end
-
 function SHA3.SHA3_512(Message: buffer): buffer
 	return ProcessSponge(Message, 1024, 64, 0x06)
-end
-
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): buffer
-	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
 function SHA3.SHAKE256(Message: buffer, OutputBytes: number): buffer

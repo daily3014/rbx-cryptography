@@ -100,7 +100,7 @@ local function ProcessBlock(InitialState: buffer, Rounds: number)
 			S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 7)
 		end
 	end
-	
+
 	buffer.writeu32(InitialState, 0, buffer.readu32(InitialState, 0) + S0)
 	buffer.writeu32(InitialState, 4, buffer.readu32(InitialState, 4) + S1)
 	buffer.writeu32(InitialState, 8, buffer.readu32(InitialState, 8) + S2)
@@ -121,11 +121,9 @@ end
 
 local function InitializeState(Key: buffer, Nonce: buffer, Counter: number): buffer
 	local KeyLength = buffer.len(Key)
-
 	local State = buffer.create(STATE_SIZE * DWORD)
 
-	local Sigma, Tau = SIGMA_CONSTANTS, TAU_CONSTANTS
-	local Constants = KeyLength == 32 and Sigma or Tau
+	local Constants = KeyLength == 32 and SIGMA_CONSTANTS or TAU_CONSTANTS
 
 	buffer.copy(State, 0, Constants, 0, 16)
 
@@ -228,7 +226,7 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 	local State = InitializeState(Key, Nonce, BlockCounter)
 	local StateBackup = buffer.create(64)
 	buffer.copy(StateBackup, 0, State, 0)
-	
+
 	while DataOffset < DataLength do
 		ProcessBlock(State, BlockRounds)
 
@@ -245,7 +243,7 @@ local function ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numbe
 		buffer.copy(State, 0, StateBackup, 0)
 		buffer.writeu32(State, 48, BlockCounter)
 	end
-	
+
 	return Output
 end
 

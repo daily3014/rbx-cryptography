@@ -49,7 +49,7 @@ local Ntt = {}
 function Ntt.ForwardNTT(Poly: buffer)
 	local Zeta = ZETA_EXP
 	local Modulus = Q
-	
+
 	for L = LOG2N - 1, 0, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
@@ -82,7 +82,7 @@ end
 function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 	local Zeta = ZETA_EXP
 	local Modulus = Q
-	
+
 	for L = LOG2N - 1, 0, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
@@ -116,7 +116,7 @@ function Ntt.InverseNTT(Poly: buffer)
 	local Zeta = ZETA_NEG_EXP
 	local Inv_n = INV_N
 	local Modulus = Q
-	
+
 	for L = 0, LOG2N - 1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)

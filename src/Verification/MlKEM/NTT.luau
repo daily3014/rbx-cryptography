@@ -223,17 +223,6 @@ function Ntt.PolyAddAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H
 	end
 end
 
-function Ntt.PolySubAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
-	local Modulus = Q
-	for Index = 0, 255 do
-		local Offset = Index * 2
-		local AValue = buffer.readu16(F, FOffset + Offset)
-		local BValue = buffer.readu16(G, GOffset + Offset)
-		local Diff = AValue - BValue
-		buffer.writeu16(H, HOffset + Offset, if Diff < 0 then Diff + Modulus else Diff)
-	end
-end
-
 function Ntt.PolyMul(F: buffer, G: buffer, H: buffer)
 	local PolyZeta = POLY_MUL_ZETA_EXP
 	local Modulus = Q

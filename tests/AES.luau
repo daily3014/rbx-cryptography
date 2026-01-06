@@ -16,10 +16,10 @@
 		Non 96bit IVs require GHASH compression which introduces risks:
 		
 		1. Authentication key leakage: If the same IV is derived from different
-			inputs via GHASH, an attacker can recover the authentication key H.
+		 	inputs via GHASH, an attacker can recover the authentication key H.
 		
 		2. Counter wrap attacks: Long IVs can produce counter values near 2^32,
-			enabling attacks that leak information about the GHASH of the IV.
+		 	enabling attacks that leak information about the GHASH of the IV.
 		
 		Idk why you would even use a different size nonce.
 --]=]

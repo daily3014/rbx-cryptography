@@ -21,12 +21,7 @@
 --!optimize 2
 --!native
 
-type Ruleset = {
-	
-}
-
 local FieldPrime = require("./FieldPrime")
-local Edwards25519 = require("./Edwards25519")
 local CSPRNG = require("./CSPRNG")
 
 local MONTGOMERY_POINT_SIZE = 208
@@ -140,77 +135,10 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 	return CurrentP
 end
 
-function Curve25519.Ladder8(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
-	local RandomBuffer = CSPRNG.Ed25519Random()
-	local RandomFactor = FieldPrime.Decode(RandomBuffer)
-
-	local BaseX = GetMontgomeryCoord(BasePoint, 0)
-	local BaseZ = GetMontgomeryCoord(BasePoint, 1)
-	
-	local RandomizedPoint = buffer.create(MONTGOMERY_POINT_SIZE)
-	buffer.copy(RandomizedPoint, 0 * COORD_SIZE, FieldPrime.Mul(BaseX, RandomFactor), 0, COORD_SIZE)
-	buffer.copy(RandomizedPoint, 1 * COORD_SIZE, FieldPrime.Mul(BaseZ, RandomFactor), 0, COORD_SIZE)
-
-	return Double(Double(Double(Ladder(RandomizedPoint, ScalarBits, ScalarBitCount))))
-end
-
-function Curve25519.Scale(InputPoint: buffer): buffer
-	local InputX = GetMontgomeryCoord(InputPoint, 0)
-	local InputZ = GetMontgomeryCoord(InputPoint, 1)
-
-	local Point = buffer.create(MONTGOMERY_POINT_SIZE)
-	buffer.copy(Point, 0 * COORD_SIZE, FieldPrime.Mul(InputX, FieldPrime.Invert(InputZ)), 0, COORD_SIZE)
-	buffer.copy(Point, 1 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
-
-	return Point
-end
-
-function Curve25519.Encode(NormalizedPoint: buffer): buffer
-	return FieldPrime.Encode(GetMontgomeryCoord(NormalizedPoint, 0))
-end
-
 function Curve25519.Decode(EncodedBuffer: buffer): buffer
 	local Point = buffer.create(MONTGOMERY_POINT_SIZE)
 	buffer.copy(Point, 0 * COORD_SIZE, FieldPrime.Decode(EncodedBuffer), 0, COORD_SIZE)
 	buffer.copy(Point, 1 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
-	
-	return Point
-end
-
-function Curve25519.DecodeEd(EdwardsBuffer: buffer): buffer
-	local YCoord = FieldPrime.Decode(EdwardsBuffer)
-	local Numerator = FieldPrime.Carry(FieldPrime.Add(FieldPrime.Num(1), YCoord))
-	local Denominator = FieldPrime.Carry(FieldPrime.Sub(FieldPrime.Num(1), YCoord))
-	
-	if FieldPrime.Eqz(Denominator) then
-		local Point = buffer.create(MONTGOMERY_POINT_SIZE)
-		buffer.copy(Point, 0 * COORD_SIZE, FieldPrime.Num(0), 0, COORD_SIZE)
-		buffer.copy(Point, 1 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
-		
-		return Point
-	else
-		local Point = buffer.create(MONTGOMERY_POINT_SIZE)
-		buffer.copy(Point, 0 * COORD_SIZE, Numerator, 0, COORD_SIZE)
-		buffer.copy(Point, 1 * COORD_SIZE, Denominator, 0, COORD_SIZE)
-		
-		return Point
-	end
-end
-
-function Curve25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
-	local EdwardsPoint = Edwards25519.MulG(ScalarBits, ScalarBitCount)
-
-	local PointY = buffer.create(COORD_SIZE)
-	local PointZ = buffer.create(COORD_SIZE)
-	buffer.copy(PointY, 0, EdwardsPoint, COORD_SIZE, COORD_SIZE)
-	buffer.copy(PointZ, 0, EdwardsPoint, 2 * COORD_SIZE, COORD_SIZE)
-
-	local NewX = FieldPrime.Carry(FieldPrime.Add(PointY, PointZ))
-	local NewZ = FieldPrime.Carry(FieldPrime.Sub(PointZ, PointY))
-
-	local Point = buffer.create(MONTGOMERY_POINT_SIZE)
-	buffer.copy(Point, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
-	buffer.copy(Point, 1 * COORD_SIZE, NewZ, 0, COORD_SIZE)
 	
 	return Point
 end
@@ -235,8 +163,8 @@ function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffe
 
 	RandomizedA = Ladder(RandomizedA, PracRuleset[1], PracRuleset[2])
 
-	local Rules: buffer = PracRuleset[3]
-	local RuleCount: number = PracRuleset[4]
+	local Rules = PracRuleset[3]
+	local RuleCount = PracRuleset[4]
 	if RuleCount == 0 then
 		return RandomizedA, nil, nil
 	end

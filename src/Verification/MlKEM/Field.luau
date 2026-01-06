@@ -25,10 +25,6 @@ local Q = 13 * 256 + 1
 
 local Field = {}
 
-function Field.BarrettReduce(Value: number): number
-	return Value % Q
-end
-
 local function ReducedAdd(A: number, B: number): number
 	local Sum = A + B
 	return if Sum >= Q then Sum - Q else Sum
@@ -80,23 +76,11 @@ function Field.Invert(A: number): number
 	return Field.Power(A, Q - 2)
 end
 
-function Field.Divide(A: number, B: number): number
-	return Field.Multiply(A, Field.Invert(B))
-end
-
 function Field.BufferReduce(Buffer: buffer, Count: number)
 	local Modulus = Q
 	for Index = 0, Count - 1 do
 		local Value = buffer.readu16(Buffer, Index * 2)
 		buffer.writeu16(Buffer, Index * 2, (Value % Modulus))
-	end
-end
-
-function Field.BufferSubtract(A: buffer, B: buffer, Result: buffer, Count: number)
-	for Index = 0, Count - 1 do
-		local AValue = buffer.readu16(A, Index * 2)
-		local BValue = buffer.readu16(B, Index * 2)
-		buffer.writeu16(Result, Index * 2, Field.Subtract(AValue, BValue))
 	end
 end
 

@@ -23,8 +23,8 @@
 local function XXH32(Message: buffer, Seed: number?): number
 	local PRIME_1, PRIME_1_HIGH, PRIME_1_LOW = 0x9e3779B1, 40503, 31153
 	local PRIME_2, PRIME_2_HIGH, PRIME_2_LOW = 0x85ebca77, 34283, 51831
-	local _PRIME_3, PRIME_3_HIGH, PRIME_3_LOW = 0xc2b2ae3d, 49842, 44605
-	local _PRIME_4, PRIME_4_HIGH, PRIME_4_LOW = 0x27d4eb2f, 10196, 60207
+	local PRIME_3_HIGH, PRIME_3_LOW = 49842, 44605
+	local PRIME_4_HIGH, PRIME_4_LOW = 10196, 60207
 	local PRIME_5, PRIME_5_HIGH, PRIME_5_LOW = 0x165667b1, 5718, 26545
 
 	local UsedSeed = Seed or 0

@@ -47,15 +47,6 @@ function Utils.CtMemcmp(Bytes0: buffer, Bytes1: buffer): number
 	return if Diff == 0 then 0xFFFFFFFF else 0x00000000
 end
 
-function Utils.CtSelect(Cond: number, A: number, B: number): number
-	local Mask = bit32.band(Cond, 0xFFFFFFFF)
-
-	return bit32.bor(
-		bit32.band(A, Mask),
-		bit32.band(B, bit32.bnot(Mask))
-	)
-end
-
 function Utils.CtCondMemcpy(Cond: number, Sink: buffer, Source0: buffer, Source1: buffer)
 	local SinkLen = buffer.len(Sink)
 	local Mask = bit32.band(Cond, 0xFFFFFFFF)

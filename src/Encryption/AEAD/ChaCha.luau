@@ -126,11 +126,9 @@ end
 
 local function InitializeState(Key: buffer, Nonce: buffer, Counter: number): buffer
 	local KeyLength = buffer.len(Key)
-
 	local State = buffer.create(STATE_SIZE * DWORD)
 
-	local Sigma, Tau = SIGMA_CONSTANTS, TAU_CONSTANTS
-	local Constants = KeyLength == 32 and Sigma or Tau
+	local Constants = KeyLength == 32 and SIGMA_CONSTANTS or TAU_CONSTANTS
 
 	buffer.copy(State, 0, Constants, 0, 16)
 
