@@ -75,10 +75,8 @@ do
 	end
 end
 
-local BLOCK_FRONT = table.create(80)
-local BLOCK_BACK = table.create(80)
-
-local FORMAT_STRING = string.rep("%08x", 16)
+local BLOCK_FRONT = table.create(80) :: {number}
+local BLOCK_BACK = table.create(80) :: {number}
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -259,7 +257,7 @@ local function SHA512(Message: buffer, Salt: buffer?): (string, buffer)
 	local ReturnDigest = buffer.create(64)
 	buffer.copy(ReturnDigest, 0, WORKING_DIGEST)
 
-	return string.format(FORMAT_STRING, H1F, H1B, H2F, H2B, H3F, H3B, H4F, H4B, H5F, H5B, H6F, H6B, H7F, H7B, H8F, H8B), ReturnDigest
+	return string.format("%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x", H1F, H1B, H2F, H2B, H3F, H3B, H4F, H4B, H5F, H5B, H6F, H6B, H7F, H7B, H8F, H8B), ReturnDigest
 end
 
 return SHA512
