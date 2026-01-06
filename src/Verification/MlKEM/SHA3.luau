@@ -1,41 +1,8 @@
---[=[
-	Cryptography library: Keccak/SHA-3
-	
-	Sizes:
-		SHA3-224 Digest: 28 bytes
-		SHA3-256 Digest: 32 bytes
-		SHA3-384 Digest: 48 bytes
-		SHA3-512 Digest: 64 bytes
-		SHAKE128 Digest: variable
-		SHAKE256 Digest: variable
-
-	Return type: string
-	Example usage:
-		local Message = buffer.fromstring("Hello World")
-		
-		local Result1 = SHA3_256(Message)
-		local Result2 = SHAKE128(Message, 32)
---]=]
-
 --!strict
 --!optimize 2
 --!native
 
 local SHA3 = {}
-
-local ENCODE_LOOKUP = buffer.create(256 * 2) do
-	local HexChars = "0123456789abcdef"
-	for Byte = 0, 255 do
-		local HighNibble = bit32.rshift(Byte, 4)
-		local LowNibble = Byte % 16
-
-		local HighChar = string.byte(HexChars, HighNibble + 1)
-		local LowChar = string.byte(HexChars, LowNibble + 1)
-
-		local Combined = HighChar + bit32.lshift(LowChar, 8)
-		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, Combined)
-	end
-end
 
 local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	local HighFactorKeccak = 0
@@ -189,18 +156,18 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Lane21Low = Temp3Low // 8388608 + Temp3High * 512; Lane21High = Temp3High // 8388608 + Temp3Low * 512
 			Lane01Low = XOR(DeltaLow, Lane01Low); Lane01High = XOR(DeltaHigh, Lane01High)
 
-			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low =  XOR(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)),  XOR(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)),  XOR(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)),  XOR(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)),  XOR(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low)) :: number
-			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High =  XOR(Lane01High, bit32.band(-1 - Lane02High, Lane03High)),  XOR(Lane02High, bit32.band(-1 - Lane03High, Lane04High)),  XOR(Lane03High, bit32.band(-1 - Lane04High, Lane05High)),  XOR(Lane04High, bit32.band(-1 - Lane05High, Lane01High)),  XOR(Lane05High, bit32.band(-1 - Lane01High, Lane02High)) :: number
-			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low =  XOR(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)),  XOR(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)),  XOR(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)),  XOR(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)),  XOR(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low)) :: number
-			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High =  XOR(Lane09High, bit32.band(-1 - Lane10High, Lane06High)),  XOR(Lane10High, bit32.band(-1 - Lane06High, Lane07High)),  XOR(Lane06High, bit32.band(-1 - Lane07High, Lane08High)),  XOR(Lane07High, bit32.band(-1 - Lane08High, Lane09High)),  XOR(Lane08High, bit32.band(-1 - Lane09High, Lane10High)) :: number
-			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low =  XOR(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)),  XOR(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)),  XOR(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)),  XOR(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)),  XOR(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low)) :: number
-			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High =  XOR(Lane12High, bit32.band(-1 - Lane13High, Lane14High)),  XOR(Lane13High, bit32.band(-1 - Lane14High, Lane15High)),  XOR(Lane14High, bit32.band(-1 - Lane15High, Lane11High)),  XOR(Lane15High, bit32.band(-1 - Lane11High, Lane12High)),  XOR(Lane11High, bit32.band(-1 - Lane12High, Lane13High)) :: number
-			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low =  XOR(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)),  XOR(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)),  XOR(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)),  XOR(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)),  XOR(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low)) :: number
-			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High =  XOR(Lane20High, bit32.band(-1 - Lane16High, Lane17High)),  XOR(Lane16High, bit32.band(-1 - Lane17High, Lane18High)),  XOR(Lane17High, bit32.band(-1 - Lane18High, Lane19High)),  XOR(Lane18High, bit32.band(-1 - Lane19High, Lane20High)),  XOR(Lane19High, bit32.band(-1 - Lane20High, Lane16High)) :: number
-			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low =  XOR(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)),  XOR(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)),  XOR(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)),  XOR(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)),  XOR(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low)) :: number
-			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High =  XOR(Lane23High, bit32.band(-1 - Lane24High, Lane25High)),  XOR(Lane24High, bit32.band(-1 - Lane25High, Lane21High)),  XOR(Lane25High, bit32.band(-1 - Lane21High, Lane22High)),  XOR(Lane21High, bit32.band(-1 - Lane22High, Lane23High)),  XOR(Lane22High, bit32.band(-1 - Lane23High, Lane24High)) :: number
+			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low = XOR(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)), XOR(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)), XOR(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)), XOR(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)), XOR(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low)) :: number
+			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High = XOR(Lane01High, bit32.band(-1 - Lane02High, Lane03High)), XOR(Lane02High, bit32.band(-1 - Lane03High, Lane04High)), XOR(Lane03High, bit32.band(-1 - Lane04High, Lane05High)), XOR(Lane04High, bit32.band(-1 - Lane05High, Lane01High)), XOR(Lane05High, bit32.band(-1 - Lane01High, Lane02High)) :: number
+			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low = XOR(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)), XOR(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)), XOR(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)), XOR(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)), XOR(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low)) :: number
+			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High = XOR(Lane09High, bit32.band(-1 - Lane10High, Lane06High)), XOR(Lane10High, bit32.band(-1 - Lane06High, Lane07High)), XOR(Lane06High, bit32.band(-1 - Lane07High, Lane08High)), XOR(Lane07High, bit32.band(-1 - Lane08High, Lane09High)), XOR(Lane08High, bit32.band(-1 - Lane09High, Lane10High)) :: number
+			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low = XOR(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)), XOR(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)), XOR(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)), XOR(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)), XOR(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low)) :: number
+			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High = XOR(Lane12High, bit32.band(-1 - Lane13High, Lane14High)), XOR(Lane13High, bit32.band(-1 - Lane14High, Lane15High)), XOR(Lane14High, bit32.band(-1 - Lane15High, Lane11High)), XOR(Lane15High, bit32.band(-1 - Lane11High, Lane12High)), XOR(Lane11High, bit32.band(-1 - Lane12High, Lane13High)) :: number
+			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low = XOR(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)), XOR(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)), XOR(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)), XOR(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)), XOR(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low)) :: number
+			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High = XOR(Lane20High, bit32.band(-1 - Lane16High, Lane17High)), XOR(Lane16High, bit32.band(-1 - Lane17High, Lane18High)), XOR(Lane17High, bit32.band(-1 - Lane18High, Lane19High)), XOR(Lane18High, bit32.band(-1 - Lane19High, Lane20High)), XOR(Lane19High, bit32.band(-1 - Lane20High, Lane16High)) :: number
+			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low = XOR(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)), XOR(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)), XOR(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)), XOR(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)), XOR(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low)) :: number
+			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High = XOR(Lane23High, bit32.band(-1 - Lane24High, Lane25High)), XOR(Lane24High, bit32.band(-1 - Lane25High, Lane21High)), XOR(Lane25High, bit32.band(-1 - Lane21High, Lane22High)), XOR(Lane21High, bit32.band(-1 - Lane22High, Lane23High)), XOR(Lane22High, bit32.band(-1 - Lane23High, Lane24High)) :: number
 
-			Lane01Low =  XOR(Lane01Low, buffer.readu32(RCLow, RoundIndex))
+			Lane01Low = XOR(Lane01Low, buffer.readu32(RCLow, RoundIndex))
 			Lane01High = XOR(Lane01High, buffer.readu32(RCHigh, RoundIndex))
 		end
 
@@ -232,7 +199,7 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 	end
 end
 
-local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): (string, buffer)
+local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer
 	local RateBytes = (1600 - CapacityBits) // 8
 	buffer.fill(LANES_LOW, 0, 0, 100)
 	buffer.fill(LANES_HIGH, 0, 0, 100)
@@ -267,13 +234,6 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	Keccak(LanesLow, LanesHigh, PaddedMessage, 0, PaddedLength, RateBytes)
 
 	local Output = buffer.create(OutputBytes)
-	local Length = buffer.len(Output)
-	local Hex = buffer.create(Length * 2)
-
-	local Lookup = ENCODE_LOOKUP
-
-	local Leftover = Length % 8
-	local HexCursor = 0
 	local OutputOffset = 0
 
 	local ZeroBuffer = buffer.create(RateBytes)
@@ -304,58 +264,30 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 		end
 	end
 
-	for Index = 0, Length - Leftover - 1, 8 do
-		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
-		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 1) * 2)
-		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 2) * 2)
-		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 3) * 2)
-		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 4) * 2)
-		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 5) * 2)
-		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 6) * 2)
-		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 7) * 2)
-
-		buffer.writeu16(Hex, HexCursor, Hex1)
-		buffer.writeu16(Hex, HexCursor + 2, Hex2)
-		buffer.writeu16(Hex, HexCursor + 4, Hex3)
-		buffer.writeu16(Hex, HexCursor + 6, Hex4)
-		buffer.writeu16(Hex, HexCursor + 8, Hex5)
-		buffer.writeu16(Hex, HexCursor + 10, Hex6)
-		buffer.writeu16(Hex, HexCursor + 12, Hex7)
-		buffer.writeu16(Hex, HexCursor + 14, Hex8)
-
-		HexCursor += 16
-	end
-
-	for Index = Length - Leftover, Length - 1 do
-		local HexPair = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
-		buffer.writeu16(Hex, HexCursor, HexPair)
-		HexCursor += 2
-	end
-	
-	return buffer.tostring(Hex), Output
+	return Output
 end
 
-function SHA3.SHA3_224(Message: buffer): (string, buffer)
+function SHA3.SHA3_224(Message: buffer): buffer
 	return ProcessSponge(Message, 448, 28, 0x06)
 end
 
-function SHA3.SHA3_256(Message: buffer): (string, buffer)
+function SHA3.SHA3_256(Message: buffer): buffer
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-function SHA3.SHA3_384(Message: buffer): (string, buffer)
+function SHA3.SHA3_384(Message: buffer): buffer
 	return ProcessSponge(Message, 768, 48, 0x06)
 end
 
-function SHA3.SHA3_512(Message: buffer): (string, buffer)
+function SHA3.SHA3_512(Message: buffer): buffer
 	return ProcessSponge(Message, 1024, 64, 0x06)
 end
 
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
+function SHA3.SHAKE128(Message: buffer, OutputBytes: number): buffer
 	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
-function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
+function SHA3.SHAKE256(Message: buffer, OutputBytes: number): buffer
 	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
 end
 
