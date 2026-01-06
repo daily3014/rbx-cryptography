@@ -41,13 +41,20 @@ local AEAD = {
 	Poly1305 = Poly1305
 }
 
-local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) & typeof(ChaCha.XChaCha20)
+local GetFn = function(UseXChaCha20: boolean?): (typeof(ChaCha.ChaCha20) | typeof(ChaCha.XChaCha20))
 	if UseXChaCha20 then
 		return ChaCha.XChaCha20
 	else
 		return ChaCha.ChaCha20
 	end
-end
+end ::
+& ( (UseXChaCha20: true) -> (typeof(ChaCha.XChaCha20)) )
+-- overload selection for boolean/nil unions (optional types) broke a bit ago,
+-- create a dedicated overload for nil to fix this issue.
+& ( (UseXChaCha20: nil ) -> (typeof(ChaCha.ChaCha20)) )
+& ( (UseXChaCha20: false) -> (typeof(ChaCha.ChaCha20)) )
+-- fixes "None of the overloads for function that accept 1 arguments are compatible."
+& ( (UseXChaCha20: boolean?) -> (typeof(ChaCha.ChaCha20) | typeof(ChaCha.XChaCha20)) )
 
 local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 	local Length1 = buffer.len(Buffer1)
