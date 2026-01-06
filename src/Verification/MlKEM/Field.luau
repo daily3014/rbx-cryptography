@@ -22,9 +22,6 @@
 --!native
 
 local Q = 13 * 256 + 1
-local Q_BIT_WIDTH = 12
-local WIDTH = (2^(2 * Q_BIT_WIDTH))
-local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local Field = {}
 
