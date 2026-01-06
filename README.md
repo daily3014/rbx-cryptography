@@ -10,7 +10,7 @@
 
 ## Authors
 
-**daily3014** - Developer - [@daily3014](https://github.com/daily3014)
+**daily3014** - Developer - [@daily3014](https://github.com/daily3014)  
 **Xoifail** - Developer - [@xoifail](https://github.com/xoifaii)
 
 ### Acknowledgments
