@@ -54,6 +54,15 @@ local SHAKE256_TestVectors: TestVectors = {
 	[string.rep("a", 1000000)] = { Description = "Million a's (64 bytes)", Expected = "3578a7a4ca9137569cdf76ed617d31bb994fca9c1bbf8b184013de8234dfd13a3fd124d4df76c0a539ee7dd2f6e1ec346124c815d9410e145eb561bcd97b18ab" }
 }
 
+Testing.Describe("SHA3-224 Algorithm Tests", function()
+	for TestString, Info in SHA3_224_TestVectors do
+		Testing.Test(Info.Description, function()
+			local Result = Algorithm.SHA3_224(buffer.fromstring(TestString))
+			Testing.Expect(Result).ToBe(Info.Expected)
+		end)
+	end
+end)
+
 Testing.Describe("SHA3-256 Algorithm Tests", function()
 	for TestString, Info in SHA3_256_TestVectors do
 		Testing.Test(Info.Description, function()

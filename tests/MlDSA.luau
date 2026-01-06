@@ -110,7 +110,6 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 				for _, Test in ipairs(Group.tests) do
 					local TestId = Test.tcId
 					local Comment = Test.comment or ""
-					local Flags = Test.flags or {}
 
 					local TestName = `Test_{TestId}`
 					if Comment ~= "" then

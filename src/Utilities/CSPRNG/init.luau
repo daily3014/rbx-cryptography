@@ -20,9 +20,9 @@
 		CSPRNG.BytesLeft
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 
 local Conversions = require("@self/Conversions")
 local ChaCha20 = require("@self/ChaCha20")

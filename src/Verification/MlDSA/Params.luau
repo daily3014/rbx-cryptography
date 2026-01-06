@@ -14,7 +14,6 @@
 --!optimize 2
 --!native
 
-local Q_BIT_WIDTH = 23
 local Q = 8380417
 
 local Params = {}

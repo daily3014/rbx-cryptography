@@ -91,7 +91,6 @@ Testing.Describe("X25519 Wycheproof Tests", function()
 				local TestId = Test.tcId
 				local Comment = Test.comment or ""
 				local ExpectedResult = Test.result
-				local Flags = Test.flags or {}
 
 				if SKIP_TEST_101 and TestId == 101 and ExpectedResult == "valid" then
 					SkippedTwistCount += 1

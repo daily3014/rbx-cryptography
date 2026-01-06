@@ -17,7 +17,6 @@
 --!optimize 2
 
 local Http = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Testing = require("./")
 local Cryptography = require("../")
@@ -77,7 +76,6 @@ Testing.Describe("Ed25519 Wycheproof Tests", function()
 			for _, Test in ipairs(Group.tests) do
 				local TestId = Test.tcId
 				local ExpectedResult = Test.result
-				local Flags = Test.flags or {}
 				local Comment = Test.comment or ""
 
 				local TestName = `Test_{TestId}`

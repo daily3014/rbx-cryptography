@@ -20,9 +20,9 @@
 		local Result = SHA1(Message, OptionalSalt)
 --]=]
 
---!native
---!optimize 2
 --!strict
+--!optimize 2
+--!native
 local OFFSETS = buffer.create(320)
 
 local function PreProcess(Contents: buffer): (buffer, number)

@@ -32,26 +32,6 @@ end
 
 local Speck = require("../Encryption/Speck")
 
-local function StringToHex(Str: string): string
-	local Hex = ""
-	for Index = 1, #Str do
-		Hex = Hex .. string.format("%02x", string.byte(Str, Index))
-	end
-	
-	return Hex
-end
-
-local function HexToString(Hex: string): string
-	local Str = ""
-	for Index = 1, #Hex, 2 do
-		local ByteValue = tonumber(string.sub(Hex, Index, Index + 1), 16)
-		if ByteValue then
-			Str = Str .. string.char(ByteValue)
-		end
-	end
-	
-	return Str
-end
 
 Testing.Describe("Speck Cipher Algorithm Tests", function()
 
@@ -60,7 +40,6 @@ Testing.Describe("Speck Cipher Algorithm Tests", function()
 			buffer.fromstring("Hello!!!"),
 			FromHex("0001020304050607")
 		)
-		local HelloHex = ToHex(HelloEncrypted)
 
 		local HelloDecrypted = Speck.Decrypt(
 			HelloEncrypted,

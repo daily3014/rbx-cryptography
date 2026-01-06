@@ -100,13 +100,8 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 
 				local HasModulusOverflow = HasFlag(Flags, "ModulusOverflow")
 				local HasTruncatedKey = HasFlag(Flags, "TruncatedDecapsulationKey")
-				local HasExtendedKey = HasFlag(Flags, "ExtendedDecapsulationKey")
-				local HasInvalidKeyLength = HasTruncatedKey or HasExtendedKey
 				local HasTruncatedCiphertext = HasFlag(Flags, "TruncatedCiphertext")
-				local HasExtendedCiphertext = HasFlag(Flags, "ExtendedCiphertext")
-				local HasInvalidCiphertextLength = HasTruncatedCiphertext or HasExtendedCiphertext
 				local HasModifiedCiphertext = HasFlag(Flags, "ModifiedCiphertext")
-				local HasStrcmp = HasFlag(Flags, "Strcmp")
 				local IsInvalid = ExpectedResult == "invalid"
 
 				Testing.Test(`Test_{TestId}`, function()

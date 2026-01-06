@@ -72,7 +72,6 @@ end
 local LANES_LOW = buffer.create(100)
 local LANES_HIGH = buffer.create(100)
 local FUNCTION_NAME = buffer.fromstring("KMAC")
-local RESULT = buffer.create(2)
 
 local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8

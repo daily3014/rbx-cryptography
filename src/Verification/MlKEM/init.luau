@@ -39,7 +39,6 @@ local DECAP_R_PRIME = buffer.create(32)
 local DECAP_J_OUTPUT = buffer.create(32)
 
 local ENCAP_G_INPUT = buffer.create(64)
-local ENCAP_K_BYTES = buffer.create(32)
 local ENCAP_R = buffer.create(32)
 
 local MlKem = {

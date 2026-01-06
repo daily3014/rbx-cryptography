@@ -82,9 +82,6 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			local CurrentWeight = 0
 
 			for Name, Weight in WeightedChances do
-				local Name: string = Name :: any
-				local Weight: number = Weight :: number
-
 				CurrentWeight += Weight
 
 				if Number <= CurrentWeight then
@@ -124,8 +121,8 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			end
 
 			for Name, Count in Occurences do
-				local Name: Rarities = Name :: any
-				local Count: number = Count :: number
+				Name = Name :: Rarities
+				Count = Count :: number
 
 				local ActualRate = math.abs(1 - (Count / ExpectedOccurences(Name)))
 				Accumlated[Name] += ActualRate
@@ -135,9 +132,6 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end
 
 		for Name, Chance in Accumlated do
-			local Name: string = Name :: any
-			local Chance: number = Chance :: number
-
 			local AverageRate = Chance / ITERATIONS
 			Testing.Expect(AverageRate).ToBeLessThan(EPSILON)
 		end
