@@ -64,7 +64,7 @@ function Pke.KeyGen(K: number, Eta1: number, Seed: buffer): (buffer, buffer)
 	buffer.copy(GInput, 0, Seed, 0, 32)
 	buffer.writeu8(GInput, 32, K)
 
-	local GOutput = SHA3.SHA3_512(GInput)
+	local _, GOutput = SHA3.SHA3_512(GInput)
 	local Rho = KEYGEN_RHO
 	local Sigma = KEYGEN_SIGMA
 	buffer.copy(Rho, 0, GOutput, 0, 32)
