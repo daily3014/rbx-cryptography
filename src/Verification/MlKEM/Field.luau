@@ -1,76 +1,103 @@
 --[=[
-	Finite field arithmetic modulo Q = 8380417
+	ML-KEM Field Arithmetic Module
 	
-	Arithmetic operations over the prime field Z_q where q = 2^23 - 2^13 + 1.
-	All operations maintain elements in canonical form [0, Q).
-
+	Prime field Zq arithmetic operations for ML-KEM.
+	Modular arithmetic over the field Z_q where q = 3329.
+	
 	Example usage:
-		local Field = require(script)
+		local Field = require(script.Field)
 		
-		local A = 12345
-		local B = 67890
-		local Sum = Field.Add(A, B)
-		local Product = Field.Multiply(A, B)
-		local Inverse = Field.Inverse(A)
+		local Sum = Field.Add(1234, 567)
+		local Product = Field.Multiply(1234, 567)
+		local Inverse = Field.Invert(1234)
+		
+		local Buffer = Field.BufferCreate(256)
+		Field.BufferReduce(Buffer, 256)
+		
+		local Sum = Field.BufferAdd(BufferA, BufferB, Result, 256)
 --]=]
 
 --!strict
 --!optimize 2
 --!native
 
-local Q = 8380417
+local Q = 13 * 256 + 1
 
 local Field = {}
 
-function Field.Add(A: number, B: number): number
+function Field.BarrettReduce(Value: number): number
+	return Value % Q
+end
+
+local function ReducedAdd(A: number, B: number): number
 	local Sum = A + B
 	return if Sum >= Q then Sum - Q else Sum
 end
 
-function Field.Negate(A: number): number
-	return if A == 0 then 0 else Q - A
+local function ReducedSub(A: number, B: number): number
+	local Diff = A - B
+	return if Diff < 0 then Diff + Q else Diff
+end
+
+function Field.Add(A: number, B: number): number
+	return ReducedAdd(A, B)
 end
 
 function Field.Subtract(A: number, B: number): number
-	local Diff = A - B
-	return if Diff < 0 then Diff + Q else Diff
+	return ReducedSub(A, B)
 end
 
 function Field.Multiply(A: number, B: number): number
 	return (A * B) % Q
 end
 
+function Field.Negate(A: number): number
+	return if A == 0 then 0 else Q - A
+end
+
 function Field.Power(Base: number, Exponent: number): number
-	if Exponent == 0 then
-		return 1
-	end
+	local Result = if bit32.band(Exponent, 1) == 1 then Base else 1
+	local CurrentBase = Base
 
-	if Exponent == 1 then
-		return Base % Q
-	end
-
-	local Result = 1
-	local CurrentBase = Base % Q 
 	local Exp = Exponent
+	while Exp > 1 do
+		Exp = bit32.rshift(Exp, 1)
+		CurrentBase = Field.Multiply(CurrentBase, CurrentBase)
 
-	while Exp > 0 do
 		if bit32.band(Exp, 1) == 1 then
 			Result = Field.Multiply(Result, CurrentBase)
 		end
-
-		CurrentBase = Field.Multiply(CurrentBase, CurrentBase)
-		Exp = bit32.rshift(Exp, 1)
 	end
 
 	return Result
 end
 
-function Field.Inverse(A: number): number
+function Field.Invert(A: number): number
+	if A == 0 then
+		return 0
+	end
+
 	return Field.Power(A, Q - 2)
 end
 
 function Field.Divide(A: number, B: number): number
-	return Field.Multiply(A, Field.Inverse(B))
+	return Field.Multiply(A, Field.Invert(B))
+end
+
+function Field.BufferReduce(Buffer: buffer, Count: number)
+	local Modulus = Q
+	for Index = 0, Count - 1 do
+		local Value = buffer.readu16(Buffer, Index * 2)
+		buffer.writeu16(Buffer, Index * 2, (Value % Modulus))
+	end
+end
+
+function Field.BufferSubtract(A: buffer, B: buffer, Result: buffer, Count: number)
+	for Index = 0, Count - 1 do
+		local AValue = buffer.readu16(A, Index * 2)
+		local BValue = buffer.readu16(B, Index * 2)
+		buffer.writeu16(Result, Index * 2, Field.Subtract(AValue, BValue))
+	end
 end
 
 return Field
