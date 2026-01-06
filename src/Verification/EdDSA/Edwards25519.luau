@@ -26,7 +26,7 @@
 local FieldPrime = require("./FieldPrime")
 
 local BASEPONT_G = nil
-local BASEPOINT_TABLE = nil
+local BASEPOINT_TABLE: buffer
 
 local POINT_SIZE = 416
 local COORD_SIZE = 104
