@@ -206,10 +206,6 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 
 	PolyVec.VecNtt(U, K)
 
-	local T = buffer.create(N * 2)
-	local TempT = buffer.create(N * 2)
-	local SinglePoly = buffer.create(N * 2)
-
 	local T = TEMP_T
 	local TempT = TEMP_T2
 	local SinglePoly = TEMP_SINGLE_POLY
