@@ -31,9 +31,6 @@ local N = 2^LOG2N
 local POLY_SIZE = N * 2 
 
 local Q = 13 * 256 + 1
-local Q_BIT_WIDTH = 12
-local WIDTH = (2^(2 * Q_BIT_WIDTH))
-local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local SAMPLE_NTT_CHUNK = buffer.create(168)
 local SAMPLE_NTT_POLY = buffer.create(N * 2)
@@ -215,7 +212,8 @@ function Sampling.GenerateNoisePoly(Eta: number, Sigma: buffer, Nonce: number): 
 	buffer.copy(PrfInput, 0, Sigma, 0, 32)
 	buffer.writeu8(PrfInput, 32, Nonce)
 
-	local PrfOutput = SHA3.SHAKE256(PrfInput, 64 * Eta)
+
+	local _, PrfOutput = SHA3.SHAKE256(PrfInput, 64 * Eta)
 	return Sampling.SamplePolyCbd(PrfOutput, Eta)
 end
 
