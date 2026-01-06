@@ -289,7 +289,11 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 	for Index, Provider in CSPRNG.EntropyProviders do
 		local BytesLeft = 1024 - Offset
 		if BytesLeft > 0 then
-			local _Success: boolean, ExtraEntropy: buffer? = pcall(Provider, BytesLeft)
+			local Success: boolean, ExtraEntropy: buffer? = pcall(Provider, BytesLeft)
+			if not Success then
+				warn(`CSPRNG Provider errored with {ExtraEntropy}`)
+			end
+
 			AddExtraEntropy(ExtraEntropy, true, `Entropy Provider #{Index}`)
 		end
 	end

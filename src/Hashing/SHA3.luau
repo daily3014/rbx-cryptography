@@ -42,7 +42,7 @@ local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	local ShiftRegister = 29
 	local function GetNextBit(): number
 		local Result = ShiftRegister % 2
-		ShiftRegister =  bit32.bxor((ShiftRegister - Result) // 2, 142 * Result)
+		ShiftRegister = bit32.bxor((ShiftRegister - Result) // 2, 142 * Result)
 
 		return Result
 	end
@@ -238,7 +238,7 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	buffer.fill(LANES_HIGH, 0, 0, 100)
 
 	local LanesLow = LANES_LOW
-	local LanesHigh  = LANES_HIGH
+	local LanesHigh = LANES_HIGH
 
 	local MessageLength: number = buffer.len(Message)
 	local PaddedLength: number = MessageLength + 1

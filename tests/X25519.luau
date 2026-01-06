@@ -129,7 +129,7 @@ Testing.Describe("X25519 Wycheproof Tests", function()
 	end
 
 	if SkippedTwistCount > 0 then
-		print(`  [Info] Skipped {SkippedTwistCount} test(s) with twist points marked as "valid" (see header comment)`)
+		print(`[Info] Skipped {SkippedTwistCount} test(s) with twist points marked as "valid" (see header comment)`)
 	end
 end)
 

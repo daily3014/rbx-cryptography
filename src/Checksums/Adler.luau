@@ -1,10 +1,10 @@
 --[=[
-    Cryptography library: Adler
+	Cryptography library: Adler
 
-    Return type: number
-    Example Usage:
-        local Message = buffer.fromstring("Hello World")
-        local Hash = Adler(Message)
+	Return type: number
+	Example Usage:
+		local Message = buffer.fromstring("Hello World")
+		local Hash = Adler(Message)
 --]=]
 
 --!strict

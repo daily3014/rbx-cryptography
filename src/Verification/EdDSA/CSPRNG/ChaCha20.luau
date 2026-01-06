@@ -46,8 +46,8 @@ end
 
 local function ProcessBlock(InitialState: buffer, Rounds: number)
 	local S0: number, S1: number, S2: number, S3: number, S4: number, S5: number, S6: number, S7: number, S8: number, S9: number, S10: number, S11: number, S12: number, S13: number, S14: number, S15: number =
-		buffer.readu32(InitialState,  0), buffer.readu32(InitialState,  4),
-		buffer.readu32(InitialState,  8), buffer.readu32(InitialState, 12),
+		buffer.readu32(InitialState, 0), buffer.readu32(InitialState, 4),
+		buffer.readu32(InitialState, 8), buffer.readu32(InitialState, 12),
 		buffer.readu32(InitialState, 16), buffer.readu32(InitialState, 20),
 		buffer.readu32(InitialState, 24), buffer.readu32(InitialState, 28),
 		buffer.readu32(InitialState, 32), buffer.readu32(InitialState, 36),
@@ -101,16 +101,16 @@ local function ProcessBlock(InitialState: buffer, Rounds: number)
 		end
 	end
 	
-	buffer.writeu32(InitialState,  0, buffer.readu32(InitialState,  0) +  S0)
-	buffer.writeu32(InitialState,  4, buffer.readu32(InitialState,  4) +  S1)
-	buffer.writeu32(InitialState,  8, buffer.readu32(InitialState,  8) +  S2)
-	buffer.writeu32(InitialState, 12, buffer.readu32(InitialState, 12) +  S3)
-	buffer.writeu32(InitialState, 16, buffer.readu32(InitialState, 16) +  S4)
-	buffer.writeu32(InitialState, 20, buffer.readu32(InitialState, 20) +  S5)
-	buffer.writeu32(InitialState, 24, buffer.readu32(InitialState, 24) +  S6)
-	buffer.writeu32(InitialState, 28, buffer.readu32(InitialState, 28) +  S7)
-	buffer.writeu32(InitialState, 32, buffer.readu32(InitialState, 32) +  S8)
-	buffer.writeu32(InitialState, 36, buffer.readu32(InitialState, 36) +  S9)
+	buffer.writeu32(InitialState, 0, buffer.readu32(InitialState, 0) + S0)
+	buffer.writeu32(InitialState, 4, buffer.readu32(InitialState, 4) + S1)
+	buffer.writeu32(InitialState, 8, buffer.readu32(InitialState, 8) + S2)
+	buffer.writeu32(InitialState, 12, buffer.readu32(InitialState, 12) + S3)
+	buffer.writeu32(InitialState, 16, buffer.readu32(InitialState, 16) + S4)
+	buffer.writeu32(InitialState, 20, buffer.readu32(InitialState, 20) + S5)
+	buffer.writeu32(InitialState, 24, buffer.readu32(InitialState, 24) + S6)
+	buffer.writeu32(InitialState, 28, buffer.readu32(InitialState, 28) + S7)
+	buffer.writeu32(InitialState, 32, buffer.readu32(InitialState, 32) + S8)
+	buffer.writeu32(InitialState, 36, buffer.readu32(InitialState, 36) + S9)
 	buffer.writeu32(InitialState, 40, buffer.readu32(InitialState, 40) + S10)
 	buffer.writeu32(InitialState, 44, buffer.readu32(InitialState, 44) + S11)
 	buffer.writeu32(InitialState, 48, buffer.readu32(InitialState, 48) + S12)

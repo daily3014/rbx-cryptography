@@ -59,21 +59,23 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Algorithm.Reseed("not a buffer" :: any)
 		end).ToThrow()
 	end)
-	
+
 	Testing.Test("Chance", function()
-		local WeightedChances = {
+		type Rarities = "Common" | "Rare" | "Legendary" | "Mythic"
+		
+		local WeightedChances: {[Rarities]: number} = {
 			Common = 50,
 			Rare = 30,
 			Legendary = 20,
 			Mythic = 1
 		}
-		
+
 		local TotalWeight = 0
-		
+
 		for Name, Weight in WeightedChances do
 			TotalWeight += Weight :: any
 		end
-		
+
 		local function ChooseRandom()
 			local Number = Algorithm.RandomInt(1, TotalWeight)
 			--local Number = math.random(1, TotalWeight)
@@ -92,7 +94,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 
 			return "Common"
 		end
-		
+
 		local ROLLS = 300_000
 		local EPSILON = 0.05
 		local ITERATIONS = 10
@@ -103,38 +105,36 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Legendary = 0,
 			Mythic = 0,
 		}
-		
+
 		local function Reset()
 			for Name, Count in Occurences do
 				Occurences[Name] = 0
 			end
 		end
-		
-		local function ExpectedOccurences(Rarity: string)
+
+		local function ExpectedOccurences(Rarity: Rarities)
 			return math.ceil((WeightedChances[Rarity] / TotalWeight) * ROLLS)
 		end
-		
+
 		local Accumlated = table.clone(Occurences)
 		for _ = 1, ITERATIONS do
 			for _ = 1, ROLLS do
 				local ChosenRarity = ChooseRandom()
 				Occurences[ChosenRarity] += 1
 			end
-			
+
 			for Name, Count in Occurences do
-				-- For some reason they're "unknown"
-				local Name: string = Name :: any
+				local Name: Rarities = Name :: any
 				local Count: number = Count :: number
 
 				local ActualRate = math.abs(1 - (Count / ExpectedOccurences(Name)))
 				Accumlated[Name] += ActualRate
 			end
-			
+
 			Reset()
 		end
-		
+
 		for Name, Chance in Accumlated do
-			-- For some reason they're "unknown"
 			local Name: string = Name :: any
 			local Chance: number = Chance :: number
 
@@ -194,24 +194,24 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 
 		Testing.Expect(ChiSquared).ToBeLessThan(14.07)
 	end)
-	
+
 	Testing.Test("RandomInt", function()
 		Testing.Expect(function()
 			Algorithm.RandomInt(0, -1)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomInt(0, 0)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomInt(1, 1)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomInt("test" :: any)
 		end).ToThrow()
-		
+
 		for i = 1, 100 do
 			local Result = Algorithm.RandomInt(10)
 			Testing.Expect(Result).ToBeGreaterThanOrEqual(1)
@@ -230,7 +230,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Testing.Expect(Result).ToBeLessThanOrEqual(2^21)
 		end
 	end)
-	
+
 	Testing.Test("Random Number", function()
 		Testing.Expect(function()
 			Algorithm.RandomNumber(0, -1)
@@ -243,11 +243,11 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		Testing.Expect(function()
 			Algorithm.RandomNumber(1, 1)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomNumber("test" :: any)
 		end).ToThrow()
-		
+
 		for i = 1, 100 do
 			local Result = Algorithm.RandomNumber(10.5)
 			Testing.Expect(Result).ToBeGreaterThanOrEqual(0)
@@ -266,20 +266,20 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Testing.Expect(Result).ToBeLessThanOrEqual(0.002)
 		end
 	end)
-	
+
 	Testing.Test("GetBytes", function()
 		Testing.Expect(function()
 			Algorithm.RandomBytes(0)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomBytes(1.1)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomBytes("test" :: any)
 		end).ToThrow()
-		
+
 		local Buffer1 = Algorithm.RandomBytes(32)
 		Testing.Expect(buffer.len(Buffer1)).ToBe(32)
 		Testing.Expect(typeof(Buffer1)).ToBe("buffer")
@@ -301,35 +301,35 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Testing.Expect(buffer.len(Buffer)).ToBe(Size)
 		end
 	end)
-	
+
 	Testing.Test("RandomString", function()
 		Testing.Expect(function()
 			Algorithm.RandomString(0)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomString(-1)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomString(10, 123 :: any)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomString(10, "hello" :: any)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomString(10.1)
 		end).ToThrow()
-		
+
 		Testing.Expect(function()
 			Algorithm.RandomString("test" :: any)
 		end).ToThrow()
-		
+
 		Testing.Expect(string.len(Algorithm.RandomString(30) :: string)).ToBe(30)
 		Testing.Expect(buffer.len(Algorithm.RandomString(30, true) :: buffer)).ToBe(30)
-		
+
 		local String1 = Algorithm.RandomString(10, false) :: string
 		Testing.Expect(typeof(String1)).ToBe("string")
 		Testing.Expect(#String1).ToBe(10)
@@ -351,7 +351,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			end
 		end
 	end)
-	
+
 	Testing.Test("RandomHex", function()
 		Testing.Expect(function()
 			Algorithm.RandomHex(0)
@@ -374,7 +374,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			Algorithm.RandomHex(31)
 		end).ToThrow()
 		Testing.Expect(string.len(Algorithm.RandomHex(32))).ToBe(32)
-		
+
 		for Length = 2, 64, 2 do 
 			local HexString = Algorithm.RandomHex(Length)
 			Testing.Expect(typeof(HexString)).ToBe("string")

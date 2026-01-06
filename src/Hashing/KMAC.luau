@@ -241,97 +241,55 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 	end
 end
 
-local function LeftEncode(Value: number): buffer
-	if Value == 0 then
-		buffer.writeu8(RESULT, 0, 1)
-		buffer.writeu8(RESULT, 1, 0)
-		
-		return RESULT
-	end
+local LEFT_ENCODE_RESULT = buffer.create(5)
+local RIGHT_ENCODE_RESULT = buffer.create(5)
 
-	local ByteLength = 1
-	if Value > 0xFF then
-		if Value > 0xFFFF then
-			if Value > 0xFFFFFF then
-				ByteLength = 4
-			else
-				ByteLength = 3
-			end
-		else
-			ByteLength = 2
-		end
-	end
+local function LeftEncode(Value: number): (buffer, number)
+	local Result = LEFT_ENCODE_RESULT
 
-	local Result = buffer.create(ByteLength + 1)
-	buffer.writeu8(Result, 0, ByteLength)
-
-	if ByteLength == 1 then
+	if Value <= 0xFF then
+		buffer.writeu8(Result, 0, 1)
 		buffer.writeu8(Result, 1, Value)
-	elseif ByteLength == 2 then
-		buffer.writeu8(Result, 1, bit32.rshift(Value, 8))
-		buffer.writeu8(Result, 2, bit32.band(Value, 0xFF))
-	elseif ByteLength == 3 then
-		buffer.writeu8(Result, 1, bit32.rshift(Value, 16))
-		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 3, bit32.band(Value, 0xFF))
-	else
-		buffer.writeu8(Result, 1, bit32.rshift(Value, 24))
-		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 16), 0xFF))
-		buffer.writeu8(Result, 3, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 4, bit32.band(Value, 0xFF))
+		return Result, 2
 	end
 
-	return Result
+	if Value <= 0xFFFF then
+		buffer.writeu8(Result, 0, 2)
+		buffer.writeu16(Result, 1, bit32.byteswap(bit32.lshift(Value, 16)))
+		return Result, 3
+	end
+
+	local ByteLength = if Value > 0xFFFFFF then 4 else 3
+	buffer.writeu8(Result, 0, ByteLength)
+	buffer.writeu32(Result, 1, bit32.byteswap(bit32.lshift(Value, (4 - ByteLength) * 8)))
+	return Result, ByteLength + 1
 end
 
-local function RightEncode(Value: number): buffer
-	if Value == 0 then
-		buffer.writeu8(RESULT, 0, 0)
-		buffer.writeu8(RESULT, 1, 1)
-		
-		return RESULT
-	end
+local function RightEncode(Value: number): (buffer, number)
+	local Result = RIGHT_ENCODE_RESULT
 
-	local ByteLength = 1
-	if Value > 0xFF then
-		if Value > 0xFFFF then
-			if Value > 0xFFFFFF then
-				ByteLength = 4
-			else
-				ByteLength = 3
-			end
-		else
-			ByteLength = 2
-		end
-	end
-
-	local Result = buffer.create(ByteLength + 1)
-	buffer.writeu8(Result, ByteLength, ByteLength)
-
-	if ByteLength == 1 then
+	if Value <= 0xFF then
 		buffer.writeu8(Result, 0, Value)
-	elseif ByteLength == 2 then
-		buffer.writeu8(Result, 0, bit32.rshift(Value, 8))
-		buffer.writeu8(Result, 1, bit32.band(Value, 0xFF))
-	elseif ByteLength == 3 then
-		buffer.writeu8(Result, 0, bit32.rshift(Value, 16))
-		buffer.writeu8(Result, 1, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 2, bit32.band(Value, 0xFF))
-	else
-		buffer.writeu8(Result, 0, bit32.rshift(Value, 24))
-		buffer.writeu8(Result, 1, bit32.band(bit32.rshift(Value, 16), 0xFF))
-		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 3, bit32.band(Value, 0xFF))
+		buffer.writeu8(Result, 1, 1)
+		return Result, 2
 	end
 
-	return Result
+	if Value <= 0xFFFF then
+		buffer.writeu16(Result, 0, bit32.byteswap(bit32.lshift(Value, 16)))
+		buffer.writeu8(Result, 2, 2)
+		return Result, 3
+	end
+
+	local ByteLength = if Value > 0xFFFFFF then 4 else 3
+	buffer.writeu32(Result, 0, bit32.byteswap(bit32.lshift(Value, (4 - ByteLength) * 8)))
+	buffer.writeu8(Result, ByteLength, ByteLength)
+	return Result, ByteLength + 1
 end
 
 local function EncodeString(Data: buffer): buffer
 	local DataLength = buffer.len(Data)
 	
-	local LengthEncoding = LeftEncode(DataLength * 8)
-	local LengthEncodingSize = buffer.len(LengthEncoding)
+	local LengthEncoding, LengthEncodingSize = LeftEncode(DataLength * 8)
 	
 	local Result = buffer.create(LengthEncodingSize + DataLength)
 
@@ -344,8 +302,7 @@ end
 local function Bytepad(Data: buffer, Rate: number): buffer
 	local DataLength = buffer.len(Data)
 	
-	local RateEncoding = LeftEncode(Rate)
-	local RateEncodingSize = buffer.len(RateEncoding)
+	local RateEncoding, RateEncodingSize = LeftEncode(Rate)
 	
 	local TotalPrePadLength = RateEncodingSize + DataLength
 	local PadLength = Rate - (TotalPrePadLength % Rate)
@@ -451,8 +408,7 @@ function KMAC.KMAC128(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: b
 	local BytepaddedKeySize = buffer.len(BytepaddedKey)
 	local DataSize = buffer.len(Data)
 
-	local RightEncodedLength = RightEncode(OutputBytes * 8)
-	local RightEncodedLengthSize = buffer.len(RightEncodedLength)
+	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
 
 	local Hex = buffer.create(OutputBytes * 2)
 	local Lookup = ENCODE_LOOKUP
@@ -507,8 +463,7 @@ function KMAC.KMAC256(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: b
 	local BytepaddedKeySize = buffer.len(BytepaddedKey)
 	local DataSize = buffer.len(Data)
 
-	local RightEncodedLength = RightEncode(OutputBytes * 8)
-	local RightEncodedLengthSize = buffer.len(RightEncodedLength)
+	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
 
 	local Hex = buffer.create(OutputBytes * 2)
 	local Lookup = ENCODE_LOOKUP

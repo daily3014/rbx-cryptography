@@ -6,9 +6,9 @@
 	Example usage:
 		local Utils = require(script)
 		
-		local PubKeySize = Utils.PubKeyLen(4, 13)    -- 1312 bytes for ML-DSA-44
-		local SecKeySize = Utils.SecKeyLen(4, 4, 2, 13)  -- 2560 bytes
-		local SigSize = Utils.SigLen(4, 4, 131072, 80, 128)  -- Variable
+		local PubKeySize = Utils.PubKeyLen(4, 13) -- 1312 bytes for ML-DSA-44
+		local SecKeySize = Utils.SecKeyLen(4, 4, 2, 13) -- 2560 bytes
+		local SigSize = Utils.SigLen(4, 4, 131072, 80, 128) -- Variable
 --]=]
 
 --!strict

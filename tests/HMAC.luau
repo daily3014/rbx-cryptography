@@ -1,6 +1,9 @@
 --[=[
 	HMAC Wycheproof Test Suite
 	
+	Validates HMAC implementations against Google's Wycheproof test vectors.
+	Covers MAC generation and verification with various key and message sizes.
+	
 	Test Vector Sources:
 		HMAC-SHA-256: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/hmac_sha256_test.json
 		HMAC-SHA3-512: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/hmac_sha3_512_test.json
@@ -55,7 +58,7 @@ type MacData = {
 type HmacConfig = {
 	Name: string,
 	Url: string,
-	HashFunc: (buffer) -> (string, buffer),
+	HashFunc: (buffer, buffer?) -> (string, buffer),
 	BlockSize: number,
 	BigEndian: boolean,
 }

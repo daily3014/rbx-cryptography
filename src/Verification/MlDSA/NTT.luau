@@ -7,7 +7,7 @@
 	Example usage:
 		local NTT = require(script)
 		
-		local Poly = buffer.create(256 * 4)  -- 256 coefficients, 4 bytes each
+		local Poly = buffer.create(256 * 4) -- 256 coefficients, 4 bytes each
 		NTT.ForwardNTT(Poly)
 		-- Perform operations in NTT domain
 		NTT.InverseNTT(Poly)
