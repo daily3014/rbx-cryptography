@@ -1,5 +1,5 @@
 --[=[
-	Cryptography library: SHA256
+	Cryptography library: SHA224
 	
 	Sizes:
 		Digest: 28 bytes
@@ -9,18 +9,16 @@
 		local Message = buffer.fromstring("Hello World")
 		
 		--------Usage Case 1--------
-		local Result = SHA256(Message)
+		local Result = SHA224(Message)
 		
 		--------Usage Case 2--------
 		local OptionalSalt = buffer.fromstring("Salty")
-		local Result = SHA256(Message, OptionalSalt)
+		local Result = SHA224(Message, OptionalSalt)
 --]=]
 
 --!strict
 --!optimize 2
 --!native
-
-local FORMAT_STRING = string.rep("%08x", 7)
 
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
@@ -132,7 +130,7 @@ local function SHA224(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 20, F)
 	buffer.writeu32(Digest, 24, G)
 
-	return string.format(FORMAT_STRING, A, B, C, D, E, F, G), Digest
+	return string.format("%08x%08x%08x%08x%08x%08x%08x", A, B, C, D, E, F, G), Digest
 end
 
 return SHA224
