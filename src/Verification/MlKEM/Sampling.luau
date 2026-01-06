@@ -213,7 +213,7 @@ function Sampling.GenerateNoisePoly(Eta: number, Sigma: buffer, Nonce: number): 
 	buffer.writeu8(PrfInput, 32, Nonce)
 
 
-	local _, PrfOutput = SHA3.SHAKE256(PrfInput, 64 * Eta)
+	local PrfOutput = SHA3.SHAKE256(PrfInput, 64 * Eta)
 	return Sampling.SamplePolyCbd(PrfOutput, Eta)
 end
 
