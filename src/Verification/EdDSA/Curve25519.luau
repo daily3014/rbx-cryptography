@@ -163,8 +163,8 @@ function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffe
 
 	RandomizedA = Ladder(RandomizedA, PracRuleset[1], PracRuleset[2])
 
-	local Rules = PracRuleset[3]
-	local RuleCount = PracRuleset[4]
+	local Rules: buffer = PracRuleset[3]
+	local RuleCount: number = PracRuleset[4]
 	if RuleCount == 0 then
 		return RandomizedA, nil, nil
 	end
