@@ -99,7 +99,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	buffer.copy(SeedHashInput, 0, Seed, 0, 32)
 	buffer.copy(SeedHashInput, 32, DomainSeparator, 0, 2)
 
-	local SeedHash = SHA3.SHAKE256(SeedHashInput, 128)
+	local _, SeedHash = SHA3.SHAKE256(SeedHashInput, 128)
 
 	local Rho = buffer.create(32)
 	local RhoPrime = buffer.create(64)
@@ -136,7 +136,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	PolyVec.Encode(T1, T1Encoded, K, T1Bw)
 	buffer.copy(PubKey, PkOff1, T1Encoded, 0, buffer.len(T1Encoded))
 
-	local Tr = SHA3.SHAKE256(PubKey, 64)
+	local _, Tr = SHA3.SHAKE256(PubKey, 64)
 
 	buffer.copy(SecKey, SkOff0, Rho, 0, 32)
 	buffer.copy(SecKey, SkOff1, Key, 0, 32)
@@ -211,14 +211,14 @@ local function Sign(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: 
 	Offset += buffer.len(Ctx)
 	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
 
-	local Mu = SHA3.SHAKE256(MuInput, 64)
+	local _, Mu = SHA3.SHAKE256(MuInput, 64)
 
 	local RhoPrimeInput = buffer.create(32 + 32 + 64)
 	buffer.copy(RhoPrimeInput, 0, Key, 0, 32)
 	buffer.copy(RhoPrimeInput, 32, Rnd, 0, 32)
 	buffer.copy(RhoPrimeInput, 64, Mu, 0, 64)
 
-	local RhoPrime = SHA3.SHAKE256(RhoPrimeInput, 64)
+	local _, RhoPrime = SHA3.SHAKE256(RhoPrimeInput, 64)
 
 	local S1 = buffer.create(L * N * 4)
 	local S2 = buffer.create(K * N * 4)
@@ -276,7 +276,7 @@ local function Sign(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: 
 		buffer.copy(ChallengeInput, 0, Mu, 0, 64)
 		buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
 
-		local CTildaFull = SHA3.SHAKE256(ChallengeInput, CTildaSize)
+		local _, CTildaFull = SHA3.SHAKE256(ChallengeInput, CTildaSize)
 		buffer.copy(CTilda, 0, CTildaFull, 0, CTildaSize)
 
 		Sampling.SampleInBall(CTilda, C, Tau, Lambda)
@@ -410,7 +410,7 @@ function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number
 	Sampling.ExpandA(Rho, A, K, L)
 	PolyVec.Decode(T1Encoded, T1, K, T1Bw)
 
-	local Tr = SHA3.SHAKE256(PubKey, 64)
+	local _, Tr = SHA3.SHAKE256(PubKey, 64)
 
 	local DomainSeparator = buffer.create(2)
 	buffer.writeu8(DomainSeparator, 0, 0)
@@ -426,7 +426,7 @@ function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number
 	Offset += buffer.len(Ctx)
 	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
 
-	local Mu = SHA3.SHAKE256(MuInput, 64)
+	local _, Mu = SHA3.SHAKE256(MuInput, 64)
 
 	local W0 = buffer.create(K * N * 4)
 	local W1 = buffer.create(K * N * 4)
@@ -452,7 +452,7 @@ function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number
 	buffer.copy(ChallengeInput, 0, Mu, 0, 64)
 	buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
 
-	local CTildaPrime = SHA3.SHAKE256(ChallengeInput, CTildaSize)
+	local _, CTildaPrime = SHA3.SHAKE256(ChallengeInput, CTildaSize)
 	
 	local CompareResult = CompareBufferSlices(CTilda, 0, CTildaPrime, 0, CTildaSize)
 	VerificationFailed = VerificationFailed or (not CompareResult)
