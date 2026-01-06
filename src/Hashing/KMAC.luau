@@ -72,7 +72,6 @@ end
 local LANES_LOW = buffer.create(100)
 local LANES_HIGH = buffer.create(100)
 local FUNCTION_NAME = buffer.fromstring("KMAC")
-local RESULT = buffer.create(2)
 
 local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
@@ -288,9 +287,9 @@ end
 
 local function EncodeString(Data: buffer): buffer
 	local DataLength = buffer.len(Data)
-	
+
 	local LengthEncoding, LengthEncodingSize = LeftEncode(DataLength * 8)
-	
+
 	local Result = buffer.create(LengthEncodingSize + DataLength)
 
 	buffer.copy(Result, 0, LengthEncoding, 0, LengthEncodingSize)
@@ -301,9 +300,9 @@ end
 
 local function Bytepad(Data: buffer, Rate: number): buffer
 	local DataLength = buffer.len(Data)
-	
+
 	local RateEncoding, RateEncodingSize = LeftEncode(Rate)
-	
+
 	local TotalPrePadLength = RateEncodingSize + DataLength
 	local PadLength = Rate - (TotalPrePadLength % Rate)
 	if PadLength == Rate then
