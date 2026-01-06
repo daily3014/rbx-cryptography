@@ -32,14 +32,14 @@ local CHACHA20_KEY_SIZE_32 = 32
 
 local SIGMA_CONSTANTS = buffer.create(16) do
 	local SigmaBytes = { string.byte("expand 32-byte k", 1, -1) }
-	for Index, ByteValue in ipairs(SigmaBytes) do
+	for Index, ByteValue in SigmaBytes do
 		buffer.writeu8(SIGMA_CONSTANTS, Index - 1, ByteValue)
 	end
 end
 
 local TAU_CONSTANTS = buffer.create(16) do
 	local TauBytes = { string.byte("expand 16-byte k", 1, -1) }
-	for Index, ByteValue in ipairs(TauBytes) do
+	for Index, ByteValue in TauBytes do
 		buffer.writeu8(TAU_CONSTANTS, Index - 1, ByteValue)
 	end
 end
