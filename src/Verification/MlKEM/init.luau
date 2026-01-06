@@ -39,7 +39,6 @@ local DECAP_R_PRIME = buffer.create(32)
 local DECAP_J_OUTPUT = buffer.create(32)
 
 local ENCAP_G_INPUT = buffer.create(64)
-local ENCAP_K_BYTES = buffer.create(32)
 local ENCAP_R = buffer.create(32)
 
 local MlKem = {
@@ -60,7 +59,7 @@ function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, b
 	end
 
 	local KpkePublicKey, KpkeSecretKey = Pke.KeyGen(K, Eta1, D)
-	local PublicKeyHash = SHA3.SHA3_256(KpkePublicKey)
+	local _, PublicKeyHash = SHA3.SHA3_256(KpkePublicKey)
 
 	local SecretKeyLen = Utils.GetKemSecretKeyLen(K)
 	local SecretKey = buffer.create(SecretKeyLen)
@@ -108,13 +107,13 @@ function MlKem.Encapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 		error("malformed public key encoding")
 	end
 
-	local PublicKeyHash = SHA3.SHA3_256(PublicKey)
+	local _, PublicKeyHash = SHA3.SHA3_256(PublicKey)
 
 	local GInput = ENCAP_G_INPUT
 	buffer.copy(GInput, 0, Message, 0, 32)
 	buffer.copy(GInput, 32, PublicKeyHash, 0, 32)
 
-	local GOutput = SHA3.SHA3_512(GInput)
+	local _, GOutput = SHA3.SHA3_512(GInput)
 
 	local K_bytes = buffer.create(32)
 	local R = ENCAP_R
@@ -164,7 +163,7 @@ function MlKem.Decapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 	buffer.copy(GInput, 0, MPrime, 0, 32)
 	buffer.copy(GInput, 32, H, 0, 32)
 
-	local GOutput = SHA3.SHA3_512(GInput)
+	local _, GOutput = SHA3.SHA3_512(GInput)
 
 	local KPrime = DECAP_K_PRIME
 	local RPrime = DECAP_R_PRIME
@@ -175,7 +174,7 @@ function MlKem.Decapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 	buffer.copy(JInput, 0, Z, 0, 32)
 	buffer.copy(JInput, 32, Ciphertext, 0, buffer.len(Ciphertext))
 
-	local JOutputBuffer = SHA3.SHAKE256(JInput, 32)
+	local _, JOutputBuffer = SHA3.SHAKE256(JInput, 32)
 	local JOutput = DECAP_J_OUTPUT
 	buffer.copy(JOutput, 0, JOutputBuffer, 0, 32)
 
@@ -208,7 +207,7 @@ function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 	buffer.copy(Ek, 0, SecretKey, EkOffset, KpkePublicKeyLen)
 	buffer.copy(StoredH, 0, SecretKey, HOffset, 32)
 
-	local ComputedH = SHA3.SHA3_256(Ek)
+	local _, ComputedH = SHA3.SHA3_256(Ek)
 	return Utils.CtMemcmp(StoredH, ComputedH) == 0xFFFFFFFF
 end
 
