@@ -718,7 +718,6 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
 	local CryptLen = buffer.len(Ciphertext)
-	local TagLength = buffer.len(Tag)
 	local AuthData = AAD or buffer.create(0)
 
 	local OutputBuffer = buffer.create(CryptLen)
@@ -735,7 +734,7 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	Gctr(EncryptionProcessor, J0, S, 16, ComputedTag)
 
 	if not ConstantTimeCompare(Tag, ComputedTag) then
-		return false
+		return false, nil
 	end
 
 	return true, OutputBuffer
