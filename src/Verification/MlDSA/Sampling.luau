@@ -14,7 +14,6 @@
 --!native
 
 local XOF = require("./XOF")
-local BitPacking = require("./Pack")
 local Params = require("./Params")
 
 local N = 256
