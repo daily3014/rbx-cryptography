@@ -53,7 +53,7 @@ local POLY_MUL_ZETA_EXP = buffer.create((N / 2) * 2) do
 	end
 end
 
-local POWERS_OF_TWO = table.create(LOG2N)
+local POWERS_OF_TWO = table.create(LOG2N) :: {{number}}
 for I = 0, LOG2N - 1 do
 	POWERS_OF_TWO[I] = {2^I, (2^I) * 2}
 end
