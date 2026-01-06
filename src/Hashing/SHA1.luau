@@ -24,8 +24,6 @@
 --!optimize 2
 --!strict
 
-local FORMAT_STRING = string.rep("%08x", 5)
-
 local OFFSETS = buffer.create(320)
 
 local function PreProcess(Contents: buffer): (buffer, number)
@@ -125,7 +123,7 @@ local function SHA1(Message: buffer, Salt: buffer?): string
 	end
 
 	local ProcessedMessage, Length = PreProcess(Message)
-	return string.format(FORMAT_STRING, DigestBlocks(ProcessedMessage, Length))
+	return string.format("%08x%08x%08x%08x%08x", DigestBlocks(ProcessedMessage, Length))
 end
 
 return SHA1
