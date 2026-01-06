@@ -261,6 +261,10 @@ function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffe
 		RandomizedA, CurrentB, CurrentC = RandomizedA, Double(RandomizedA), RandomizedA
 	end
 
+	if not CurrentC then
+		return nil, nil, nil
+	end
+
 	for RuleIndex = RuleCount - 1, 1, -1 do
 		local CurrentRule = buffer.readf64(Rules, (RuleIndex - 1) * 8)
 		if CurrentRule == 0 then

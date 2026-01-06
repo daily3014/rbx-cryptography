@@ -20,11 +20,8 @@ local N = 2^LOG2N
 local Q = 3329
 local POLY_SIZE = N * 2
 
-local TEMP_POLY_A = buffer.create(N * 2)
-local TEMP_POLY_B = buffer.create(N * 2)
 local TEMP_POLY_MUL = buffer.create(N * 2)
 local TEMP_POLY_ACCUM = buffer.create(N * 2)
-local TEMP_POLY_NTT = buffer.create(N * 2)
 local TEMP_POLY_ENCODE = buffer.create(N * 2)
 local TEMP_POLY_COMPRESS = buffer.create(N * 2)
 

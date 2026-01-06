@@ -20,8 +20,6 @@
 --!optimize 2
 --!native
 
-local FORMAT_STRING = string.rep("%08x", 7)
-
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
 		0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -132,7 +130,7 @@ local function SHA224(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 20, F)
 	buffer.writeu32(Digest, 24, G)
 
-	return string.format(FORMAT_STRING, A, B, C, D, E, F, G), Digest
+	return string.format("%08x%08x%08x%08x%08x%08x%08x", A, B, C, D, E, F, G), Digest
 end
 
 return SHA224

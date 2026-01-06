@@ -41,7 +41,7 @@ local AEAD = {
 	Poly1305 = Poly1305
 }
 
-local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) & typeof(ChaCha.XChaCha20)
+local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) | typeof(ChaCha.XChaCha20)
 	if UseXChaCha20 then
 		return ChaCha.XChaCha20
 	else

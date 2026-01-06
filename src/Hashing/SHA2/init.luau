@@ -1,5 +1,5 @@
 --[[
-	Cryptography library: SHA2 Family  
+	Cryptography library: SHA2 Family
 --]]
 
 return {

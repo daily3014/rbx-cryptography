@@ -7,7 +7,7 @@
 	Example usage:
 		local PolyVec = require(script)
 		
-		local Vec = buffer.create(4 * 256 * 4)  -- 4 polynomials
+		local Vec = buffer.create(4 * 256 * 4) -- 4 polynomials
 		PolyVec.ForwardNTT(Vec, 4)
 		local Norm = PolyVec.InfinityNorm(Vec, 4)
 --]=]

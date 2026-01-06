@@ -304,7 +304,7 @@ end
 
 local function SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWidth: number): (buffer, number)
 	if ScalarBitCount <= 0 or ScalarBitCount > 256 then
-		error("Invalid scalar bit  count", 2)
+		error("Invalid scalar bit count", 2)
 	end
 
 	if RadixWidth <= 0 or RadixWidth > 8 then
@@ -396,6 +396,10 @@ do
 end
 
 local function GetBasePointTableEntry(WindowIndex: number, Multiple: number, Storage: buffer?): buffer
+	if not BASEPOINT_TABLE then
+		return buffer.create(0)
+	end
+	
 	local BaseOffset = ((WindowIndex - 1) * BASE_POINT_ROW * POINT_SIZE)
 	local Offset = BaseOffset + ((Multiple - 1) * POINT_SIZE)
 

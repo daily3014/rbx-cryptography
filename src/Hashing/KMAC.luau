@@ -49,13 +49,14 @@ local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 	local ShiftRegister = 29
 	local function GetNextBit(): number
 		local Result = ShiftRegister % 2
-		ShiftRegister =  bit32.bxor((ShiftRegister - Result) // 2, 142 * Result)
+		ShiftRegister = bit32.bxor((ShiftRegister - Result) // 2, 142 * Result)
 
 		return Result
 	end
 
 	for Index = 0, 23 do
-		local LowValue: number, Multiplier: number = 0, nil
+		local LowValue = 0
+		local Multiplier: number
 
 		for _ = 1, 6 do
 			Multiplier = if Multiplier then Multiplier * Multiplier * 2 else 1
@@ -197,18 +198,18 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Lane21Low = Temp3Low // 8388608 + Temp3High * 512; Lane21High = Temp3High // 8388608 + Temp3Low * 512
 			Lane01Low = XOR(DeltaLow, Lane01Low); Lane01High = XOR(DeltaHigh, Lane01High)
 
-			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low =  XOR(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)),  XOR(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)),  XOR(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)),  XOR(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)),  XOR(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low))
-			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High =  XOR(Lane01High, bit32.band(-1 - Lane02High, Lane03High)),  XOR(Lane02High, bit32.band(-1 - Lane03High, Lane04High)),  XOR(Lane03High, bit32.band(-1 - Lane04High, Lane05High)),  XOR(Lane04High, bit32.band(-1 - Lane05High, Lane01High)),  XOR(Lane05High, bit32.band(-1 - Lane01High, Lane02High))
-			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low =  XOR(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)),  XOR(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)),  XOR(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)),  XOR(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)),  XOR(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low))
-			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High =  XOR(Lane09High, bit32.band(-1 - Lane10High, Lane06High)),  XOR(Lane10High, bit32.band(-1 - Lane06High, Lane07High)),  XOR(Lane06High, bit32.band(-1 - Lane07High, Lane08High)),  XOR(Lane07High, bit32.band(-1 - Lane08High, Lane09High)),  XOR(Lane08High, bit32.band(-1 - Lane09High, Lane10High))
-			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low =  XOR(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)),  XOR(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)),  XOR(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)),  XOR(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)),  XOR(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low))
-			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High =  XOR(Lane12High, bit32.band(-1 - Lane13High, Lane14High)),  XOR(Lane13High, bit32.band(-1 - Lane14High, Lane15High)),  XOR(Lane14High, bit32.band(-1 - Lane15High, Lane11High)),  XOR(Lane15High, bit32.band(-1 - Lane11High, Lane12High)),  XOR(Lane11High, bit32.band(-1 - Lane12High, Lane13High))
-			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low =  XOR(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)),  XOR(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)),  XOR(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)),  XOR(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)),  XOR(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low))
-			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High =  XOR(Lane20High, bit32.band(-1 - Lane16High, Lane17High)),  XOR(Lane16High, bit32.band(-1 - Lane17High, Lane18High)),  XOR(Lane17High, bit32.band(-1 - Lane18High, Lane19High)),  XOR(Lane18High, bit32.band(-1 - Lane19High, Lane20High)),  XOR(Lane19High, bit32.band(-1 - Lane20High, Lane16High))
-			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low =  XOR(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)),  XOR(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)),  XOR(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)),  XOR(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)),  XOR(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low))
-			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High =  XOR(Lane23High, bit32.band(-1 - Lane24High, Lane25High)),  XOR(Lane24High, bit32.band(-1 - Lane25High, Lane21High)),  XOR(Lane25High, bit32.band(-1 - Lane21High, Lane22High)),  XOR(Lane21High, bit32.band(-1 - Lane22High, Lane23High)),  XOR(Lane22High, bit32.band(-1 - Lane23High, Lane24High))
+			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low = XOR(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)), XOR(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)), XOR(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)), XOR(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)), XOR(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low)) :: number
+			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High = XOR(Lane01High, bit32.band(-1 - Lane02High, Lane03High)), XOR(Lane02High, bit32.band(-1 - Lane03High, Lane04High)), XOR(Lane03High, bit32.band(-1 - Lane04High, Lane05High)), XOR(Lane04High, bit32.band(-1 - Lane05High, Lane01High)), XOR(Lane05High, bit32.band(-1 - Lane01High, Lane02High)) :: number
+			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low = XOR(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)), XOR(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)), XOR(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)), XOR(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)), XOR(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low)) :: number
+			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High = XOR(Lane09High, bit32.band(-1 - Lane10High, Lane06High)), XOR(Lane10High, bit32.band(-1 - Lane06High, Lane07High)), XOR(Lane06High, bit32.band(-1 - Lane07High, Lane08High)), XOR(Lane07High, bit32.band(-1 - Lane08High, Lane09High)), XOR(Lane08High, bit32.band(-1 - Lane09High, Lane10High)) :: number
+			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low = XOR(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)), XOR(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)), XOR(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)), XOR(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)), XOR(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low)) :: number
+			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High = XOR(Lane12High, bit32.band(-1 - Lane13High, Lane14High)), XOR(Lane13High, bit32.band(-1 - Lane14High, Lane15High)), XOR(Lane14High, bit32.band(-1 - Lane15High, Lane11High)), XOR(Lane15High, bit32.band(-1 - Lane11High, Lane12High)), XOR(Lane11High, bit32.band(-1 - Lane12High, Lane13High)) :: number
+			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low = XOR(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)), XOR(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)), XOR(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)), XOR(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)), XOR(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low)) :: number
+			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High = XOR(Lane20High, bit32.band(-1 - Lane16High, Lane17High)), XOR(Lane16High, bit32.band(-1 - Lane17High, Lane18High)), XOR(Lane17High, bit32.band(-1 - Lane18High, Lane19High)), XOR(Lane18High, bit32.band(-1 - Lane19High, Lane20High)), XOR(Lane19High, bit32.band(-1 - Lane20High, Lane16High)) :: number
+			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low = XOR(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)), XOR(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)), XOR(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)), XOR(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)), XOR(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low)) :: number
+			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High = XOR(Lane23High, bit32.band(-1 - Lane24High, Lane25High)), XOR(Lane24High, bit32.band(-1 - Lane25High, Lane21High)), XOR(Lane25High, bit32.band(-1 - Lane21High, Lane22High)), XOR(Lane21High, bit32.band(-1 - Lane22High, Lane23High)), XOR(Lane22High, bit32.band(-1 - Lane23High, Lane24High)) :: number
 
-			Lane01Low =  XOR(Lane01Low, buffer.readu32(RCLow, RoundIndex))
+			Lane01Low = XOR(Lane01Low, buffer.readu32(RCLow, RoundIndex))
 			Lane01High = XOR(Lane01High, buffer.readu32(RCHigh, RoundIndex))
 		end
 
@@ -240,97 +241,55 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 	end
 end
 
-local function LeftEncode(Value: number): buffer
-	if Value == 0 then
-		buffer.writeu8(RESULT, 0, 1)
-		buffer.writeu8(RESULT, 1, 0)
-		
-		return RESULT
-	end
+local LEFT_ENCODE_RESULT = buffer.create(5)
+local RIGHT_ENCODE_RESULT = buffer.create(5)
 
-	local ByteLength = 1
-	if Value > 0xFF then
-		if Value > 0xFFFF then
-			if Value > 0xFFFFFF then
-				ByteLength = 4
-			else
-				ByteLength = 3
-			end
-		else
-			ByteLength = 2
-		end
-	end
+local function LeftEncode(Value: number): (buffer, number)
+	local Result = LEFT_ENCODE_RESULT
 
-	local Result = buffer.create(ByteLength + 1)
-	buffer.writeu8(Result, 0, ByteLength)
-
-	if ByteLength == 1 then
+	if Value <= 0xFF then
+		buffer.writeu8(Result, 0, 1)
 		buffer.writeu8(Result, 1, Value)
-	elseif ByteLength == 2 then
-		buffer.writeu8(Result, 1, bit32.rshift(Value, 8))
-		buffer.writeu8(Result, 2, bit32.band(Value, 0xFF))
-	elseif ByteLength == 3 then
-		buffer.writeu8(Result, 1, bit32.rshift(Value, 16))
-		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 3, bit32.band(Value, 0xFF))
-	else
-		buffer.writeu8(Result, 1, bit32.rshift(Value, 24))
-		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 16), 0xFF))
-		buffer.writeu8(Result, 3, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 4, bit32.band(Value, 0xFF))
+		return Result, 2
 	end
 
-	return Result
+	if Value <= 0xFFFF then
+		buffer.writeu8(Result, 0, 2)
+		buffer.writeu16(Result, 1, bit32.byteswap(bit32.lshift(Value, 16)))
+		return Result, 3
+	end
+
+	local ByteLength = if Value > 0xFFFFFF then 4 else 3
+	buffer.writeu8(Result, 0, ByteLength)
+	buffer.writeu32(Result, 1, bit32.byteswap(bit32.lshift(Value, (4 - ByteLength) * 8)))
+	return Result, ByteLength + 1
 end
 
-local function RightEncode(Value: number): buffer
-	if Value == 0 then
-		buffer.writeu8(RESULT, 0, 0)
-		buffer.writeu8(RESULT, 1, 1)
-		
-		return RESULT
-	end
+local function RightEncode(Value: number): (buffer, number)
+	local Result = RIGHT_ENCODE_RESULT
 
-	local ByteLength = 1
-	if Value > 0xFF then
-		if Value > 0xFFFF then
-			if Value > 0xFFFFFF then
-				ByteLength = 4
-			else
-				ByteLength = 3
-			end
-		else
-			ByteLength = 2
-		end
-	end
-
-	local Result = buffer.create(ByteLength + 1)
-	buffer.writeu8(Result, ByteLength, ByteLength)
-
-	if ByteLength == 1 then
+	if Value <= 0xFF then
 		buffer.writeu8(Result, 0, Value)
-	elseif ByteLength == 2 then
-		buffer.writeu8(Result, 0, bit32.rshift(Value, 8))
-		buffer.writeu8(Result, 1, bit32.band(Value, 0xFF))
-	elseif ByteLength == 3 then
-		buffer.writeu8(Result, 0, bit32.rshift(Value, 16))
-		buffer.writeu8(Result, 1, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 2, bit32.band(Value, 0xFF))
-	else
-		buffer.writeu8(Result, 0, bit32.rshift(Value, 24))
-		buffer.writeu8(Result, 1, bit32.band(bit32.rshift(Value, 16), 0xFF))
-		buffer.writeu8(Result, 2, bit32.band(bit32.rshift(Value, 8), 0xFF))
-		buffer.writeu8(Result, 3, bit32.band(Value, 0xFF))
+		buffer.writeu8(Result, 1, 1)
+		return Result, 2
 	end
 
-	return Result
+	if Value <= 0xFFFF then
+		buffer.writeu16(Result, 0, bit32.byteswap(bit32.lshift(Value, 16)))
+		buffer.writeu8(Result, 2, 2)
+		return Result, 3
+	end
+
+	local ByteLength = if Value > 0xFFFFFF then 4 else 3
+	buffer.writeu32(Result, 0, bit32.byteswap(bit32.lshift(Value, (4 - ByteLength) * 8)))
+	buffer.writeu8(Result, ByteLength, ByteLength)
+	return Result, ByteLength + 1
 end
 
 local function EncodeString(Data: buffer): buffer
 	local DataLength = buffer.len(Data)
 	
-	local LengthEncoding = LeftEncode(DataLength * 8)
-	local LengthEncodingSize = buffer.len(LengthEncoding)
+	local LengthEncoding, LengthEncodingSize = LeftEncode(DataLength * 8)
 	
 	local Result = buffer.create(LengthEncodingSize + DataLength)
 
@@ -343,8 +302,7 @@ end
 local function Bytepad(Data: buffer, Rate: number): buffer
 	local DataLength = buffer.len(Data)
 	
-	local RateEncoding = LeftEncode(Rate)
-	local RateEncodingSize = buffer.len(RateEncoding)
+	local RateEncoding, RateEncodingSize = LeftEncode(Rate)
 	
 	local TotalPrePadLength = RateEncodingSize + DataLength
 	local PadLength = Rate - (TotalPrePadLength % Rate)
@@ -450,8 +408,7 @@ function KMAC.KMAC128(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: b
 	local BytepaddedKeySize = buffer.len(BytepaddedKey)
 	local DataSize = buffer.len(Data)
 
-	local RightEncodedLength = RightEncode(OutputBytes * 8)
-	local RightEncodedLengthSize = buffer.len(RightEncodedLength)
+	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
 
 	local Hex = buffer.create(OutputBytes * 2)
 	local Lookup = ENCODE_LOOKUP
@@ -506,8 +463,7 @@ function KMAC.KMAC256(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: b
 	local BytepaddedKeySize = buffer.len(BytepaddedKey)
 	local DataSize = buffer.len(Data)
 
-	local RightEncodedLength = RightEncode(OutputBytes * 8)
-	local RightEncodedLengthSize = buffer.len(RightEncodedLength)
+	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
 
 	local Hex = buffer.create(OutputBytes * 2)
 	local Lookup = ENCODE_LOOKUP

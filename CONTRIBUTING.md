@@ -15,9 +15,9 @@ All contributors must follow the steps and guidelines defined below.
 - **Bug Reports**: Use issues with reproduction steps
 - **Feature Requests**: Open an issue to discuss before implementing
 - **Pull Requests**: 
-  - Follow existing code style
-  - Add tests for new features
-  - Make sure all tests pass
+- Follow existing code style
+- Add tests for new features
+- Make sure all tests pass
 
 ## Adding New Algorithms
 

@@ -15,9 +15,6 @@
 --!strict
 --!optimize 2
 --!native
-
-local Q_BIT_WIDTH = 12
-
 local Params = {}
 
 function Params.CheckD(D: number): boolean

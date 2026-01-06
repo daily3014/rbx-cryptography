@@ -51,7 +51,7 @@ type TestingLib = {
 	Test: (Name: string, Callback: () -> ()) -> (),
 	Describe: (Name: string, Callback: () -> ()) -> (),
 	Defer: (Function: () -> ()) -> (),
-	Expect: ((Value: (...any) -> ...any) -> FunctionalCases) & ((Value: any) -> ExpectCases) & ExpectHandler,
+	Expect: ((Value: any) -> FunctionalCases) & ExpectHandler,
 	Expected: (Value: any) -> (),
 	ExpectEqual: (Expected: any, Value: any) -> (),
 }
@@ -108,7 +108,7 @@ end
 
 local function RunTest(Function: () -> (), Info: TestInfo)
 	Testing.Count += 1
-	if Testing.Count % 10 == 0 then
+	if Testing.Count % 90 == 0 then
 		task.wait()
 	end
 
@@ -146,12 +146,10 @@ local function RunTest(Function: () -> (), Info: TestInfo)
 
 			local ShortenedSource = ShortSource or Source
 
-			-- Only runs when a test fails, so the deoptimization
-			-- should never occur when all the tests pass
 			if not ShortSource then
 				local SourceEnv = getfenv(DebugFunction)
 				if SourceEnv and SourceEnv.script then
-					SourceScript = SourceEnv.script
+					SourceScript = SourceEnv.script :: Instance
 
 					ShortenedSource = `{SourceScript.Parent}.{SourceScript}`
 					ShortSource = ShortenedSource
@@ -163,7 +161,7 @@ local function RunTest(Function: () -> (), Info: TestInfo)
 
 		Error = ErrorMessage
 		if ShortSource and SourceScript then
-			Error = Error:gsub(SourceScript:GetFullName(), ShortSource)
+			Error = (Error :: string):gsub((SourceScript :: Instance):GetFullName(), ShortSource)
 		end
 	end)
 
@@ -174,9 +172,9 @@ local function RunTest(Function: () -> (), Info: TestInfo)
 
 	for Index = #DeferQueue, 1, -1 do
 		local Value = DeferQueue[Index]
-		local Success, Result: any = pcall(Value)
+		local Success = pcall(Value)
 		if not Success then
-			print(`Deferred function failed:\n    {Result}`)
+			print(`Deferred function failed`)
 		end
 	end
 	table.clear(DeferQueue)
@@ -214,7 +212,7 @@ function Testing.Describe(Name: string, Function: (...any) -> ...any): ()
 	if not Ok then
 		Testing.Failed += 1
 		print(`{Line}: Describe("{Name}", ...):`)
-		print(`   {Error}`)
+		print(`{Error}`)
 	end
 end
 
@@ -242,7 +240,7 @@ function Testing.Entry(Function: (...any) -> ...any): ()
 		print(` Tests: {Count} total`)
 	end
 
-	print(` Time:  {math.ceil(Time * 1000) / 1000} s`)
+	print(` Time: {math.ceil(Time * 1000) / 1000} s`)
 end
 
 function Testing.Complete(): ()
@@ -255,7 +253,7 @@ function Testing.Complete(): ()
 		print(` Tests: {Count} total`)
 	end
 
-	print(` Time:  {math.ceil(Time * 1000) / 1000} s`)
+	print(` Time: {math.ceil(Time * 1000) / 1000} s`)
 end
 
 function Testing.Defer(Function: () -> ())
@@ -268,14 +266,14 @@ local function AssertExpect(Flipped: boolean, Value: boolean, Format: string, ..
 	end
 
 	if not Value then
-		error(string.format(Format, ...), 4)
+		error(string.format(Format :: any, ...), 4)
 	end
 end
 
 local Conditional = {}
 Conditional.__index = Conditional
 
-function Conditional.New(Name: string, Function: (Value: any) -> (boolean, string?), Any: any?)
+function Conditional.New(Name: string, Function: (Value: any) -> (boolean, any?, string?), Any: any?)
 	return setmetatable({
 		Test = Function,
 		Name = Name,
@@ -556,7 +554,7 @@ local function DeepScan(Any: any, Second: any, State: { [any]: any }, Key: strin
 
 	if Conditional.Is(Any) then
 		if Any.Name ~= "@similar" then
-			local Result, _, Reason = Any(Second)
+			local Result, _, Reason = (Any :: any)(Second)
 			if not Result then
 				return { `{Key or ""}{if Reason then string.format(Reason, "") else "failed condition"}` }
 			end
@@ -584,7 +582,7 @@ local function DeepScan(Any: any, Second: any, State: { [any]: any }, Key: strin
 				KeysHit[EntryKey] = true
 			end
 			for _, Difference in Result do
-				table.insert(Chunk, `    {Difference}`)
+				table.insert(Chunk, `{Difference}`)
 			end
 		end
 
@@ -594,7 +592,7 @@ local function DeepScan(Any: any, Second: any, State: { [any]: any }, Key: strin
 				continue
 			end
 			for _, Difference in Result do
-				table.insert(Chunk, `    {Difference}`)
+				table.insert(Chunk, `{Difference}`)
 			end
 		end
 

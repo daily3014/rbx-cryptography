@@ -14,11 +14,7 @@
 --!strict
 --!optimize 2
 --!native
-
-local FORMAT_STRING = string.rep("%08x", 4)
-
-local OFFSETS = table.create(64)
-
+local OFFSETS = table.create(64) :: {number}
 local CONSTANTS = {
 	0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
 	0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
@@ -144,7 +140,7 @@ local function MD5(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 8, C)
 	buffer.writeu32(Digest, 12, D)
 
-	return string.format(FORMAT_STRING, A, B, C, D), Digest
+	return string.format("%08x%08x%08x%08x", A, B, C, D), Digest
 end
 
 return MD5

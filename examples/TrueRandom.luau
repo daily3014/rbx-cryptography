@@ -73,7 +73,7 @@ end
 
 --[=[
 	If the http request fails it will retry with an exponential backoff
-	If it does fail after max attempts, it will return nil because it is  extra entropy, so no fallback needed
+	If it does fail after max attempts, it will return nil because it is extra entropy, so no fallback needed
 --]=]
 local function Retry(Func: () -> any, MaxAttempts: number): (boolean, buffer?)
 	local Attempts = 0

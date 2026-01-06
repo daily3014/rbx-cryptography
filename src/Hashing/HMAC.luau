@@ -58,7 +58,7 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 		if BigEndian ~= false then
 			ToBigEndian(Digest)
 		end
-		
+
 		local PaddedKey = buffer.create(BlockSizeBytes)
 		buffer.copy(PaddedKey, 0, Digest)
 		return PaddedKey
@@ -67,7 +67,7 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 		buffer.copy(PaddedKey, 0, Key)
 		return PaddedKey
 	end
-	
+
 	return Key
 end
 

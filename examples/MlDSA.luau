@@ -12,7 +12,7 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 		Digital Signature Algorithm
 	
 	ML-DSA is a post-quantum digital signature scheme from NIST FIPS 204. 
-  It has three security levels and supports
+	It has three security levels and supports
 	both deterministic and hedged (randomized) signing.
 	
 	Hedged signing uses 32 bytes of randomness for security.

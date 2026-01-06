@@ -177,9 +177,9 @@ local function ExchangeOnPoint(MaskedSecretKey: buffer, CurvePoint: buffer): (bu
 	local MaskPointZ = buffer.create(COORD_SIZE)
 	buffer.copy(MaskPointZ, 0, MaskPoint, 1 * COORD_SIZE, COORD_SIZE)
 
-	PointX, PointZ = FieldPrime.Mul(PointX, PointZ), FieldPrime.Square(PointZ)
-	FullPointX, FullPointZ = FieldPrime.Mul(FullPointX, FullPointZ), FieldPrime.Square(FullPointZ)
-	MaskPointX, MaskPointZ = FieldPrime.Mul(MaskPointX, MaskPointZ), FieldPrime.Square(MaskPointZ)
+	PointX, PointZ = FieldPrime.Mul(PointX, PointZ), FieldPrime.Square(PointZ) :: buffer
+	FullPointX, FullPointZ = FieldPrime.Mul(FullPointX, FullPointZ), FieldPrime.Square(FullPointZ) :: buffer
+	MaskPointX, MaskPointZ = FieldPrime.Mul(MaskPointX, MaskPointZ), FieldPrime.Square(MaskPointZ) :: buffer
 
 	local PointXSquared = FieldPrime.Square(PointX)
 	local PointZSquared = FieldPrime.Square(PointZ)

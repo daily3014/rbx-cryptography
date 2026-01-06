@@ -31,9 +31,6 @@ local N = 2^LOG2N
 local POLY_SIZE = N * 2 
 
 local Q = 13 * 256 + 1
-local Q_BIT_WIDTH = 12
-local WIDTH = (2^(2 * Q_BIT_WIDTH))
-local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local SAMPLE_NTT_CHUNK = buffer.create(168)
 local SAMPLE_NTT_POLY = buffer.create(N * 2)

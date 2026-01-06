@@ -19,9 +19,6 @@
 --!strict
 --!optimize 2
 --!native
-
-local FORMAT_STRING = string.rep("%08x", 8)
-
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
 		0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -103,7 +100,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 			bit32.bor(E + OldE, 0),
 			bit32.bor(F + OldF, 0),
 			bit32.bor(G + OldG, 0),
-			bit32.bor(H + OldH, 0)
+			bit32.bor(H + OldH, 0) :: number
 	end
 
 	return A, B, C, D, E, F, G, H
@@ -133,7 +130,7 @@ local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 24, G)
 	buffer.writeu32(Digest, 28, H)
 
-	return string.format(FORMAT_STRING, A, B, C, D, E, F, G, H), Digest
+	return string.format("%08x%08x%08x%08x%08x%08x%08x%08x", A, B, C, D, E, F, G, H), Digest
 end
 
 return SHA256

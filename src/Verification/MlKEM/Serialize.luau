@@ -16,17 +16,10 @@
 --!optimize 2
 --!native
 
-local Field = require("./Field")
 local Params = require("./Params")
 
 local LOG2N = 8
 local N = 2^LOG2N
-local POLY_SIZE = N * 2 
-
-local Q = 13 * 256 + 1
-local Q_BIT_WIDTH = 12
-local WIDTH = (2^(2 * Q_BIT_WIDTH))
-local R = math.floor((2^(2 * Q_BIT_WIDTH)) / Q)
 
 local Serialize = {}
 

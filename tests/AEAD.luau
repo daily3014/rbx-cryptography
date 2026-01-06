@@ -187,10 +187,10 @@ Testing.Describe("ChaCha20-Poly1305 Wycheproof Tests", function()
 	local SkippedNonce, SkippedEmpty = RunAeadTests(Data, 96, false)
 
 	if SkippedNonce > 0 then
-		print(`  [Info] Skipped {SkippedNonce} tests with non-96-bit nonces (invalid per RFC 7539)`)
+		print(`[Info] Skipped {SkippedNonce} tests with non-96-bit nonces (invalid per RFC 7539)`)
 	end
 	if SkippedEmpty > 0 then
-		print(`  [Info] Skipped {SkippedEmpty} tests with empty messages (unsupported)`)
+		print(`[Info] Skipped {SkippedEmpty} tests with empty messages (unsupported)`)
 	end
 end)
 
@@ -199,10 +199,10 @@ Testing.Describe("XChaCha20-Poly1305 Wycheproof Tests", function()
 	local SkippedNonce, SkippedEmpty = RunAeadTests(Data, 192, true)
 
 	if SkippedNonce > 0 then
-		print(`  [Info] Skipped {SkippedNonce} tests with non-192-bit nonces (invalid per spec)`)
+		print(`[Info] Skipped {SkippedNonce} tests with non-192-bit nonces (invalid per spec)`)
 	end
 	if SkippedEmpty > 0 then
-		print(`  [Info] Skipped {SkippedEmpty} tests with empty messages (unsupported)`)
+		print(`[Info] Skipped {SkippedEmpty} tests with empty messages (unsupported)`)
 	end
 end)
 

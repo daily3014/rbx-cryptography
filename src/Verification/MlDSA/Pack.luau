@@ -8,7 +8,7 @@
 		local BitPacking = require(script)
 		
 		local Poly = buffer.create(256 * 4)
-		local Encoded = buffer.create(96)  -- For 3-bit encoding
+		local Encoded = buffer.create(96) -- For 3-bit encoding
 		BitPacking.Encode(Poly, Encoded, 3)
 		BitPacking.Decode(Encoded, Poly, 3)
 --]=]

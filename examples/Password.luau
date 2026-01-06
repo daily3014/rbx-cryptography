@@ -24,7 +24,7 @@
 		- Maximum 128 characters
 		
 	Usage:
-		local GeneratedPassword = GenerateSecurePassword(24)  -- App generates this locally
+		local GeneratedPassword = GenerateSecurePassword(24) -- App generates this locally
 		-- User stores GeneratedPassword in their password manager
 		local Hash, Salt = CreatePasswordHash(GeneratedPassword)
 		local IsValid = VerifyPassword(GeneratedPassword, Hash, Salt)

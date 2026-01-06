@@ -20,7 +20,7 @@
 --!optimize 2
 --!native
 
-local CRC32_LOOKUP = table.create(256)
+local CRC32_LOOKUP = table.create(256) :: {number}
 for Index = 0, 255 do
 	local CRC = Index
 	for _ = 1, 8 do

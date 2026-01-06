@@ -397,7 +397,6 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 	StateLow[8] = XOR(StateLow[8], WL8, WorkL16)
 end
 
-local OutputFormat = string.rep("%08x", 16)
 local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): (string, buffer)
 	local KeyLength = KeyData and buffer.len(KeyData) or 0
 	local DataLength = buffer.len(InputData)
@@ -407,8 +406,8 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 
 	StateLow[1] = bit32.bxor(StateLow[1], 0x01010000, bit32.lshift(KeyLength, 8), OutputLength)
 
-	local BlockHigh = table.create(16)
-	local BlockLow = table.create(16)
+	local BlockHigh = table.create(16) :: {number}
+	local BlockLow = table.create(16) :: {number}
 	local ProcessedBytes = KeyLength > 0 and 128 or 0
 
 	if KeyLength > 0 and KeyData then
@@ -459,7 +458,7 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	end
 
 	local FinalDigest = string.format(
-		OutputFormat,
+		"%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x",
 		bit32.byteswap(StateLow[1]), bit32.byteswap(StateHigh[1]),
 		bit32.byteswap(StateLow[2]), bit32.byteswap(StateHigh[2]),
 		bit32.byteswap(StateLow[3]), bit32.byteswap(StateHigh[3]),
@@ -473,7 +472,7 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	return string.sub(FinalDigest, 1, OutputLength * 2), Digest
 end
 
-local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer?): string
+local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer?): (string, buffer)
 	if InputData == nil then
 		error("InputData cannot be nil", 2)
 	end

@@ -64,6 +64,6 @@ local Pub1024, Sec1024 = MlKem.MLKEM_1024.KeyGen(CSPRNG.RandomBytes(32), CSPRNG.
 
 -- Key sizes
 print("ML-KEM-512 sizes:", buffer.len(Pub512), buffer.len(Sec512))
-print("ML-KEM-768 sizes:", buffer.len(PublicKey), buffer.len(SecretKey))  
+print("ML-KEM-768 sizes:", buffer.len(PublicKey), buffer.len(SecretKey))
 print("ML-KEM-1024 sizes:", buffer.len(Pub1024), buffer.len(Sec1024))
 -- Quite big

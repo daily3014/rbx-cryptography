@@ -162,9 +162,9 @@ function FieldPrime.Carry(ElementA: buffer, Storage: buffer?): buffer
 	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 	A00 += 19 / 2 ^ 255 * C11
 
-	C00 = A00 + 3 * 2 ^ 73  - 3 * 2 ^ 73
+	C00 = A00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
 	A01 += C00
-	C01 = A01 + 3 * 2 ^ 94  - 3 * 2 ^ 94
+	C01 = A01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
 	A02 += C01
 	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
 	A03 += C02
@@ -242,17 +242,17 @@ function FieldPrime.Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 	C00 += 19 / 2 ^ 255 * (A11 - C11)
 
 	local Buf = Storage or buffer.create(SIZE)
-	if  C11 / 2 ^ 234 == 2 ^ 21 - 1
+	if C11 / 2 ^ 234 == 2 ^ 21 - 1
 		and C10 / 2 ^ 213 == 2 ^ 21 - 1
 		and C09 / 2 ^ 192 == 2 ^ 21 - 1
 		and C08 / 2 ^ 170 == 2 ^ 22 - 1
 		and C07 / 2 ^ 149 == 2 ^ 21 - 1
 		and C06 / 2 ^ 128 == 2 ^ 21 - 1
 		and C05 / 2 ^ 107 == 2 ^ 21 - 1
-		and C04 / 2 ^ 85  == 2 ^ 22 - 1
-		and C03 / 2 ^ 64  == 2 ^ 21 - 1
-		and C02 / 2 ^ 43  == 2 ^ 21 - 1
-		and C01 / 2 ^ 22  == 2 ^ 21 - 1
+		and C04 / 2 ^ 85 == 2 ^ 22 - 1
+		and C03 / 2 ^ 64 == 2 ^ 21 - 1
+		and C02 / 2 ^ 43 == 2 ^ 21 - 1
+		and C01 / 2 ^ 22 == 2 ^ 21 - 1
 		and C00 >= 2 ^ 22 - 19
 	then
 		buffer.writef64(Buf, 0, 19 - 2 ^ 22 + C00)
@@ -285,16 +285,16 @@ local function Eq(ElementA: buffer, ElementB: buffer): boolean
 		local LimbHigh = buffer.readu32(Difference, LimbIndex + 4)
 		DifferenceAccumulator = bit32.bor(DifferenceAccumulator, LimbLow, LimbHigh)
 	end
-	
+
 	return DifferenceAccumulator == 0
 end
 
 local CompoundV = (19 / 2 ^ 255)
 
 local a00: number, a01: number, a02: number, a03: number, a04: number, a05: number, a06: number,
-	a07: number, a08: number, a09: number, a10: number, a11: number
+a07: number, a08: number, a09: number, a10: number, a11: number
 local b00: number, b01: number, b02: number, b03: number, b04: number, b05: number, b06: number,
-	b07: number, b08: number, b09: number, b10: number, b11: number
+b07: number, b08: number, b09: number, b10: number, b11: number
 
 function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
 	local COMPOUND_V = CompoundV
@@ -315,11 +315,11 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 		buffer.readf64(ElementB, 80), buffer.readf64(ElementB, 88)
 
 	local A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number,
-			A07: number, A08: number, A09: number, A10: number, A11: number =
+	A07: number, A08: number, A09: number, A10: number, A11: number =
 		a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10, a11
 
 	local B00: number, B01: number, B02: number, B03: number, B04: number, B05: number, B06: number,
-			B07: number, B08: number, B09: number, B10: number, B11: number =
+	B07: number, B08: number, B09: number, B10: number, B11: number =
 		b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11
 
 	local C00 = A11 * B01
@@ -503,9 +503,9 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 	A11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 	C00 += COMPOUND_V * A11
 
-	A00 = C00 + 3 * 2 ^ 73  - 3 * 2 ^ 73
+	A00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
 	C01 += A00
-	A01 = C01 + 3 * 2 ^ 94  - 3 * 2 ^ 94
+	A01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
 	C02 += A01
 	A02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
 	C03 += A02
@@ -594,7 +594,7 @@ function FieldPrime.Square(ElementA: buffer, Storage: buffer?): buffer
 	local L10 = A10 * D00 + A09 * D01 + A08 * D02 + A07 * D03 + A06 * D04 + A05 * A05
 	local L11 = A11 * D00 + A10 * D01 + A09 * D02 + A08 * D03 + A07 * D04 + A06 * D05
 
-	local Result = Storage or  buffer.create(SIZE)
+	local Result = Storage or buffer.create(SIZE)
 	buffer.writef64(Result, 0, H00 * ReductionFactor + L00)
 	buffer.writef64(Result, 8, H01 * ReductionFactor + L01)
 	buffer.writef64(Result, 16, H02 * ReductionFactor + L02)
@@ -638,9 +638,9 @@ function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): bu
 	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 	A00 += 19 / 2 ^ 255 * C11
 
-	C00 = A00 + 3 * 2 ^ 73  - 3 * 2 ^ 73
+	C00 = A00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
 	A01 += C00
-	C01 = A01 + 3 * 2 ^ 94  - 3 * 2 ^ 94
+	C01 = A01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
 	A02 += C01
 	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
 	A03 += C02
@@ -698,7 +698,7 @@ local function NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boo
 end
 
 function FieldPrime.Invert(ElementA: buffer, Storage: buffer?): buffer
-    local Mul = FieldPrime.Mul
+	local Mul = FieldPrime.Mul
 
 	local A2 = FieldPrime.Square(ElementA)
 	local A9 = Mul(ElementA, NSquare(A2, 2))
@@ -717,8 +717,8 @@ function FieldPrime.Invert(ElementA: buffer, Storage: buffer?): buffer
 end
 
 function FieldPrime.SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
-    local Mul = FieldPrime.Mul
-    local Square = FieldPrime.Square
+	local Mul = FieldPrime.Mul
+	local Square = FieldPrime.Square
 
 	FieldPrime.Carry(ElementU, ElementU)
 

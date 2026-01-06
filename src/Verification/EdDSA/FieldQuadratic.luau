@@ -296,7 +296,7 @@ function FieldQuadratic.MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, 
 			FFloat = -FFloat
 		elseif 4 * FFloat < EFloat and DMod3 == Mod3Lut[EMod3] then
 			Rule = 1
-			DTable, ETable = MultiPrecision.Third(MultiPrecision.Add(DTable, FTable)), MultiPrecision.Third(MultiPrecision.Sub(ETable, FTable))
+			DTable, ETable = MultiPrecision.Third(MultiPrecision.Add(DTable, FTable)), MultiPrecision.Third(MultiPrecision.Sub(ETable, FTable)) :: buffer
 			DMod2, EMod2 = EMod2, DMod2
 			DMod3, EMod3 = MultiPrecision.Mod3(DTable), MultiPrecision.Mod3(ETable)
 			EFloat = MultiPrecision.Approx(ETable)

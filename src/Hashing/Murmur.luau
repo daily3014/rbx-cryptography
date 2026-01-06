@@ -46,8 +46,6 @@ end
 local function MurmurHash3(Message: buffer, Seed: number?): number
 	local C1 = 0xcc9e2d51
 	local C2 = 0x1b873593
-	local M = 5
-	local N = 0xe6546b64
 
 	local Hash = bit32.bor(Seed or 0, 0)
 	local MessageLength = buffer.len(Message)

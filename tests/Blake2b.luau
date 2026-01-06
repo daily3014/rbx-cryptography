@@ -8,6 +8,7 @@ type TestVector = {
 }
 
 type TestVectors = {[string]: TestVector}
+local AlgorithmName = script.Parent.Name
 local Algorithm = require("../Hashing/Blake2b")
 
 local TestVectors: TestVectors = {

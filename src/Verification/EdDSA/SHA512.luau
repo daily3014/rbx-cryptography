@@ -42,8 +42,8 @@ local FRONTK: {number}, BACKK: {number} do
 	}
 end
 
-local BLOCK_FRONT = table.create(80)
-local BLOCK_BACK = table.create(80)
+local BLOCK_FRONT = table.create(80) :: {number}
+local BLOCK_BACK = table.create(80) :: {number}
 local RESULT_BUFFER = buffer.create(64)
 
 local function PreProcess(Contents: buffer): (buffer, number)

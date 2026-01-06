@@ -44,7 +44,7 @@ type CSPRNGModule = {
 	BufferPosition: number,
 	BufferSize: number,
 	BytesLeft: number,
-	
+
 	EntropyProviders: { EntropyProvider },
 
 	Reseed: (CustomEntropy: buffer?) -> (),
@@ -290,6 +290,10 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		local BytesLeft = 1024 - Offset
 		if BytesLeft > 0 then
 			local Success: boolean, ExtraEntropy: buffer? = pcall(Provider, BytesLeft)
+			if not Success then
+				warn(`CSPRNG Provider errored with {ExtraEntropy}`)
+			end
+
 			AddExtraEntropy(ExtraEntropy, true, `Entropy Provider #{Index}`)
 		end
 	end
@@ -305,7 +309,7 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 
 	CSPRNG.Nonce = buffer.create(NONCE_SIZE)
 	buffer.copy(CSPRNG.Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
-	
+
 	return buffer.len(EntropyBuffers) - Offset
 end
 
@@ -401,43 +405,22 @@ local function GetNumberRange(Min: number, Max: number): number
 end
 
 local function GetRandomString(Length: number, AsBuffer: boolean?): string | buffer
-	local FixedLength = if Length % 4 ~= 0 then Length + (4 - Length % 4) else Length
+	local Characters = buffer.create(Length)
 
-	local Characters = buffer.create(FixedLength)
-	local Packs = bit32.rshift(FixedLength, 2)
-
-	for Index = 0, Packs * 4 - 1, 4 do
-		local U32 = bit32.bor(
-			bit32.lshift(GetIntRange(36, 122), 0),
-			bit32.lshift(GetIntRange(36, 122), 8),
-			bit32.lshift(GetIntRange(36, 122), 16),
-			bit32.lshift(GetIntRange(36, 122), 24)
-		)
-		buffer.writeu32(Characters, Index, U32)
+	for Index = 0, Length - 1 do
+		buffer.writeu8(Characters, Index, GetIntRange(36, 122))
 	end
 
-	if AsBuffer then
-		if FixedLength == Length then
-			return Characters
-		end
-
-		local Buf = buffer.create(Length)
-		buffer.copy(Buf, 0, Characters, 0, Length)
-		return Buf
-	end
-
-	return buffer.readstring(Characters, 0, Length)
+	return if AsBuffer
+		then Characters
+		else buffer.tostring(Characters)
 end
 
 local function GetEd25519RandomBytes(): buffer
 	local Output = buffer.create(32)
-	for Index = 0, 31, 4 do
-		buffer.writeu32(Output, Index, bit32.bor(
-			bit32.lshift(GetIntRange(0, 255), 0),
-			bit32.lshift(GetIntRange(0, 255), 8),
-			bit32.lshift(GetIntRange(0, 255), 16),
-			bit32.lshift(GetIntRange(0, 255), 24)
-			))
+
+	for Index = 0, 31 do
+		buffer.writeu8(Output, Index, GetIntRange(0, 255))
 	end
 
 	return Output
