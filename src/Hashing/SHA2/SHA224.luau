@@ -1,5 +1,5 @@
 --[=[
-	Cryptography library: SHA256
+	Cryptography library: SHA224
 	
 	Sizes:
 		Digest: 28 bytes
@@ -9,11 +9,11 @@
 		local Message = buffer.fromstring("Hello World")
 		
 		--------Usage Case 1--------
-		local Result = SHA256(Message)
+		local Result = SHA224(Message)
 		
 		--------Usage Case 2--------
 		local OptionalSalt = buffer.fromstring("Salty")
-		local Result = SHA256(Message, OptionalSalt)
+		local Result = SHA224(Message, OptionalSalt)
 --]=]
 
 --!strict
