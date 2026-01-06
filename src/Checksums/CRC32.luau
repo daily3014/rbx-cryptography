@@ -20,7 +20,7 @@
 --!optimize 2
 --!native
 
-local CRC32_LOOKUP = table.create(256)
+local CRC32_LOOKUP = table.create(256) :: {number}
 for Index = 0, 255 do
 	local CRC = Index
 	for _ = 1, 8 do
@@ -34,12 +34,12 @@ for Index = 0, 255 do
 	CRC32_LOOKUP[Index + 1] = CRC
 end
 
-local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?): number | string
+local CRC32 = function(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?): (number | string)
 	local Lookup = CRC32_LOOKUP
 	local Hash = 0xFFFFFFFF
 
 	local Leftover = buffer.len(Message) % 4
-	
+
 	for Index = 0, Leftover - 1 do
 		local Value = buffer.readu8(Message, Index)
 		local TableIndex = bit32.band(bit32.bxor(Hash, Value), 0xFF) + 1
@@ -49,14 +49,14 @@ local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?): numb
 			bit32.rshift(Hash, 8)
 		)
 	end
-	
+
 	for Index = Leftover, buffer.len(Message) - 1, 4 do
 		local TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index)), 0xFF) + 1
 		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
-		
+
 		TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index + 1)), 0xFF) + 1
 		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
-		
+
 		TableIndex = bit32.band(bit32.bxor(Hash, buffer.readu8(Message, Index + 2)), 0xFF) + 1
 		Hash = bit32.bxor(Lookup[TableIndex], bit32.rshift(Hash, 8))
 
@@ -65,11 +65,16 @@ local function CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?): numb
 	end
 
 	if Mode == "Jam" then
-		return Hex == true and string.format("%08x", Hash) or Hash
+		return if Hex then string.format("%08x", Hash) else Hash
 	end
 
 	Hash = bit32.bxor(Hash, 0xFFFFFFFF)
-	return Hex == true and string.format("%08x", Hash) or Hash
-end
+	return if Hex then string.format("%08x", Hash) else Hash
+end ::
+& ( (Message: buffer, Mode: "Jam" | "Iso"?, Hex: false) -> (number) )
+-- overload selection for boolean/nil unions (optional types) broke a bit ago,
+-- create a dedicated overload for nil to fix this issue.
+& ( (Message: buffer, Mode: "Jam" | "Iso"?, Hex: nil) -> (number) )
+& ( (Message: buffer, Mode: "Jam" | "Iso"?, Hex: true) -> (string) )
 
 return CRC32
