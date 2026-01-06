@@ -28,6 +28,8 @@ end ::
 & ( (Length: number, AsBuffer: false) -> (string) )
 -- overload selection for boolean/nil unions (optional types) broke a bit ago,
 -- create a dedicated overload for nil to fix this issue.
-& ( (Length: number, AsBuffer: false) -> (nil) )
+& ( (Length: number, AsBuffer: nil) -> (string) )
+-- fixes "None of the overloads for function that accept 2 arguments are compatible."
+& ( (Length: number, AsBuffer: boolean?) -> (string | buffer) )
 
 return RandomString
