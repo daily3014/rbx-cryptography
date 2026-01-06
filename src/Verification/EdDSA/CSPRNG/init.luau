@@ -44,7 +44,7 @@ type CSPRNGModule = {
 	BufferPosition: number,
 	BufferSize: number,
 	BytesLeft: number,
-	
+
 	EntropyProviders: { EntropyProvider },
 
 	Reseed: (CustomEntropy: buffer?) -> (),
@@ -55,7 +55,7 @@ type CSPRNGModule = {
 	RandomInt: (Min: number, Max: number?) -> number,
 	RandomNumber: (Min: number, Max: number?) -> number,
 	RandomBytes: (Count: number) -> buffer,
-	RandomString: (Length: number, AsBuffer: boolean?) -> string | buffer,
+	RandomString: RandomStringConstructor,
 	RandomHex: (Length: number) -> string,
 	Ed25519ClampedBytes: (Input: buffer) -> buffer,
 	Ed25519Random: () -> buffer,
@@ -305,7 +305,7 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 
 	CSPRNG.Nonce = buffer.create(NONCE_SIZE)
 	buffer.copy(CSPRNG.Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
-	
+
 	return buffer.len(EntropyBuffers) - Offset
 end
 
@@ -400,44 +400,33 @@ local function GetNumberRange(Min: number, Max: number): number
 	return Min + (GetFloat() * Range)
 end
 
-local function GetRandomString(Length: number, AsBuffer: boolean?): string | buffer
-	local FixedLength = if Length % 4 ~= 0 then Length + (4 - Length % 4) else Length
+type RandomStringConstructor = 
+	& ( (Length: number, AsBuffer: true) -> (buffer) )
+	& ( (Length: number, AsBuffer: false) -> (string) )
+	-- overload selection for boolean/nil unions (optional types) broke a bit ago,
+	-- create a dedicated overload for nil to fix this issue.
+	& ( (Length: number, AsBuffer: false) -> (nil) )
+	-- fixes "None of the overloads for function that accept 2 arguments are compatible."
+	& ( (Length: number, AsBuffer: boolean?) -> (string | buffer) )
 
-	local Characters = buffer.create(FixedLength)
-	local Packs = bit32.rshift(FixedLength, 2)
+local GetRandomString = function(Length: number, AsBuffer: boolean?): (string | buffer)
+	local Characters = buffer.create(Length)
 
-	for Index = 0, Packs * 4 - 1, 4 do
-		local U32 = bit32.bor(
-			bit32.lshift(GetIntRange(36, 122), 0),
-			bit32.lshift(GetIntRange(36, 122), 8),
-			bit32.lshift(GetIntRange(36, 122), 16),
-			bit32.lshift(GetIntRange(36, 122), 24)
-		)
-		buffer.writeu32(Characters, Index, U32)
+	for Index = 0, Length - 1 do
+		-- Writing a u32 in one call is slower due to additional bit ops
+		buffer.writeu8(Characters, Index, GetIntRange(36, 122))
 	end
 
-	if AsBuffer then
-		if FixedLength == Length then
-			return Characters
-		end
-
-		local Buf = buffer.create(Length)
-		buffer.copy(Buf, 0, Characters, 0, Length)
-		return Buf
-	end
-
-	return buffer.readstring(Characters, 0, Length)
-end
+	return if AsBuffer
+		then Characters
+		else buffer.tostring(Characters)
+end :: RandomStringConstructor
 
 local function GetEd25519RandomBytes(): buffer
 	local Output = buffer.create(32)
-	for Index = 0, 31, 4 do
-		buffer.writeu32(Output, Index, bit32.bor(
-			bit32.lshift(GetIntRange(0, 255), 0),
-			bit32.lshift(GetIntRange(0, 255), 8),
-			bit32.lshift(GetIntRange(0, 255), 16),
-			bit32.lshift(GetIntRange(0, 255), 24)
-			))
+	for Index = 0, 31 do
+		-- Writing a u32 in one call is slower due to additional bit ops
+		buffer.writeu8(Output, Index, GetIntRange(0, 255))
 	end
 
 	return Output
@@ -575,7 +564,7 @@ function CSPRNG.RandomBytes(Count: number): buffer
 	return GetBytes(Count)
 end
 
-function CSPRNG.RandomString(Length: number, AsBuffer: boolean?): string | buffer
+CSPRNG.RandomString = function(Length: number, AsBuffer: boolean?): (string | buffer)
 	if type(Length) ~= "number" then
 		error(`Length must be a number, got {typeof(Length)}`, 2)
 	end
@@ -593,7 +582,7 @@ function CSPRNG.RandomString(Length: number, AsBuffer: boolean?): string | buffe
 	end
 
 	return GetRandomString(Length, AsBuffer)
-end
+end :: RandomStringConstructor
 
 function CSPRNG.RandomHex(Length: number): string
 	if type(Length) ~= "number" then
