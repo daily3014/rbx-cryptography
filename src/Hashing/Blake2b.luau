@@ -72,13 +72,8 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 	local WorkH9, WorkH10, WorkH11, WorkH12, WorkH13, WorkH14, WorkH15, WorkH16 = WH9, WH10, WH11, WH12, WH13, WH14, WH15, WH16
 	local WorkL9, WorkL10, WorkL11, WorkL12, WorkL13, WorkL14, WorkL15, WorkL16 = WL9, WL10, WL11, WL12, WL13, WL14, WL15, WL16
 
-	local XOR = bit32.bxor
-	local ShiftLeft = bit32.lshift
-	local ShiftRight = bit32.rshift
-	local BOR = bit32.bor
-
-	WorkH13 = XOR(WorkH13, ByteCounter // 0x100000000)
-	WorkL13 = XOR(WorkL13, BOR(ByteCounter, 0))
+	WorkH13 = bit32.bxor(WorkH13, ByteCounter // 0x100000000)
+	WorkL13 = bit32.bxor(WorkL13, bit32.bor(ByteCounter, 0))
 	if FinalBlock then
 		WorkH15 = bit32.bnot(WorkH15)
 		WorkL15 = bit32.bnot(WorkL15)
@@ -96,35 +91,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL1 + WL5 + MsgLowX
 		WH1 += WH5 + MsgHighX + CarryBits // 0x100000000
-		WL1 = BOR(CarryBits, 0)
+		WL1 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH13
-		WorkH13 = XOR(WorkL13, WL1)
-		WorkL13 = XOR(CarryBits, WH1)
+		WorkH13 = bit32.bxor(WorkL13, WL1)
+		WorkL13 = bit32.bxor(CarryBits, WH1)
 
 		CarryBits = WorkL9 + WorkL13
 		WorkH9 += WorkH13 + CarryBits // 0x100000000
-		WorkL9 = BOR(CarryBits, 0)
+		WorkL9 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH5
-		WH5 = XOR(ShiftRight(WH5, 24), ShiftLeft(WL5, 8), ShiftRight(WorkH9, 24), ShiftLeft(WorkL9, 8))
-		WL5 = XOR(ShiftRight(WL5, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL9, 24), ShiftLeft(WorkH9, 8))
+		WH5 = bit32.bxor(bit32.rshift(WH5, 24), bit32.lshift(WL5, 8), bit32.rshift(WorkH9, 24), bit32.lshift(WorkL9, 8))
+		WL5 = bit32.bxor(bit32.rshift(WL5, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL9, 24), bit32.lshift(WorkH9, 8))
 
 		CarryBits = WL1 + WL5 + MsgLowY
 		WH1 += WH5 + MsgHighY + CarryBits // 0x100000000
-		WL1 = BOR(CarryBits, 0)
+		WL1 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH13
-		WorkH13 = XOR(ShiftRight(WorkH13, 16), ShiftLeft(WorkL13, 16), ShiftRight(WH1, 16), ShiftLeft(WL1, 16))
-		WorkL13 = XOR(ShiftRight(WorkL13, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL1, 16), ShiftLeft(WH1, 16))
+		WorkH13 = bit32.bxor(bit32.rshift(WorkH13, 16), bit32.lshift(WorkL13, 16), bit32.rshift(WH1, 16), bit32.lshift(WL1, 16))
+		WorkL13 = bit32.bxor(bit32.rshift(WorkL13, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL1, 16), bit32.lshift(WH1, 16))
 
 		CarryBits = WorkL9 + WorkL13
 		WorkH9 += WorkH13 + CarryBits // 0x100000000
-		WorkL9 = BOR(CarryBits, 0)
+		WorkL9 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH5
-		WH5 = XOR(ShiftLeft(WH5, 1), ShiftRight(WL5, 31), ShiftLeft(WorkH9, 1), ShiftRight(WorkL9, 31))
-		WL5 = XOR(ShiftLeft(WL5, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL9, 1), ShiftRight(WorkH9, 31))
+		WH5 = bit32.bxor(bit32.lshift(WH5, 1), bit32.rshift(WL5, 31), bit32.lshift(WorkH9, 1), bit32.rshift(WorkL9, 31))
+		WL5 = bit32.bxor(bit32.lshift(WL5, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL9, 1), bit32.rshift(WorkH9, 31))
 
 		local S3, S4 = Permutation[ScheduleBase + 3], Permutation[ScheduleBase + 4]
 		MsgHighX, MsgLowX = HighWords[S3], LowWords[S3]
@@ -132,35 +127,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL2 + WL6 + MsgLowX
 		WH2 += WH6 + MsgHighX + CarryBits // 0x100000000
-		WL2 = BOR(CarryBits, 0)
+		WL2 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH14
-		WorkH14 = XOR(WorkL14, WL2)
-		WorkL14 = XOR(CarryBits, WH2)
+		WorkH14 = bit32.bxor(WorkL14, WL2)
+		WorkL14 = bit32.bxor(CarryBits, WH2)
 
 		CarryBits = WorkL10 + WorkL14
 		WorkH10 += WorkH14 + CarryBits // 0x100000000
-		WorkL10 = BOR(CarryBits, 0)
+		WorkL10 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH6
-		WH6 = XOR(ShiftRight(WH6, 24), ShiftLeft(WL6, 8), ShiftRight(WorkH10, 24), ShiftLeft(WorkL10, 8))
-		WL6 = XOR(ShiftRight(WL6, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL10, 24), ShiftLeft(WorkH10, 8))
+		WH6 = bit32.bxor(bit32.rshift(WH6, 24), bit32.lshift(WL6, 8), bit32.rshift(WorkH10, 24), bit32.lshift(WorkL10, 8))
+		WL6 = bit32.bxor(bit32.rshift(WL6, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL10, 24), bit32.lshift(WorkH10, 8))
 
 		CarryBits = WL2 + WL6 + MsgLowY
 		WH2 += WH6 + MsgHighY + CarryBits // 0x100000000
-		WL2 = BOR(CarryBits, 0)
+		WL2 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH14
-		WorkH14 = XOR(ShiftRight(WorkH14, 16), ShiftLeft(WorkL14, 16), ShiftRight(WH2, 16), ShiftLeft(WL2, 16))
-		WorkL14 = XOR(ShiftRight(WorkL14, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL2, 16), ShiftLeft(WH2, 16))
+		WorkH14 = bit32.bxor(bit32.rshift(WorkH14, 16), bit32.lshift(WorkL14, 16), bit32.rshift(WH2, 16), bit32.lshift(WL2, 16))
+		WorkL14 = bit32.bxor(bit32.rshift(WorkL14, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL2, 16), bit32.lshift(WH2, 16))
 
 		CarryBits = WorkL10 + WorkL14
 		WorkH10 += WorkH14 + CarryBits // 0x100000000
-		WorkL10 = BOR(CarryBits, 0)
+		WorkL10 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH6
-		WH6 = XOR(ShiftLeft(WH6, 1), ShiftRight(WL6, 31), ShiftLeft(WorkH10, 1), ShiftRight(WorkL10, 31))
-		WL6 = XOR(ShiftLeft(WL6, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL10, 1), ShiftRight(WorkH10, 31))
+		WH6 = bit32.bxor(bit32.lshift(WH6, 1), bit32.rshift(WL6, 31), bit32.lshift(WorkH10, 1), bit32.rshift(WorkL10, 31))
+		WL6 = bit32.bxor(bit32.lshift(WL6, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL10, 1), bit32.rshift(WorkH10, 31))
 
 		local S5, S6 = Permutation[ScheduleBase + 5], Permutation[ScheduleBase + 6]
 		MsgHighX, MsgLowX = HighWords[S5], LowWords[S5]
@@ -168,35 +163,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL3 + WL7 + MsgLowX
 		WH3 += WH7 + MsgHighX + CarryBits // 0x100000000
-		WL3 = BOR(CarryBits, 0)
+		WL3 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH15
-		WorkH15 = XOR(WorkL15, WL3)
-		WorkL15 = XOR(CarryBits, WH3)
+		WorkH15 = bit32.bxor(WorkL15, WL3)
+		WorkL15 = bit32.bxor(CarryBits, WH3)
 
 		CarryBits = WorkL11 + WorkL15
 		WorkH11 += WorkH15 + CarryBits // 0x100000000
-		WorkL11 = BOR(CarryBits, 0)
+		WorkL11 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH7
-		WH7 = XOR(ShiftRight(WH7, 24), ShiftLeft(WL7, 8), ShiftRight(WorkH11, 24), ShiftLeft(WorkL11, 8))
-		WL7 = XOR(ShiftRight(WL7, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL11, 24), ShiftLeft(WorkH11, 8))
+		WH7 = bit32.bxor(bit32.rshift(WH7, 24), bit32.lshift(WL7, 8), bit32.rshift(WorkH11, 24), bit32.lshift(WorkL11, 8))
+		WL7 = bit32.bxor(bit32.rshift(WL7, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL11, 24), bit32.lshift(WorkH11, 8))
 
 		CarryBits = WL3 + WL7 + MsgLowY
 		WH3 += WH7 + MsgHighY + CarryBits // 0x100000000
-		WL3 = BOR(CarryBits, 0)
+		WL3 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH15
-		WorkH15 = XOR(ShiftRight(WorkH15, 16), ShiftLeft(WorkL15, 16), ShiftRight(WH3, 16), ShiftLeft(WL3, 16))
-		WorkL15 = XOR(ShiftRight(WorkL15, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL3, 16), ShiftLeft(WH3, 16))
+		WorkH15 = bit32.bxor(bit32.rshift(WorkH15, 16), bit32.lshift(WorkL15, 16), bit32.rshift(WH3, 16), bit32.lshift(WL3, 16))
+		WorkL15 = bit32.bxor(bit32.rshift(WorkL15, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL3, 16), bit32.lshift(WH3, 16))
 
 		CarryBits = WorkL11 + WorkL15
 		WorkH11 += WorkH15 + CarryBits // 0x100000000
-		WorkL11 = BOR(CarryBits, 0)
+		WorkL11 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH7
-		WH7 = XOR(ShiftLeft(WH7, 1), ShiftRight(WL7, 31), ShiftLeft(WorkH11, 1), ShiftRight(WorkL11, 31))
-		WL7 = XOR(ShiftLeft(WL7, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL11, 1), ShiftRight(WorkH11, 31))
+		WH7 = bit32.bxor(bit32.lshift(WH7, 1), bit32.rshift(WL7, 31), bit32.lshift(WorkH11, 1), bit32.rshift(WorkL11, 31))
+		WL7 = bit32.bxor(bit32.lshift(WL7, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL11, 1), bit32.rshift(WorkH11, 31))
 
 		local S7, S8 = Permutation[ScheduleBase + 7], Permutation[ScheduleBase + 8]
 		MsgHighX, MsgLowX = HighWords[S7], LowWords[S7]
@@ -204,35 +199,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL4 + WL8 + MsgLowX
 		WH4 += WH8 + MsgHighX + CarryBits // 0x100000000
-		WL4 = BOR(CarryBits, 0)
+		WL4 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH16
-		WorkH16 = XOR(WorkL16, WL4)
-		WorkL16 = XOR(CarryBits, WH4)
+		WorkH16 = bit32.bxor(WorkL16, WL4)
+		WorkL16 = bit32.bxor(CarryBits, WH4)
 
 		CarryBits = WorkL12 + WorkL16
 		WorkH12 += WorkH16 + CarryBits // 0x100000000
-		WorkL12 = BOR(CarryBits, 0)
+		WorkL12 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH8
-		WH8 = XOR(ShiftRight(WH8, 24), ShiftLeft(WL8, 8), ShiftRight(WorkH12, 24), ShiftLeft(WorkL12, 8))
-		WL8 = XOR(ShiftRight(WL8, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL12, 24), ShiftLeft(WorkH12, 8))
+		WH8 = bit32.bxor(bit32.rshift(WH8, 24), bit32.lshift(WL8, 8), bit32.rshift(WorkH12, 24), bit32.lshift(WorkL12, 8))
+		WL8 = bit32.bxor(bit32.rshift(WL8, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL12, 24), bit32.lshift(WorkH12, 8))
 
 		CarryBits = WL4 + WL8 + MsgLowY
 		WH4 += WH8 + MsgHighY + CarryBits // 0x100000000
-		WL4 = BOR(CarryBits, 0)
+		WL4 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH16
-		WorkH16 = XOR(ShiftRight(WorkH16, 16), ShiftLeft(WorkL16, 16), ShiftRight(WH4, 16), ShiftLeft(WL4, 16))
-		WorkL16 = XOR(ShiftRight(WorkL16, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL4, 16), ShiftLeft(WH4, 16))
+		WorkH16 = bit32.bxor(bit32.rshift(WorkH16, 16), bit32.lshift(WorkL16, 16), bit32.rshift(WH4, 16), bit32.lshift(WL4, 16))
+		WorkL16 = bit32.bxor(bit32.rshift(WorkL16, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL4, 16), bit32.lshift(WH4, 16))
 
 		CarryBits = WorkL12 + WorkL16
 		WorkH12 += WorkH16 + CarryBits // 0x100000000
-		WorkL12 = BOR(CarryBits, 0)
+		WorkL12 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH8
-		WH8 = XOR(ShiftLeft(WH8, 1), ShiftRight(WL8, 31), ShiftLeft(WorkH12, 1), ShiftRight(WorkL12, 31))
-		WL8 = XOR(ShiftLeft(WL8, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL12, 1), ShiftRight(WorkH12, 31))
+		WH8 = bit32.bxor(bit32.lshift(WH8, 1), bit32.rshift(WL8, 31), bit32.lshift(WorkH12, 1), bit32.rshift(WorkL12, 31))
+		WL8 = bit32.bxor(bit32.lshift(WL8, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL12, 1), bit32.rshift(WorkH12, 31))
 
 		local S9, S10 = Permutation[ScheduleBase + 9], Permutation[ScheduleBase + 10]
 		MsgHighX, MsgLowX = HighWords[S9], LowWords[S9]
@@ -240,35 +235,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL1 + WL6 + MsgLowX
 		WH1 += WH6 + MsgHighX + CarryBits // 0x100000000
-		WL1 = BOR(CarryBits, 0)
+		WL1 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH16
-		WorkH16 = XOR(WorkL16, WL1)
-		WorkL16 = XOR(CarryBits, WH1)
+		WorkH16 = bit32.bxor(WorkL16, WL1)
+		WorkL16 = bit32.bxor(CarryBits, WH1)
 
 		CarryBits = WorkL11 + WorkL16
 		WorkH11 += WorkH16 + CarryBits // 0x100000000
-		WorkL11 = BOR(CarryBits, 0)
+		WorkL11 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH6
-		WH6 = XOR(ShiftRight(WH6, 24), ShiftLeft(WL6, 8), ShiftRight(WorkH11, 24), ShiftLeft(WorkL11, 8))
-		WL6 = XOR(ShiftRight(WL6, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL11, 24), ShiftLeft(WorkH11, 8))
+		WH6 = bit32.bxor(bit32.rshift(WH6, 24), bit32.lshift(WL6, 8), bit32.rshift(WorkH11, 24), bit32.lshift(WorkL11, 8))
+		WL6 = bit32.bxor(bit32.rshift(WL6, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL11, 24), bit32.lshift(WorkH11, 8))
 
 		CarryBits = WL1 + WL6 + MsgLowY
 		WH1 += WH6 + MsgHighY + CarryBits // 0x100000000
-		WL1 = BOR(CarryBits, 0)
+		WL1 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH16
-		WorkH16 = XOR(ShiftRight(WorkH16, 16), ShiftLeft(WorkL16, 16), ShiftRight(WH1, 16), ShiftLeft(WL1, 16))
-		WorkL16 = XOR(ShiftRight(WorkL16, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL1, 16), ShiftLeft(WH1, 16))
+		WorkH16 = bit32.bxor(bit32.rshift(WorkH16, 16), bit32.lshift(WorkL16, 16), bit32.rshift(WH1, 16), bit32.lshift(WL1, 16))
+		WorkL16 = bit32.bxor(bit32.rshift(WorkL16, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL1, 16), bit32.lshift(WH1, 16))
 
 		CarryBits = WorkL11 + WorkL16
 		WorkH11 += WorkH16 + CarryBits // 0x100000000
-		WorkL11 = BOR(CarryBits, 0)
+		WorkL11 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH6
-		WH6 = XOR(ShiftLeft(WH6, 1), ShiftRight(WL6, 31), ShiftLeft(WorkH11, 1), ShiftRight(WorkL11, 31))
-		WL6 = XOR(ShiftLeft(WL6, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL11, 1), ShiftRight(WorkH11, 31))
+		WH6 = bit32.bxor(bit32.lshift(WH6, 1), bit32.rshift(WL6, 31), bit32.lshift(WorkH11, 1), bit32.rshift(WorkL11, 31))
+		WL6 = bit32.bxor(bit32.lshift(WL6, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL11, 1), bit32.rshift(WorkH11, 31))
 
 		local S11, S12 = Permutation[ScheduleBase + 11], Permutation[ScheduleBase + 12]
 		MsgHighX, MsgLowX = HighWords[S11], LowWords[S11]
@@ -276,35 +271,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL2 + WL7 + MsgLowX
 		WH2 += WH7 + MsgHighX + CarryBits // 0x100000000
-		WL2 = BOR(CarryBits, 0)
+		WL2 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH13
-		WorkH13 = XOR(WorkL13, WL2)
-		WorkL13 = XOR(CarryBits, WH2)
+		WorkH13 = bit32.bxor(WorkL13, WL2)
+		WorkL13 = bit32.bxor(CarryBits, WH2)
 
 		CarryBits = WorkL12 + WorkL13
 		WorkH12 += WorkH13 + CarryBits // 0x100000000
-		WorkL12 = BOR(CarryBits, 0)
+		WorkL12 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH7
-		WH7 = XOR(ShiftRight(WH7, 24), ShiftLeft(WL7, 8), ShiftRight(WorkH12, 24), ShiftLeft(WorkL12, 8))
-		WL7 = XOR(ShiftRight(WL7, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL12, 24), ShiftLeft(WorkH12, 8))
+		WH7 = bit32.bxor(bit32.rshift(WH7, 24), bit32.lshift(WL7, 8), bit32.rshift(WorkH12, 24), bit32.lshift(WorkL12, 8))
+		WL7 = bit32.bxor(bit32.rshift(WL7, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL12, 24), bit32.lshift(WorkH12, 8))
 
 		CarryBits = WL2 + WL7 + MsgLowY
 		WH2 += WH7 + MsgHighY + CarryBits // 0x100000000
-		WL2 = BOR(CarryBits, 0)
+		WL2 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH13
-		WorkH13 = XOR(ShiftRight(WorkH13, 16), ShiftLeft(WorkL13, 16), ShiftRight(WH2, 16), ShiftLeft(WL2, 16))
-		WorkL13 = XOR(ShiftRight(WorkL13, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL2, 16), ShiftLeft(WH2, 16))
+		WorkH13 = bit32.bxor(bit32.rshift(WorkH13, 16), bit32.lshift(WorkL13, 16), bit32.rshift(WH2, 16), bit32.lshift(WL2, 16))
+		WorkL13 = bit32.bxor(bit32.rshift(WorkL13, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL2, 16), bit32.lshift(WH2, 16))
 
 		CarryBits = WorkL12 + WorkL13
 		WorkH12 += WorkH13 + CarryBits // 0x100000000
-		WorkL12 = BOR(CarryBits, 0)
+		WorkL12 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH7
-		WH7 = XOR(ShiftLeft(WH7, 1), ShiftRight(WL7, 31), ShiftLeft(WorkH12, 1), ShiftRight(WorkL12, 31))
-		WL7 = XOR(ShiftLeft(WL7, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL12, 1), ShiftRight(WorkH12, 31))
+		WH7 = bit32.bxor(bit32.lshift(WH7, 1), bit32.rshift(WL7, 31), bit32.lshift(WorkH12, 1), bit32.rshift(WorkL12, 31))
+		WL7 = bit32.bxor(bit32.lshift(WL7, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL12, 1), bit32.rshift(WorkH12, 31))
 
 		local S13, S14 = Permutation[ScheduleBase + 13], Permutation[ScheduleBase + 14]
 		MsgHighX, MsgLowX = HighWords[S13], LowWords[S13]
@@ -312,35 +307,35 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL3 + WL8 + MsgLowX
 		WH3 += WH8 + MsgHighX + CarryBits // 0x100000000
-		WL3 = BOR(CarryBits, 0)
+		WL3 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH14
-		WorkH14 = XOR(WorkL14, WL3)
-		WorkL14 = XOR(CarryBits, WH3)
+		WorkH14 = bit32.bxor(WorkL14, WL3)
+		WorkL14 = bit32.bxor(CarryBits, WH3)
 
 		CarryBits = WorkL9 + WorkL14
 		WorkH9 += WorkH14 + CarryBits // 0x100000000
-		WorkL9 = BOR(CarryBits, 0)
+		WorkL9 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH8
-		WH8 = XOR(ShiftRight(WH8, 24), ShiftLeft(WL8, 8), ShiftRight(WorkH9, 24), ShiftLeft(WorkL9, 8))
-		WL8 = XOR(ShiftRight(WL8, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL9, 24), ShiftLeft(WorkH9, 8))
+		WH8 = bit32.bxor(bit32.rshift(WH8, 24), bit32.lshift(WL8, 8), bit32.rshift(WorkH9, 24), bit32.lshift(WorkL9, 8))
+		WL8 = bit32.bxor(bit32.rshift(WL8, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL9, 24), bit32.lshift(WorkH9, 8))
 
 		CarryBits = WL3 + WL8 + MsgLowY
 		WH3 += WH8 + MsgHighY + CarryBits // 0x100000000
-		WL3 = BOR(CarryBits, 0)
+		WL3 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH14
-		WorkH14 = XOR(ShiftRight(WorkH14, 16), ShiftLeft(WorkL14, 16), ShiftRight(WH3, 16), ShiftLeft(WL3, 16))
-		WorkL14 = XOR(ShiftRight(WorkL14, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL3, 16), ShiftLeft(WH3, 16))
+		WorkH14 = bit32.bxor(bit32.rshift(WorkH14, 16), bit32.lshift(WorkL14, 16), bit32.rshift(WH3, 16), bit32.lshift(WL3, 16))
+		WorkL14 = bit32.bxor(bit32.rshift(WorkL14, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL3, 16), bit32.lshift(WH3, 16))
 
 		CarryBits = WorkL9 + WorkL14
 		WorkH9 += WorkH14 + CarryBits // 0x100000000
-		WorkL9 = BOR(CarryBits, 0)
+		WorkL9 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH8
-		WH8 = XOR(ShiftLeft(WH8, 1), ShiftRight(WL8, 31), ShiftLeft(WorkH9, 1), ShiftRight(WorkL9, 31))
-		WL8 = XOR(ShiftLeft(WL8, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL9, 1), ShiftRight(WorkH9, 31))
+		WH8 = bit32.bxor(bit32.lshift(WH8, 1), bit32.rshift(WL8, 31), bit32.lshift(WorkH9, 1), bit32.rshift(WorkL9, 31))
+		WL8 = bit32.bxor(bit32.lshift(WL8, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL9, 1), bit32.rshift(WorkH9, 31))
 
 		local S15, S16 = Permutation[ScheduleBase + 15], Permutation[ScheduleBase + 16]
 		MsgHighX, MsgLowX = HighWords[S15], LowWords[S15]
@@ -348,53 +343,53 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 
 		CarryBits = WL4 + WL5 + MsgLowX
 		WH4 += WH5 + MsgHighX + CarryBits // 0x100000000
-		WL4 = BOR(CarryBits, 0)
+		WL4 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH15
-		WorkH15 = XOR(WorkL15, WL4)
-		WorkL15 = XOR(CarryBits, WH4)
+		WorkH15 = bit32.bxor(WorkL15, WL4)
+		WorkL15 = bit32.bxor(CarryBits, WH4)
 
 		CarryBits = WorkL10 + WorkL15
 		WorkH10 += WorkH15 + CarryBits // 0x100000000
-		WorkL10 = BOR(CarryBits, 0)
+		WorkL10 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH5
-		WH5 = XOR(ShiftRight(WH5, 24), ShiftLeft(WL5, 8), ShiftRight(WorkH10, 24), ShiftLeft(WorkL10, 8))
-		WL5 = XOR(ShiftRight(WL5, 24), ShiftLeft(CarryBits, 8), ShiftRight(WorkL10, 24), ShiftLeft(WorkH10, 8))
+		WH5 = bit32.bxor(bit32.rshift(WH5, 24), bit32.lshift(WL5, 8), bit32.rshift(WorkH10, 24), bit32.lshift(WorkL10, 8))
+		WL5 = bit32.bxor(bit32.rshift(WL5, 24), bit32.lshift(CarryBits, 8), bit32.rshift(WorkL10, 24), bit32.lshift(WorkH10, 8))
 
 		CarryBits = WL4 + WL5 + MsgLowY
 		WH4 += WH5 + MsgHighY + CarryBits // 0x100000000
-		WL4 = BOR(CarryBits, 0)
+		WL4 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WorkH15
-		WorkH15 = XOR(ShiftRight(WorkH15, 16), ShiftLeft(WorkL15, 16), ShiftRight(WH4, 16), ShiftLeft(WL4, 16))
-		WorkL15 = XOR(ShiftRight(WorkL15, 16), ShiftLeft(CarryBits, 16), ShiftRight(WL4, 16), ShiftLeft(WH4, 16))
+		WorkH15 = bit32.bxor(bit32.rshift(WorkH15, 16), bit32.lshift(WorkL15, 16), bit32.rshift(WH4, 16), bit32.lshift(WL4, 16))
+		WorkL15 = bit32.bxor(bit32.rshift(WorkL15, 16), bit32.lshift(CarryBits, 16), bit32.rshift(WL4, 16), bit32.lshift(WH4, 16))
 
 		CarryBits = WorkL10 + WorkL15
 		WorkH10 += WorkH15 + CarryBits // 0x100000000
-		WorkL10 = BOR(CarryBits, 0)
+		WorkL10 = bit32.bor(CarryBits, 0)
 
 		CarryBits = WH5
-		WH5 = XOR(ShiftLeft(WH5, 1), ShiftRight(WL5, 31), ShiftLeft(WorkH10, 1), ShiftRight(WorkL10, 31))
-		WL5 = XOR(ShiftLeft(WL5, 1), ShiftRight(CarryBits, 31), ShiftLeft(WorkL10, 1), ShiftRight(WorkH10, 31))
+		WH5 = bit32.bxor(bit32.lshift(WH5, 1), bit32.rshift(WL5, 31), bit32.lshift(WorkH10, 1), bit32.rshift(WorkL10, 31))
+		WL5 = bit32.bxor(bit32.lshift(WL5, 1), bit32.rshift(CarryBits, 31), bit32.lshift(WorkL10, 1), bit32.rshift(WorkH10, 31))
 	end
 
-	StateHigh[1] = XOR(StateHigh[1], WH1, WorkH9)
-	StateLow[1] = XOR(StateLow[1], WL1, WorkL9)
-	StateHigh[2] = XOR(StateHigh[2], WH2, WorkH10)
-	StateLow[2] = XOR(StateLow[2], WL2, WorkL10)
-	StateHigh[3] = XOR(StateHigh[3], WH3, WorkH11)
-	StateLow[3] = XOR(StateLow[3], WL3, WorkL11)
-	StateHigh[4] = XOR(StateHigh[4], WH4, WorkH12)
-	StateLow[4] = XOR(StateLow[4], WL4, WorkL12)
-	StateHigh[5] = XOR(StateHigh[5], WH5, WorkH13)
-	StateLow[5] = XOR(StateLow[5], WL5, WorkL13)
-	StateHigh[6] = XOR(StateHigh[6], WH6, WorkH14)
-	StateLow[6] = XOR(StateLow[6], WL6, WorkL14)
-	StateHigh[7] = XOR(StateHigh[7], WH7, WorkH15)
-	StateLow[7] = XOR(StateLow[7], WL7, WorkL15)
-	StateHigh[8] = XOR(StateHigh[8], WH8, WorkH16)
-	StateLow[8] = XOR(StateLow[8], WL8, WorkL16)
+	StateHigh[1] = bit32.bxor(StateHigh[1], WH1, WorkH9)
+	StateLow[1] = bit32.bxor(StateLow[1], WL1, WorkL9)
+	StateHigh[2] = bit32.bxor(StateHigh[2], WH2, WorkH10)
+	StateLow[2] = bit32.bxor(StateLow[2], WL2, WorkL10)
+	StateHigh[3] = bit32.bxor(StateHigh[3], WH3, WorkH11)
+	StateLow[3] = bit32.bxor(StateLow[3], WL3, WorkL11)
+	StateHigh[4] = bit32.bxor(StateHigh[4], WH4, WorkH12)
+	StateLow[4] = bit32.bxor(StateLow[4], WL4, WorkL12)
+	StateHigh[5] = bit32.bxor(StateHigh[5], WH5, WorkH13)
+	StateLow[5] = bit32.bxor(StateLow[5], WL5, WorkL13)
+	StateHigh[6] = bit32.bxor(StateHigh[6], WH6, WorkH14)
+	StateLow[6] = bit32.bxor(StateLow[6], WL6, WorkL14)
+	StateHigh[7] = bit32.bxor(StateHigh[7], WH7, WorkH15)
+	StateLow[7] = bit32.bxor(StateLow[7], WL7, WorkL15)
+	StateHigh[8] = bit32.bxor(StateHigh[8], WH8, WorkH16)
+	StateLow[8] = bit32.bxor(StateLow[8], WL8, WorkL16)
 end
 
 local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): (string, buffer)

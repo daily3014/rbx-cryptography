@@ -224,32 +224,30 @@ local function Decode(Input: buffer): buffer
 		OutputIndex += 3
 	end
 
-	do
-		local Char0 = buffer.readu8(Input, InputIndex)
-		local Char1 = buffer.readu8(Input, InputIndex + 1)
-		local Char2 = buffer.readu8(Input, InputIndex + 2)
-		local Char3 = buffer.readu8(Input, InputIndex + 3)
-		local Decoded0 = buffer.readu8(Dtet, Char0)
-		local Decoded1 = buffer.readu8(Dtet, Char1)
+	local Char0 = buffer.readu8(Input, InputIndex)
+	local Char1 = buffer.readu8(Input, InputIndex + 1)
+	local Char2 = buffer.readu8(Input, InputIndex + 2)
+	local Char3 = buffer.readu8(Input, InputIndex + 3)
+	local Decoded0 = buffer.readu8(Dtet, Char0)
+	local Decoded1 = buffer.readu8(Dtet, Char1)
 
-		if Char2 == PADDING_CHARACTER then
-			local PairA = Decoded0 * 64 + Decoded1
-			buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-		elseif Char3 == PADDING_CHARACTER then
-			local Decoded2 = buffer.readu8(Dtet, Char2)
-			local PairA = Decoded0 * 64 + Decoded1
-			local PairB = Decoded2 * 64
-			buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-			buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + (PairB // 256))
-		else
-			local Decoded2 = buffer.readu8(Dtet, Char2)
-			local Decoded3 = buffer.readu8(Dtet, Char3)
-			local PairA = Decoded0 * 64 + Decoded1
-			local PairB = Decoded2 * 64 + Decoded3
-			buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-			buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + buffer.readu8(PairBLow, PairB))
-			buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB))
-		end
+	if Char2 == PADDING_CHARACTER then
+		local PairA = Decoded0 * 64 + Decoded1
+		buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+	elseif Char3 == PADDING_CHARACTER then
+		local Decoded2 = buffer.readu8(Dtet, Char2)
+		local PairA = Decoded0 * 64 + Decoded1
+		local PairB = Decoded2 * 64
+		buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+		buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + (PairB // 256))
+	else
+		local Decoded2 = buffer.readu8(Dtet, Char2)
+		local Decoded3 = buffer.readu8(Dtet, Char3)
+		local PairA = Decoded0 * 64 + Decoded1
+		local PairB = Decoded2 * 64 + Decoded3
+		buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+		buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + buffer.readu8(PairBLow, PairB))
+		buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB))
 	end
 
 	return Output

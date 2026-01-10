@@ -23,6 +23,7 @@
 local MultiPrecision = require("./MultiPrecision")
 
 local CONSTANT_ZERO = MultiPrecision.Num(0)
+local OUTPUT_BUFFER = buffer.create(8192)
 local FIELD_ORDER_BYTES = buffer.create(32) do
 	local Bytes = {
 		0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
@@ -95,6 +96,38 @@ local function Reduce(LargeNumber: buffer): buffer
 	return MultiPrecision.Carry(Difference)
 end
 
+local function Demontgomery(MontgomeryScalar: buffer): buffer
+	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MONTGOMERY_T0), FIELD_ORDER)
+	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, CONSTANT_ZERO, ReductionLow, ReductionHigh)
+
+	return Reduce(ResultHigh)
+end
+
+local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)
+	local OutputLength = 0
+	local Accumulator = 0
+	local Multiplier = 1
+
+	for Index = 0, InputLength - 1 do
+		Accumulator += buffer.readf64(InputBuffer, Index * 8) * Multiplier
+		Multiplier *= FromBase
+		while Multiplier >= ToBase do
+			local Remainder = Accumulator % ToBase
+			Accumulator = (Accumulator - Remainder) / ToBase
+			Multiplier /= ToBase
+			buffer.writef64(OUTPUT_BUFFER, OutputLength * 8, Remainder)
+			OutputLength += 1
+		end
+	end
+
+	if Multiplier > 0 then
+		buffer.writef64(OUTPUT_BUFFER, OutputLength * 8, Accumulator)
+		OutputLength += 1
+	end
+
+	return OUTPUT_BUFFER, OutputLength
+end
+
 local FieldQuadratic = {}
 
 function FieldQuadratic.IsValidScalar(ScalarBytes: buffer): boolean
@@ -109,6 +142,10 @@ function FieldQuadratic.IsValidScalar(ScalarBytes: buffer): boolean
 	end
 
 	return Borrow == 1
+end
+
+function FieldQuadratic.Montgomery(RegularScalar: buffer): buffer
+	return FieldQuadratic.Mul(RegularScalar, MONTGOMERY_T1)
 end
 
 function FieldQuadratic.Add(ScalarA: buffer, ScalarB: buffer): buffer
@@ -127,17 +164,6 @@ function FieldQuadratic.Mul(ScalarA: buffer, ScalarB: buffer): buffer
 	local ProductLow, ProductHigh = MultiPrecision.Mul(ScalarA, ScalarB)
 	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(ProductLow, MONTGOMERY_T0), FIELD_ORDER)
 	local _, ResultHigh = MultiPrecision.DWAdd(ProductLow, ProductHigh, ReductionLow, ReductionHigh)
-
-	return Reduce(ResultHigh)
-end
-
-local function Montgomery(RegularScalar: buffer): buffer
-	return FieldQuadratic.Mul(RegularScalar, MONTGOMERY_T1)
-end
-
-local function Demontgomery(MontgomeryScalar: buffer): buffer
-	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(MontgomeryScalar, MONTGOMERY_T0), FIELD_ORDER)
-	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, CONSTANT_ZERO, ReductionLow, ReductionHigh)
 
 	return Reduce(ResultHigh)
 end
@@ -181,7 +207,7 @@ function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
 		+ buffer.readu8(EncodedBuffer, 31) * 256
 	buffer.writef64(DecodedBuffer, 10 * 8, LastValue)
 
-	return Montgomery(DecodedBuffer)
+	return FieldQuadratic.Montgomery(DecodedBuffer)
 end
 
 function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
@@ -207,7 +233,7 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 
 	buffer.writef64(HighPart, 10 * 8, buffer.readu8(WideBuffer, 63))
 
-	return FieldQuadratic.Add(Montgomery(LowPart), Montgomery(Montgomery(HighPart)))
+	return FieldQuadratic.Add(FieldQuadratic.Montgomery(LowPart), FieldQuadratic.Montgomery(FieldQuadratic.Montgomery(HighPart)))
 end
 
 function FieldQuadratic.DecodeClamped(ClampedBuffer: buffer): buffer
@@ -225,32 +251,6 @@ end
 
 function FieldQuadratic.Eighth(MontgomeryScalar: buffer): buffer
 	return FieldQuadratic.Mul(MontgomeryScalar, DIVIDE_8)
-end
-
-local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)
-	local OutputBuffer = buffer.create(8192)
-	local OutputLength = 0
-	local Accumulator = 0
-	local Multiplier = 1
-
-	for Index = 0, InputLength - 1 do
-		Accumulator += buffer.readf64(InputBuffer, Index * 8) * Multiplier
-		Multiplier *= FromBase
-		while Multiplier >= ToBase do
-			local Remainder = Accumulator % ToBase
-			Accumulator = (Accumulator - Remainder) / ToBase
-			Multiplier /= ToBase
-			buffer.writef64(OutputBuffer, OutputLength * 8, Remainder)
-			OutputLength += 1
-		end
-	end
-
-	if Multiplier > 0 then
-		buffer.writef64(OutputBuffer, OutputLength * 8, Accumulator)
-		OutputLength += 1
-	end
-
-	return OutputBuffer, OutputLength
 end
 
 function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)

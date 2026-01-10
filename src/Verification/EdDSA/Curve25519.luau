@@ -123,6 +123,8 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 	local CurrentQ = buffer.create(MONTGOMERY_POINT_SIZE)
 	buffer.copy(CurrentQ, 0, DifferencePoint, 0, MONTGOMERY_POINT_SIZE)
 
+	local LadderStep = LadderStep
+
 	for BitIndex = ScalarBitCount, 1, -1 do
 		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
 		if BitValue == 0 then

@@ -21,6 +21,7 @@
 --!native
 
 local SIZE = 104
+local COMPOUND_V = (19 / 2 ^ 255)
 local SQUARES = buffer.create(SIZE) do
 	local Tbl = {
 		0958640 * 2 ^ 0,
@@ -289,16 +290,14 @@ local function Eq(ElementA: buffer, ElementB: buffer): boolean
 	return DifferenceAccumulator == 0
 end
 
-local CompoundV = (19 / 2 ^ 255)
-
-local a00: number, a01: number, a02: number, a03: number, a04: number, a05: number, a06: number,
-a07: number, a08: number, a09: number, a10: number, a11: number
-local b00: number, b01: number, b02: number, b03: number, b04: number, b05: number, b06: number,
-b07: number, b08: number, b09: number, b10: number, b11: number
+local A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number,
+A07: number, A08: number, A09: number, A10: number, A11: number
+local B00: number, B01: number, B02: number, B03: number, B04: number, B05: number, B06: number,
+B07: number, B08: number, B09: number, B10: number, B11: number
 
 function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
-	local COMPOUND_V = CompoundV
-	a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10, a11 =
+	local CompoundV = COMPOUND_V
+	A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
 		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
 		buffer.readf64(ElementA, 32), buffer.readf64(ElementA, 40),
@@ -306,7 +305,7 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 		buffer.readf64(ElementA, 64), buffer.readf64(ElementA, 72),
 		buffer.readf64(ElementA, 80), buffer.readf64(ElementA, 88)
 
-	b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11 =
+	B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11 =
 		buffer.readf64(ElementB, 0), buffer.readf64(ElementB, 8),
 		buffer.readf64(ElementB, 16), buffer.readf64(ElementB, 24),
 		buffer.readf64(ElementB, 32), buffer.readf64(ElementB, 40),
@@ -314,234 +313,234 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 		buffer.readf64(ElementB, 64), buffer.readf64(ElementB, 72),
 		buffer.readf64(ElementB, 80), buffer.readf64(ElementB, 88)
 
-	local A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number,
-	A07: number, A08: number, A09: number, A10: number, A11: number =
-		a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10, a11
+	local T00: number, T01: number, T02: number, T03: number, T04: number, T05: number, T06: number,
+	T07: number, T08: number, T09: number, T10: number, T11: number =
+		A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11
 
-	local B00: number, B01: number, B02: number, B03: number, B04: number, B05: number, B06: number,
-	B07: number, B08: number, B09: number, B10: number, B11: number =
-		b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11
+	local U00: number, U01: number, U02: number, U03: number, U04: number, U05: number, U06: number,
+	U07: number, U08: number, U09: number, U10: number, U11: number =
+		B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11
 
-	local C00 = A11 * B01
-		+ A10 * B02
-		+ A09 * B03
-		+ A08 * B04
-		+ A07 * B05
-		+ A06 * B06
-		+ A05 * B07
-		+ A04 * B08
-		+ A03 * B09
-		+ A02 * B10
-		+ A01 * B11
+	local C00 = T11 * U01
+		+ T10 * U02
+		+ T09 * U03
+		+ T08 * U04
+		+ T07 * U05
+		+ T06 * U06
+		+ T05 * U07
+		+ T04 * U08
+		+ T03 * U09
+		+ T02 * U10
+		+ T01 * U11
 
-	local C01 = A11 * B02
-		+ A10 * B03
-		+ A09 * B04
-		+ A08 * B05
-		+ A07 * B06
-		+ A06 * B07
-		+ A05 * B08
-		+ A04 * B09
-		+ A03 * B10
-		+ A02 * B11
+	local C01 = T11 * U02
+		+ T10 * U03
+		+ T09 * U04
+		+ T08 * U05
+		+ T07 * U06
+		+ T06 * U07
+		+ T05 * U08
+		+ T04 * U09
+		+ T03 * U10
+		+ T02 * U11
 
-	local C02 = A11 * B03
-		+ A10 * B04
-		+ A09 * B05
-		+ A08 * B06
-		+ A07 * B07
-		+ A06 * B08
-		+ A05 * B09
-		+ A04 * B10
-		+ A03 * B11
+	local C02 = T11 * U03
+		+ T10 * U04
+		+ T09 * U05
+		+ T08 * U06
+		+ T07 * U07
+		+ T06 * U08
+		+ T05 * U09
+		+ T04 * U10
+		+ T03 * U11
 
-	local C03 = A11 * B04
-		+ A10 * B05
-		+ A09 * B06
-		+ A08 * B07
-		+ A07 * B08
-		+ A06 * B09
-		+ A05 * B10
-		+ A04 * B11
+	local C03 = T11 * U04
+		+ T10 * U05
+		+ T09 * U06
+		+ T08 * U07
+		+ T07 * U08
+		+ T06 * U09
+		+ T05 * U10
+		+ T04 * U11
 
-	local C04 = A11 * B05
-		+ A10 * B06
-		+ A09 * B07
-		+ A08 * B08
-		+ A07 * B09
-		+ A06 * B10
-		+ A05 * B11
+	local C04 = T11 * U05
+		+ T10 * U06
+		+ T09 * U07
+		+ T08 * U08
+		+ T07 * U09
+		+ T06 * U10
+		+ T05 * U11
 
-	local C05 = A11 * B06
-		+ A10 * B07
-		+ A09 * B08
-		+ A08 * B09
-		+ A07 * B10
-		+ A06 * B11
+	local C05 = T11 * U06
+		+ T10 * U07
+		+ T09 * U08
+		+ T08 * U09
+		+ T07 * U10
+		+ T06 * U11
 
-	local C06 = A11 * B07
-		+ A10 * B08
-		+ A09 * B09
-		+ A08 * B10
-		+ A07 * B11
+	local C06 = T11 * U07
+		+ T10 * U08
+		+ T09 * U09
+		+ T08 * U10
+		+ T07 * U11
 
-	local C07 = A11 * B08
-		+ A10 * B09
-		+ A09 * B10
-		+ A08 * B11
+	local C07 = T11 * U08
+		+ T10 * U09
+		+ T09 * U10
+		+ T08 * U11
 
-	local C08 = A11 * B09
-		+ A10 * B10
-		+ A09 * B11
+	local C08 = T11 * U09
+		+ T10 * U10
+		+ T09 * U11
 
-	local C09 = A11 * B10 + A10 * B11
-	local C10 = A11 * B11
+	local C09 = T11 * U10 + T10 * U11
+	local C10 = T11 * U11
 
-	C00 *= COMPOUND_V
-	C00 += A00 * B00
+	C00 *= CompoundV
+	C00 += T00 * U00
 
-	C01 *= COMPOUND_V
-	C01 += A01 * B00
-		+ A00 * B01
+	C01 *= CompoundV
+	C01 += T01 * U00
+		+ T00 * U01
 
-	C02 *= COMPOUND_V
-	C02 += A02 * B00
-		+ A01 * B01
-		+ A00 * B02
+	C02 *= CompoundV
+	C02 += T02 * U00
+		+ T01 * U01
+		+ T00 * U02
 
-	C03 *= COMPOUND_V
-	C03 += A03 * B00
-		+ A02 * B01
-		+ A01 * B02
-		+ A00 * B03
+	C03 *= CompoundV
+	C03 += T03 * U00
+		+ T02 * U01
+		+ T01 * U02
+		+ T00 * U03
 
-	C04 *= COMPOUND_V
-	C04 += A04 * B00
-		+ A03 * B01
-		+ A02 * B02
-		+ A01 * B03
-		+ A00 * B04
+	C04 *= CompoundV
+	C04 += T04 * U00
+		+ T03 * U01
+		+ T02 * U02
+		+ T01 * U03
+		+ T00 * U04
 
-	C05 *= COMPOUND_V
-	C05 += A05 * B00
-		+ A04 * B01
-		+ A03 * B02
-		+ A02 * B03
-		+ A01 * B04
-		+ A00 * B05
+	C05 *= CompoundV
+	C05 += T05 * U00
+		+ T04 * U01
+		+ T03 * U02
+		+ T02 * U03
+		+ T01 * U04
+		+ T00 * U05
 
-	C06 *= COMPOUND_V
-	C06 += A06 * B00
-		+ A05 * B01
-		+ A04 * B02
-		+ A03 * B03
-		+ A02 * B04
-		+ A01 * B05
-		+ A00 * B06
+	C06 *= CompoundV
+	C06 += T06 * U00
+		+ T05 * U01
+		+ T04 * U02
+		+ T03 * U03
+		+ T02 * U04
+		+ T01 * U05
+		+ T00 * U06
 
-	C07 *= COMPOUND_V
-	C07 += A07 * B00
-		+ A06 * B01
-		+ A05 * B02
-		+ A04 * B03
-		+ A03 * B04
-		+ A02 * B05
-		+ A01 * B06
-		+ A00 * B07
+	C07 *= CompoundV
+	C07 += T07 * U00
+		+ T06 * U01
+		+ T05 * U02
+		+ T04 * U03
+		+ T03 * U04
+		+ T02 * U05
+		+ T01 * U06
+		+ T00 * U07
 
-	C08 *= COMPOUND_V
-	C08 += A08 * B00
-		+ A07 * B01
-		+ A06 * B02
-		+ A05 * B03
-		+ A04 * B04
-		+ A03 * B05
-		+ A02 * B06
-		+ A01 * B07
-		+ A00 * B08
+	C08 *= CompoundV
+	C08 += T08 * U00
+		+ T07 * U01
+		+ T06 * U02
+		+ T05 * U03
+		+ T04 * U04
+		+ T03 * U05
+		+ T02 * U06
+		+ T01 * U07
+		+ T00 * U08
 
-	C09 *= COMPOUND_V
-	C09 += A09 * B00
-		+ A08 * B01
-		+ A07 * B02
-		+ A06 * B03
-		+ A05 * B04
-		+ A04 * B05
-		+ A03 * B06
-		+ A02 * B07
-		+ A01 * B08
-		+ A00 * B09
+	C09 *= CompoundV
+	C09 += T09 * U00
+		+ T08 * U01
+		+ T07 * U02
+		+ T06 * U03
+		+ T05 * U04
+		+ T04 * U05
+		+ T03 * U06
+		+ T02 * U07
+		+ T01 * U08
+		+ T00 * U09
 
-	C10 *= COMPOUND_V
-	C10 += A10 * B00
-		+ A09 * B01
-		+ A08 * B02
-		+ A07 * B03
-		+ A06 * B04
-		+ A05 * B05
-		+ A04 * B06
-		+ A03 * B07
-		+ A02 * B08
-		+ A01 * B09
-		+ A00 * B10
+	C10 *= CompoundV
+	C10 += T10 * U00
+		+ T09 * U01
+		+ T08 * U02
+		+ T07 * U03
+		+ T06 * U04
+		+ T05 * U05
+		+ T04 * U06
+		+ T03 * U07
+		+ T02 * U08
+		+ T01 * U09
+		+ T00 * U10
 
-	local C11 = A11 * B00
-		+ A10 * B01
-		+ A09 * B02
-		+ A08 * B03
-		+ A07 * B04
-		+ A06 * B05
-		+ A05 * B06
-		+ A04 * B07
-		+ A03 * B08
-		+ A02 * B09
-		+ A01 * B10
-		+ A00 * B11
+	local C11 = T11 * U00
+		+ T10 * U01
+		+ T09 * U02
+		+ T08 * U03
+		+ T07 * U04
+		+ T06 * U05
+		+ T05 * U06
+		+ T04 * U07
+		+ T03 * U08
+		+ T02 * U09
+		+ T01 * U10
+		+ T00 * U11
 
-	A10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	C11 += A10
-	A11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	C00 += COMPOUND_V * A11
+	T10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	C11 += T10
+	T11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	C00 += CompoundV * T11
 
-	A00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	C01 += A00
-	A01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	C02 += A01
-	A02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	C03 += A02
-	A03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	C04 += A03
-	A04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	C05 += A04
-	A05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	C06 += A05
-	A06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	C07 += A06
-	A07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	C08 += A07
-	A08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	C09 += A08
-	A09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	C10 = C10 - A10 + A09
-	A10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	C11 = C11 - A11 + A10
+	T00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	C01 += T00
+	T01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	C02 += T01
+	T02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	C03 += T02
+	T03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	C04 += T03
+	T04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	C05 += T04
+	T05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	C06 += T05
+	T06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	C07 += T06
+	T07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	C08 += T07
+	T08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	C09 += T08
+	T09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	C10 = C10 - T10 + T09
+	T10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	C11 = C11 - T11 + T10
 
-	A11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	T11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
 
 	local Buf = Storage or buffer.create(SIZE)
 
-	buffer.writef64(Buf, 0, C00 - A00 + COMPOUND_V * A11)
-	buffer.writef64(Buf, 8, C01 - A01)
-	buffer.writef64(Buf, 16, C02 - A02)
-	buffer.writef64(Buf, 24, C03 - A03)
-	buffer.writef64(Buf, 32, C04 - A04)
-	buffer.writef64(Buf, 40, C05 - A05)
-	buffer.writef64(Buf, 48, C06 - A06)
-	buffer.writef64(Buf, 56, C07 - A07)
-	buffer.writef64(Buf, 64, C08 - A08)
-	buffer.writef64(Buf, 72, C09 - A09)
-	buffer.writef64(Buf, 80, C10 - A10)
-	buffer.writef64(Buf, 88, C11 - A11)
+	buffer.writef64(Buf, 0, C00 - T00 + CompoundV * T11)
+	buffer.writef64(Buf, 8, C01 - T01)
+	buffer.writef64(Buf, 16, C02 - T02)
+	buffer.writef64(Buf, 24, C03 - T03)
+	buffer.writef64(Buf, 32, C04 - T04)
+	buffer.writef64(Buf, 40, C05 - T05)
+	buffer.writef64(Buf, 48, C06 - T06)
+	buffer.writef64(Buf, 56, C07 - T07)
+	buffer.writef64(Buf, 64, C08 - T08)
+	buffer.writef64(Buf, 72, C09 - T09)
+	buffer.writef64(Buf, 80, C10 - T10)
+	buffer.writef64(Buf, 88, C11 - T11)
 
 	return Buf
 end
@@ -682,15 +681,16 @@ function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): bu
 end
 
 local function NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
+	local Square = FieldPrime.Square
 	if StoreInBuffer then
 		for _ = 1, SquareCount do
-			FieldPrime.Square(ElementA, ElementA)
+			Square(ElementA, ElementA)
 		end
 
 		return ElementA
 	else
 		for _ = 1, SquareCount do
-			ElementA = FieldPrime.Square(ElementA)
+			ElementA = Square(ElementA)
 		end
 
 		return ElementA
@@ -772,66 +772,221 @@ function FieldPrime.Encode(ElementA: buffer): buffer
 	local ByteIndex = 0
 	local Accumulator = A00
 
-	local function PutBytes(ByteCount)
-		for _ = 1, ByteCount do
-			local SingleByte = Accumulator % 256
-			buffer.writeu8(Buf, ByteIndex, SingleByte)
-			ByteIndex += 1
-			Accumulator = (Accumulator - SingleByte) / 256
-		end
-	end
+	local Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
 
-	PutBytes(2)
+	local Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
 	Accumulator += A01 / 2 ^ 16
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	local Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A02 / 2 ^ 40
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A03 / 2 ^ 64
-	PutBytes(2)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
 	Accumulator += A04 / 2 ^ 80
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A05 / 2 ^ 104
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A06 / 2 ^ 128
-	PutBytes(2)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
 	Accumulator += A07 / 2 ^ 144
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A08 / 2 ^ 168
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A09 / 2 ^ 192
-	PutBytes(2)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
 	Accumulator += A10 / 2 ^ 208
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
+	Accumulator = (Accumulator - Byte2) / 256
+	ByteIndex += 1
+
 	Accumulator += A11 / 2 ^ 232
-	PutBytes(3)
+
+	Byte0 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte0)
+	Accumulator = (Accumulator - Byte0) / 256
+	ByteIndex += 1
+
+	Byte1 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte1)
+	Accumulator = (Accumulator - Byte1) / 256
+	ByteIndex += 1
+
+	Byte2 = Accumulator % 256
+	buffer.writeu8(Buf, ByteIndex, Byte2)
 
 	return Buf
 end
 
 function FieldPrime.Decode(EncodedBytes: buffer): buffer
-	local function ReadLittleEndian(Offset: number, Bytes: number): number
-		local Result = 0
-		for Index = 0, Bytes - 1 do
-			Result += buffer.readu8(EncodedBytes, Offset + Index) * (2 ^ (8 * Index))
-		end
+	local B0, B1, B2 = buffer.readu8(EncodedBytes, 0), buffer.readu8(EncodedBytes, 1), buffer.readu8(EncodedBytes, 2)
+	local W00 = B0 + B1 * 256 + B2 * 65536
 
-		return Result
-	end
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 3), buffer.readu8(EncodedBytes, 4), buffer.readu8(EncodedBytes, 5)
+	local W01 = B0 + B1 * 256 + B2 * 65536
 
-	local W00 = ReadLittleEndian(0, 3)
-	local W01 = ReadLittleEndian(3, 3)
-	local W02 = ReadLittleEndian(6, 2)
-	local W03 = ReadLittleEndian(8, 3)
-	local W04 = ReadLittleEndian(11, 3)
-	local W05 = ReadLittleEndian(14, 2)
-	local W06 = ReadLittleEndian(16, 3)
-	local W07 = ReadLittleEndian(19, 3)
-	local W08 = ReadLittleEndian(22, 2)
-	local W09 = ReadLittleEndian(24, 3)
-	local W10 = ReadLittleEndian(27, 3)
-	local W11 = ReadLittleEndian(30, 2)
+	local W02 = buffer.readu16(EncodedBytes, 6)
 
-	W11 %= 2 ^ 15
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 8), buffer.readu8(EncodedBytes, 9), buffer.readu8(EncodedBytes, 10)
+	local W03 = B0 + B1 * 256 + B2 * 65536
+
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 11), buffer.readu8(EncodedBytes, 12), buffer.readu8(EncodedBytes, 13)
+	local W04 = B0 + B1 * 256 + B2 * 65536
+
+	local W05 = buffer.readu16(EncodedBytes, 14)
+
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 16), buffer.readu8(EncodedBytes, 17), buffer.readu8(EncodedBytes, 18)
+	local W06 = B0 + B1 * 256 + B2 * 65536
+
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 19), buffer.readu8(EncodedBytes, 20), buffer.readu8(EncodedBytes, 21)
+	local W07 = B0 + B1 * 256 + B2 * 65536
+
+	local W08 = buffer.readu16(EncodedBytes, 22)
+
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 24), buffer.readu8(EncodedBytes, 25), buffer.readu8(EncodedBytes, 26)
+	local W09 = B0 + B1 * 256 + B2 * 65536
+
+	B0, B1, B2 = buffer.readu8(EncodedBytes, 27), buffer.readu8(EncodedBytes, 28), buffer.readu8(EncodedBytes, 29)
+	local W10 = B0 + B1 * 256 + B2 * 65536
+
+	local W11 = buffer.readu16(EncodedBytes, 30) % 32768
 
 	local Buf = buffer.create(SIZE)
 

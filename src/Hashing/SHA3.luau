@@ -68,18 +68,17 @@ local LANES_HIGH = buffer.create(100)
 local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RCHigh, RCLow = HIGH_ROUND, LOW_ROUND
-	local XOR = bit32.bxor
 
 	for Position = Offset, Offset + Size - 1, BlockSizeInBytes do
 		for Index = 0, (QuadWordsQuantity - 1) * 4, 4 do
 			local BufferPos = Position + Index * 2
 
-			buffer.writeu32(LanesLow, Index, XOR(
+			buffer.writeu32(LanesLow, Index, bit32.bxor(
 				buffer.readu32(LanesLow, Index),
 				buffer.readu32(InputBuffer, BufferPos)
 				))
 
-			buffer.writeu32(LanesHigh, Index, XOR(
+			buffer.writeu32(LanesHigh, Index, bit32.bxor(
 				buffer.readu32(LanesHigh, Index),
 				buffer.readu32(InputBuffer, BufferPos + 4)
 				))
@@ -120,18 +119,18 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 		local Lane25Low, Lane25High = buffer.readu32(LanesLow, 96), buffer.readu32(LanesHigh, 96)
 
 		for RoundIndex = 0, 92, 4 do
-			local Column1Low, Column1High = XOR(Lane01Low, Lane06Low, Lane11Low, Lane16Low, Lane21Low), XOR(Lane01High, Lane06High, Lane11High, Lane16High, Lane21High)
-			local Column2Low, Column2High = XOR(Lane02Low, Lane07Low, Lane12Low, Lane17Low, Lane22Low), XOR(Lane02High, Lane07High, Lane12High, Lane17High, Lane22High)
-			local Column3Low, Column3High = XOR(Lane03Low, Lane08Low, Lane13Low, Lane18Low, Lane23Low), XOR(Lane03High, Lane08High, Lane13High, Lane18High, Lane23High)
-			local Column4Low, Column4High = XOR(Lane04Low, Lane09Low, Lane14Low, Lane19Low, Lane24Low), XOR(Lane04High, Lane09High, Lane14High, Lane19High, Lane24High)
-			local Column5Low, Column5High = XOR(Lane05Low, Lane10Low, Lane15Low, Lane20Low, Lane25Low), XOR(Lane05High, Lane10High, Lane15High, Lane20High, Lane25High)
+			local Column1Low, Column1High = bit32.bxor(Lane01Low, Lane06Low, Lane11Low, Lane16Low, Lane21Low), bit32.bxor(Lane01High, Lane06High, Lane11High, Lane16High, Lane21High)
+			local Column2Low, Column2High = bit32.bxor(Lane02Low, Lane07Low, Lane12Low, Lane17Low, Lane22Low), bit32.bxor(Lane02High, Lane07High, Lane12High, Lane17High, Lane22High)
+			local Column3Low, Column3High = bit32.bxor(Lane03Low, Lane08Low, Lane13Low, Lane18Low, Lane23Low), bit32.bxor(Lane03High, Lane08High, Lane13High, Lane18High, Lane23High)
+			local Column4Low, Column4High = bit32.bxor(Lane04Low, Lane09Low, Lane14Low, Lane19Low, Lane24Low), bit32.bxor(Lane04High, Lane09High, Lane14High, Lane19High, Lane24High)
+			local Column5Low, Column5High = bit32.bxor(Lane05Low, Lane10Low, Lane15Low, Lane20Low, Lane25Low), bit32.bxor(Lane05High, Lane10High, Lane15High, Lane20High, Lane25High)
 
-			local DeltaLow, DeltaHigh = XOR(Column1Low, Column3Low * 2 + Column3High // 2147483648), XOR(Column1High, Column3High * 2 + Column3Low // 2147483648)
-			local Temp0Low, Temp0High = XOR(DeltaLow, Lane02Low), XOR(DeltaHigh, Lane02High)
-			local Temp1Low, Temp1High = XOR(DeltaLow, Lane07Low), XOR(DeltaHigh, Lane07High)
-			local Temp2Low, Temp2High = XOR(DeltaLow, Lane12Low), XOR(DeltaHigh, Lane12High)
-			local Temp3Low, Temp3High = XOR(DeltaLow, Lane17Low), XOR(DeltaHigh, Lane17High)
-			local Temp4Low, Temp4High = XOR(DeltaLow, Lane22Low), XOR(DeltaHigh, Lane22High)
+			local DeltaLow, DeltaHigh = bit32.bxor(Column1Low, Column3Low * 2 + Column3High // 2147483648), bit32.bxor(Column1High, Column3High * 2 + Column3Low // 2147483648)
+			local Temp0Low, Temp0High = bit32.bxor(DeltaLow, Lane02Low), bit32.bxor(DeltaHigh, Lane02High)
+			local Temp1Low, Temp1High = bit32.bxor(DeltaLow, Lane07Low), bit32.bxor(DeltaHigh, Lane07High)
+			local Temp2Low, Temp2High = bit32.bxor(DeltaLow, Lane12Low), bit32.bxor(DeltaHigh, Lane12High)
+			local Temp3Low, Temp3High = bit32.bxor(DeltaLow, Lane17Low), bit32.bxor(DeltaHigh, Lane17High)
+			local Temp4Low, Temp4High = bit32.bxor(DeltaLow, Lane22Low), bit32.bxor(DeltaHigh, Lane22High)
 
 			Lane02Low = Temp1Low // 1048576 + (Temp1High * 4096); Lane02High = Temp1High // 1048576 + (Temp1Low * 4096)
 			Lane07Low = Temp3Low // 524288 + (Temp3High * 8192); Lane07High = Temp3High // 524288 + (Temp3Low * 8192)
@@ -139,12 +138,12 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Lane17Low = Temp2Low * 1024 + Temp2High // 4194304; Lane17High = Temp2High * 1024 + Temp2Low // 4194304
 			Lane22Low = Temp4Low * 4 + Temp4High // 1073741824; Lane22High = Temp4High * 4 + Temp4Low // 1073741824
 
-			DeltaLow = XOR(Column2Low, Column4Low * 2 + Column4High // 2147483648); DeltaHigh = XOR(Column2High, Column4High * 2 + Column4Low // 2147483648)
-			Temp0Low = XOR(DeltaLow, Lane03Low); Temp0High = XOR(DeltaHigh, Lane03High)
-			Temp1Low = XOR(DeltaLow, Lane08Low); Temp1High = XOR(DeltaHigh, Lane08High)
-			Temp2Low = XOR(DeltaLow, Lane13Low); Temp2High = XOR(DeltaHigh, Lane13High)
-			Temp3Low = XOR(DeltaLow, Lane18Low); Temp3High = XOR(DeltaHigh, Lane18High)
-			Temp4Low = XOR(DeltaLow, Lane23Low); Temp4High = XOR(DeltaHigh, Lane23High)
+			DeltaLow = bit32.bxor(Column2Low, Column4Low * 2 + Column4High // 2147483648); DeltaHigh = bit32.bxor(Column2High, Column4High * 2 + Column4Low // 2147483648)
+			Temp0Low = bit32.bxor(DeltaLow, Lane03Low); Temp0High = bit32.bxor(DeltaHigh, Lane03High)
+			Temp1Low = bit32.bxor(DeltaLow, Lane08Low); Temp1High = bit32.bxor(DeltaHigh, Lane08High)
+			Temp2Low = bit32.bxor(DeltaLow, Lane13Low); Temp2High = bit32.bxor(DeltaHigh, Lane13High)
+			Temp3Low = bit32.bxor(DeltaLow, Lane18Low); Temp3High = bit32.bxor(DeltaHigh, Lane18High)
+			Temp4Low = bit32.bxor(DeltaLow, Lane23Low); Temp4High = bit32.bxor(DeltaHigh, Lane23High)
 
 			Lane03Low = Temp2Low // 2097152 + (Temp2High * 2048); Lane03High = Temp2High // 2097152 + (Temp2Low * 2048)
 			Lane08Low = Temp4Low // 8 + bit32.bor(Temp4High * 536870912, 0); Lane08High = Temp4High // 8 + bit32.bor(Temp4Low * 536870912, 0)
@@ -152,25 +151,25 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Lane18Low = (Temp3Low * 32768) + Temp3High // 131072; Lane18High = (Temp3High * 32768) + Temp3Low // 131072
 			Lane23Low = Temp0Low // 4 + bit32.bor(Temp0High * 1073741824, 0); Lane23High = Temp0High // 4 + bit32.bor(Temp0Low * 1073741824, 0)
 
-			DeltaLow = XOR(Column3Low, Column5Low * 2 + Column5High // 2147483648); DeltaHigh = XOR(Column3High, Column5High * 2 + Column5Low // 2147483648)
-			Temp0Low = XOR(DeltaLow, Lane04Low); Temp0High = XOR(DeltaHigh, Lane04High)
-			Temp1Low = XOR(DeltaLow, Lane09Low); Temp1High = XOR(DeltaHigh, Lane09High)
-			Temp2Low = XOR(DeltaLow, Lane14Low); Temp2High = XOR(DeltaHigh, Lane14High)
-			Temp3Low = XOR(DeltaLow, Lane19Low); Temp3High = XOR(DeltaHigh, Lane19High)
-			Temp4Low = XOR(DeltaLow, Lane24Low); Temp4High = XOR(DeltaHigh, Lane24High)
+			DeltaLow = bit32.bxor(Column3Low, Column5Low * 2 + Column5High // 2147483648); DeltaHigh = bit32.bxor(Column3High, Column5High * 2 + Column5Low // 2147483648)
+			Temp0Low = bit32.bxor(DeltaLow, Lane04Low); Temp0High = bit32.bxor(DeltaHigh, Lane04High)
+			Temp1Low = bit32.bxor(DeltaLow, Lane09Low); Temp1High = bit32.bxor(DeltaHigh, Lane09High)
+			Temp2Low = bit32.bxor(DeltaLow, Lane14Low); Temp2High = bit32.bxor(DeltaHigh, Lane14High)
+			Temp3Low = bit32.bxor(DeltaLow, Lane19Low); Temp3High = bit32.bxor(DeltaHigh, Lane19High)
+			Temp4Low = bit32.bxor(DeltaLow, Lane24Low); Temp4High = bit32.bxor(DeltaHigh, Lane24High)
 
 			Lane04Low = bit32.bor(Temp3Low * 2097152, 0) + Temp3High // 2048; Lane04High = bit32.bor(Temp3High * 2097152, 0) + Temp3Low // 2048
 			Lane09Low = bit32.bor(Temp0Low * 268435456, 0) + Temp0High // 16; Lane09High = bit32.bor(Temp0High * 268435456, 0) + Temp0Low // 16
 			Lane14Low = bit32.bor(Temp2Low * 33554432, 0) + Temp2High // 128; Lane14High = bit32.bor(Temp2High * 33554432, 0) + Temp2Low // 128
 			Lane19Low = Temp4Low // 256 + bit32.bor(Temp4High * 16777216, 0); Lane19High = Temp4High // 256 + bit32.bor(Temp4Low * 16777216, 0)
 			Lane24Low = Temp1Low // 512 + bit32.bor(Temp1High * 8388608, 0); Lane24High = Temp1High // 512 + bit32.bor(Temp1Low * 8388608, 0)
-			DeltaLow = XOR(Column4Low, Column1Low * 2 + Column1High // 2147483648); DeltaHigh = XOR(Column4High, Column1High * 2 + Column1Low // 2147483648)
+			DeltaLow = bit32.bxor(Column4Low, Column1Low * 2 + Column1High // 2147483648); DeltaHigh = bit32.bxor(Column4High, Column1High * 2 + Column1Low // 2147483648)
 
-			Temp0Low = XOR(DeltaLow, Lane05Low); Temp0High = XOR(DeltaHigh, Lane05High)
-			Temp1Low = XOR(DeltaLow, Lane10Low); Temp1High = XOR(DeltaHigh, Lane10High)
-			Temp2Low = XOR(DeltaLow, Lane15Low); Temp2High = XOR(DeltaHigh, Lane15High)
-			Temp3Low = XOR(DeltaLow, Lane20Low); Temp3High = XOR(DeltaHigh, Lane20High)
-			Temp4Low = XOR(DeltaLow, Lane25Low); Temp4High = XOR(DeltaHigh, Lane25High)
+			Temp0Low = bit32.bxor(DeltaLow, Lane05Low); Temp0High = bit32.bxor(DeltaHigh, Lane05High)
+			Temp1Low = bit32.bxor(DeltaLow, Lane10Low); Temp1High = bit32.bxor(DeltaHigh, Lane10High)
+			Temp2Low = bit32.bxor(DeltaLow, Lane15Low); Temp2High = bit32.bxor(DeltaHigh, Lane15High)
+			Temp3Low = bit32.bxor(DeltaLow, Lane20Low); Temp3High = bit32.bxor(DeltaHigh, Lane20High)
+			Temp4Low = bit32.bxor(DeltaLow, Lane25Low); Temp4High = bit32.bxor(DeltaHigh, Lane25High)
 
 			Lane05Low = (Temp4Low * 16384) + Temp4High // 262144; Lane05High = (Temp4High * 16384) + Temp4Low // 262144
 			Lane10Low = bit32.bor(Temp1Low * 1048576, 0) + Temp1High // 4096; Lane10High = bit32.bor(Temp1High * 1048576, 0) + Temp1Low // 4096
@@ -178,30 +177,30 @@ local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, 
 			Lane20Low = bit32.bor(Temp0Low * 134217728, 0) + Temp0High // 32; Lane20High = bit32.bor(Temp0High * 134217728, 0) + Temp0Low // 32
 			Lane25Low = Temp2Low // 33554432 + Temp2High * 128; Lane25High = Temp2High // 33554432 + Temp2Low * 128
 
-			DeltaLow = XOR(Column5Low, Column2Low * 2 + Column2High // 2147483648); DeltaHigh = XOR(Column5High, Column2High * 2 + Column2Low // 2147483648)
-			Temp1Low = XOR(DeltaLow, Lane06Low); Temp1High = XOR(DeltaHigh, Lane06High)
-			Temp2Low = XOR(DeltaLow, Lane11Low); Temp2High = XOR(DeltaHigh, Lane11High)
-			Temp3Low = XOR(DeltaLow, Lane16Low); Temp3High = XOR(DeltaHigh, Lane16High)
-			Temp4Low = XOR(DeltaLow, Lane21Low); Temp4High = XOR(DeltaHigh, Lane21High)
+			DeltaLow = bit32.bxor(Column5Low, Column2Low * 2 + Column2High // 2147483648); DeltaHigh = bit32.bxor(Column5High, Column2High * 2 + Column2Low // 2147483648)
+			Temp1Low = bit32.bxor(DeltaLow, Lane06Low); Temp1High = bit32.bxor(DeltaHigh, Lane06High)
+			Temp2Low = bit32.bxor(DeltaLow, Lane11Low); Temp2High = bit32.bxor(DeltaHigh, Lane11High)
+			Temp3Low = bit32.bxor(DeltaLow, Lane16Low); Temp3High = bit32.bxor(DeltaHigh, Lane16High)
+			Temp4Low = bit32.bxor(DeltaLow, Lane21Low); Temp4High = bit32.bxor(DeltaHigh, Lane21High)
 			Lane06Low = Temp2Low * 8 + Temp2High // 536870912; Lane06High = Temp2High * 8 + Temp2Low // 536870912
 			Lane11Low = (Temp4Low * 262144) + Temp4High // 16384; Lane11High = (Temp4High * 262144) + Temp4Low // 16384
 			Lane16Low = Temp1Low // 268435456 + Temp1High * 16; Lane16High = Temp1High // 268435456 + Temp1Low * 16
 			Lane21Low = Temp3Low // 8388608 + Temp3High * 512; Lane21High = Temp3High // 8388608 + Temp3Low * 512
-			Lane01Low = XOR(DeltaLow, Lane01Low); Lane01High = XOR(DeltaHigh, Lane01High)
+			Lane01Low = bit32.bxor(DeltaLow, Lane01Low); Lane01High = bit32.bxor(DeltaHigh, Lane01High)
 
-			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low = XOR(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)), XOR(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)), XOR(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)), XOR(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)), XOR(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low)) :: number
-			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High = XOR(Lane01High, bit32.band(-1 - Lane02High, Lane03High)), XOR(Lane02High, bit32.band(-1 - Lane03High, Lane04High)), XOR(Lane03High, bit32.band(-1 - Lane04High, Lane05High)), XOR(Lane04High, bit32.band(-1 - Lane05High, Lane01High)), XOR(Lane05High, bit32.band(-1 - Lane01High, Lane02High)) :: number
-			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low = XOR(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)), XOR(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)), XOR(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)), XOR(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)), XOR(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low)) :: number
-			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High = XOR(Lane09High, bit32.band(-1 - Lane10High, Lane06High)), XOR(Lane10High, bit32.band(-1 - Lane06High, Lane07High)), XOR(Lane06High, bit32.band(-1 - Lane07High, Lane08High)), XOR(Lane07High, bit32.band(-1 - Lane08High, Lane09High)), XOR(Lane08High, bit32.band(-1 - Lane09High, Lane10High)) :: number
-			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low = XOR(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)), XOR(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)), XOR(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)), XOR(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)), XOR(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low)) :: number
-			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High = XOR(Lane12High, bit32.band(-1 - Lane13High, Lane14High)), XOR(Lane13High, bit32.band(-1 - Lane14High, Lane15High)), XOR(Lane14High, bit32.band(-1 - Lane15High, Lane11High)), XOR(Lane15High, bit32.band(-1 - Lane11High, Lane12High)), XOR(Lane11High, bit32.band(-1 - Lane12High, Lane13High)) :: number
-			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low = XOR(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)), XOR(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)), XOR(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)), XOR(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)), XOR(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low)) :: number
-			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High = XOR(Lane20High, bit32.band(-1 - Lane16High, Lane17High)), XOR(Lane16High, bit32.band(-1 - Lane17High, Lane18High)), XOR(Lane17High, bit32.band(-1 - Lane18High, Lane19High)), XOR(Lane18High, bit32.band(-1 - Lane19High, Lane20High)), XOR(Lane19High, bit32.band(-1 - Lane20High, Lane16High)) :: number
-			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low = XOR(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)), XOR(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)), XOR(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)), XOR(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)), XOR(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low)) :: number
-			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High = XOR(Lane23High, bit32.band(-1 - Lane24High, Lane25High)), XOR(Lane24High, bit32.band(-1 - Lane25High, Lane21High)), XOR(Lane25High, bit32.band(-1 - Lane21High, Lane22High)), XOR(Lane21High, bit32.band(-1 - Lane22High, Lane23High)), XOR(Lane22High, bit32.band(-1 - Lane23High, Lane24High)) :: number
+			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low = bit32.bxor(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)), bit32.bxor(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)), bit32.bxor(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)), bit32.bxor(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)), bit32.bxor(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low)) :: number
+			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High = bit32.bxor(Lane01High, bit32.band(-1 - Lane02High, Lane03High)), bit32.bxor(Lane02High, bit32.band(-1 - Lane03High, Lane04High)), bit32.bxor(Lane03High, bit32.band(-1 - Lane04High, Lane05High)), bit32.bxor(Lane04High, bit32.band(-1 - Lane05High, Lane01High)), bit32.bxor(Lane05High, bit32.band(-1 - Lane01High, Lane02High)) :: number
+			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low = bit32.bxor(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)), bit32.bxor(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)), bit32.bxor(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)), bit32.bxor(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)), bit32.bxor(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low)) :: number
+			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High = bit32.bxor(Lane09High, bit32.band(-1 - Lane10High, Lane06High)), bit32.bxor(Lane10High, bit32.band(-1 - Lane06High, Lane07High)), bit32.bxor(Lane06High, bit32.band(-1 - Lane07High, Lane08High)), bit32.bxor(Lane07High, bit32.band(-1 - Lane08High, Lane09High)), bit32.bxor(Lane08High, bit32.band(-1 - Lane09High, Lane10High)) :: number
+			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low = bit32.bxor(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)), bit32.bxor(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)), bit32.bxor(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)), bit32.bxor(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)), bit32.bxor(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low)) :: number
+			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High = bit32.bxor(Lane12High, bit32.band(-1 - Lane13High, Lane14High)), bit32.bxor(Lane13High, bit32.band(-1 - Lane14High, Lane15High)), bit32.bxor(Lane14High, bit32.band(-1 - Lane15High, Lane11High)), bit32.bxor(Lane15High, bit32.band(-1 - Lane11High, Lane12High)), bit32.bxor(Lane11High, bit32.band(-1 - Lane12High, Lane13High)) :: number
+			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low = bit32.bxor(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)), bit32.bxor(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)), bit32.bxor(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)), bit32.bxor(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)), bit32.bxor(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low)) :: number
+			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High = bit32.bxor(Lane20High, bit32.band(-1 - Lane16High, Lane17High)), bit32.bxor(Lane16High, bit32.band(-1 - Lane17High, Lane18High)), bit32.bxor(Lane17High, bit32.band(-1 - Lane18High, Lane19High)), bit32.bxor(Lane18High, bit32.band(-1 - Lane19High, Lane20High)), bit32.bxor(Lane19High, bit32.band(-1 - Lane20High, Lane16High)) :: number
+			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low = bit32.bxor(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)), bit32.bxor(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)), bit32.bxor(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)), bit32.bxor(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)), bit32.bxor(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low)) :: number
+			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High = bit32.bxor(Lane23High, bit32.band(-1 - Lane24High, Lane25High)), bit32.bxor(Lane24High, bit32.band(-1 - Lane25High, Lane21High)), bit32.bxor(Lane25High, bit32.band(-1 - Lane21High, Lane22High)), bit32.bxor(Lane21High, bit32.band(-1 - Lane22High, Lane23High)), bit32.bxor(Lane22High, bit32.band(-1 - Lane23High, Lane24High)) :: number
 
-			Lane01Low = XOR(Lane01Low, buffer.readu32(RCLow, RoundIndex))
-			Lane01High = XOR(Lane01High, buffer.readu32(RCHigh, RoundIndex))
+			Lane01Low = bit32.bxor(Lane01Low, buffer.readu32(RCLow, RoundIndex))
+			Lane01High = bit32.bxor(Lane01High, buffer.readu32(RCHigh, RoundIndex))
 		end
 
 		buffer.writeu32(LanesLow, 0, Lane01Low); buffer.writeu32(LanesHigh, 0, Lane01High)

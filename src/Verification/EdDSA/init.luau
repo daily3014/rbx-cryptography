@@ -146,25 +146,32 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 	if PublicKey == nil then
 		error("PublicKey cannot be nil", 2)
 	end
+	
 	if typeof(PublicKey) ~= "buffer" then
 		error(`PublicKey must be a buffer, got {typeof(PublicKey)}`, 2)
 	end
+	
 	local PublicKeyLength = buffer.len(PublicKey)
 	if PublicKeyLength ~= ED25519_PUBLIC_KEY_SIZE then
 		error(`PublicKey must be exactly {ED25519_PUBLIC_KEY_SIZE} bytes long, got {PublicKeyLength} bytes`, 2)
 	end
+	
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
+	
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
+	
 	if Signature == nil then
 		error("Signature cannot be nil", 2)
 	end
+	
 	if typeof(Signature) ~= "buffer" then
 		error(`Signature must be a buffer, got {typeof(Signature)}`, 2)
 	end
+	
 	local SignatureLength = buffer.len(Signature)
 	if SignatureLength ~= ED25519_SIGNATURE_SIZE then
 		error(`Signature must be exactly {ED25519_SIGNATURE_SIZE} bytes long, got {SignatureLength} bytes`, 2)

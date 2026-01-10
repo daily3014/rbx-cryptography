@@ -31,7 +31,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@2.8.1"
+cryptography = "daily3014/cryptography@2.9.0"
 ```
 
 ### Pesde
@@ -145,8 +145,8 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 | Simon (Roundtrip) | 20k | **790 μs** | - | - | - |
 | Speck (Encrypt) | 20k | **350 μs** | - | - | - |
 | Speck (Roundtrip) | 20k | **700 μs** | - | - | - |
-| AES-GCM (Encrypt) | 20k | **11.41 ms** | - | - | - |
-| AES-GCM (Roundtrip) | 20k | **21.88 ms** | - | - | - |
+| AES-GCM (Encrypt) | 20k | **1.03 ms** | - | - | - |
+| AES-GCM (Roundtrip) | 20k | **2.08 ms** | - | - | - |
 | XOR (Encrypt) | 1 million | **1.10 ms** | ~49.5 ms (@TwiistedRoyalty) | 4000 ms (daily) | **64.3x faster** |
 | XOR (Roundtrip) | 1 million | **2.20 ms** | 98.9 ms (@TwiistedRoyalty) | ~8000 ms (daily) | **64.3x faster** |
 

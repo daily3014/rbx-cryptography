@@ -364,25 +364,29 @@ local function RadixWTable(BasePoint: buffer, RadixWidth: number): buffer
 	local CurrentBasePoint = buffer.create(PointSize)
 	buffer.copy(CurrentBasePoint, 0, BasePoint, 0, PointSize)
 
+	local Niels = Edwards25519.Niels
+	local Add = Edwards25519.Add
+	local Double = Edwards25519.Double
+
 	for WindowIndex = 1, MaxWindows do
 		local BaseOffset = ((WindowIndex - 1) * MaxRowSize * PointSize)
 		local WorkingPoint = buffer.create(PointSize)
 		buffer.copy(WorkingPoint, 0, CurrentBasePoint, 0, PointSize)
 
 		local NielsBuffer = buffer.create(PointSize)
-		local FirstNiels = Edwards25519.Niels(WorkingPoint)
+		local FirstNiels = Niels(WorkingPoint)
 		buffer.copy(TableData, BaseOffset, FirstNiels, 0, PointSize)
 
 		for Multiple = 2, MaxRowSize do
-			Edwards25519.Add(WorkingPoint, FirstNiels, WorkingPoint)
-			Edwards25519.Niels(WorkingPoint, NielsBuffer)
+			Add(WorkingPoint, FirstNiels, WorkingPoint)
+			Niels(WorkingPoint, NielsBuffer)
 
 			local Offset = BaseOffset + ((Multiple - 1) * PointSize)
 			buffer.copy(TableData, Offset, NielsBuffer, 0, PointSize)
 		end
 
 		for _ = 1, RadixWidth do
-			CurrentBasePoint = Edwards25519.Double(CurrentBasePoint)
+			CurrentBasePoint = Double(CurrentBasePoint)
 		end
 	end
 
@@ -459,13 +463,16 @@ local function WindowedNAFTable(BasePoint: buffer, WindowWidth: number): buffer
 	local FirstNiels = BasePoint
 	buffer.copy(TableData, 0, FirstNiels, 0, PointSize)
 
+	local Add = Edwards25519.Add
+	local Niels = Edwards25519.Niels
+
 	for OddMultiple = 3, MaxOddMultiples, 2 do
 		local PrevOffset = ((OddMultiple - 3) * PointSize)
 		local CurrentOffset = ((OddMultiple - 1) * PointSize)
 
 		buffer.copy(BasePoint, 0, TableData, PrevOffset, PointSize)
 
-		Edwards25519.Niels(Edwards25519.Add(DoubledPoint, BasePoint, BasePoint), BasePoint)
+		Niels(Add(DoubledPoint, BasePoint, BasePoint), BasePoint)
 		local CurrentNiels = BasePoint
 		buffer.copy(TableData, CurrentOffset, CurrentNiels, 0, PointSize)
 	end
@@ -475,23 +482,30 @@ end
 
 function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local PointSize = POINT_SIZE
-
 	local SignedWindows, WindowCount = SignedRadixW(ScalarBits, ScalarBitCount, BASE_RADIX_WIDTH)
 	local ResultPoint = buffer.create(PointSize)
 	buffer.copy(ResultPoint, 0, IDENTITY_O, 0, PointSize)
-
 	local NielsPoint = buffer.create(PointSize)
+	local DummyPoint = buffer.create(PointSize)
+
+	local GetBasePoint = GetBasePointTableEntry
+	local Add = Edwards25519.Add
+	local Sub = Edwards25519.Sub
+
 	for WindowIndex = 1, WindowCount do
 		local WindowValue = buffer.readf64(SignedWindows, (WindowIndex - 1) * 8)
 		if WindowValue > 0 then
-			GetBasePointTableEntry(WindowIndex, WindowValue, NielsPoint)
-			ResultPoint = Edwards25519.Add(ResultPoint, NielsPoint)
+			GetBasePoint(WindowIndex, WindowValue, NielsPoint)
+			ResultPoint = Add(ResultPoint, NielsPoint)
 		elseif WindowValue < 0 then
-			GetBasePointTableEntry(WindowIndex, -WindowValue, NielsPoint)
-			ResultPoint = Edwards25519.Sub(ResultPoint, NielsPoint)
+			GetBasePoint(WindowIndex, -WindowValue, NielsPoint)
+			ResultPoint = Sub(ResultPoint, NielsPoint)
+		else
+			GetBasePoint(WindowIndex, 1, NielsPoint)
+			DummyPoint = Add(DummyPoint, NielsPoint)
 		end
 	end
-
+	
 	return ResultPoint
 end
 
@@ -502,17 +516,21 @@ function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount:
 	buffer.copy(ResultPoint, 0, IDENTITY_O, 0, POINT_SIZE)
 
 	local NielsPoint = buffer.create(POINT_SIZE)
+	local Double = Edwards25519.Double
+	local Add = Edwards25519.Add
+	local Sub = Edwards25519.Sub
+	
 	for NAFIndex = NAFLength, 1, -1 do
 		local NAFDigit = buffer.readf64(NAFForm, (NAFIndex - 1) * 8)
 
 		if NAFDigit == 0 then
-			Edwards25519.Double(ResultPoint, ResultPoint)
+			Double(ResultPoint, ResultPoint)
 		elseif NAFDigit > 0 then
 			buffer.copy(NielsPoint, 0, MultipleTable, ((NAFDigit - 1) * POINT_SIZE), POINT_SIZE)
-			Edwards25519.Add(ResultPoint, NielsPoint, ResultPoint)
+			Add(ResultPoint, NielsPoint, ResultPoint)
 		else
 			buffer.copy(NielsPoint, 0, MultipleTable, (((-NAFDigit) - 1) * POINT_SIZE), POINT_SIZE)
-			Edwards25519.Sub(ResultPoint, NielsPoint, ResultPoint)
+			Sub(ResultPoint, NielsPoint, ResultPoint)
 		end
 	end
 

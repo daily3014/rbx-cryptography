@@ -309,102 +309,124 @@ local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 	return Difference == 0
 end
 
-local function GfMult(X: buffer, Y: buffer, Z: buffer)
-	local V = buffer.create(16)
+local function GaloisMultiply(X: number, Y: number): number
+	local Z = 0
+	local V = Y
 
-	buffer.writeu32(Z, 0, 0)
-	buffer.writeu32(Z, 4, 0)
-	buffer.writeu32(Z, 8, 0)
-	buffer.writeu32(Z, 12, 0)
+	for I = 0, 7 do
+		if bit32.band(X, bit32.lshift(1, 7 - I)) ~= 0 then
+			Z = bit32.bxor(Z, V)
+		end
 
-	buffer.writeu32(V, 0, buffer.readu32(Y, 0))
-	buffer.writeu32(V, 4, buffer.readu32(Y, 4))
-	buffer.writeu32(V, 8, buffer.readu32(Y, 8))
-	buffer.writeu32(V, 12, buffer.readu32(Y, 12))
-
-	for I = 0, 15 do
-		for J = 0, 7 do
-			if bit32.band(buffer.readu8(X, I), bit32.lshift(1, 7 - J)) ~= 0 then
-				buffer.writeu32(Z, 0, bit32.bxor(buffer.readu32(Z, 0), buffer.readu32(V, 0)))
-				buffer.writeu32(Z, 4, bit32.bxor(buffer.readu32(Z, 4), buffer.readu32(V, 4)))
-				buffer.writeu32(Z, 8, bit32.bxor(buffer.readu32(Z, 8), buffer.readu32(V, 8)))
-				buffer.writeu32(Z, 12, bit32.bxor(buffer.readu32(Z, 12), buffer.readu32(V, 12)))
-			end
-
-			if buffer.readu8(V, 15) % 2 == 1 then
-				local Val: number = 0
-
-				Val = bit32.byteswap(buffer.readu32(V, 12))
-				Val = bit32.rshift(Val, 1)
-				if bit32.band(buffer.readu8(V, 11), 0x01) ~= 0 then
-					Val = bit32.bor(Val, 0x80000000)
-				end
-				buffer.writeu32(V, 12, bit32.byteswap(Val))
-
-				Val = bit32.byteswap(buffer.readu32(V, 8))
-				Val = bit32.rshift(Val, 1)
-				if bit32.band(buffer.readu8(V, 7), 0x01) ~= 0 then
-					Val = bit32.bor(Val, 0x80000000)
-				end
-				buffer.writeu32(V, 8, bit32.byteswap(Val))
-
-				Val = bit32.byteswap(buffer.readu32(V, 4))
-				Val = bit32.rshift(Val, 1)
-				if bit32.band(buffer.readu8(V, 3), 0x01) ~= 0 then
-					Val = bit32.bor(Val, 0x80000000)
-				end
-				buffer.writeu32(V, 4, bit32.byteswap(Val))
-
-				Val = bit32.byteswap(buffer.readu32(V, 0))
-				Val = bit32.rshift(Val, 1)
-				buffer.writeu32(V, 0, bit32.byteswap(Val))
-
-				buffer.writeu8(V, 0, bit32.bxor(buffer.readu8(V, 0), 0xE1))
-			else
-				local Val: number = 0
-
-				Val = bit32.byteswap(buffer.readu32(V, 12))
-				Val = bit32.rshift(Val, 1)
-				if bit32.band(buffer.readu8(V, 11), 0x01) ~= 0 then
-					Val = bit32.bor(Val, 0x80000000)
-				end
-				buffer.writeu32(V, 12, bit32.byteswap(Val))
-
-				Val = bit32.byteswap(buffer.readu32(V, 8))
-				Val = bit32.rshift(Val, 1)
-				if bit32.band(buffer.readu8(V, 7), 0x01) ~= 0 then
-					Val = bit32.bor(Val, 0x80000000)
-				end
-				buffer.writeu32(V, 8, bit32.byteswap(Val))
-
-				Val = bit32.byteswap(buffer.readu32(V, 4))
-				Val = bit32.rshift(Val, 1)
-				if bit32.band(buffer.readu8(V, 3), 0x01) ~= 0 then
-					Val = bit32.bor(Val, 0x80000000)
-				end
-				buffer.writeu32(V, 4, bit32.byteswap(Val))
-
-				Val = bit32.byteswap(buffer.readu32(V, 0))
-				Val = bit32.rshift(Val, 1)
-				buffer.writeu32(V, 0, bit32.byteswap(Val))
-			end
+		local LSB = bit32.band(V, 1)
+		V = bit32.rshift(V, 1)
+		if LSB == 1 then
+			V = bit32.bxor(V, 0xE1)
 		end
 	end
+
+	return Z
 end
 
-local function Ghash(H: buffer, X: buffer, XLen: number, Y: buffer)
+local AllTables = buffer.create(32 * 16 * 16)
+local Doubles = buffer.create(128 * 16)
+
+local function BuildShoupTables(H: buffer): buffer
+	buffer.copy(Doubles, 0, H, 0, 16)
+
+	for I = 1, 127 do
+		local PrevOffset = (I - 1) * 16
+		local CurrOffset = I * 16
+
+		local LSB = bit32.band(buffer.readu8(Doubles, PrevOffset + 15), 1)
+
+		local Carry = 0
+		for BytePos = 0, 15 do
+			local B = buffer.readu8(Doubles, PrevOffset + BytePos)
+			local NewCarry = bit32.lshift(bit32.band(B, 1), 7)
+			buffer.writeu8(Doubles, CurrOffset + BytePos, bit32.bor(bit32.rshift(B, 1), Carry))
+			Carry = NewCarry
+		end
+
+		if LSB == 1 then
+			buffer.writeu8(Doubles, CurrOffset, bit32.bxor(buffer.readu8(Doubles, CurrOffset), 0xE1))
+		end
+	end
+
+	for NibbleIdx = 0, 31 do
+		local TableOffset = NibbleIdx * 256
+
+		buffer.writeu32(AllTables, TableOffset, 0)
+		buffer.writeu32(AllTables, TableOffset + 4, 0)
+		buffer.writeu32(AllTables, TableOffset + 8, 0)
+		buffer.writeu32(AllTables, TableOffset + 12, 0)
+
+		for Entry = 1, 15 do
+			local EntryOffset = TableOffset + Entry * 16
+			local Z0, Z1, Z2, Z3 = 0, 0, 0, 0
+
+			for Bit = 0, 3 do
+				if bit32.band(Entry, bit32.lshift(1, 3 - Bit)) ~= 0 then
+					local DoubleOffset = (NibbleIdx * 4 + Bit) * 16
+
+					Z0 = bit32.bxor(Z0, buffer.readu32(Doubles, DoubleOffset))
+					Z1 = bit32.bxor(Z1, buffer.readu32(Doubles, DoubleOffset + 4))
+					Z2 = bit32.bxor(Z2, buffer.readu32(Doubles, DoubleOffset + 8))
+					Z3 = bit32.bxor(Z3, buffer.readu32(Doubles, DoubleOffset + 12))
+				end
+			end
+
+			buffer.writeu32(AllTables, EntryOffset, Z0)
+			buffer.writeu32(AllTables, EntryOffset + 4, Z1)
+			buffer.writeu32(AllTables, EntryOffset + 8, Z2)
+			buffer.writeu32(AllTables, EntryOffset + 12, Z3)
+		end
+	end
+
+	return AllTables
+end
+
+local function GfMult(Y: buffer, Tables: buffer, Z: buffer)
+	local Z0, Z1, Z2, Z3 = 0, 0, 0, 0
+
+	for ByteIdx = 0, 15 do
+		local ByteVal = buffer.readu8(Y, ByteIdx)
+		local BaseOffset = ByteIdx * 512
+
+		local HighOffset = BaseOffset + bit32.rshift(ByteVal, 4) * 16
+		Z0 = bit32.bxor(Z0, buffer.readu32(Tables, HighOffset))
+		Z1 = bit32.bxor(Z1, buffer.readu32(Tables, HighOffset + 4))
+		Z2 = bit32.bxor(Z2, buffer.readu32(Tables, HighOffset + 8))
+		Z3 = bit32.bxor(Z3, buffer.readu32(Tables, HighOffset + 12))
+
+		local LowOffset = BaseOffset + 256 + bit32.band(ByteVal, 0x0F) * 16
+		Z0 = bit32.bxor(Z0, buffer.readu32(Tables, LowOffset))
+		Z1 = bit32.bxor(Z1, buffer.readu32(Tables, LowOffset + 4))
+		Z2 = bit32.bxor(Z2, buffer.readu32(Tables, LowOffset + 8))
+		Z3 = bit32.bxor(Z3, buffer.readu32(Tables, LowOffset + 12))
+	end
+
+	buffer.writeu32(Z, 0, Z0)
+	buffer.writeu32(Z, 4, Z1)
+	buffer.writeu32(Z, 8, Z2)
+	buffer.writeu32(Z, 12, Z3)
+end
+
+local function Ghash(Tables: buffer, X: buffer, XLen: number, Y: buffer)
 	local M = math.floor(XLen / 16)
 	local XPos = 0
 	local Tmp = buffer.create(16)
+	local GfMult = GfMult
 
-	for I = 0, M - 1 do
+	for _ = 1, M do
 		buffer.writeu32(Y, 0, bit32.bxor(buffer.readu32(Y, 0), buffer.readu32(X, XPos)))
 		buffer.writeu32(Y, 4, bit32.bxor(buffer.readu32(Y, 4), buffer.readu32(X, XPos + 4)))
 		buffer.writeu32(Y, 8, bit32.bxor(buffer.readu32(Y, 8), buffer.readu32(X, XPos + 8)))
 		buffer.writeu32(Y, 12, bit32.bxor(buffer.readu32(Y, 12), buffer.readu32(X, XPos + 12)))
 		XPos += 16
 
-		GfMult(Y, H, Tmp)
+		GfMult(Y, Tables, Tmp)
+
 		buffer.writeu32(Y, 0, buffer.readu32(Tmp, 0))
 		buffer.writeu32(Y, 4, buffer.readu32(Tmp, 4))
 		buffer.writeu32(Y, 8, buffer.readu32(Tmp, 8))
@@ -417,17 +439,14 @@ local function Ghash(H: buffer, X: buffer, XLen: number, Y: buffer)
 		buffer.writeu32(Tmp, 4, 0)
 		buffer.writeu32(Tmp, 8, 0)
 		buffer.writeu32(Tmp, 12, 0)
-
-		for I = 0, Last - 1 do
-			buffer.writeu8(Tmp, I, buffer.readu8(X, XPos + I))
-		end
+		buffer.copy(Tmp, 0, X, XPos, Last)
 
 		buffer.writeu32(Y, 0, bit32.bxor(buffer.readu32(Y, 0), buffer.readu32(Tmp, 0)))
 		buffer.writeu32(Y, 4, bit32.bxor(buffer.readu32(Y, 4), buffer.readu32(Tmp, 4)))
 		buffer.writeu32(Y, 8, bit32.bxor(buffer.readu32(Y, 8), buffer.readu32(Tmp, 8)))
 		buffer.writeu32(Y, 12, bit32.bxor(buffer.readu32(Y, 12), buffer.readu32(Tmp, 12)))
 
-		GfMult(Y, H, Tmp)
+		GfMult(Y, Tables, Tmp)
 
 		buffer.writeu32(Y, 0, buffer.readu32(Tmp, 0))
 		buffer.writeu32(Y, 4, buffer.readu32(Tmp, 4))
@@ -479,7 +498,9 @@ local function Gctr(EncryptionProcessor: Processor, ICB: buffer, X: buffer, XLen
 	end
 end
 
-local function PrepareJ0(IV: buffer, IVLen: number, H: buffer, J0: buffer)
+local function PrepareJ0(H: buffer, IV: buffer, IVLen: number, J0: buffer): buffer
+	local Tables = BuildShoupTables(H)
+
 	if IVLen == 12 then
 		buffer.writeu32(J0, 0, buffer.readu32(IV, 0))
 		buffer.writeu32(J0, 4, buffer.readu32(IV, 4))
@@ -491,18 +512,20 @@ local function PrepareJ0(IV: buffer, IVLen: number, H: buffer, J0: buffer)
 		buffer.writeu32(J0, 8, 0)
 		buffer.writeu32(J0, 12, 0)
 
-		Ghash(H, IV, IVLen, J0)
+		Ghash(Tables, IV, IVLen, J0)
 
 		local LenBuf = buffer.create(16)
 		local IVLenBits = IVLen * 8
 
-		buffer.writeu32(LenBuf, 0, 0) 
+		buffer.writeu32(LenBuf, 0, 0)
 		buffer.writeu32(LenBuf, 4, 0)
 		buffer.writeu32(LenBuf, 8, 0)
-		buffer.writeu32(LenBuf, 12, IVLenBits)
+		buffer.writeu32(LenBuf, 12, bit32.byteswap(IVLenBits))
 
-		Ghash(H, LenBuf, 16, J0)
+		Ghash(Tables, LenBuf, 16, J0)
 	end
+
+	return Tables
 end
 
 local function GcmGctr(EncryptionProcessor: Processor, J0: buffer, Input: buffer, Len: number, Output: buffer)
@@ -524,8 +547,9 @@ local function GcmGctr(EncryptionProcessor: Processor, J0: buffer, Input: buffer
 	Gctr(EncryptionProcessor, J0Inc, Input, Len, Output)
 end
 
-local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, CryptLen: number, S: buffer)
-	local LenBuf = buffer.create(16)
+local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffer, CryptLen: number, S: buffer)
+	local Tmp = buffer.create(16)
+	local GfMult = GfMult
 
 	buffer.writeu32(S, 0, 0)
 	buffer.writeu32(S, 4, 0)
@@ -534,16 +558,15 @@ local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, Cr
 
 	local M = math.floor(AADLen / 16)
 	local XPos = 0
-	local Tmp = buffer.create(16)
 
-	for I = 0, M - 1 do
+	for _ = 1, M do
 		buffer.writeu32(S, 0, bit32.bxor(buffer.readu32(S, 0), buffer.readu32(AAD, XPos)))
 		buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), buffer.readu32(AAD, XPos + 4)))
 		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(AAD, XPos + 8)))
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(AAD, XPos + 12)))
 		XPos += 16
 
-		GfMult(S, H, Tmp)
+		GfMult(S, Tables, Tmp)
 
 		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
 		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
@@ -553,22 +576,18 @@ local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, Cr
 
 	if XPos < AADLen then
 		local Last = AADLen - XPos
-
 		buffer.writeu32(Tmp, 0, 0)
 		buffer.writeu32(Tmp, 4, 0)
 		buffer.writeu32(Tmp, 8, 0)
 		buffer.writeu32(Tmp, 12, 0)
-
-		for I = 0, Last - 1 do
-			buffer.writeu8(Tmp, I, buffer.readu8(AAD, XPos + I))
-		end
+		buffer.copy(Tmp, 0, AAD, XPos, Last)
 
 		buffer.writeu32(S, 0, bit32.bxor(buffer.readu32(S, 0), buffer.readu32(Tmp, 0)))
 		buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), buffer.readu32(Tmp, 4)))
 		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(Tmp, 8)))
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(Tmp, 12)))
 
-		GfMult(S, H, Tmp)
+		GfMult(S, Tables, Tmp)
 
 		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
 		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
@@ -579,14 +598,15 @@ local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, Cr
 	M = math.floor(CryptLen / 16)
 	XPos = 0
 
-	for I = 0, M - 1 do
+	for _ = 1, M do
 		buffer.writeu32(S, 0, bit32.bxor(buffer.readu32(S, 0), buffer.readu32(Crypt, XPos)))
 		buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), buffer.readu32(Crypt, XPos + 4)))
 		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(Crypt, XPos + 8)))
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(Crypt, XPos + 12)))
 		XPos += 16
 
-		GfMult(S, H, Tmp)
+		GfMult(S, Tables, Tmp)
+
 		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
 		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
 		buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
@@ -599,17 +619,14 @@ local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, Cr
 		buffer.writeu32(Tmp, 4, 0)
 		buffer.writeu32(Tmp, 8, 0)
 		buffer.writeu32(Tmp, 12, 0)
-
-		for I = 0, Last - 1 do
-			buffer.writeu8(Tmp, I, buffer.readu8(Crypt, XPos + I))
-		end
+		buffer.copy(Tmp, 0, Crypt, XPos, Last)
 
 		buffer.writeu32(S, 0, bit32.bxor(buffer.readu32(S, 0), buffer.readu32(Tmp, 0)))
 		buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), buffer.readu32(Tmp, 4)))
 		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(Tmp, 8)))
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(Tmp, 12)))
 
-		GfMult(S, H, Tmp)
+		GfMult(S, Tables, Tmp)
 
 		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
 		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
@@ -620,38 +637,26 @@ local function GcmHash(H: buffer, AAD: buffer, AADLen: number, Crypt: buffer, Cr
 	local AADLenBits = AADLen * 8
 	local CryptLenBits = CryptLen * 8
 
-	buffer.writeu32(LenBuf, 0, 0)
-	buffer.writeu32(LenBuf, 4, bit32.byteswap(AADLenBits))
+	buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), bit32.byteswap(AADLenBits)))
+	buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), bit32.byteswap(CryptLenBits)))
 
-	buffer.writeu32(LenBuf, 8, 0)
-	buffer.writeu32(LenBuf, 12, bit32.byteswap(CryptLenBits))
+	GfMult(S, Tables, Tmp)
 
-	M = 1
-	XPos = 0
-
-	for I = 0, M - 1 do
-		buffer.writeu32(S, 0, bit32.bxor(buffer.readu32(S, 0), buffer.readu32(LenBuf, XPos)))
-		buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), buffer.readu32(LenBuf, XPos + 4)))
-		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(LenBuf, XPos + 8)))
-		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(LenBuf, XPos + 12)))
-		XPos += 16
-
-		GfMult(S, H, Tmp)
-
-		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
-	end
+	buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
+	buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
+	buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
+	buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
 end
 
 function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): (buffer, buffer)
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
+	
 	if not IV or typeof(IV) ~= "buffer" then
 		error("IV must be a buffer", 2)
 	end
+	
 	if not Plaintext or typeof(Plaintext) ~= "buffer" then
 		error("Plaintext must be a buffer", 2)
 	end
@@ -681,9 +686,9 @@ function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): 
 	local S = buffer.create(16)
 
 	EncryptionProcessor(H, 0, H, 0)
-	PrepareJ0(IV, IVLen, H, J0)
+	local Tables = PrepareJ0(H, IV, IVLen, J0)
 	GcmGctr(EncryptionProcessor, J0, Plaintext, PlainLen, OutputBuffer)
-	GcmHash(H, AuthData, AADLen, OutputBuffer, PlainLen, S)
+	GcmHash(Tables, AuthData, AADLen, OutputBuffer, PlainLen, S)
 	Gctr(EncryptionProcessor, J0, S, 16, OutputTag)
 
 	return OutputBuffer, OutputTag
@@ -693,12 +698,15 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
+	
 	if not IV or typeof(IV) ~= "buffer" then
 		error("IV must be a buffer", 2)
 	end
+	
 	if not Ciphertext or typeof(Ciphertext) ~= "buffer" then
 		error("Ciphertext must be a buffer", 2)
 	end
+	
 	if not Tag or typeof(Tag) ~= "buffer" then
 		error("Tag must be a buffer", 2)
 	end
@@ -728,9 +736,9 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	local ComputedTag = buffer.create(16)
 
 	EncryptionProcessor(H, 0, H, 0)
-	PrepareJ0(IV, IVLen, H, J0)
+	local Tables = PrepareJ0(H, IV, IVLen, J0)
 	GcmGctr(EncryptionProcessor, J0, Ciphertext, CryptLen, OutputBuffer)
-	GcmHash(H, AuthData, AADLen, Ciphertext, CryptLen, S)
+	GcmHash(Tables, AuthData, AADLen, Ciphertext, CryptLen, S)
 	Gctr(EncryptionProcessor, J0, S, 16, ComputedTag)
 
 	if not ConstantTimeCompare(Tag, ComputedTag) then
