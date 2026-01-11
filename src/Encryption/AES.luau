@@ -28,6 +28,9 @@ local SBOX_16BIT = buffer.create(131072)
 local SMIX_TABLE0 = buffer.create(65536)
 local SMIX_TABLE1 = buffer.create(65536)
 
+local ALL_TABLES = buffer.create(32 * 16 * 16)
+local DOUBLES = buffer.create(128 * 16)
+
 local INVS_XOR_TABLE = buffer.create(65536)
 local INVMIX_TABLE0 = buffer.create(65536)
 local INVMIX_TABLE1 = buffer.create(65536)
@@ -309,29 +312,10 @@ local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 	return Difference == 0
 end
 
-local function GaloisMultiply(X: number, Y: number): number
-	local Z = 0
-	local V = Y
-
-	for I = 0, 7 do
-		if bit32.band(X, bit32.lshift(1, 7 - I)) ~= 0 then
-			Z = bit32.bxor(Z, V)
-		end
-
-		local LSB = bit32.band(V, 1)
-		V = bit32.rshift(V, 1)
-		if LSB == 1 then
-			V = bit32.bxor(V, 0xE1)
-		end
-	end
-
-	return Z
-end
-
-local AllTables = buffer.create(32 * 16 * 16)
-local Doubles = buffer.create(128 * 16)
-
 local function BuildShoupTables(H: buffer): buffer
+	local Doubles = DOUBLES
+	local AllTables = ALL_TABLES
+
 	buffer.copy(Doubles, 0, H, 0, 16)
 
 	for I = 1, 127 do
@@ -652,11 +636,11 @@ function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): 
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
-	
+
 	if not IV or typeof(IV) ~= "buffer" then
 		error("IV must be a buffer", 2)
 	end
-	
+
 	if not Plaintext or typeof(Plaintext) ~= "buffer" then
 		error("Plaintext must be a buffer", 2)
 	end
@@ -698,15 +682,15 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
-	
+
 	if not IV or typeof(IV) ~= "buffer" then
 		error("IV must be a buffer", 2)
 	end
-	
+
 	if not Ciphertext or typeof(Ciphertext) ~= "buffer" then
 		error("Ciphertext must be a buffer", 2)
 	end
-	
+
 	if not Tag or typeof(Tag) ~= "buffer" then
 		error("Tag must be a buffer", 2)
 	end
