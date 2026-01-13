@@ -23,7 +23,14 @@
 local MultiPrecision = require("./MultiPrecision")
 
 local CONSTANT_ZERO = MultiPrecision.Num(0)
+
 local OUTPUT_BUFFER = buffer.create(8192)
+local RULE_BUFFER = buffer.create(8192)
+local DECODE_WIDE_LOW = buffer.create(96)
+local DECODE_WIDE_HIGH = buffer.create(96)
+local DECODE_BUFFER = buffer.create(96)
+local CLAMPED_BUFFER = buffer.create(32)
+
 local FIELD_ORDER_BYTES = buffer.create(32) do
 	local Bytes = {
 		0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
@@ -191,7 +198,7 @@ function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 end
 
 function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
-	local DecodedBuffer = buffer.create(96)
+	local DecodedBuffer = DECODE_BUFFER
 	local ByteIndex = 0
 
 	for LimbIndex = 0, 9 do
@@ -211,7 +218,8 @@ function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
 end
 
 function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
-	local LowPart = buffer.create(96)
+	local LowPart = DECODE_WIDE_LOW
+	local HighPart = DECODE_WIDE_HIGH
 
 	for LimbIndex = 0, 10 do
 		local ByteIndex = LimbIndex * 3
@@ -221,8 +229,6 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 		buffer.writef64(LowPart, LimbIndex * 8, Value)
 	end
 
-	local HighPart = buffer.create(96)
-
 	for LimbIndex = 0, 9 do
 		local ByteIndex = 33 + LimbIndex * 3
 		local Value = buffer.readu8(WideBuffer, ByteIndex)
@@ -230,14 +236,17 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
 		buffer.writef64(HighPart, LimbIndex * 8, Value)
 	end
-
 	buffer.writef64(HighPart, 10 * 8, buffer.readu8(WideBuffer, 63))
 
-	return FieldQuadratic.Add(FieldQuadratic.Montgomery(LowPart), FieldQuadratic.Montgomery(FieldQuadratic.Montgomery(HighPart)))
+	local MontLow = FieldQuadratic.Montgomery(LowPart)
+	local MontHigh = FieldQuadratic.Montgomery(HighPart)
+	local MontMontHigh = FieldQuadratic.Montgomery(MontHigh)
+
+	return FieldQuadratic.Add(MontLow, MontMontHigh)
 end
 
 function FieldQuadratic.DecodeClamped(ClampedBuffer: buffer): buffer
-	local ClampedCopy = buffer.create(32)
+	local ClampedCopy = CLAMPED_BUFFER
 	buffer.copy(ClampedCopy, 0, ClampedBuffer, 0, 32)
 
 	local FirstByte = buffer.readu8(ClampedCopy, 0)
@@ -280,7 +289,7 @@ function FieldQuadratic.MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, 
 
 	local Mod3Lut = {[0] = 0, 2, 1}
 
-	local RuleBuffer = buffer.create(8192)
+	local RuleBuffer = RULE_BUFFER
 	local RuleCount = 0
 
 	while FFloat ~= 0 do

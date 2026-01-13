@@ -439,7 +439,7 @@ local function Ghash(Tables: buffer, X: buffer, XLen: number, Y: buffer)
 	end
 end
 
-local function Gctr(EncryptionProcessor: Processor, ICB: buffer, X: buffer, XLen: number, Y: buffer)
+local function Gctr(RoundKeys: buffer, KeyMaterialLength: number, ICB: buffer, X: buffer, XLen: number, Y: buffer)
 	if XLen == 0 then
 		return
 	end
@@ -455,8 +455,10 @@ local function Gctr(EncryptionProcessor: Processor, ICB: buffer, X: buffer, XLen
 	buffer.writeu32(CB, 8, buffer.readu32(ICB, 8))
 	buffer.writeu32(CB, 12, buffer.readu32(ICB, 12))
 
+	local Encrypt = EncryptBlock
+
 	for I = 0, N - 1 do
-		EncryptionProcessor(CB, 0, Tmp, 0)
+		Encrypt(RoundKeys, KeyMaterialLength, CB, 0, Tmp, 0)
 
 		buffer.writeu32(Y, YPos + 0, bit32.bxor(buffer.readu32(X, XPos + 0), buffer.readu32(Tmp, 0)))
 		buffer.writeu32(Y, YPos + 4, bit32.bxor(buffer.readu32(X, XPos + 4), buffer.readu32(Tmp, 4)))
@@ -473,7 +475,7 @@ local function Gctr(EncryptionProcessor: Processor, ICB: buffer, X: buffer, XLen
 
 	local Last = XLen - XPos
 	if Last > 0 then
-		EncryptionProcessor(CB, 0, Tmp, 0)
+		EncryptBlock(RoundKeys, KeyMaterialLength, CB, 0, Tmp, 0)
 		for I = 0, Last - 1 do
 			local XByte = buffer.readu8(X, XPos + I)
 			local TmpByte = buffer.readu8(Tmp, I)
@@ -512,7 +514,7 @@ local function PrepareJ0(H: buffer, IV: buffer, IVLen: number, J0: buffer): buff
 	return Tables
 end
 
-local function GcmGctr(EncryptionProcessor: Processor, J0: buffer, Input: buffer, Len: number, Output: buffer)
+local function GcmGctr(RoundKeys: buffer, KeyMaterialLength: number, J0: buffer, Input: buffer, Len: number, Output: buffer)
 	if Len == 0 then
 		return
 	end
@@ -528,7 +530,7 @@ local function GcmGctr(EncryptionProcessor: Processor, J0: buffer, Input: buffer
 	Val = (Val + 1) % 0x100000000
 	buffer.writeu32(J0Inc, 12, bit32.byteswap(Val))
 
-	Gctr(EncryptionProcessor, J0Inc, Input, Len, Output)
+	Gctr(RoundKeys, KeyMaterialLength, J0Inc, Input, Len, Output)
 end
 
 local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffer, CryptLen: number, S: buffer)
@@ -650,12 +652,9 @@ function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): 
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
-	local RoundKeysBuffer = ExpandKeySchedule(Key, KeyLength, buffer.create(KEY_CONFIGS[KeyLength].ExpandedLength))
-	local KeyMaterialLength = KEY_CONFIGS[KeyLength].MaterialLength
-
-	local function EncryptionProcessor(PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number)
-		EncryptBlock(RoundKeysBuffer, KeyMaterialLength, PlaintextBlock, PlaintextOffset, OutputBuffer, OutputOffset)
-	end
+	local KeyConfig = KEY_CONFIGS[KeyLength]
+	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
+	local KeyMaterialLength = KeyConfig.MaterialLength
 
 	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
@@ -669,11 +668,11 @@ function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): 
 	local J0 = buffer.create(16)
 	local S = buffer.create(16)
 
-	EncryptionProcessor(H, 0, H, 0)
+	EncryptBlock(RoundKeys, KeyMaterialLength, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
-	GcmGctr(EncryptionProcessor, J0, Plaintext, PlainLen, OutputBuffer)
+	GcmGctr(RoundKeys, KeyMaterialLength, J0, Plaintext, PlainLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, OutputBuffer, PlainLen, S)
-	Gctr(EncryptionProcessor, J0, S, 16, OutputTag)
+	Gctr(RoundKeys, KeyMaterialLength, J0, S, 16, OutputTag)
 
 	return OutputBuffer, OutputTag
 end
@@ -700,12 +699,9 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
-	local RoundKeysBuffer = ExpandKeySchedule(Key, KeyLength, buffer.create(KEY_CONFIGS[KeyLength].ExpandedLength))
-	local KeyMaterialLength = KEY_CONFIGS[KeyLength].MaterialLength
-
-	local function EncryptionProcessor(PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number)
-		EncryptBlock(RoundKeysBuffer, KeyMaterialLength, PlaintextBlock, PlaintextOffset, OutputBuffer, OutputOffset)
-	end
+	local KeyConfig = KEY_CONFIGS[KeyLength]
+	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
+	local KeyMaterialLength = KeyConfig.MaterialLength
 
 	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
@@ -719,11 +715,11 @@ function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, A
 	local S = buffer.create(16)
 	local ComputedTag = buffer.create(16)
 
-	EncryptionProcessor(H, 0, H, 0)
+	EncryptBlock(RoundKeys, KeyMaterialLength, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
-	GcmGctr(EncryptionProcessor, J0, Ciphertext, CryptLen, OutputBuffer)
+	GcmGctr(RoundKeys, KeyMaterialLength, J0, Ciphertext, CryptLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, Ciphertext, CryptLen, S)
-	Gctr(EncryptionProcessor, J0, S, 16, ComputedTag)
+	Gctr(RoundKeys, KeyMaterialLength, J0, S, 16, ComputedTag)
 
 	if not ConstantTimeCompare(Tag, ComputedTag) then
 		return false, nil

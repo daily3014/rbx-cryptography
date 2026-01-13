@@ -37,70 +37,6 @@ local SAMPLE_NTT_POLY = buffer.create(N * 2)
 local GEN_VECTOR_PRF_OUTPUT = buffer.create(192)
 local GEN_VECTOR_PRF_INPUT = buffer.create(33)
 
-local Sampling = {}
-
-local function SampleNtt(XofInput: buffer, Poly: buffer)
-	local CoeffIndex = 0
-	local Chunk = SAMPLE_NTT_CHUNK
-
-	XOF.Reset128()
-	XOF.Absorb128(XofInput)
-
-	while CoeffIndex < N do
-		XOF.Squeeze128Into(Chunk, 168, 0)
-		local Offset = 0
-
-		while Offset + 2 < 168 and CoeffIndex < N do
-			local B0 = buffer.readu8(Chunk, Offset)
-			local B1 = buffer.readu8(Chunk, Offset + 1)
-			local B2 = buffer.readu8(Chunk, Offset + 2)
-
-			local D1 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
-			local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
-
-			if D1 < Q then
-				buffer.writeu16(Poly, CoeffIndex * 2, D1)
-				CoeffIndex += 1
-			end
-
-			if D2 < Q and CoeffIndex < N then
-				buffer.writeu16(Poly, CoeffIndex * 2, D2)
-				CoeffIndex += 1
-			end
-
-			Offset += 3
-		end
-	end
-end
-
-function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): buffer
-	local Matrix = PolyVec.MatCreate(K, K)
-	local XofInput = buffer.create(34)
-	buffer.copy(XofInput, 0, Rho, 0, 32)
-
-	local PolySize = POLY_SIZE
-	local Poly = SAMPLE_NTT_POLY
-	local Sample = SampleNtt
-
-	for I = 0, K - 1 do
-		for J = 0, K - 1 do
-			if Transpose then
-				buffer.writeu8(XofInput, 32, I)
-				buffer.writeu8(XofInput, 33, J)
-			else
-				buffer.writeu8(XofInput, 32, J)
-				buffer.writeu8(XofInput, 33, I)
-			end
-
-			Sample(XofInput, Poly)
-			local Index = (I * K + J) * PolySize
-			buffer.copy(Matrix, Index, Poly, 0, PolySize)
-		end
-	end
-
-	return Matrix
-end
-
 local function SamplePolyCbd2(Prf: buffer, Poly: buffer, Offset: number?)
 	local BaseOffset = Offset or 0
 	local Mask2 = 0x03
@@ -159,6 +95,70 @@ local function SamplePolyCbd3(Prf: buffer, Poly: buffer, Offset: number?)
 			buffer.writeu16(Poly, BaseOffset + (PolyOffset + J) * 2, Coeff)
 		end
 	end
+end
+
+local function SampleNtt(XofInput: buffer, Poly: buffer)
+	local CoeffIndex = 0
+	local Chunk = SAMPLE_NTT_CHUNK
+
+	XOF.Reset128()
+	XOF.Absorb128(XofInput)
+
+	while CoeffIndex < N do
+		XOF.Squeeze128Into(Chunk, 168, 0)
+		local Offset = 0
+
+		while Offset + 2 < 168 and CoeffIndex < N do
+			local B0 = buffer.readu8(Chunk, Offset)
+			local B1 = buffer.readu8(Chunk, Offset + 1)
+			local B2 = buffer.readu8(Chunk, Offset + 2)
+
+			local D1 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
+			local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
+
+			if D1 < Q then
+				buffer.writeu16(Poly, CoeffIndex * 2, D1)
+				CoeffIndex += 1
+			end
+
+			if D2 < Q and CoeffIndex < N then
+				buffer.writeu16(Poly, CoeffIndex * 2, D2)
+				CoeffIndex += 1
+			end
+
+			Offset += 3
+		end
+	end
+end
+
+local Sampling = {}
+
+function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): buffer
+	local Matrix = PolyVec.MatCreate(K, K)
+	local XofInput = buffer.create(34)
+	buffer.copy(XofInput, 0, Rho, 0, 32)
+
+	local PolySize = POLY_SIZE
+	local Poly = SAMPLE_NTT_POLY
+	local Sample = SampleNtt
+
+	for I = 0, K - 1 do
+		for J = 0, K - 1 do
+			if Transpose then
+				buffer.writeu8(XofInput, 32, I)
+				buffer.writeu8(XofInput, 33, J)
+			else
+				buffer.writeu8(XofInput, 32, J)
+				buffer.writeu8(XofInput, 33, I)
+			end
+
+			Sample(XofInput, Poly)
+			local Index = (I * K + J) * PolySize
+			buffer.copy(Matrix, Index, Poly, 0, PolySize)
+		end
+	end
+
+	return Matrix
 end
 
 function Sampling.SamplePolyCbd(Prf: buffer, Eta: number): buffer

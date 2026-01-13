@@ -103,7 +103,7 @@ function MultiPrecision.Carry(LargeNumber: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-function MultiPrecision.Add(NumberA: buffer, NumberB: buffer): buffer
+function MultiPrecision.Add(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
 		buffer.readf64(NumberA, 0), buffer.readf64(NumberA, 8),
 		buffer.readf64(NumberA, 16), buffer.readf64(NumberA, 24),
@@ -120,7 +120,8 @@ function MultiPrecision.Add(NumberA: buffer, NumberB: buffer): buffer
 		buffer.readf64(NumberB, 64), buffer.readf64(NumberB, 72),
 		buffer.readf64(NumberB, 80)
 
-	local Buf = buffer.create(SIZE)
+	local Buf = Storage or buffer.create(SIZE)
+
 	buffer.writef64(Buf, 0, A00 + B00)
 	buffer.writef64(Buf, 8, A01 + B01)
 	buffer.writef64(Buf, 16, A02 + B02)
@@ -136,7 +137,7 @@ function MultiPrecision.Add(NumberA: buffer, NumberB: buffer): buffer
 	return Buf
 end
 
-function MultiPrecision.Sub(NumberA: buffer, NumberB: buffer): buffer
+function MultiPrecision.Sub(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
 		buffer.readf64(NumberA, 0), buffer.readf64(NumberA, 8),
 		buffer.readf64(NumberA, 16), buffer.readf64(NumberA, 24),
@@ -153,7 +154,7 @@ function MultiPrecision.Sub(NumberA: buffer, NumberB: buffer): buffer
 		buffer.readf64(NumberB, 64), buffer.readf64(NumberB, 72),
 		buffer.readf64(NumberB, 80)
 
-	local Buf = buffer.create(SIZE)
+	local Buf = Storage or buffer.create(SIZE)
 
 	buffer.writef64(Buf, 0, A00 - B00)
 	buffer.writef64(Buf, 8, A01 - B01)
@@ -170,7 +171,7 @@ function MultiPrecision.Sub(NumberA: buffer, NumberB: buffer): buffer
 	return Buf
 end
 
-function MultiPrecision.LMul(NumberA: buffer, NumberB: buffer): buffer
+function MultiPrecision.LMul(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
 		buffer.readf64(NumberA, 0), buffer.readf64(NumberA, 8),
 		buffer.readf64(NumberA, 16), buffer.readf64(NumberA, 24),
@@ -187,7 +188,7 @@ function MultiPrecision.LMul(NumberA: buffer, NumberB: buffer): buffer
 		buffer.readf64(NumberB, 64), buffer.readf64(NumberB, 72),
 		buffer.readf64(NumberB, 80)
 
-	local Buf = buffer.create(SIZE)
+	local Buf = Storage or buffer.create(SIZE)
 
 	buffer.writef64(Buf, 0, A00 * B00)
 	buffer.writef64(Buf, 8, A01 * B00 + A00 * B01)
@@ -204,8 +205,8 @@ function MultiPrecision.LMul(NumberA: buffer, NumberB: buffer): buffer
 	return MultiPrecision.Carry(Buf, Buf)
 end
 
-function MultiPrecision.Mul(NumberA: buffer, NumberB: buffer): (buffer, buffer)
-	local LowResult = MultiPrecision.LMul(NumberA, NumberB)
+function MultiPrecision.Mul(NumberA: buffer, NumberB: buffer, LowStorage: buffer?, HighStorage: buffer?): (buffer, buffer)
+	local LowResult = MultiPrecision.LMul(NumberA, NumberB, LowStorage)
 	local Overflow = buffer.readf64(LowResult, CARRY)
 
 	local A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
@@ -222,7 +223,7 @@ function MultiPrecision.Mul(NumberA: buffer, NumberB: buffer): (buffer, buffer)
 		buffer.readf64(NumberB, 56), buffer.readf64(NumberB, 64),
 		buffer.readf64(NumberB, 72), buffer.readf64(NumberB, 80)
 
-	local Buf = buffer.create(SIZE)
+	local Buf = HighStorage or buffer.create(SIZE)
 
 	buffer.writef64(Buf, 0, Overflow + A10 * B01 + A09 * B02 + A08 * B03 + A07 * B04 + A06 * B05 + A05 * B06 + A04 * B07 + A03 * B08 + A02 * B09 + A01 * B10)
 	buffer.writef64(Buf, 8, A10 * B02 + A09 * B03 + A08 * B04 + A07 * B05 + A06 * B06 + A05 * B07 + A04 * B08 + A03 * B09 + A02 * B10)
@@ -239,18 +240,18 @@ function MultiPrecision.Mul(NumberA: buffer, NumberB: buffer): (buffer, buffer)
 	return LowResult, MultiPrecision.Carry(Buf, Buf)
 end
 
-function MultiPrecision.DWAdd(NumberA0: buffer, NumberA1: buffer, NumberB0: buffer, NumberB1: buffer): (buffer, buffer, number)
-	local LowSum = MultiPrecision.Carry(MultiPrecision.Add(NumberA0, NumberB0))
+function MultiPrecision.DWAdd(NumberA0: buffer, NumberA1: buffer, NumberB0: buffer, NumberB1: buffer, LowStorage: buffer?, HighStorage: buffer?): (buffer, buffer, number)
+	local LowSum = MultiPrecision.Carry(MultiPrecision.Add(NumberA0, NumberB0, LowStorage), LowStorage)
 	local CarryOut = buffer.readf64(LowSum, CARRY)
 
-	local HighSum = MultiPrecision.Add(NumberA1, NumberB1)
+	local HighSum = MultiPrecision.Add(NumberA1, NumberB1, HighStorage)
 	buffer.writef64(HighSum, 0, buffer.readf64(HighSum, 0) + CarryOut)
 	local Carried = MultiPrecision.Carry(HighSum, HighSum)
 
 	return LowSum, Carried, buffer.readf64(Carried, CARRY)
 end
 
-function MultiPrecision.Half(NumberA: buffer): buffer
+function MultiPrecision.Half(NumberA: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
 		buffer.readf64(NumberA, 0),
 		buffer.readf64(NumberA, 8),
@@ -264,7 +265,7 @@ function MultiPrecision.Half(NumberA: buffer): buffer
 		buffer.readf64(NumberA, 72),
 		buffer.readf64(NumberA, 80)
 
-	local Buf = buffer.create(SIZE)
+	local Buf = Storage or buffer.create(SIZE)
 
 	buffer.writef64(Buf, 0, A00 * 0.5 + A01 * 2 ^ 23)
 	buffer.writef64(Buf, 8, A02 * 2 ^ 23)
@@ -281,7 +282,7 @@ function MultiPrecision.Half(NumberA: buffer): buffer
 	return MultiPrecision.CarryWeak(Buf, Buf)
 end
 
-function MultiPrecision.Third(NumberA: buffer): buffer
+function MultiPrecision.Third(NumberA: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
 		buffer.readf64(NumberA, 0),
 		buffer.readf64(NumberA, 8),
@@ -307,7 +308,7 @@ function MultiPrecision.Third(NumberA: buffer): buffer
 	local Division09 = A09 * 0xaaaaaa + Division08
 	local Division10 = A10 * 0xaaaaaa + Division09
 
-	local Buf = buffer.create(SIZE)
+	local Buf = Storage or buffer.create(SIZE)
 
 	buffer.writef64(Buf, 0, A00 + Division00)
 	buffer.writef64(Buf, 8, A01 + Division01)
@@ -365,7 +366,7 @@ end
 function MultiPrecision.Num(RegularNumber: number): buffer
 	local Buf = buffer.create(SIZE)
 	buffer.writef64(Buf, 0, RegularNumber)
-	
+
 	return Buf
 end
 

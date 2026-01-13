@@ -25,22 +25,14 @@ local Q = 13 * 256 + 1
 
 local Field = {}
 
-local function ReducedAdd(A: number, B: number): number
+function Field.Add(A: number, B: number): number
 	local Sum = A + B
 	return if Sum >= Q then Sum - Q else Sum
 end
 
-local function ReducedSub(A: number, B: number): number
+function Field.Subtract(A: number, B: number): number
 	local Diff = A - B
 	return if Diff < 0 then Diff + Q else Diff
-end
-
-function Field.Add(A: number, B: number): number
-	return ReducedAdd(A, B)
-end
-
-function Field.Subtract(A: number, B: number): number
-	return ReducedSub(A, B)
 end
 
 function Field.Multiply(A: number, B: number): number

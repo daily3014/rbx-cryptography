@@ -1,20 +1,27 @@
 --[=[
-	Cryptography library: EdDSA (Ed25519)
+	Cryptography library: EdDSA (Ed25519) with Batch Verification
 
 	Return type: varies by function
 	Example usage:
 		local EdDSA = require("EdDSA")
 
 		--------Usage Case 1--------
-		local SecretKey = RandomBytes.Generate(32) -- use your random module
+		local SecretKey = RandomBytes.Generate(32)
 		local PublicKey = EdDSA.PublicKey(SecretKey)
 
 		--------Usage Case 2--------
-		local Message = buffer.fromstring("Hello World") -- or use buffer directly
+		local Message = buffer.fromstring("Hello World")
 		local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
 
 		--------Usage Case 3--------
 		local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
+
+		--------Usage Case 4: Batch Verification--------
+		local AllValid = EdDSA.VerifyBatch({
+			{PublicKey = PK1, Message = M1, Signature = S1},
+			{PublicKey = PK2, Message = M2, Signature = S2},
+			...
+		})
 --]=]
 
 --!strict
@@ -51,6 +58,12 @@ local function ConcatBuffers(...): buffer
 
 	return Result
 end
+
+export type SignatureEntry = {
+	PublicKey: buffer,
+	Message: buffer,
+	Signature: buffer,
+}
 
 local EDDSA = {
 	CSPRNG = CSPRNG,
@@ -218,6 +231,144 @@ function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): bo
 
 	local SBNiels = Edwards25519.Niels(SB)
 	local Difference = Edwards25519.Sub(RKA, SBNiels)
+
+	Difference = Edwards25519.Double(Difference)
+	Difference = Edwards25519.Double(Difference)
+	Difference = Edwards25519.Double(Difference)
+
+	local DifferenceX = buffer.create(104)
+	local DifferenceT = buffer.create(104)
+	buffer.copy(DifferenceX, 0, Difference, 0 * 104, 104)
+	buffer.copy(DifferenceT, 0, Difference, 3 * 104, 104)
+
+	local XIsZero = FieldPrime.Eqz(DifferenceX)
+	local TIsZero = FieldPrime.Eqz(DifferenceT)
+
+	return XIsZero and TIsZero
+end
+
+function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
+	local Count = #Entries
+	if Count == 0 then
+		return true
+	end
+
+	if Count == 1 then
+		local Entry = Entries[1]
+		return EDDSA.Verify(Entry.PublicKey, Entry.Message, Entry.Signature)
+	end
+
+	local TranscriptData = {}
+	local ParsedData = {}
+
+	for Index, Entry in Entries do
+		local PublicKey = Entry.PublicKey
+		local Message = Entry.Message
+		local Signature = Entry.Signature
+
+		if typeof(PublicKey) ~= "buffer" or buffer.len(PublicKey) ~= ED25519_PUBLIC_KEY_SIZE then
+			return false
+		end
+
+		if typeof(Message) ~= "buffer" then
+			return false
+		end
+
+		if typeof(Signature) ~= "buffer" or buffer.len(Signature) ~= ED25519_SIGNATURE_SIZE then
+			return false
+		end
+
+		local LastByte = buffer.readu8(Signature, 63)
+		if bit32.band(LastByte, 0xE0) ~= 0x00 then
+			return false
+		end
+
+		local CommitmentBytes = buffer.create(32)
+		buffer.copy(CommitmentBytes, 0, Signature, 0, 32)
+		local ResponseBytes = buffer.create(32)
+		buffer.copy(ResponseBytes, 0, Signature, 32, 32)
+
+		if not FieldQuadratic.IsValidScalar(ResponseBytes) then
+			return false
+		end
+
+		local PublicPoint = Edwards25519.Decode(PublicKey)
+		if not PublicPoint then
+			return false
+		end
+
+		local CommitmentPoint = Edwards25519.Decode(CommitmentBytes)
+		if not CommitmentPoint then
+			return false
+		end
+
+		local ChallengeInput = ConcatBuffers(CommitmentBytes, PublicKey, Message)
+		local ChallengeHash = SHA512(ChallengeInput)
+		local ChallengeScalar = FieldQuadratic.DecodeWide(ChallengeHash)
+
+		local ResponseScalar = FieldQuadratic.Decode(ResponseBytes)
+
+		table.insert(TranscriptData, ChallengeHash)
+		table.insert(TranscriptData, ResponseBytes)
+
+		ParsedData[Index] = {
+			PublicPoint = PublicPoint,
+			CommitmentPoint = CommitmentPoint,
+			ChallengeScalar = ChallengeScalar,
+			ResponseScalar = ResponseScalar,
+		}
+	end
+
+	local TranscriptBuffer = ConcatBuffers(table.unpack(TranscriptData))
+
+	local SumS: buffer? = nil
+	local Accumulator: buffer? = nil
+
+	for Index, Parsed in ParsedData do
+		local IndexBuffer = buffer.create(2)
+		buffer.writeu16(IndexBuffer, 0, Index)
+		local ZInput = ConcatBuffers(IndexBuffer, TranscriptBuffer)
+		local ZHash = SHA512(ZInput)
+
+		local ZBytes = buffer.create(32)
+		buffer.copy(ZBytes, 0, ZHash, 0, 32)
+		buffer.writeu8(ZBytes, 31, bit32.band(buffer.readu8(ZBytes, 31), 0x0F))
+		local Z = FieldQuadratic.Decode(ZBytes)
+
+		local ZS = FieldQuadratic.Mul(Z, Parsed.ResponseScalar)
+		if SumS == nil then
+			SumS = ZS
+		else
+			SumS = FieldQuadratic.Add(SumS, ZS)
+		end
+
+		local ZH = FieldQuadratic.Mul(Z, Parsed.ChallengeScalar)
+		local ZHBits, ZHBitCount = FieldQuadratic.Bits(ZH)
+		local ZHA = Edwards25519.Mul(Parsed.PublicPoint, ZHBits, ZHBitCount)
+
+		local ZBits, ZBitCount = FieldQuadratic.Bits(Z)
+		local ZR = Edwards25519.Mul(Parsed.CommitmentPoint, ZBits, ZBitCount)
+
+		local ZHANiels = Edwards25519.Niels(ZHA)
+		local ZRHA = Edwards25519.Add(ZR, ZHANiels)
+
+		if Accumulator == nil then
+			Accumulator = ZRHA
+		else
+			local ZRHANiels = Edwards25519.Niels(ZRHA)
+			Accumulator = Edwards25519.Add(Accumulator, ZRHANiels)
+		end
+	end
+
+	if SumS == nil or Accumulator == nil then
+		return false
+	end
+
+	local SumSBits, SumSBitCount = FieldQuadratic.Bits(SumS)
+	local LeftSide = Edwards25519.MulG(SumSBits, SumSBitCount)
+
+	local LeftNiels = Edwards25519.Niels(LeftSide)
+	local Difference = Edwards25519.Sub(Accumulator :: buffer, LeftNiels)
 
 	Difference = Edwards25519.Double(Difference)
 	Difference = Edwards25519.Double(Difference)

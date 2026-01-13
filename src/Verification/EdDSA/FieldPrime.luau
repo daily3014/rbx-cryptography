@@ -278,7 +278,7 @@ function FieldPrime.Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-local function Eq(ElementA: buffer, ElementB: buffer): boolean
+function FieldPrime.Eq(ElementA: buffer, ElementB: buffer): boolean
 	local Difference = FieldPrime.Canonicalize(FieldPrime.Sub(ElementA, ElementB))
 	local DifferenceAccumulator = 0
 	for LimbIndex = 0, 88, 8 do
@@ -680,7 +680,7 @@ function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): bu
 	return Buf
 end
 
-local function NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
+function FieldPrime.NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
 	local Square = FieldPrime.Square
 	if StoreInBuffer then
 		for _ = 1, SquareCount do
@@ -701,57 +701,57 @@ function FieldPrime.Invert(ElementA: buffer, Storage: buffer?): buffer
 	local Mul = FieldPrime.Mul
 
 	local A2 = FieldPrime.Square(ElementA)
-	local A9 = Mul(ElementA, NSquare(A2, 2))
+	local A9 = Mul(ElementA, FieldPrime.NSquare(A2, 2))
 	local A11 = Mul(A9, A2)
 
 	local X5 = Mul(FieldPrime.Square(A11), A9)
-	local X10 = Mul(NSquare(X5, 5), X5)
-	local X20 = Mul(NSquare(X10, 10), X10)
-	local X40 = Mul(NSquare(X20, 20), X20)
-	local X50 = Mul(NSquare(X40, 10), X10)
-	local X100 = Mul(NSquare(X50, 50), X50)
-	local X200 = Mul(NSquare(X100, 100), X100)
-	local X250 = Mul(NSquare(X200, 50), X50)
+	local X10 = Mul(FieldPrime.NSquare(X5, 5), X5)
+	local X20 = Mul(FieldPrime.NSquare(X10, 10), X10)
+	local X40 = Mul(FieldPrime.NSquare(X20, 20), X20)
+	local X50 = Mul(FieldPrime.NSquare(X40, 10), X10)
+	local X100 = Mul(FieldPrime.NSquare(X50, 50), X50)
+	local X200 = Mul(FieldPrime.NSquare(X100, 100), X100)
+	local X250 = Mul(FieldPrime.NSquare(X200, 50), X50)
 
-	return Mul(NSquare(X250, 5), A11, Storage)
+	return Mul(FieldPrime.NSquare(X250, 5), A11, Storage)
 end
 
 function FieldPrime.SqrtDiv(ElementU: buffer, ElementV: buffer): buffer?
 	local Mul = FieldPrime.Mul
 	local Square = FieldPrime.Square
+	local Carry = FieldPrime.Carry
 
-	FieldPrime.Carry(ElementU, ElementU)
+	Carry(ElementU, ElementU)
 
 	local V2 = Square(ElementV)
 	local V3 = Mul(ElementV, V2)
-	local V6 = Square(V3)
-	local V7 = Mul(ElementV, V6)
-	local UV7 = Mul(ElementU, V7)
+	local UV3 = Mul(ElementU, V3)
+	local V4 = Square(V2)
+	local UV7 = Mul(UV3, V4)
 
 	local X2 = Mul(Square(UV7), UV7)
-	local X4 = Mul(NSquare(X2, 2), X2)
-	local X8 = Mul(NSquare(X4, 4), X4)
-	local X16 = Mul(NSquare(X8, 8), X8)
-	local X18 = Mul(NSquare(X16, 2), X2)
-	local X32 = Mul(NSquare(X16, 16), X16)
-	local X50 = Mul(NSquare(X32, 18), X18)
-	local X100 = Mul(NSquare(X50, 50), X50)
-	local X200 = Mul(NSquare(X100, 100), X100)
-	local X250 = Mul(NSquare(X200, 50), X50)
-	local PowerResult = Mul(NSquare(X250, 2), UV7)
+	local X4 = Mul(FieldPrime.NSquare(X2, 2), X2)
+	local X8 = Mul(FieldPrime.NSquare(X4, 4), X4)
+	local X16 = Mul(FieldPrime.NSquare(X8, 8), X8)
+	local X18 = Mul(FieldPrime.NSquare(X16, 2), X2)
+	local X32 = Mul(FieldPrime.NSquare(X16, 16), X16)
+	local X50 = Mul(FieldPrime.NSquare(X32, 18), X18)
+	local X100 = Mul(FieldPrime.NSquare(X50, 50), X50)
+	local X200 = Mul(FieldPrime.NSquare(X100, 100), X100)
+	local X250 = Mul(FieldPrime.NSquare(X200, 50), X50)
+	local PowerResult = Mul(FieldPrime.NSquare(X250, 2), UV7)
 
-	local UV3 = Mul(ElementU, V3)
 	local CandidateB = Mul(UV3, PowerResult)
 	local B2 = Square(CandidateB)
 	local VB2 = Mul(ElementV, B2)
 
-	if not Eq(VB2, ElementU) then
+	if not FieldPrime.Eq(VB2, ElementU) then
 		CandidateB = Mul(CandidateB, SQUARES)
 		B2 = Square(CandidateB)
 		VB2 = Mul(ElementV, B2)
 	end
 
-	if Eq(VB2, ElementU) then
+	if FieldPrime.Eq(VB2, ElementU) then
 		return CandidateB
 	else
 		return nil
