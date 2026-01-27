@@ -29,15 +29,15 @@ local Message1 = buffer.fromstring("Transaction: Alice sends 100 to Bob")
 local Message2 = buffer.fromstring("Transaction: Bob sends 50 to Charlie")
 local Message3 = buffer.fromstring("Transaction: Charlie sends 25 to Dave")
 
-local Signature1 = EdDSA.Sign(Signer1Private, Signer1Public, Message1)
-local Signature2 = EdDSA.Sign(Signer2Private, Signer2Public, Message2)
-local Signature3 = EdDSA.Sign(Signer3Private, Signer3Public, Message3)
+local Signature1 = EdDSA.Sign(Message1, Signer1Private, Signer1Public)
+local Signature2 = EdDSA.Sign(Message2, Signer2Private, Signer2Public)
+local Signature3 = EdDSA.Sign(Message3, Signer3Private, Signer3Public)
 
 -- Batch verification: verify all signatures at once
 local Entries = {
-	{ PublicKey = Signer1Public, Message = Message1, Signature = Signature1 },
-	{ PublicKey = Signer2Public, Message = Message2, Signature = Signature2 },
-	{ PublicKey = Signer3Public, Message = Message3, Signature = Signature3 },
+	{ Message = Message1, PublicKey = Signer1Public, Signature = Signature1 },
+	{ Message = Message2, PublicKey = Signer2Public, Signature = Signature2 },
+	{  Message = Message3, PublicKey = Signer3Public,Signature = Signature3 },
 }
 
 -- One of the drawbacks is that you do not know which sgnature failed and have to throw out the whole batch
@@ -54,9 +54,9 @@ buffer.copy(TamperedSignature, 0, Signature3, 0, 64)
 buffer.writeu8(TamperedSignature, 0, bit32.bxor(buffer.readu8(TamperedSignature, 0), 0x01))
 
 local TamperedEntries = {
-	{ PublicKey = Signer1Public, Message = Message1, Signature = Signature1 },
-	{ PublicKey = Signer2Public, Message = Message2, Signature = Signature2 },
-	{ PublicKey = Signer3Public, Message = Message3, Signature = TamperedSignature },
+	{ Message = Message1, PublicKey = Signer1Public, Signature = Signature1 },
+	{ Message = Message2, PublicKey = Signer2Public, Signature = Signature2 },
+	{ Message = Message3, PublicKey = Signer3Public, Signature = TamperedSignature },
 }
 
 local TamperedValid = EdDSA.VerifyBatch(TamperedEntries)

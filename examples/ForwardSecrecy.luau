@@ -24,7 +24,7 @@ local ClientIdentityPrivate = CSPRNG.Ed25519Random()
 local ClientIdentityPublic = EdDSA.PublicKey(ClientIdentityPrivate)
 
 local ServerIdentityPrivate = CSPRNG.Ed25519Random()
-local ServerIdentityPublic = EdDSA.PublicKey(ServerIdentityPrivate)
+local _ServerIdentityPublic = EdDSA.PublicKey(ServerIdentityPrivate)
 
 -- *Client and server exchange identity public keys*
 
@@ -83,8 +83,8 @@ ClientEphemeralPrivate2 = buffer.create(0)
 ServerEphemeralPrivate2 = buffer.create(0)
 
 -- Authentication: Sign ephemeral public keys with long-term identity keys
-local EphemeralSignature = EdDSA.Sign(ClientIdentityPrivate, ClientIdentityPublic, ClientEphemeralPublic2)
-local SignatureValid = EdDSA.Verify(ClientIdentityPublic, ClientEphemeralPublic2, EphemeralSignature)
+local EphemeralSignature = EdDSA.Sign(ClientEphemeralPublic2, ClientIdentityPrivate, ClientIdentityPublic)
+local SignatureValid = EdDSA.Verify(ClientEphemeralPublic2, ClientIdentityPublic, EphemeralSignature)
 
 -- Verify decryption works
 local Decrypted1 = AEAD.Decrypt(Encrypted1, SessionKey1, Nonce1, Tag1)

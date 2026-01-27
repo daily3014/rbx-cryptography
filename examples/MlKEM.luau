@@ -46,14 +46,14 @@ end
 
 -- Encapsulate with 32-byte message
 local Message = CSPRNG.RandomBytes(32)
-local Ciphertext, SharedSecret = MlKem.MLKEM_768.Encapsulate(PublicKey, Message)
+local Ciphertext, SharedSecret = MlKem.MLKEM_768.Encapsulate(Message, PublicKey)
 
 if not Ciphertext or not SharedSecret then
 	error("Encapsulation failed")
 end
 
 -- Decapsulate to recover shared secret
-local RecoveredSecret = MlKem.MLKEM_768.Decapsulate(SecretKey, Ciphertext)
+local RecoveredSecret = MlKem.MLKEM_768.Decapsulate(Ciphertext, SecretKey)
 
 -- Verify secrets match
 print("Success:", MlKem.SecretsEqual(SharedSecret, RecoveredSecret))

@@ -11,11 +11,11 @@ local CSPRNG = Cryptography.Utilities.CSPRNG
 		Module-Lattice-based
 		Digital Signature Algorithm
 	
-	ML-DSA is a post-quantum digital signature scheme from NIST FIPS 204. 
-	It has three security levels and supports
+	ML-DSA is a post-quantum digital signature scheme standardized
+	in NIST FIPS 204. It provides three security levels and supports
 	both deterministic and hedged (randomized) signing.
 	
-	Hedged signing uses 32 bytes of randomness for security.
+	Hedged signing uses 32 bytes of randomness for enhanced security.
 	Context can be used for domain separation (max 255 bytes).
 --]]
 
@@ -28,25 +28,25 @@ local Context = buffer.create(0) -- Empty context
 local Randomness = CSPRNG.RandomBytes(32)
 local Signature = buffer.create(MLDSA.ML_DSA_44.SigByteLen)
 
-local SignSuccess = MLDSA.ML_DSA_44.Sign(Randomness, SecKey, Message, Context, Signature)
+local SignSuccess = MLDSA.ML_DSA_44.Sign(Message, Randomness, SecKey, Context, Signature)
 if not SignSuccess then
 	error("Signing failed")
 end
 
 -- Verify signature
-local Valid = MLDSA.ML_DSA_44.Verify(PubKey, Message, Context, Signature)
+local Valid = MLDSA.ML_DSA_44.Verify(Message, PubKey, Context, Signature)
 print("Signature valid:", Valid)
 
 -- Deterministic signing (zero randomness)
 local DetRandom = buffer.create(32)
 local DetSig = buffer.create(MLDSA.ML_DSA_44.SigByteLen)
-MLDSA.ML_DSA_44.Sign(DetRandom, SecKey, Message, Context, DetSig)
+MLDSA.ML_DSA_44.Sign(Message, DetRandom, SecKey, Context, DetSig)
 
 -- Context example
 local ContextData = buffer.fromstring("game-session")
 local CtxSig = buffer.create(MLDSA.ML_DSA_44.SigByteLen)
-MLDSA.ML_DSA_44.Sign(CSPRNG.RandomBytes(32), SecKey, Message, ContextData, CtxSig)
-local CtxValid = MLDSA.ML_DSA_44.Verify(PubKey, Message, ContextData, CtxSig)
+MLDSA.ML_DSA_44.Sign(Message, CSPRNG.RandomBytes(32), SecKey, ContextData, CtxSig)
+local CtxValid = MLDSA.ML_DSA_44.Verify(Message, PubKey, ContextData, CtxSig)
 print("Context signature valid:", CtxValid)
 
 -- Different security levels
