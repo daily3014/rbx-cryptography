@@ -123,15 +123,15 @@ Performance benchmarks conducted in Roblox Studio on Intel AMD Ryzen 5 7600X usi
 
 | Algorithm | Data Size | This Library | HashLib | Alternative | Other Libraries | Improvement |
 |-----------|-----------|--------------|---------|-------------|-----------------|-------------|
-| SHA-256 | 20k | **271 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **7.6x faster** than HashLib |
-| SHA-512 | 20k | **421 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **10.3x faster** than HashLib |
-| SHA3-512 | 20k | **826 μs** | 10.60 ms | - | - | **12.8x faster** than HashLib |
-| BLAKE3 | 20k | **133 μs** | - | - | - | - |
-| HMAC-BLAKE3 | 20k | **145 μs** | - | - | - | - |
-| KMAC-128 | 20k | **443 μs** | - | - | - | - |
-| KMAC-256 | 20k | **501 μs** | - | - | - | - |
-| Adler-32 | 200k | **163 μs** | - | 1.65 ms (Naive Approach) | - | **10.1x faster** |
-| CRC32 | 200k | **1.43 ms** | - | 6.26 ms (DevForum) | - | **4.4x faster** |
+| SHA-256 | 20k | **370 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **5.5x faster** than HashLib |
+| SHA-512 | 20k | **766 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **5.7x faster** than HashLib |
+| SHA3-512 | 20k | **1.0 ms** | 10.60 ms | - | - | **10.6x faster** than HashLib |
+| BLAKE3 | 20k | **168 μs** | - | - | - | - |
+| HMAC-BLAKE3 | 20k | **165 μs** | - | - | - | - |
+| KMAC-128 | 20k | **1.3 ms** | - | - | - | - |
+| KMAC-256 | 20k | **1.6 ms** | - | - | - | - |
+| Adler-32 | 200k | **190 μs** | - | 1.65 ms (Naive Approach) | - | **8.7x faster** |
+| CRC32 | 200k | **2.01 ms** | - | 6.26 ms (DevForum) | - | **3.1x faster** |
 
 ### Encryption
 
