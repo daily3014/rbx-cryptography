@@ -122,7 +122,7 @@ Testing.Describe("AES-GCM Wycheproof Tests", function()
 
 					if ExpectedResult == "valid" then
 						local EncOk, Ct, Tag = pcall(function()
-							return AES.Encrypt(Key, Iv, Msg, Aad)
+							return AES.Encrypt(Msg, Key, Iv, Aad)
 						end)
 
 						Testing.Expect(EncOk).ToBe(true)
@@ -134,7 +134,7 @@ Testing.Describe("AES-GCM Wycheproof Tests", function()
 							Testing.Expect(BuffersEqual(Tag, ExpectedTag)).ToBe(true)
 
 							local DecOk, DecSuccess, Plaintext = pcall(function()
-								return AES.Decrypt(Key, Iv, Ct, Tag, Aad)
+								return AES.Decrypt(Ct, Key, Iv, Tag, Aad)
 							end)
 
 							Testing.Expect(DecOk).ToBe(true)
@@ -147,7 +147,7 @@ Testing.Describe("AES-GCM Wycheproof Tests", function()
 						end
 					elseif ExpectedResult == "invalid" then
 						local DecOk, DecSuccess, _ = pcall(function()
-							return AES.Decrypt(Key, Iv, ExpectedCt, ExpectedTag, Aad)
+							return AES.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
 						end)
 
 						local DecryptionFailed = not DecOk or not DecSuccess

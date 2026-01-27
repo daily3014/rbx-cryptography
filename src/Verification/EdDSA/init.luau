@@ -11,15 +11,15 @@
 
 		--------Usage Case 2--------
 		local Message = buffer.fromstring("Hello World")
-		local Signature = EdDSA.Sign(SecretKey, PublicKey, Message)
+		local Signature = EdDSA.Sign(Message, SecretKey, PublicKey)
 
 		--------Usage Case 3--------
-		local IsValid = EdDSA.Verify(PublicKey, Message, Signature)
+		local IsValid = EdDSA.Verify(Message, PublicKey, Signature)
 
 		--------Usage Case 4: Batch Verification--------
 		local AllValid = EdDSA.VerifyBatch({
-			{PublicKey = PK1, Message = M1, Signature = S1},
-			{PublicKey = PK2, Message = M2, Signature = S2},
+			{Message = M1, PublicKey = PK1, Signature = S1},
+			{Message = M2, PublicKey = PK2, Signature = S2},
 			...
 		})
 --]=]
@@ -94,7 +94,7 @@ function EDDSA.PublicKey(SecretKey: buffer): buffer
 	return Edwards25519.Encode(Edwards25519.MulG(ScalarBits, BitCount))
 end
 
-function EDDSA.Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buffer
+function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buffer
 	if SecretKey == nil then
 		error("SecretKey cannot be nil", 2)
 	end
@@ -156,7 +156,7 @@ function EDDSA.Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer): buff
 	return ConcatBuffers(CommitmentString, ResponseString)
 end
 
-function EDDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer): boolean
+function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): boolean
 	if PublicKey == nil then
 		error("PublicKey cannot be nil", 2)
 	end
@@ -255,7 +255,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 
 	if Count == 1 then
 		local Entry = Entries[1]
-		return EDDSA.Verify(Entry.PublicKey, Entry.Message, Entry.Signature)
+		return EDDSA.Verify(Entry.Message, Entry.PublicKey, Entry.Signature)
 	end
 
 	local TranscriptData = {}

@@ -87,7 +87,7 @@ Testing.Describe("Ed25519 Wycheproof Tests", function()
 					local SignatureBytes = FromHex(Test.sig)
 
 					local Success, IsValid = pcall(function()
-						return Ed25519.Verify(PublicKeyBytes, MessageBytes, SignatureBytes)
+						return Ed25519.Verify(MessageBytes, PublicKeyBytes, SignatureBytes)
 					end)
 
 					if ExpectedResult == "valid" then
@@ -117,11 +117,11 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 		Testing.Test("Single valid signature batch", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
-			local Message = buffer.fromstring("Test message")
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+			local GivenMessage = buffer.fromstring("Test message")
+			local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = Message, Signature = Signature}
+				{Message = GivenMessage, PublicKey = PublicKey, Signature = Signature}
 			})
 			Testing.Expect(Result).ToBe(true)
 		end)
@@ -129,13 +129,13 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 		Testing.Test("Single invalid signature batch", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
-			local Message = buffer.fromstring("Test message")
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+			local GivenMessage = buffer.fromstring("Test message")
+			local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 
 			local WrongMessage = buffer.fromstring("Wrong message")
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = WrongMessage, Signature = Signature}
+				{Message = WrongMessage, PublicKey = PublicKey, Signature = Signature}
 			})
 			Testing.Expect(Result).ToBe(false)
 		end)
@@ -150,12 +150,12 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 
 			local Message1 = buffer.fromstring("Message one")
 			local Message2 = buffer.fromstring("Message two")
-			local Signature1 = Ed25519.Sign(SecretKey, PublicKey, Message1)
-			local Signature2 = Ed25519.Sign(SecretKey, PublicKey, Message2)
+			local Signature1 = Ed25519.Sign(Message1, SecretKey, PublicKey)
+			local Signature2 = Ed25519.Sign(Message2, SecretKey, PublicKey)
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = Message1, Signature = Signature1},
-				{PublicKey = PublicKey, Message = Message2, Signature = Signature2},
+				{Message = Message1, PublicKey = PublicKey, Signature = Signature1},
+				{Message = Message2, PublicKey = PublicKey, Signature = Signature2},
 			})
 			Testing.Expect(Result).ToBe(true)
 		end)
@@ -166,11 +166,11 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 
 			local Entries = {}
 			for I = 1, 5 do
-				local Message = buffer.fromstring(`Message number {I}`)
-				local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+				local GivenMessage = buffer.fromstring(`Message number {I}`)
+				local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 				table.insert(Entries, {
+					Message = GivenMessage,
 					PublicKey = PublicKey,
-					Message = Message,
 					Signature = Signature,
 				})
 			end
@@ -187,16 +187,16 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 			local Message2 = buffer.fromstring("Valid message 2")
 			local Message3 = buffer.fromstring("Valid message 3")
 
-			local Signature1 = Ed25519.Sign(SecretKey, PublicKey, Message1)
-			local Signature2 = Ed25519.Sign(SecretKey, PublicKey, Message2)
-			local Signature3 = Ed25519.Sign(SecretKey, PublicKey, Message3)
+			local Signature1 = Ed25519.Sign(Message1, SecretKey, PublicKey)
+			local Signature2 = Ed25519.Sign(Message2, SecretKey, PublicKey)
+			local Signature3 = Ed25519.Sign(Message3, SecretKey, PublicKey)
 
 			local WrongMessage = buffer.fromstring("Tampered message")
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = Message1, Signature = Signature1},
-				{PublicKey = PublicKey, Message = WrongMessage, Signature = Signature2},
-				{PublicKey = PublicKey, Message = Message3, Signature = Signature3},
+				{Message = Message1, PublicKey = PublicKey, Signature = Signature1},
+				{Message = WrongMessage, PublicKey = PublicKey, Signature = Signature2},
+				{Message = Message3, PublicKey = PublicKey, Signature = Signature3},
 			})
 			Testing.Expect(Result).ToBe(false)
 		end)
@@ -213,12 +213,12 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 
 			local Message1 = buffer.fromstring("Message from key 1")
 			local Message2 = buffer.fromstring("Message from key 2")
-			local Signature1 = Ed25519.Sign(SecretKey1, PublicKey1, Message1)
-			local Signature2 = Ed25519.Sign(SecretKey2, PublicKey2, Message2)
+			local Signature1 = Ed25519.Sign(Message1, SecretKey1, PublicKey1)
+			local Signature2 = Ed25519.Sign(Message2, SecretKey2, PublicKey2)
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey1, Message = Message1, Signature = Signature1},
-				{PublicKey = PublicKey2, Message = Message2, Signature = Signature2},
+				{Message = Message1, PublicKey = PublicKey1, Signature = Signature1},
+				{Message = Message2, PublicKey = PublicKey2, Signature = Signature2},
 			})
 			Testing.Expect(Result).ToBe(true)
 		end)
@@ -228,11 +228,11 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 			for I = 1, 8 do
 				local SecretKey = CSPRNG.RandomBytes(32)
 				local PublicKey = Ed25519.PublicKey(SecretKey)
-				local Message = buffer.fromstring(`Unique message {I} with random data`)
-				local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+				local GivenMessage = buffer.fromstring(`Unique message {I} with random data`)
+				local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 				table.insert(Entries, {
 					PublicKey = PublicKey,
-					Message = Message,
+					Message = GivenMessage,
 					Signature = Signature,
 				})
 			end
@@ -253,14 +253,14 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 			local Message2 = buffer.fromstring("Message 2")
 			local Message3 = buffer.fromstring("Message 3")
 
-			local Signature1 = Ed25519.Sign(SecretKey1, PublicKey1, Message1)
-			local Signature2 = Ed25519.Sign(SecretKey2, PublicKey2, Message2)
-			local Signature3 = Ed25519.Sign(SecretKey3, PublicKey3, Message3)
+			local Signature1 = Ed25519.Sign(Message1, SecretKey1, PublicKey1)
+			local Signature2 = Ed25519.Sign(Message2, SecretKey2, PublicKey2)
+			local Signature3 = Ed25519.Sign(Message3, SecretKey3, PublicKey3)
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey1, Message = Message1, Signature = Signature1},
-				{PublicKey = PublicKey2, Message = Message2, Signature = Signature2},
-				{PublicKey = PublicKey1, Message = Message3, Signature = Signature3},
+				{Message = Message1, PublicKey = PublicKey1, Signature = Signature1},
+				{Message = Message2, PublicKey = PublicKey2, Signature = Signature2},
+				{Message = Message3, PublicKey = PublicKey1, Signature = Signature3},
 			})
 			Testing.Expect(Result).ToBe(false)
 		end)
@@ -277,12 +277,12 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 
 			local Message1 = buffer.fromstring("Determinism test 1")
 			local Message2 = buffer.fromstring("Determinism test 2")
-			local Signature1 = Ed25519.Sign(SecretKey1, PublicKey1, Message1)
-			local Signature2 = Ed25519.Sign(SecretKey2, PublicKey2, Message2)
+			local Signature1 = Ed25519.Sign(Message1, SecretKey1, PublicKey1)
+			local Signature2 = Ed25519.Sign(Message2, SecretKey2, PublicKey2)
 
 			local Entries = {
-				{PublicKey = PublicKey1, Message = Message1, Signature = Signature1},
-				{PublicKey = PublicKey2, Message = Message2, Signature = Signature2},
+				{Message = Message1, PublicKey = PublicKey1, Signature = Signature1},
+				{Message = Message2, PublicKey = PublicKey2, Signature = Signature2},
 			}
 
 			local Result1 = Ed25519.VerifyBatch(Entries)
@@ -301,12 +301,12 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 		Testing.Test("Invalid signature length rejected", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
-			local Message = buffer.fromstring("Test")
+			local GivenMessage = buffer.fromstring("Test")
 			local ShortSignature = buffer.create(32)
 
 			Testing.Expect(function()
 				Ed25519.VerifyBatch({
-					{PublicKey = PublicKey, Message = Message, Signature = ShortSignature}
+					{Message = GivenMessage, PublicKey = PublicKey, Signature = ShortSignature}
 				})
 			end).ToThrow("Signature must be exactly 64 bytes long, got 32 bytes")
 		end)
@@ -314,13 +314,13 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 		Testing.Test("Invalid public key length rejected", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
-			local Message = buffer.fromstring("Test")
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+			local GivenMessage = buffer.fromstring("Test")
+			local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 			local ShortPublicKey = buffer.create(16)
 
 			Testing.Expect(function()
 				Ed25519.VerifyBatch({
-					{PublicKey = ShortPublicKey, Message = Message, Signature = Signature}
+					{Message = GivenMessage, PublicKey = ShortPublicKey, Signature = Signature}
 				})
 			end).ToThrow("PublicKey must be exactly 32 bytes long, got 16 bytes")
 		end)
@@ -329,10 +329,10 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
 			local EmptyMessage = buffer.create(0)
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, EmptyMessage)
+			local Signature = Ed25519.Sign(EmptyMessage, SecretKey, PublicKey)
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = EmptyMessage, Signature = Signature}
+				{Message = EmptyMessage, PublicKey = PublicKey, Signature = Signature}
 			})
 			Testing.Expect(Result).ToBe(true)
 		end)
@@ -344,10 +344,10 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 			for I = 0, 9999 do
 				buffer.writeu8(LargeMessage, I, I % 256)
 			end
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, LargeMessage)
+			local Signature = Ed25519.Sign(LargeMessage, SecretKey, PublicKey)
 
 			local Result = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = LargeMessage, Signature = Signature}
+				{Message = LargeMessage, PublicKey = PublicKey, Signature = Signature}
 			})
 			Testing.Expect(Result).ToBe(true)
 		end)
@@ -359,12 +359,12 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 		Testing.Test("Batch and single verify agree on valid", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
-			local Message = buffer.fromstring("Consistency test")
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+			local GivenMessage = buffer.fromstring("Consistency test")
+			local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 
-			local SingleResult = Ed25519.Verify(PublicKey, Message, Signature)
+			local SingleResult = Ed25519.Verify(GivenMessage, PublicKey, Signature)
 			local BatchResult = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = Message, Signature = Signature}
+				{Message = GivenMessage, PublicKey = PublicKey, Signature = Signature}
 			})
 
 			Testing.Expect(SingleResult).ToBe(true)
@@ -374,13 +374,13 @@ Testing.Describe("Ed25519 Batch Verification Tests", function()
 		Testing.Test("Batch and single verify agree on invalid", function()
 			local SecretKey = CSPRNG.RandomBytes(32)
 			local PublicKey = Ed25519.PublicKey(SecretKey)
-			local Message = buffer.fromstring("Original")
-			local Signature = Ed25519.Sign(SecretKey, PublicKey, Message)
+			local GivenMessage = buffer.fromstring("Original")
+			local Signature = Ed25519.Sign(GivenMessage, SecretKey, PublicKey)
 			local WrongMessage = buffer.fromstring("Tampered")
 
-			local SingleResult = Ed25519.Verify(PublicKey, WrongMessage, Signature)
+			local SingleResult = Ed25519.Verify(WrongMessage, PublicKey, Signature)
 			local BatchResult = Ed25519.VerifyBatch({
-				{PublicKey = PublicKey, Message = WrongMessage, Signature = Signature}
+				{Message = WrongMessage, PublicKey = PublicKey, Signature = Signature}
 			})
 
 			Testing.Expect(SingleResult).ToBe(false)

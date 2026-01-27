@@ -239,7 +239,7 @@ Testing.Describe("Blake3 Algorithm Tests", function()
 
 		Testing.Test(`Input Length {TestCase.InputLen} Keyed Hash`, function()
 			local Key = buffer.fromstring(New.Key)
-			local Result = Algorithm.DigestKeyed(Key, Input, KeyedHashOutputLen)
+			local Result = Algorithm.DigestKeyed(Input, Key, KeyedHashOutputLen)
 			Testing.Expect(Result).ToBe(TestCase.KeyedHash)
 		end)
 

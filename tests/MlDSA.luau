@@ -123,7 +123,7 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 						local ExpectedResult = Test.result
 
 						local Success, IsValid = pcall(function()
-							return MlDSA.ML_DSA_87.Verify(PublicKeyBytes, MessageBytes, Context, SignatureBytes)
+							return MlDSA.ML_DSA_87.Verify(MessageBytes, PublicKeyBytes, Context, SignatureBytes)
 						end)
 
 						if ExpectedResult == "valid" then
@@ -182,7 +182,7 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 						local ZeroRnd = buffer.create(32)
 						local ComputedSig = buffer.create(MlDSA.ML_DSA_87.SigByteLen)
 
-						local SignSuccess = MlDSA.ML_DSA_87.Sign(ZeroRnd, SecKey, MessageBytes, Context, ComputedSig)
+						local SignSuccess = MlDSA.ML_DSA_87.Sign(MessageBytes, ZeroRnd, SecKey, Context, ComputedSig)
 
 						if HasInvalidContext or ExpectedResult == "invalid" then
 							Testing.Expect(SignSuccess).ToBe(false)

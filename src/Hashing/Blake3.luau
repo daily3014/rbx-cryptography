@@ -14,7 +14,7 @@
 		local Hash = Blake3.Digest(Message, 32)
 		
 		--------Keyed Hash--------
-		local KeyedHash = Blake3.DigestKeyed(Key, Message, 32)
+		local KeyedHash = Blake3.DigestKeyed(Message, Key, 32)
 		
 		--------Key Derivation--------
 		local Context = buffer.fromstring("my context")
@@ -394,7 +394,7 @@ function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 	return ToHex(Result), Result
 end
 
-function Blake3.DigestKeyed(Key: buffer, Message: buffer, Length: number?): (string, buffer)
+function Blake3.DigestKeyed(Message: buffer, Key: buffer, Length: number?): (string, buffer)
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end

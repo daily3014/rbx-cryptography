@@ -495,15 +495,16 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 	local Double = Edwards25519.Double
 	local Scale = Edwards25519.Scale
 	local Niels = Edwards25519.Niels
+	local NielsSize = AFFINE_NIELS_SIZE
 
 	for WindowIndex = 1, MaxWindows do
-		local BaseOffset = ((WindowIndex - 1) * MaxRowSize * AFFINE_NIELS_SIZE)
+		local BaseOffset = ((WindowIndex - 1) * MaxRowSize * NielsSize)
 		local WorkingPoint = buffer.create(POINT_SIZE)
 		buffer.copy(WorkingPoint, 0, CurrentBasePoint, 0, POINT_SIZE)
 
 		local ScaledPoint = Scale(WorkingPoint)
 		local FirstAffineNiels = AffineNiels(ScaledPoint)
-		buffer.copy(TableData, BaseOffset, FirstAffineNiels, 0, AFFINE_NIELS_SIZE)
+		buffer.copy(TableData, BaseOffset, FirstAffineNiels, 0, NielsSize)
 
 		local FirstNiels = Niels(ScaledPoint)
 
@@ -512,8 +513,8 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 			local Scaled = Scale(WorkingPoint)
 			local AffineNielsBuffer = AffineNiels(Scaled)
 
-			local Offset = BaseOffset + ((Multiple - 1) * AFFINE_NIELS_SIZE)
-			buffer.copy(TableData, Offset, AffineNielsBuffer, 0, AFFINE_NIELS_SIZE)
+			local Offset = BaseOffset + ((Multiple - 1) * NielsSize)
+			buffer.copy(TableData, Offset, AffineNielsBuffer, 0, NielsSize)
 		end
 
 		for _ = 1, RadixWidth do

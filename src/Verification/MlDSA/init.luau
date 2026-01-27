@@ -13,8 +13,8 @@
 		local Signature = buffer.create(MLDSA.ML_DSA_44.SigByteLen)
 		local Random = buffer.create(32)
 		
-		local Success = MLDSA.ML_DSA_44.Sign(Random, SecKey, Message, Context, Signature)
-		local Valid = MLDSA.ML_DSA_44.Verify(PubKey, Message, Context, Signature)
+		local Success = MLDSA.ML_DSA_44.Sign(Message, Random, SecKey, Context, Signature)
+		local Valid = MLDSA.ML_DSA_44.Verify(Message, PubKey, Context, Signature)
 --]=]
 
 --!strict
@@ -160,7 +160,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	buffer.copy(SecKey, SkOff5, T0Encoded, 0, buffer.len(T0Encoded))
 end
 
-local function Sign(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
 	if not Params.CheckSigningParams(K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
 		error("Invalid signing parameters")
 	end
@@ -337,7 +337,7 @@ local function Sign(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: 
 	return HasSigned
 end
 
-function Verify(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
 	if not Params.CheckVerifyParams(K, L, D, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
 		error("Invalid verify parameters")
 	end
@@ -482,12 +482,12 @@ Mldsa.ML_DSA_44 = {
 		Keygen(Seed, PubKey, SecKey, 4, 4, 13, 2)
 	end,
 
-	Sign = function(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer): boolean
-		return Sign(Rnd, SecKey, Msg, Ctx, Sig, 4, 4, 13, 2, 131072, 95232, 39, 78, 80, 128)
+	Sign = function(Msg: buffer,Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer): boolean
+		return Sign(Msg, Rnd, SecKey, Ctx, Sig, 4, 4, 13, 2, 131072, 95232, 39, 78, 80, 128)
 	end,
 
-	Verify = function(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer): boolean
-		return Verify(PubKey, Msg, Ctx, Sig, 4, 4, 13, 131072, 95232, 39, 78, 80, 128)
+	Verify = function(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer): boolean
+		return Verify(Msg, PubKey, Ctx, Sig, 4, 4, 13, 131072, 95232, 39, 78, 80, 128)
 	end,
 
 	GenerateKeys = function(): (buffer, buffer)
@@ -521,12 +521,12 @@ Mldsa.ML_DSA_65 = {
 		Keygen(Seed, PubKey, SecKey, 6, 5, 13, 4)
 	end,
 
-	Sign = function(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer): boolean
-		return Sign(Rnd, SecKey, Msg, Ctx, Sig, 6, 5, 13, 4, 524288, 261888, 49, 196, 55, 192)
+	Sign = function(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer): boolean
+		return Sign(Msg, Rnd, SecKey, Ctx, Sig, 6, 5, 13, 4, 524288, 261888, 49, 196, 55, 192)
 	end,
 
-	Verify = function(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer): boolean
-		return Verify(PubKey, Msg, Ctx, Sig, 6, 5, 13, 524288, 261888, 49, 196, 55, 192)
+	Verify = function(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer): boolean
+		return Verify(Msg, PubKey, Ctx, Sig, 6, 5, 13, 524288, 261888, 49, 196, 55, 192)
 	end,
 
 	GenerateKeys = function(): (buffer, buffer)
@@ -560,12 +560,12 @@ Mldsa.ML_DSA_87 = {
 		Keygen(Seed, PubKey, SecKey, 8, 7, 13, 2)
 	end,
 
-	Sign = function(Rnd: buffer, SecKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer): boolean
-		return Sign(Rnd, SecKey, Msg, Ctx, Sig, 8, 7, 13, 2, 524288, 261888, 60, 120, 75, 256)
+	Sign = function(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer): boolean
+		return Sign(Msg, Rnd, SecKey, Ctx, Sig, 8, 7, 13, 2, 524288, 261888, 60, 120, 75, 256)
 	end,
 
-	Verify = function(PubKey: buffer, Msg: buffer, Ctx: buffer, Sig: buffer): boolean
-		return Verify(PubKey, Msg, Ctx, Sig, 8, 7, 13, 524288, 261888, 60, 120, 75, 256)
+	Verify = function(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer): boolean
+		return Verify(Msg, PubKey, Ctx, Sig, 8, 7, 13, 524288, 261888, 60, 120, 75, 256)
 	end,
 
 	GenerateKeys = function(): (buffer, buffer)

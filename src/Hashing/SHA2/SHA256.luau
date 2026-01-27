@@ -7,13 +7,7 @@
 	Return type: string
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		
-		--------Usage Case 1--------
 		local Result = SHA256(Message)
-		
-		--------Usage Case 2--------
-		local OptionalSalt = buffer.fromstring("Salty")
-		local Result = SHA256(Message, OptionalSalt)
 --]=]
 
 --!strict
@@ -106,16 +100,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 	return A, B, C, D, E, F, G, H
 end
 
-local function SHA256(Message: buffer, Salt: buffer?): (string, buffer)
-	if Salt and buffer.len(Salt) > 0 then
-		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
-
-		buffer.copy(MessageWithSalt, 0, Message)
-		buffer.copy(MessageWithSalt, buffer.len(Message), Salt)
-
-		Message = MessageWithSalt
-	end
-
+local function SHA256(Message: buffer): (string, buffer)
 	local ProcessedMessage, Length = PreProcess(Message)
 	local A, B, C, D, E, F, G, H = DigestBlocks(ProcessedMessage, Length)
 

@@ -31,7 +31,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@2.9.2"
+cryptography = "daily3014/cryptography@3.0.0"
 ```
 
 ### Pesde
@@ -117,51 +117,52 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using Benchmarker by @boatbomber.
+Performance benchmarks conducted in Roblox Studio on Intel AMD Ryzen 5 7600X using Benchmarker by @boatbomber.
 
 ### Hashing / Checksum
 
 | Algorithm | Data Size | This Library | HashLib | Alternative | Other Libraries | Improvement |
 |-----------|-----------|--------------|---------|-------------|-----------------|-------------|
-| SHA-256 | 20k | **370 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **5.5x faster** than HashLib |
-| SHA-512 | 20k | **766 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **5.7x faster** than HashLib |
-| SHA3-512 | 20k | **1.0 ms** | 10.60 ms | - | - | **10.6x faster** than HashLib |
-| BLAKE3 | 20k | **168 μs** | - | - | - | - |
-| HMAC-BLAKE3 | 20k | **165 μs** | - | - | - | - |
-| KMAC-128 | 20k | **1.3 ms** | - | - | - | - |
-| KMAC-256 | 20k | **1.6 ms** | - | - | - | - |
-| Adler-32 | 200k | **190 μs** | - | 1.65 ms (Naive Approach) | - | **8.7x faster** |
-| CRC32 | 200k | **2.01 ms** | - | 6.26 ms (DevForum) | - | **3.1x faster** |
+| SHA-256 | 20k | **271 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **7.6x faster** than HashLib |
+| SHA-512 | 20k | **421 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **10.3x faster** than HashLib |
+| SHA3-512 | 20k | **826 μs** | 10.60 ms | - | - | **12.8x faster** than HashLib |
+| BLAKE3 | 20k | **133 μs** | - | - | - | - |
+| HMAC-BLAKE3 | 20k | **145 μs** | - | - | - | - |
+| KMAC-128 | 20k | **443 μs** | - | - | - | - |
+| KMAC-256 | 20k | **501 μs** | - | - | - | - |
+| Adler-32 | 200k | **163 μs** | - | 1.65 ms (Naive Approach) | - | **10.1x faster** |
+| CRC32 | 200k | **1.43 ms** | - | 6.26 ms (DevForum) | - | **4.4x faster** |
 
 ### Encryption
 
 | Algorithm | Data Size | This Library | Alternative | Other Libraries | Improvement |
 |-----------|-----------|--------------|-------------|-----------------|-------------|
-| ChaCha20 (Encrypt) | 20k | **266 μs** | 7.87 ms (EncryptedNet) | - | **29.6x faster** |
-| ChaCha20 (Roundtrip) | 20k | **538 μs** | ~15 ms (EncryptedNet) | - | **27.9x faster** |
-| ChaCha20-Poly1305 (Encrypt) | 20k | **310 μs** | - | - | - |
-| ChaCha20-Poly1305 (Roundtrip) | 20k | **642 μs** | - | - | - |
-| Simon (Encrypt) | 20k | **395 μs** | - | - | - |
-| Simon (Roundtrip) | 20k | **790 μs** | - | - | - |
-| Speck (Encrypt) | 20k | **350 μs** | - | - | - |
-| Speck (Roundtrip) | 20k | **700 μs** | - | - | - |
-| AES-GCM (Encrypt) | 20k | **1.03 ms** | - | - | - |
-| AES-GCM (Roundtrip) | 20k | **2.08 ms** | - | - | - |
-| XOR (Encrypt) | 1 million | **1.10 ms** | ~49.5 ms (@TwiistedRoyalty) | 4000 ms (daily) | **64.3x faster** |
-| XOR (Roundtrip) | 1 million | **2.20 ms** | 98.9 ms (@TwiistedRoyalty) | ~8000 ms (daily) | **64.3x faster** |
+| ChaCha20 (Encrypt) | 20k | **177 μs** | 7.87 ms (EncryptedNet) | - | **44.5x faster** |
+| ChaCha20 (Roundtrip) | 20k | **338 μs** | ~15 ms (EncryptedNet) | - | **44.4x faster** |
+| ChaCha20-Poly1305 (Encrypt) | 20k | **232 μs** | - | - | - |
+| ChaCha20-Poly1305 (Roundtrip) | 20k | **448 μs** | - | - | - |
+| Simon (Encrypt) | 20k | **239 μs** | - | - | - |
+| Simon (Roundtrip) | 20k | **466 μs** | - | - | - |
+| Speck (Encrypt) | 20k | **193 μs** | - | - | - |
+| Speck (Roundtrip) | 20k | **388 μs** | - | - | - |
+| AES-GCM (Encrypt) | 20k | **833 μs** | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | - | **2.3x faster** |
+| AES-GCM (Roundtrip) | 20k | **1.5 ms** | - | - | - |
+| XOR (Encrypt) | 1 million | **1.10 ms** | ~49.5 ms (Devfourm) | ~171000 ms (daily) | **155,454x faster** |
+| XOR (Roundtrip) | 1 million | **2.20 ms** | 98.9 ms (Devfourm) | ~342000 ms (daily) | **155,454x faster** |
 
 ### Digital Signatures & Key Exchange
 
 | Algorithm | Operation | Time | Alternative | Improvement |
 |-----------|-----------|------|-------------|-------------|
-| EdDSA (Roundtrip) | Sign+Verify | **776 μs** | - | - |
-| ML-DSA-44 (Roundtrip) | Sign+Verify | **4.2 ms** | - | - |
-| ML-KEM-512 (Roundtrip) | Encap+Decap | **891 μs** | - | - |
+| EdDSA (Roundtrip) | Sign+Verify | **691 μs** | - | - |
+| ML-DSA-44 (Roundtrip) | Sign+Verify | **3.65 ms** | - | - |
+| ML-KEM-512 (Roundtrip) | Encap+Decap | **754 μs** | - | - |
 
 ### Utilities
+
 | Algorithm | Data Size | Time | Alternative | Improvement |
 |-----------|-----------|------|-------------|-------------|
-| Base64 (Encode/Decode) | 1 million | **4.62ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **2.0x faster** than Lute<br>**2.6x faster** than Reselim |
+| Base64 (Roundtrip) | 1 million | **3.77ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **2.4x faster** than Lute<br>**3.2x faster** than Reselim |
 
 *Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
 
@@ -171,10 +172,10 @@ Performance benchmarks conducted in Roblox Studio on Intel Core i7-12700 using B
 
 **SHA-2 Family:**
 ```lua
-Hashing.SHA2.SHA224(Message: buffer, Salt?: buffer) -> (string, buffer)
-Hashing.SHA2.SHA256(Message: buffer, Salt?: buffer) -> (string, buffer)
-Hashing.SHA2.SHA384(Message: buffer, Salt?: buffer) -> (string, buffer)
-Hashing.SHA2.SHA512(Message: buffer, Salt?: buffer) -> (string, buffer)
+Hashing.SHA2.SHA224(Message: buffer) -> (string, buffer)
+Hashing.SHA2.SHA256(Message: buffer) -> (string, buffer)
+Hashing.SHA2.SHA384(Message: buffer) -> (string, buffer)
+Hashing.SHA2.SHA512(Message: buffer) -> (string, buffer)
 ```
 
 **SHA-3 Family:**
@@ -191,7 +192,7 @@ Hashing.SHA3.SHAKE_256(Message: buffer) -> (string, buffer)
 **BLAKE Family:**
 ```lua
 Hashing.Blake3.Digest(Message: buffer, Length?: number) -> (string, buffer)
-Hashing.Blake3.DigestKeyed(Key: buffer, Message: buffer, Length?: number) -> (string, buffer)
+Hashing.Blake3.DigestKeyed(Message: buffer, Key: buffer, Length?: number) -> (string, buffer)
 Hashing.Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
 
 Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> (string, buffer)
@@ -228,8 +229,8 @@ Encryption.AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buf
 **Block Ciphers:**
 ```lua
 -- AES-GCM
-AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?) -> (buffer, buffer)
-AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, AAD: buffer?) -> (boolean, buffer?)
+AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?) -> (buffer, buffer)
+AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?) -> (boolean, buffer?)
 
 -- Simon
 Encryption.Simon.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
@@ -250,8 +251,8 @@ Encryption.XOR(Data: buffer, Key: buffer) -> buffer
 **EdDSA (Ed25519):**
 ```lua
 Verification.EdDSA.PublicKey(SecretKey: buffer) -> buffer
-Verification.EdDSA.Sign(SecretKey: buffer, PublicKey: buffer, Message: buffer) -> buffer
-Verification.EdDSA.Verify(PublicKey: buffer, Message: buffer, Signature: buffer) -> boolean
+Verification.EdDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer) -> buffer
+Verification.EdDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer) -> boolean
 ```
 
 **Masked X25519:**
@@ -267,16 +268,16 @@ Verification.EdDSA.X25519.MaskComponent(MaskedKey: buffer) -> buffer
 **ML-DSA (Post-Quantum):**
 ```lua
 Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-Mldsa.ML_DSA_44.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
-Mldsa.ML_DSA_44.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+Mldsa.ML_DSA_44.Sign(Message: buffer, RandomSeed: buffer, SecretKey: buffer, Context: buffer, Signature: buffer) -> boolean
+Mldsa.ML_DSA_44.Verify(Message: buffer, PublicKey: buffer, Context: buffer, Signature: buffer) -> boolean
 
 Mldsa.ML_DSA_65.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-Mldsa.ML_DSA_65.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
-Mldsa.ML_DSA_65.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+Mldsa.ML_DSA_65.Sign(Message: buffer, RandomSeed: buffer, SecretKey: buffer, Context: buffer, Signature: buffer) -> boolean
+Mldsa.ML_DSA_65.Verify(Message: buffer, PublicKey: buffer, Context: buffer, Signature: buffer) -> boolean
 
 Mldsa.ML_DSA_87.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-Mldsa.ML_DSA_87.Sign(RandomSeed: buffer, SecretKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
-Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Signature: buffer) -> boolean
+Mldsa.ML_DSA_87.Sign(Message: buffer, RandomSeed: buffer, SecretKey: buffer, Context: buffer, Signature: buffer) -> boolean
+Mldsa.ML_DSA_87.Verify(Message: buffer, PublicKey: buffer, Context: buffer, Signature: buffer) -> boolean
 ```
 
 ### Key Encapsulation
@@ -285,18 +286,18 @@ Mldsa.ML_DSA_87.Verify(PublicKey: buffer, Message: buffer, Context: buffer, Sign
 ```lua
 MlKem.MLKEM_512.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
 MlKem.MLKEM_512.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_512.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
-MlKem.MLKEM_512.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
+MlKem.MLKEM_512.Encapsulate(Message: buffer, PublicKey: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
+MlKem.MLKEM_512.Decapsulate(Ciphertext: buffer, SecretKey: buffer) -> SharedSecret: buffer
 
 MlKem.MLKEM_768.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
 MlKem.MLKEM_768.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_768.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
-MlKem.MLKEM_768.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
+MlKem.MLKEM_768.Encapsulate(Message: buffer, PublicKey: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
+MlKem.MLKEM_768.Decapsulate(Ciphertext: buffer, SecretKey: buffer) -> SharedSecret: buffer
 
 MlKem.MLKEM_1024.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
 MlKem.MLKEM_1024.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_1024.Encapsulate(PublicKey: buffer, Message: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
-MlKem.MLKEM_1024.Decapsulate(SecretKey: buffer, Ciphertext: buffer) -> SharedSecret: buffer
+MlKem.MLKEM_1024.Encapsulate(Message: buffer, PublicKey: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
+MlKem.MLKEM_1024.Decapsulate(Ciphertext: buffer, SecretKey: buffer) -> SharedSecret: buffer
 ```
 
 ### Utility Functions
@@ -395,5 +396,6 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 <div align="center">
 
 [DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271) • [Discord](https://discord.gg/Fg3sM8qKPp) • [Wally](https://wally.run/package/daily3014/cryptography) • [Pesde](https://pesde.dev/packages/daily3014/cryptography)
+
 
 </div>

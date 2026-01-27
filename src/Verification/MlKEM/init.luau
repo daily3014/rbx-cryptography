@@ -14,10 +14,10 @@
 		local PublicKey, SecretKey = MlKem.MLKEM_1024.KeyGen(D, Z)
 		
 		local Message = CSPRNG.RandomBytes(32)
-		local Success, Ciphertext, SharedSecret = MlKem.MLKEM_1024.Encapsulate(PublicKey, Message)
+		local Success, Ciphertext, SharedSecret = MlKem.MLKEM_1024.Encapsulate(Message, PublicKey)
 		
 		if Success then
-			local RecoveredSecret = MlKem.MLKEM_1024.Decapsulate(SecretKey, Ciphertext)
+			local RecoveredSecret = MlKem.MLKEM_1024.Decapsulate(Ciphertext, SecretKey)
 			-- RecoveredSecret should equal SharedSecret
 		end
 --]=]
@@ -82,7 +82,7 @@ function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, b
 	return KpkePublicKey, SecretKey
 end
 
-function MlKem.Encapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer, Message: buffer): (buffer?, buffer?)
+function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer): (buffer?, buffer?)
 	if not Params.CheckEncapParams(K, Eta1, Eta2, Du, Dv) then
 		error("Invalid encapsulation parameters")
 	end
@@ -125,7 +125,7 @@ function MlKem.Encapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv
 	return Ciphertext, K_bytes
 end
 
-function MlKem.Decapsulate(K: number, Eta1: number, Eta2: number, Du: number, Dv: number, SecretKey: buffer, Ciphertext: buffer): buffer
+function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, SecretKey: buffer): buffer
 	if not Params.CheckDecapParams(K, Eta1, Eta2, Du, Dv) then
 		error("Invalid decapsulation parameters")
 	end
@@ -216,12 +216,12 @@ MlKem.MLKEM_512 = {
 		return MlKem.KeyGen(2, 3, D, Z)
 	end,
 
-	Encapsulate = function(PublicKey: buffer, Message: buffer): (buffer?, buffer?)
-		return MlKem.Encapsulate(2, 3, 2, 10, 4, PublicKey, Message)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
+		return MlKem.Encapsulate(Message, 2, 3, 2, 10, 4, PublicKey)
 	end,
 
-	Decapsulate = function(SecretKey: buffer, Ciphertext: buffer): buffer
-		return MlKem.Decapsulate(2, 3, 2, 10, 4, SecretKey, Ciphertext)
+	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer
+		return MlKem.Decapsulate(Ciphertext, 2, 3, 2, 10, 4, SecretKey)
 	end,
 
 	GenerateKeys = function(): (buffer, buffer)
@@ -241,12 +241,12 @@ MlKem.MLKEM_768 = {
 		return MlKem.KeyGen(3, 2, D, Z)
 	end,
 
-	Encapsulate = function(PublicKey: buffer, Message: buffer): (buffer?, buffer?)
-		return MlKem.Encapsulate(3, 2, 2, 10, 4, PublicKey, Message)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
+		return MlKem.Encapsulate(Message, 3, 2, 2, 10, 4, PublicKey)
 	end,
 
-	Decapsulate = function(SecretKey: buffer, Ciphertext: buffer): buffer
-		return MlKem.Decapsulate(3, 2, 2, 10, 4, SecretKey, Ciphertext)
+	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer
+		return MlKem.Decapsulate(Ciphertext, 3, 2, 2, 10, 4, SecretKey)
 	end,
 
 	GenerateKeys = function(): (buffer, buffer)
@@ -266,12 +266,12 @@ MlKem.MLKEM_1024 = {
 		return MlKem.KeyGen(4, 2, D, Z)
 	end,
 
-	Encapsulate = function(PublicKey: buffer, Message: buffer): (buffer?, buffer?)
-		return MlKem.Encapsulate(4, 2, 2, 11, 5, PublicKey, Message)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
+		return MlKem.Encapsulate(Message, 4, 2, 2, 11, 5, PublicKey)
 	end,
 
-	Decapsulate = function(SecretKey: buffer, Ciphertext: buffer): buffer
-		return MlKem.Decapsulate(4, 2, 2, 11, 5, SecretKey, Ciphertext)
+	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer
+		return MlKem.Decapsulate(Ciphertext, 4, 2, 2, 11, 5, SecretKey)
 	end,
 
 	GenerateKeys = function(): (buffer, buffer)

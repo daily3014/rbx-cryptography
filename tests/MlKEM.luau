@@ -133,7 +133,7 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 							if CTLen ~= MLKEM_1024_CT_LEN then
 								if HasTruncatedCiphertext or IsInvalid then
 									Testing.Expect(function()
-										MLKEM.MLKEM_1024.Decapsulate(GeneratedSK, CT)
+										MLKEM.MLKEM_1024.Decapsulate(CT, GeneratedSK)
 									end).ToThrow("Invalid ciphertext length")
 								else
 									Testing.Expect(CTLen).ToBe(MLKEM_1024_CT_LEN)
@@ -141,7 +141,7 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 								return
 							end
 
-							local RecoveredSS = MLKEM.MLKEM_1024.Decapsulate(GeneratedSK, CT)
+							local RecoveredSS = MLKEM.MLKEM_1024.Decapsulate(CT, GeneratedSK)
 
 							if Test.K then
 								local ExpectedK = FromHex(Test.K)
@@ -164,7 +164,7 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 							if HasTruncatedKey or IsInvalid then
 								Testing.Expect(function()
 									local CT = if Test.c then FromHex(Test.c) else buffer.create(MLKEM_1024_CT_LEN)
-									MLKEM.MLKEM_1024.Decapsulate(DK, CT)
+									MLKEM.MLKEM_1024.Decapsulate(CT, DK)
 								end).ToThrow("Invalid secret key length")
 							else
 								Testing.Expect(DKLen).ToBe(MLKEM_1024_DK_LEN)
@@ -179,7 +179,7 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 							if CTLen ~= MLKEM_1024_CT_LEN then
 								if HasTruncatedCiphertext or IsInvalid then
 									Testing.Expect(function()
-										MLKEM.MLKEM_1024.Decapsulate(DK, CT)
+										MLKEM.MLKEM_1024.Decapsulate(CT, DK)
 									end).ToThrow("Invalid ciphertext length")
 								else
 									Testing.Expect(CTLen).ToBe(MLKEM_1024_CT_LEN)
@@ -187,7 +187,7 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 								return
 							end
 
-							local RecoveredSS = MLKEM.MLKEM_1024.Decapsulate(DK, CT)
+							local RecoveredSS = MLKEM.MLKEM_1024.Decapsulate(CT, DK)
 
 							if Test.K then
 								local ExpectedK = FromHex(Test.K)
@@ -210,7 +210,7 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 							if IsInvalid then
 								Testing.Expect(function()
 									local M = if Test.m then FromHex(Test.m) else buffer.create(32)
-									MLKEM.MLKEM_1024.Encapsulate(EK, M)
+									MLKEM.MLKEM_1024.Encapsulate(M, EK)
 								end).ToThrow("Invalid public key length")
 							else
 								Testing.Expect(EKLen).ToBe(MLKEM_1024_EK_LEN)
@@ -222,10 +222,10 @@ Testing.Describe("ML-KEM-1024 Wycheproof Tests", function()
 
 						if HasModulusOverflow or IsInvalid then
 							Testing.Expect(function()
-								MLKEM.MLKEM_1024.Encapsulate(EK, M)
+								MLKEM.MLKEM_1024.Encapsulate(M, EK)
 							end).ToThrow("malformed public key encoding")
 						else
-							local Ciphertext, SharedSecret = MLKEM.MLKEM_1024.Encapsulate(EK, M)
+							local Ciphertext, SharedSecret = MLKEM.MLKEM_1024.Encapsulate(M, EK)
 							Testing.Expect(Ciphertext).ToBeDefined()
 							Testing.Expect(SharedSecret).ToBeDefined()
 						end

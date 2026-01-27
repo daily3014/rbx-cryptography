@@ -13,7 +13,7 @@
 	local Plaintext = buffer.fromstring(Message)
 
 	local AAD = buffer.fromstring("user:john,timestamp:456745683")
-	local Ciphertext, Tag = AES.Encrypt(Key, IV, Plaintext, AAD)
+	local Ciphertext, Tag = AES.Encrypt(Plaintext, Key, IV, AAD)
 --]=]
 
 --!strict
@@ -634,7 +634,7 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 	buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
 end
 
-function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): (buffer, buffer)
+function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): (buffer, buffer)
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
@@ -677,7 +677,7 @@ function AES.Encrypt(Key: buffer, IV: buffer, Plaintext: buffer, AAD: buffer?): 
 	return OutputBuffer, OutputTag
 end
 
-function AES.Decrypt(Key: buffer, IV: buffer, Ciphertext: buffer, Tag: buffer, AAD: buffer?): (boolean, buffer?)
+function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?): (boolean, buffer?)
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
