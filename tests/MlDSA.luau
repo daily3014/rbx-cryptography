@@ -4,14 +4,6 @@
 	Test Vector Sources:
 		Sign: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/mldsa_87_sign_seed_test.json
 		Verify: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/mldsa_87_verify_test.json
-	
-	Test Categories:
-		ValidSignature - Ordinary valid signatures
-		ModifiedSignature - Bit-flipped signatures
-		InvalidContext - Context exceeds 255 bytes
-		InvalidHintsEncoding - Malformed hint encoding
-		IncorrectPublicKeyLength / IncorrectSignatureLength - Wrong sizes
-		BoundaryCondition / ManySteps - Edge cases
 --]=]
 
 --!strict
@@ -55,6 +47,7 @@ type SignTest = {
 	msg: string,
 	sig: string,
 	ctx: string?,
+	rnd: string?,
 	result: string?,
 }
 
@@ -97,6 +90,15 @@ end
 local function FetchSignVectors(): SignData
 	local Response = Http:GetAsync(SIGN_URL)
 	return Http:JSONDecode(Response) :: SignData
+end
+
+local function IsNistAcvpSource(Source: {name: string, version: string}?): boolean
+	if not Source then
+		return false
+	end
+
+	local Name = Source.name:lower()
+	return Name:find("nist") ~= nil or Name:find("acvp") ~= nil
 end
 
 Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
@@ -148,6 +150,7 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 			local PrivateSeedBytes = FromHex(Group.privateSeed)
 			local ExpectedPubKeyBytes = FromHex(Group.publicKey)
 			local SourceName = if Group.source then Group.source.name else "unknown"
+			local IsNistAcvp = IsNistAcvpSource(Group.source)
 
 			Testing.Describe(`SignGroup_{GroupIndex} (Source: {SourceName})`, function()
 				Testing.Test("KeyGen_PublicKey_Match", function()
@@ -179,10 +182,25 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 						local SecKey = buffer.create(MlDSA.ML_DSA_87.SecKeyByteLen)
 						MlDSA.ML_DSA_87.KeyGen(PrivateSeedBytes, PubKey, SecKey)
 
-						local ZeroRnd = buffer.create(32)
-						local ComputedSig = buffer.create(MlDSA.ML_DSA_87.SigByteLen)
+						local Rnd: buffer
+						if Test.rnd then
+							Rnd = FromHex(Test.rnd)
+						else
+							Rnd = buffer.create(32)
+						end
 
-						local SignSuccess = MlDSA.ML_DSA_87.Sign(MessageBytes, ZeroRnd, SecKey, Context, ComputedSig)
+						local ComputedSig = buffer.create(MlDSA.ML_DSA_87.SigByteLen)
+						local SignSuccess: boolean
+
+						if IsNistAcvp then
+							if buffer.len(MessageBytes) == 64 then
+								SignSuccess = MlDSA.ML_DSA_87.SignMu(MessageBytes, Rnd, SecKey, ComputedSig)
+							else
+								SignSuccess = MlDSA.ML_DSA_87.SignInternal(MessageBytes, Rnd, SecKey, ComputedSig)
+							end
+						else
+							SignSuccess = MlDSA.ML_DSA_87.Sign(MessageBytes, Rnd, SecKey, Context, ComputedSig)
+						end
 
 						if HasInvalidContext or ExpectedResult == "invalid" then
 							Testing.Expect(SignSuccess).ToBe(false)

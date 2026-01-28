@@ -31,7 +31,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@3.0.0"
+cryptography = "daily3014/cryptography@3.0.1"
 ```
 
 ### Pesde

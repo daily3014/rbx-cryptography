@@ -160,15 +160,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	buffer.copy(SecKey, SkOff5, T0Encoded, 0, buffer.len(T0Encoded))
 end
 
-local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
-	if not Params.CheckSigningParams(K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
-		error("Invalid signing parameters")
-	end
-
-	if buffer.len(Ctx) > 255 then
-		return false
-	end
-
+local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
 	local T0Rng = bit32.lshift(1, D - 1)
 	local EtaBw = Utils.BitWidth(2 * Eta)
 	local S1Len = L * EtaBw * 32
@@ -188,30 +180,12 @@ local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: 
 
 	local Rho = buffer.create(32)
 	local Key = buffer.create(32)
-	local Tr = buffer.create(64)
 
 	buffer.copy(Rho, 0, SecKey, SkOff0, 32)
 	buffer.copy(Key, 0, SecKey, SkOff1, 32)
-	buffer.copy(Tr, 0, SecKey, SkOff2, 64)
 
 	local A = buffer.create(K * L * N * 4)
 	Sampling.ExpandA(Rho, A, K, L)
-
-	local DomainSeparator = buffer.create(2)
-	buffer.writeu8(DomainSeparator, 0, 0)
-	buffer.writeu8(DomainSeparator, 1, buffer.len(Ctx))
-
-	local MuInput = buffer.create(64 + 2 + buffer.len(Ctx) + buffer.len(Msg))
-	local Offset = 0
-	buffer.copy(MuInput, Offset, Tr, 0, 64)
-	Offset += 64
-	buffer.copy(MuInput, Offset, DomainSeparator, 0, 2)
-	Offset += 2
-	buffer.copy(MuInput, Offset, Ctx, 0, buffer.len(Ctx))
-	Offset += buffer.len(Ctx)
-	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
-
-	local Mu = SHA3.SHAKE256(MuInput, 64)
 
 	local RhoPrimeInput = buffer.create(32 + 32 + 64)
 	buffer.copy(RhoPrimeInput, 0, Key, 0, 32)
@@ -337,7 +311,71 @@ local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: 
 	return HasSigned
 end
 
-function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+	if not Params.CheckSigningParams(K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
+		error("Invalid signing parameters")
+	end
+
+	if buffer.len(Ctx) > 255 then
+		return false
+	end
+
+	local SkOff2 = 64
+
+	local Tr = buffer.create(64)
+	buffer.copy(Tr, 0, SecKey, SkOff2, 64)
+
+	local DomainSeparator = buffer.create(2)
+	buffer.writeu8(DomainSeparator, 0, 0)
+	buffer.writeu8(DomainSeparator, 1, buffer.len(Ctx))
+
+	local MuInput = buffer.create(64 + 2 + buffer.len(Ctx) + buffer.len(Msg))
+	local Offset = 0
+	buffer.copy(MuInput, Offset, Tr, 0, 64)
+	Offset += 64
+	buffer.copy(MuInput, Offset, DomainSeparator, 0, 2)
+	Offset += 2
+	buffer.copy(MuInput, Offset, Ctx, 0, buffer.len(Ctx))
+	Offset += buffer.len(Ctx)
+	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
+
+	local Mu = SHA3.SHAKE256(MuInput, 64)
+
+	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
+end
+
+local function SignInternal(MPrime: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+	if not Params.CheckSigningParams(K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
+		error("Invalid signing parameters")
+	end
+
+	local SkOff2 = 64
+
+	local Tr = buffer.create(64)
+	buffer.copy(Tr, 0, SecKey, SkOff2, 64)
+
+	local MuInput = buffer.create(64 + buffer.len(MPrime))
+	buffer.copy(MuInput, 0, Tr, 0, 64)
+	buffer.copy(MuInput, 64, MPrime, 0, buffer.len(MPrime))
+
+	local Mu = SHA3.SHAKE256(MuInput, 64)
+
+	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
+end
+
+local function SignMu(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+	if not Params.CheckSigningParams(K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
+		error("Invalid signing parameters")
+	end
+
+	if buffer.len(Mu) ~= 64 then
+		error("Mu must be 64 bytes")
+	end
+
+	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
+end
+
+local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number, L: number, D: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
 	if not Params.CheckVerifyParams(K, L, D, Gamma1, Gamma2, Tau, Beta, Omega, Lambda) then
 		error("Invalid verify parameters")
 	end
@@ -364,32 +402,28 @@ function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number
 	local M = math.floor((Q - 1) / Alpha)
 	local W1Bw = Utils.BitWidth(M - 1)
 
+	local PkOff1 = 32
+
 	local SigOff0 = 0
 	local SigOff1 = SigOff0 + CTildaSize
 	local SigOff2 = SigOff1 + (32 * L * Gamma1Bw)
-	local PkOff0 = 0
-	local PkOff1 = PkOff0 + 32
-
-	local CTilda = buffer.create(CTildaSize)
-	local ZEncoded = buffer.create(32 * L * Gamma1Bw)
-	local HEncoded = buffer.create(buffer.len(Sig) - SigOff2)
-
-	buffer.copy(CTilda, 0, Sig, SigOff0, CTildaSize)
-	buffer.copy(ZEncoded, 0, Sig, SigOff1, buffer.len(ZEncoded))
-	buffer.copy(HEncoded, 0, Sig, SigOff2, buffer.len(HEncoded))
 
 	local VerificationFailed = false
 
-	local H = buffer.create(K * N * 4)
-	local HintFailed = BitPacking.DecodeHintBits(HEncoded, H, K, Omega)
-	VerificationFailed = VerificationFailed or HintFailed
+	local Rho = buffer.create(32)
+	buffer.copy(Rho, 0, PubKey, 0, 32)
 
-	local Count1s = PolyVec.Count1s(H, K)
-	VerificationFailed = VerificationFailed or (Count1s > Omega)
+	local T1Encoded = buffer.create(buffer.len(PubKey) - PkOff1)
+	buffer.copy(T1Encoded, 0, PubKey, PkOff1, buffer.len(T1Encoded))
 
-	local C = buffer.create(N * 4)
-	Sampling.SampleInBall(CTilda, C, Tau, Lambda)
-	NTT.ForwardNTT(C)
+	local T1 = buffer.create(K * N * 4)
+	PolyVec.Decode(T1Encoded, T1, K, T1Bw)
+
+	local CTilda = buffer.create(CTildaSize)
+	buffer.copy(CTilda, 0, Sig, SigOff0, CTildaSize)
+
+	local ZEncoded = buffer.create(32 * L * Gamma1Bw)
+	buffer.copy(ZEncoded, 0, Sig, SigOff1, buffer.len(ZEncoded))
 
 	local Z = buffer.create(L * N * 4)
 	PolyVec.Decode(ZEncoded, Z, L, Gamma1Bw)
@@ -398,17 +432,15 @@ function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number
 	local ZNorm = PolyVec.InfinityNorm(Z, L)
 	VerificationFailed = VerificationFailed or (ZNorm >= (Gamma1 - Beta))
 
-	local Rho = buffer.create(32)
-	local T1Encoded = buffer.create(buffer.len(PubKey) - PkOff1)
+	local HEncoded = buffer.create(buffer.len(Sig) - SigOff2)
+	buffer.copy(HEncoded, 0, Sig, SigOff2, buffer.len(HEncoded))
 
-	buffer.copy(Rho, 0, PubKey, PkOff0, 32)
-	buffer.copy(T1Encoded, 0, PubKey, PkOff1, buffer.len(T1Encoded))
+	local H = buffer.create(K * N * 4)
+	local HintDecodeFailed = BitPacking.DecodeHintBits(HEncoded, H, K, Omega)
+	VerificationFailed = VerificationFailed or HintDecodeFailed
 
 	local A = buffer.create(K * L * N * 4)
-	local T1 = buffer.create(K * N * 4)
-
 	Sampling.ExpandA(Rho, A, K, L)
-	PolyVec.Decode(T1Encoded, T1, K, T1Bw)
 
 	local Tr = SHA3.SHAKE256(PubKey, 64)
 
@@ -427,6 +459,10 @@ function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number
 	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
 
 	local Mu = SHA3.SHAKE256(MuInput, 64)
+
+	local C = buffer.create(N * 4)
+	Sampling.SampleInBall(CTilda, C, Tau, Lambda)
+	NTT.ForwardNTT(C)
 
 	local W0 = buffer.create(K * N * 4)
 	local W1 = buffer.create(K * N * 4)
@@ -453,10 +489,10 @@ function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: number
 	buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
 
 	local CTildaPrime = SHA3.SHAKE256(ChallengeInput, CTildaSize)
-	
+
 	local CompareResult = CompareBufferSlices(CTilda, 0, CTildaPrime, 0, CTildaSize)
 	VerificationFailed = VerificationFailed or (not CompareResult)
-	
+
 	return not VerificationFailed
 end
 
@@ -482,8 +518,16 @@ Mldsa.ML_DSA_44 = {
 		Keygen(Seed, PubKey, SecKey, 4, 4, 13, 2)
 	end,
 
-	Sign = function(Msg: buffer,Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer): boolean
+	Sign = function(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer): boolean
 		return Sign(Msg, Rnd, SecKey, Ctx, Sig, 4, 4, 13, 2, 131072, 95232, 39, 78, 80, 128)
+	end,
+
+	SignInternal = function(MPrime: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer): boolean
+		return SignInternal(MPrime, Rnd, SecKey, Sig, 4, 4, 13, 2, 131072, 95232, 39, 78, 80, 128)
+	end,
+
+	SignMu = function(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer): boolean
+		return SignMu(Mu, Rnd, SecKey, Sig, 4, 4, 13, 2, 131072, 95232, 39, 78, 80, 128)
 	end,
 
 	Verify = function(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer): boolean
@@ -525,6 +569,14 @@ Mldsa.ML_DSA_65 = {
 		return Sign(Msg, Rnd, SecKey, Ctx, Sig, 6, 5, 13, 4, 524288, 261888, 49, 196, 55, 192)
 	end,
 
+	SignInternal = function(MPrime: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer): boolean
+		return SignInternal(MPrime, Rnd, SecKey, Sig, 6, 5, 13, 4, 524288, 261888, 49, 196, 55, 192)
+	end,
+
+	SignMu = function(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer): boolean
+		return SignMu(Mu, Rnd, SecKey, Sig, 6, 5, 13, 4, 524288, 261888, 49, 196, 55, 192)
+	end,
+
 	Verify = function(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer): boolean
 		return Verify(Msg, PubKey, Ctx, Sig, 6, 5, 13, 524288, 261888, 49, 196, 55, 192)
 	end,
@@ -562,6 +614,14 @@ Mldsa.ML_DSA_87 = {
 
 	Sign = function(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: buffer): boolean
 		return Sign(Msg, Rnd, SecKey, Ctx, Sig, 8, 7, 13, 2, 524288, 261888, 60, 120, 75, 256)
+	end,
+
+	SignInternal = function(MPrime: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer): boolean
+		return SignInternal(MPrime, Rnd, SecKey, Sig, 8, 7, 13, 2, 524288, 261888, 60, 120, 75, 256)
+	end,
+
+	SignMu = function(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer): boolean
+		return SignMu(Mu, Rnd, SecKey, Sig, 8, 7, 13, 2, 524288, 261888, 60, 120, 75, 256)
 	end,
 
 	Verify = function(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer): boolean
