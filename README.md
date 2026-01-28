@@ -117,7 +117,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Performance benchmarks conducted in Roblox Studio on Intel AMD Ryzen 5 7600X using Benchmarker by @boatbomber.
+Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Benchmarker by @boatbomber.
 
 ### Hashing / Checksum
 
@@ -399,3 +399,4 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 
 
 </div>
+
