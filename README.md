@@ -1,6 +1,7 @@
 # Luau Cryptography
 
 <p align="center">
+	<a href="https://xoifaii.github.io/"><img src="https://img.shields.io/badge/Docs-xoifaii.github.io-00d4aa" alt="Docs"></a>
 	<a href="https://discord.gg/Fg3sM8qKPp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 	<a href="https://wally.run/package/daily3014/cryptography"><img src="https://img.shields.io/badge/Wally-Package-orange" alt="Wally"></a>
 	<a href="https://pesde.dev/packages/daily3014/cryptography"><img src="https://img.shields.io/badge/Pesde-Package-blue" alt="Pesde"></a>
@@ -24,6 +25,10 @@
 ## Disclaimer
 
 While this library has extensive testing, it's always recommended that you do your own tests. Keep in mind that there may be timing vulnerabilities that cannot be fixed due to how Luau compiles functions. **This library is NOT intended for exploitation, harassment, illegal activities, or explicit content.** All security issues should be reported in the Discord server.
+
+## Documentation
+
+[![Docs](https://img.shields.io/badge/Docs-Read%20the%20Docs-00d4aa?logo=readthedocs&logoColor=white)](https://xoifaii.github.io/)
 
 ## Installation
 
@@ -166,182 +171,6 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Ben
 
 *Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
 
-## API Reference
-
-### Hashing Functions
-
-**SHA-2 Family:**
-```lua
-Hashing.SHA2.SHA224(Message: buffer) -> (string, buffer)
-Hashing.SHA2.SHA256(Message: buffer) -> (string, buffer)
-Hashing.SHA2.SHA384(Message: buffer) -> (string, buffer)
-Hashing.SHA2.SHA512(Message: buffer) -> (string, buffer)
-```
-
-**SHA-3 Family:**
-```lua
-Hashing.SHA3.SHA3_224(Message: buffer) -> (string, buffer)
-Hashing.SHA3.SHA3_256(Message: buffer) -> (string, buffer)
-Hashing.SHA3.SHA3_384(Message: buffer) -> (string, buffer)
-Hashing.SHA3.SHA3_512(Message: buffer) -> (string, buffer)
-
-Hashing.SHA3.SHAKE_128(Message: buffer) -> (string, buffer)
-Hashing.SHA3.SHAKE_256(Message: buffer) -> (string, buffer)
-```
-
-**BLAKE Family:**
-```lua
-Hashing.Blake3.Digest(Message: buffer, Length?: number) -> (string, buffer)
-Hashing.Blake3.DigestKeyed(Message: buffer, Key: buffer, Length?: number) -> (string, buffer)
-Hashing.Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer)
-
-Hashing.Blake2b(InputData: buffer, OutputLength: number?, KeyData: buffer?) -> (string, buffer)
-```
-
-**Authentication:**
-```lua
-Hashing.HMAC(Message: buffer, Key: buffer, HashFn: function, BlockSize: number, BigEndian: boolean?) -> (string, buffer)
-Hashing.KMAC.KMAC128(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?) -> (string, buffer)
-Hashing.KMAC.KMAC256(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?) -> (string, buffer)
--- SHA3/Blake family should have BigEndian = false
-```
-
-**Non-Cryptographic Hashing:**
-```lua
-Hashing.XXH32(Message: buffer, Seed?: number) -> number
-Hashing.MurMur(Message: buffer, Seed: number?) -> number
-```
-
-### Encryption Functions
-
-**Stream Cipher:**
-```lua
-Encryption.AEAD.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter?: number, Rounds?: number) -> buffer
-Encryption.AEAD.XChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?) -> buffer
-```
-
-**Authenticated Encryption:**
-```lua
-Encryption.AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AAD?: buffer, Rounds?: number, UseXChaCha20: boolean?) -> (buffer, buffer)
-Encryption.AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AAD?: buffer, Rounds?: number, UseXChaCha20: boolean?) -> buffer?
-```
-
-**Block Ciphers:**
-```lua
--- AES-GCM
-AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?) -> (buffer, buffer)
-AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?) -> (boolean, buffer?)
-
--- Simon
-Encryption.Simon.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
-Encryption.Simon.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
-
--- Speck
-Encryption.Speck.Encrypt(PlaintextBuffer: buffer, KeyBuffer: buffer) -> buffer
-Encryption.Speck.Decrypt(CipherBuffer: buffer, KeyBuffer: buffer) -> buffer
-```
-
-**Simple Cipher:**
-```lua
-Encryption.XOR(Data: buffer, Key: buffer) -> buffer
-```
-
-### Digital Signatures
-
-**EdDSA (Ed25519):**
-```lua
-Verification.EdDSA.PublicKey(SecretKey: buffer) -> buffer
-Verification.EdDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer) -> buffer
-Verification.EdDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer) -> boolean
-```
-
-**Masked X25519:**
-```lua
-Verification.EdDSA.X25519.Mask(SecretKey: buffer) -> buffer
-Verification.EdDSA.X25519.MaskSignature(SignatureSecretKey: buffer) -> buffer
-Verification.EdDSA.X25519.Remask(MaskedKey: buffer) -> buffer
-Verification.EdDSA.X25519.PublicKey(MaskedKey: buffer) -> buffer
-Verification.EdDSA.X25519.Exchange(MaskedSecretKey: buffer, TheirPublicKey: buffer) -> (buffer, buffer)
-Verification.EdDSA.X25519.MaskComponent(MaskedKey: buffer) -> buffer
-```
-
-**ML-DSA (Post-Quantum):**
-```lua
-Mldsa.ML_DSA_44.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-Mldsa.ML_DSA_44.Sign(Message: buffer, RandomSeed: buffer, SecretKey: buffer, Context: buffer, Signature: buffer) -> boolean
-Mldsa.ML_DSA_44.Verify(Message: buffer, PublicKey: buffer, Context: buffer, Signature: buffer) -> boolean
-
-Mldsa.ML_DSA_65.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-Mldsa.ML_DSA_65.Sign(Message: buffer, RandomSeed: buffer, SecretKey: buffer, Context: buffer, Signature: buffer) -> boolean
-Mldsa.ML_DSA_65.Verify(Message: buffer, PublicKey: buffer, Context: buffer, Signature: buffer) -> boolean
-
-Mldsa.ML_DSA_87.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-Mldsa.ML_DSA_87.Sign(Message: buffer, RandomSeed: buffer, SecretKey: buffer, Context: buffer, Signature: buffer) -> boolean
-Mldsa.ML_DSA_87.Verify(Message: buffer, PublicKey: buffer, Context: buffer, Signature: buffer) -> boolean
-```
-
-### Key Encapsulation
-
-**ML-KEM (Post-Quantum):**
-```lua
-MlKem.MLKEM_512.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_512.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_512.Encapsulate(Message: buffer, PublicKey: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
-MlKem.MLKEM_512.Decapsulate(Ciphertext: buffer, SecretKey: buffer) -> SharedSecret: buffer
-
-MlKem.MLKEM_768.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_768.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_768.Encapsulate(Message: buffer, PublicKey: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
-MlKem.MLKEM_768.Decapsulate(Ciphertext: buffer, SecretKey: buffer) -> SharedSecret: buffer
-
-MlKem.MLKEM_1024.GenerateKeys() -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_1024.KeyGen(D: buffer, Z: buffer) -> (PublicKey: buffer, SecretKey: buffer)
-MlKem.MLKEM_1024.Encapsulate(Message: buffer, PublicKey: buffer) -> (Ciphertext: buffer?, SharedSecret: buffer?)
-MlKem.MLKEM_1024.Decapsulate(Ciphertext: buffer, SecretKey: buffer) -> SharedSecret: buffer
-```
-
-### Utility Functions
-
-**Encoding:**
-```lua
-Utilities.Base64.Encode(Input: buffer) -> buffer
-Utilities.Base64.Decode(Input: buffer) -> buffer
-```
-
-**Conversions:**
-```lua
-Utilities.Conversions.ToHex(Buffer: buffer) -> string
-Utilities.Conversions.FromHex(Hex: string) -> buffer
-```
-
-**Random Generation:**
-```lua
-Utilities.RandomString(Length: number, AsBuffer: false) -> string
-Utilities.RandomString(Length: number, AsBuffer: true) -> buffer
-```
-
-**CSPRNG:**
-```lua
-Utilities.CSPRNG.Random() -> number
-Utilities.CSPRNG.RandomInt(Min: number, Max: number?) -> number
-Utilities.CSPRNG.RandomNumber(Min: number, Max: number?) -> number
-Utilities.CSPRNG.RandomBytes(Count: number) -> buffer
-Utilities.CSPRNG.RandomHex(Length: number) -> string
-Utilities.CSPRNG.RandomString(Length: number, AsBuffer: boolean?) -> buffer | string
-Utilities.CSPRNG.Ed25519ClampedBytes(Input: buffer) -> buffer
-Utilities.CSPRNG.Ed25519Random() -> buffer
-Utilities.CSPRNG.Reseed(CustomEntropy: buffer?)
-Utilities.CSPRNG.AddEntropyProvider(ProviderFunction: () -> buffer?)
-Utilities.CSPRNG.RemoveEntropyProvider(ProviderFunction: () -> buffer?)
-```
-
-### Checksum Functions
-
-```lua
-Checksums.CRC32(Message: buffer, Mode: "Jam" | "Iso"?, Hex: boolean?) -> number
-Checksums.Adler(Message: buffer) -> number
-```
-
 ## Testing and Benchmarking
 
 ### Running Tests
@@ -370,23 +199,6 @@ To contribute, fork this repository and make your changes, and then make a Pull 
 
 Please read the [CONTRIBUTING.md file](CONTRIBUTING.md) for detailed guidelines.
 
-## FAQ
-
-### Will you add other algorithms?
-
-Maybe! It depends on whether the algorithm is feasible to implement in Luau without requiring extremely expensive calculations like RSA/Argon.
-
-### How is this library faster?
-
-Through extensive optimizations including efficient buffer operations, algorithm tuning, and Luau-specific optimizations.
-
-### Which algorithms should I use?
-
-- **Hashing**: SHA-256 for general use, XXH32 for speed, BLAKE3 for speed and security, SHA3-256 for latest standards
-- **Encryption**: ChaCha20-Poly1305 AEAD for authenticated encryption, AES-GCM for compatibility and security
-- **Signatures**: Ed25519 for fast digital signatures and key exchange, ML-DSA for post-quantum security
-- **Key Exchange**: ML-KEM for post-quantum key encapsulation, X25519 for compatibility
-
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
@@ -395,8 +207,9 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 
 <div align="center">
 
-[DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271) • [Discord](https://discord.gg/Fg3sM8qKPp) • [Wally](https://wally.run/package/daily3014/cryptography) • [Pesde](https://pesde.dev/packages/daily3014/cryptography)
+[DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271) • [Discord](https://discord.gg/Fg3sM8qKPp) • [Docs](https://xoifaii.github.io/) • [Wally](https://wally.run/package/daily3014/cryptography) • [Pesde](https://pesde.dev/packages/daily3014/cryptography)
 
 
 </div>
+
 
