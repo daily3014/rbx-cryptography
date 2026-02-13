@@ -44,7 +44,8 @@ type SignTest = {
 	tcId: number,
 	comment: string?,
 	flags: {string}?,
-	msg: string,
+	msg: string?,
+	mu: string?,
 	sig: string,
 	ctx: string?,
 	rnd: string?,
@@ -175,7 +176,6 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 					local HasInvalidContext = table.find(Flags, "InvalidContext") ~= nil
 
 					Testing.Test(TestName, function()
-						local MessageBytes = FromHex(Test.msg)
 						local Context = if Test.ctx then FromHex(Test.ctx) else buffer.create(0)
 
 						local PubKey = buffer.create(MlDSA.ML_DSA_87.PubKeyByteLen)
@@ -193,12 +193,17 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 						local SignSuccess: boolean
 
 						if IsNistAcvp then
-							if buffer.len(MessageBytes) == 64 then
-								SignSuccess = MlDSA.ML_DSA_87.SignMu(MessageBytes, Rnd, SecKey, ComputedSig)
-							else
+							if Test.mu then
+								local MuBytes = FromHex(Test.mu)
+								SignSuccess = MlDSA.ML_DSA_87.SignMu(MuBytes, Rnd, SecKey, ComputedSig)
+							elseif Test.msg then
+								local MessageBytes = FromHex(Test.msg)
 								SignSuccess = MlDSA.ML_DSA_87.SignInternal(MessageBytes, Rnd, SecKey, ComputedSig)
+							else
+								SignSuccess = false
 							end
 						else
+							local MessageBytes = FromHex(Test.msg :: string)
 							SignSuccess = MlDSA.ML_DSA_87.Sign(MessageBytes, Rnd, SecKey, Context, ComputedSig)
 						end
 
