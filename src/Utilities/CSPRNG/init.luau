@@ -83,8 +83,6 @@ local CSPRNG: CSPRNGModule = {
 } :: CSPRNGModule
 
 local INPUT_BUFFER = buffer.create(BLOCK_SIZE)
-local REKEY_THRESHOLD = math.max(math.floor(CSPRNG.RekeyAfter), 2)
-local SIZE_TARGET_CLAMPED = math.clamp(math.floor(CSPRNG.SizeTarget), 64, 4294967295)
 
 local function Reset()
 	CSPRNG.Key = buffer.create(0)
@@ -316,13 +314,15 @@ end
 local function GenerateBlock()
 	buffer.fill(INPUT_BUFFER, 0, 0, BLOCK_SIZE)
 	local ChaChaOutput = ChaCha20(INPUT_BUFFER, CSPRNG.Key, CSPRNG.Nonce, CSPRNG.Counter, 20)
+	local RekeyThreshold = math.max(math.floor(CSPRNG.RekeyAfter), 2)
+	local SizeTargetClamped = math.clamp(math.floor(CSPRNG.SizeTarget), 64, 4294967295)
 
-	CSPRNG.Buffer = if CSPRNG.BlockExpansion then Blake3(ChaChaOutput, SIZE_TARGET_CLAMPED) else ChaChaOutput
+	CSPRNG.Buffer = if CSPRNG.BlockExpansion then Blake3(ChaChaOutput, SizeTargetClamped) else ChaChaOutput
 	CSPRNG.BufferPosition = 0
 	CSPRNG.BufferSize = buffer.len(CSPRNG.Buffer)
 	CSPRNG.Counter += 1
 
-	if CSPRNG.Counter % REKEY_THRESHOLD == 0 then
+	if CSPRNG.Counter % RekeyThreshold == 0 then
 		GatherEntropy() 
 		CSPRNG.Counter = 0
 	end

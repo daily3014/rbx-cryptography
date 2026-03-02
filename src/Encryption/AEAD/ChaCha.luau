@@ -60,50 +60,46 @@ local function ProcessBlock(InitialState: buffer, Rounds: number)
 		buffer.readu32(InitialState, 48), buffer.readu32(InitialState, 52),
 		buffer.readu32(InitialState, 56), buffer.readu32(InitialState, 60)
 
-	for Round = 1, Rounds do
-		local IsOddRound = Round % 2 == 1
+	for Round = 1, Rounds, 2 do
+		S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 16)
+		S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 12)
+		S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 8)
+		S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 7)
 
-		if IsOddRound then
-			S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 16)
-			S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 12)
-			S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 8)
-			S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 7)
+		S1 = bit32.bor(S1 + S5, 0); S13 = bit32.lrotate(bit32.bxor(S13, S1), 16)
+		S9 = bit32.bor(S9 + S13, 0); S5 = bit32.lrotate(bit32.bxor(S5, S9), 12)
+		S1 = bit32.bor(S1 + S5, 0); S13 = bit32.lrotate(bit32.bxor(S13, S1), 8)
+		S9 = bit32.bor(S9 + S13, 0); S5 = bit32.lrotate(bit32.bxor(S5, S9), 7)
 
-			S1 = bit32.bor(S1 + S5, 0); S13 = bit32.lrotate(bit32.bxor(S13, S1), 16)
-			S9 = bit32.bor(S9 + S13, 0); S5 = bit32.lrotate(bit32.bxor(S5, S9), 12)
-			S1 = bit32.bor(S1 + S5, 0); S13 = bit32.lrotate(bit32.bxor(S13, S1), 8)
-			S9 = bit32.bor(S9 + S13, 0); S5 = bit32.lrotate(bit32.bxor(S5, S9), 7)
+		S2 = bit32.bor(S2 + S6, 0); S14 = bit32.lrotate(bit32.bxor(S14, S2), 16)
+		S10 = bit32.bor(S10 + S14, 0); S6 = bit32.lrotate(bit32.bxor(S6, S10), 12)
+		S2 = bit32.bor(S2 + S6, 0); S14 = bit32.lrotate(bit32.bxor(S14, S2), 8)
+		S10 = bit32.bor(S10 + S14, 0); S6 = bit32.lrotate(bit32.bxor(S6, S10), 7)
 
-			S2 = bit32.bor(S2 + S6, 0); S14 = bit32.lrotate(bit32.bxor(S14, S2), 16)
-			S10 = bit32.bor(S10 + S14, 0); S6 = bit32.lrotate(bit32.bxor(S6, S10), 12)
-			S2 = bit32.bor(S2 + S6, 0); S14 = bit32.lrotate(bit32.bxor(S14, S2), 8)
-			S10 = bit32.bor(S10 + S14, 0); S6 = bit32.lrotate(bit32.bxor(S6, S10), 7)
+		S3 = bit32.bor(S3 + S7, 0); S15 = bit32.lrotate(bit32.bxor(S15, S3), 16)
+		S11 = bit32.bor(S11 + S15, 0); S7 = bit32.lrotate(bit32.bxor(S7, S11), 12)
+		S3 = bit32.bor(S3 + S7, 0); S15 = bit32.lrotate(bit32.bxor(S15, S3), 8)
+		S11 = bit32.bor(S11 + S15, 0); S7 = bit32.lrotate(bit32.bxor(S7, S11), 7)
 
-			S3 = bit32.bor(S3 + S7, 0); S15 = bit32.lrotate(bit32.bxor(S15, S3), 16)
-			S11 = bit32.bor(S11 + S15, 0); S7 = bit32.lrotate(bit32.bxor(S7, S11), 12)
-			S3 = bit32.bor(S3 + S7, 0); S15 = bit32.lrotate(bit32.bxor(S15, S3), 8)
-			S11 = bit32.bor(S11 + S15, 0); S7 = bit32.lrotate(bit32.bxor(S7, S11), 7)
-		else
-			S0 = bit32.bor(S0 + S5, 0); S15 = bit32.lrotate(bit32.bxor(S15, S0), 16)
-			S10 = bit32.bor(S10 + S15, 0); S5 = bit32.lrotate(bit32.bxor(S5, S10), 12)
-			S0 = bit32.bor(S0 + S5, 0); S15 = bit32.lrotate(bit32.bxor(S15, S0), 8)
-			S10 = bit32.bor(S10 + S15, 0); S5 = bit32.lrotate(bit32.bxor(S5, S10), 7)
+		S0 = bit32.bor(S0 + S5, 0); S15 = bit32.lrotate(bit32.bxor(S15, S0), 16)
+		S10 = bit32.bor(S10 + S15, 0); S5 = bit32.lrotate(bit32.bxor(S5, S10), 12)
+		S0 = bit32.bor(S0 + S5, 0); S15 = bit32.lrotate(bit32.bxor(S15, S0), 8)
+		S10 = bit32.bor(S10 + S15, 0); S5 = bit32.lrotate(bit32.bxor(S5, S10), 7)
 
-			S1 = bit32.bor(S1 + S6, 0); S12 = bit32.lrotate(bit32.bxor(S12, S1), 16)
-			S11 = bit32.bor(S11 + S12, 0); S6 = bit32.lrotate(bit32.bxor(S6, S11), 12)
-			S1 = bit32.bor(S1 + S6, 0); S12 = bit32.lrotate(bit32.bxor(S12, S1), 8)
-			S11 = bit32.bor(S11 + S12, 0); S6 = bit32.lrotate(bit32.bxor(S6, S11), 7)
+		S1 = bit32.bor(S1 + S6, 0); S12 = bit32.lrotate(bit32.bxor(S12, S1), 16)
+		S11 = bit32.bor(S11 + S12, 0); S6 = bit32.lrotate(bit32.bxor(S6, S11), 12)
+		S1 = bit32.bor(S1 + S6, 0); S12 = bit32.lrotate(bit32.bxor(S12, S1), 8)
+		S11 = bit32.bor(S11 + S12, 0); S6 = bit32.lrotate(bit32.bxor(S6, S11), 7)
 
-			S2 = bit32.bor(S2 + S7, 0); S13 = bit32.lrotate(bit32.bxor(S13, S2), 16)
-			S8 = bit32.bor(S8 + S13, 0); S7 = bit32.lrotate(bit32.bxor(S7, S8), 12)
-			S2 = bit32.bor(S2 + S7, 0); S13 = bit32.lrotate(bit32.bxor(S13, S2), 8)
-			S8 = bit32.bor(S8 + S13, 0); S7 = bit32.lrotate(bit32.bxor(S7, S8), 7)
+		S2 = bit32.bor(S2 + S7, 0); S13 = bit32.lrotate(bit32.bxor(S13, S2), 16)
+		S8 = bit32.bor(S8 + S13, 0); S7 = bit32.lrotate(bit32.bxor(S7, S8), 12)
+		S2 = bit32.bor(S2 + S7, 0); S13 = bit32.lrotate(bit32.bxor(S13, S2), 8)
+		S8 = bit32.bor(S8 + S13, 0); S7 = bit32.lrotate(bit32.bxor(S7, S8), 7)
 
-			S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 16)
-			S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 12)
-			S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 8)
-			S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 7)
-		end
+		S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 16)
+		S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 12)
+		S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 8)
+		S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 7)
 	end
 
 	buffer.writeu32(InitialState, 0, buffer.readu32(InitialState, 0) + S0)
@@ -236,8 +232,15 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 		ProcessBlock(State, BlockRounds)
 
 		local BytesToProcess = math.min(BLOCK_SIZE, DataLength - DataOffset)
+		local Leftover = BytesToProcess % 4
 
-		for Index = 0, BytesToProcess - 1 do
+		for Index = 0, BytesToProcess - Leftover - 1, 4 do
+			local DataWord = buffer.readu32(Data, DataOffset + Index)
+			local KeystreamWord = buffer.readu32(State, Index)
+			buffer.writeu32(Output, DataOffset + Index, bit32.bxor(DataWord, KeystreamWord))
+		end
+
+		for Index = BytesToProcess - Leftover, BytesToProcess - 1 do
 			local DataByte = buffer.readu8(Data, DataOffset + Index)
 			local KeystreamByte = buffer.readu8(State, Index)
 			buffer.writeu8(Output, DataOffset + Index, bit32.bxor(DataByte, KeystreamByte))
