@@ -93,15 +93,6 @@ local function FetchSignVectors(): SignData
 	return Http:JSONDecode(Response) :: SignData
 end
 
-local function IsNistAcvpSource(Source: {name: string, version: string}?): boolean
-	if not Source then
-		return false
-	end
-
-	local Name = Source.name:lower()
-	return Name:find("nist") ~= nil or Name:find("acvp") ~= nil
-end
-
 Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 	Testing.Describe("Verify Tests", function()
 		local VerifyData = FetchVerifyVectors()
@@ -148,12 +139,15 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 		local SignData = FetchSignVectors()
 
 		for GroupIndex, Group in ipairs(SignData.testGroups) do
+			if not Group.privateSeed or not Group.publicKey then
+				continue
+			end
+
 			local PrivateSeedBytes = FromHex(Group.privateSeed)
 			local ExpectedPubKeyBytes = FromHex(Group.publicKey)
-			local SourceName = if Group.source then Group.source.name else "unknown"
-			local IsNistAcvp = IsNistAcvpSource(Group.source)
+			local Flags = if Group.tests[1] then Group.tests[1].flags or {} else {}
 
-			Testing.Describe(`SignGroup_{GroupIndex} (Source: {SourceName})`, function()
+			Testing.Describe(`SignGroup_{GroupIndex}`, function()
 				Testing.Test("KeyGen_PublicKey_Match", function()
 					local PubKey = buffer.create(MlDSA.ML_DSA_87.PubKeyByteLen)
 					local SecKey = buffer.create(MlDSA.ML_DSA_87.SecKeyByteLen)
@@ -165,7 +159,7 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 				for _, Test in ipairs(Group.tests) do
 					local TestId = Test.tcId
 					local Comment = Test.comment or ""
-					local Flags = Test.flags or {}
+					local TestFlags = Test.flags or {}
 					local ExpectedResult = Test.result or "valid"
 
 					local TestName = `Test_{TestId}`
@@ -173,7 +167,8 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 						TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 					end
 
-					local HasInvalidContext = table.find(Flags, "InvalidContext") ~= nil
+					local HasInvalidContext = table.find(TestFlags, "InvalidContext") ~= nil
+					local IsInternal = table.find(TestFlags, "Internal") ~= nil
 
 					Testing.Test(TestName, function()
 						local Context = if Test.ctx then FromHex(Test.ctx) else buffer.create(0)
@@ -192,7 +187,7 @@ Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
 						local ComputedSig = buffer.create(MlDSA.ML_DSA_87.SigByteLen)
 						local SignSuccess: boolean
 
-						if IsNistAcvp then
+						if IsInternal then
 							if Test.mu then
 								local MuBytes = FromHex(Test.mu)
 								SignSuccess = MlDSA.ML_DSA_87.SignMu(MuBytes, Rnd, SecKey, ComputedSig)
