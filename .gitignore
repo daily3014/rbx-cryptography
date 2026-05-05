@@ -11,5 +11,6 @@ lune_packages/
 DevPackages/
 Packages/
 
+dump.txt
 sourcemap.json
 wally.lock

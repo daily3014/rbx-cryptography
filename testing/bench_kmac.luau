@@ -1,7 +1,9 @@
-local ported_sha512, ported_sha384 = require("../src/Hashing/SHA2/SHA512"), require("../src/Hashing/SHA2/SHA384")
-local old_sha512, old_sha384 = require("./algorithms/SHA512old"), require("./algorithms/SHA384old")
+local ported_kmac = require("../src/Hashing/KMAC")
+local old_kmac = require("./algorithms/KMACold")
 
 local msg = buffer.fromstring(string.rep("A", 20_000))
+local key = buffer.fromstring(string.rep("B", 32))
+local out_32, out_64 = buffer.create(32), buffer.create(64)
 
 local function Format(Difference)
 	if Difference < 0.001 then
@@ -29,10 +31,21 @@ do
 
 	local start = os.clock()
 	for i = 1, Iterations do
-		ported_sha512(msg)
+		ported_kmac.KMAC128(msg, key, out_32)
 	end
 	local took = os.clock() - start
-	print(`[Int SHA512] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
+	print(`[Int KMAC128] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
+end
+
+do
+	Work()
+	
+	local start = os.clock()
+	for i = 1, Iterations do
+		old_kmac.KMAC128(msg, key, out_32)
+	end
+	local took = os.clock() - start
+	print(`[Old KMAC128] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
@@ -40,30 +53,19 @@ do
 
 	local start = os.clock()
 	for i = 1, Iterations do
-		old_sha512(msg)
+		ported_kmac.KMAC256(msg, key, out_64)
 	end
 	local took = os.clock() - start
-	print(`[Old SHA512] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
+	print(`[Int KMAC256] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
 	Work()
-
+	
 	local start = os.clock()
-	for i = 1, 100 do
-		ported_sha384(msg)
+	for i = 1, Iterations do
+		old_kmac.KMAC256(msg, key, out_64)
 	end
 	local took = os.clock() - start
-	print(`[Int SHA384] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
-end
-
-do
-	Work()
-
-	local start = os.clock()
-	for i = 1, 100 do
-		old_sha384(msg)
-	end
-	local took = os.clock() - start
-	print(`[Old SHA384] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
+	print(`[Old KMAC256] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end

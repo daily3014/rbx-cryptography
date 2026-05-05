@@ -6,9 +6,9 @@ We actively maintain and provide security updates for the following versions of 
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 2.9.x   | :white_check_mark: |
-| 2.8.x   | :white_check_mark: |
-| < 2.8   | :x:                |
+| 3.2.x   | :white_check_mark: |
+| 3.1.x   | :white_check_mark: |
+| < 3.1   | :x:                |
 
 We recommend always using the latest version to make sure you have the most recent security patches and improvements.
 
@@ -107,7 +107,7 @@ Updates will be announced via:
 We can acknowledge anyone who report vulnerabilities (with their permission) in our release notes or security advisories.
 
 ## Additional Resources
-- **Documentation (Readme file)**: [GitHub Repository](https://github.com/daily3014/rbx-cryptography)
+- **Documentation**: [API](https://xoifaii.github.io/)
 - **Community Support**: [Discord Server](https://discord.gg/Fg3sM8qKPp)
 - **DevForum Thread**: [Roblox DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271)
 
