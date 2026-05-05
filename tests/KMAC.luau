@@ -16,10 +16,10 @@
 --!strict
 --!optimize 2
 
-local Http = game:GetService("HttpService")
-
+local IsLuauCLI = warn == nil
 local Testing = require("./")
-local Cryptography = require("../")
+local Cryptography = if IsLuauCLI then require("../src") else require("../")
+
 local KMAC = Cryptography.Hashing.KMAC
 local Conversions = Cryptography.Utilities.Conversions
 local FromHex = Conversions.FromHex
@@ -68,6 +68,15 @@ local KMAC_CONFIGS: {KmacConfig} = {
 }
 
 local function FetchTestVectors(Url: string): MacData
+	if IsLuauCLI then
+		if Url == KMAC_CONFIGS[1].Url then
+			return require("../testing/data/kmac128_no_customization_test") :: MacData
+		elseif Url == KMAC_CONFIGS[2].Url then
+			return require("../testing/data/kmac256_no_customization_test") :: MacData
+		end
+	end
+
+	local Http = game:GetService("HttpService")
 	local Response = Http:GetAsync(Url)
 	return Http:JSONDecode(Response) :: MacData
 end

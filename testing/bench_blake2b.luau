@@ -22,25 +22,26 @@ local function Work()
 end
 
 print(`Size of message: {buffer.len(msg)} bytes`)
+local Iterations = 100
 
 do
 	Work()
 
 	local start = os.clock()
-	for i = 1, 100 do
+	for i = 1, Iterations do
 		ported_blake2b(msg)
 	end
 	local took = os.clock() - start
-	print("[Int Blake2b] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Int Blake2b] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
 	Work()
 	
 	local start = os.clock()
-	for i = 1, 100 do
+	for i = 1, Iterations do
 		old_blake2b(msg)
 	end
 	local took = os.clock() - start
-	print("[Old Blake2b] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Old Blake2b] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end

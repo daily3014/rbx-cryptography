@@ -22,6 +22,7 @@ local function Work()
 end
 
 print(`Size of message: {buffer.len(msg)} bytes`)
+local Iterations = 100
 
 do
 	Work()
@@ -31,7 +32,7 @@ do
 		ported_sha512(msg)
 	end
 	local took = os.clock() - start
-	print("[Int SHA512] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Int SHA512] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
@@ -42,7 +43,7 @@ do
 		old_sha512(msg)
 	end
 	local took = os.clock() - start
-	print("[Old SHA512] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Old SHA512] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
@@ -53,7 +54,7 @@ do
 		ported_sha384(msg)
 	end
 	local took = os.clock() - start
-	print("[Int SHA384] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Int SHA384] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
@@ -64,5 +65,5 @@ do
 		old_sha384(msg)
 	end
 	local took = os.clock() - start
-	print("[Old SHA384] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Old SHA384] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end

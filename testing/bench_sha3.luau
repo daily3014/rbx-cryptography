@@ -22,6 +22,7 @@ local function Work()
 end
 
 print(`Size of message: {buffer.len(msg)} bytes`)
+local Iterations = 100
 
 do
 	Work()
@@ -31,7 +32,7 @@ do
 		ported_sha3.SHA3_256(msg)
 	end
 	local took = os.clock() - start
-	print("[Int SHA3] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Int SHA3] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
 
 do
@@ -42,5 +43,5 @@ do
 		old_sha3.SHA3_256(msg)
 	end
 	local took = os.clock() - start
-	print("[Old SHA3] 100/1 iteration(s) took:", `{Format(took)} / {Format(took / 100)}`)
+	print(`[Old SHA3] {Iterations}/1 iteration(s) took:`, `{Format(took)} / {Format(took / Iterations)}`)
 end
