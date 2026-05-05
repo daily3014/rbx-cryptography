@@ -9,10 +9,9 @@
 --!strict
 --!optimize 2
 
-local Http = game:GetService("HttpService")
-
+local IsLuauCLI = warn == nil
 local Testing = require("./")
-local Cryptography = require("../")
+local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
 local MlDSA = Cryptography.Verification.MlDSA
 local Conversions = Cryptography.Utilities.Conversions
@@ -84,11 +83,21 @@ local function BuffersEqual(A: buffer, B: buffer): boolean
 end
 
 local function FetchVerifyVectors(): VerifyData
+	if IsLuauCLI then
+		return require("../testing/data/mldsa_87_verify_test") :: VerifyData
+	end
+
+	local Http = game:GetService("HttpService")
 	local Response = Http:GetAsync(VERIFY_URL)
 	return Http:JSONDecode(Response) :: VerifyData
 end
 
 local function FetchSignVectors(): SignData
+	if IsLuauCLI then
+		return require("../testing/data/mldsa_87_sign_seed_test") :: SignData
+	end
+
+	local Http = game:GetService("HttpService")
 	local Response = Http:GetAsync(SIGN_URL)
 	return Http:JSONDecode(Response) :: SignData
 end

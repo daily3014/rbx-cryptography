@@ -20,12 +20,10 @@
 local RATE_128 = 168
 local RATE_256 = 136
 
-local LanesLow128 = buffer.create(100)
-local LanesHigh128 = buffer.create(100)
+local Lanes128 = buffer.create(200)
 local SqueezeOffset128 = 0
 
-local LanesLow256 = buffer.create(100)
-local LanesHigh256 = buffer.create(100)
+local Lanes256 = buffer.create(200)
 local SqueezeOffset256 = 0
 
 local ZeroBuffer128 = buffer.create(RATE_128)
@@ -38,8 +36,7 @@ local SqueezeBuffer128_168 = buffer.create(168)
 local SqueezeBuffer256_128 = buffer.create(128)
 local SqueezeBuffer256_192 = buffer.create(192)
 
-local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
-	local HighFactorKeccak = 0
+local ROUND_CONSTANTS = buffer.create(192) do
 	local ShiftRegister = 29
 	local function GetNextBit(): number
 		local Result = ShiftRegister % 2
@@ -47,198 +44,148 @@ local LOW_ROUND, HIGH_ROUND = buffer.create(96), buffer.create(96) do
 		return Result
 	end
 
+	local BitPositions = {0i, 1i, 3i, 7i, 15i, 31i, 63i}
 	for Index = 0, 23 do
-		local LowValue = 0
-		local Multiplier: number
+		local Value = 0i
 
-		for _ = 1, 6 do
-			Multiplier = if Multiplier then Multiplier * Multiplier * 2 else 1
-			LowValue += GetNextBit() * Multiplier
+		for j = 1, 7 do
+			if GetNextBit() == 1 then
+				Value = integer.bor(Value, integer.lshift(1i, BitPositions[j]))
+			end
 		end
 
-		local HighValue = GetNextBit() * Multiplier
-		buffer.writeu32(HIGH_ROUND, Index * 4, HighValue)
-		buffer.writeu32(LOW_ROUND, Index * 4, LowValue + HighValue * HighFactorKeccak)
+		buffer.writeinteger(ROUND_CONSTANTS, Index * 8, Value)
 	end
 end
 
-local function Keccak(LanesLow: buffer, LanesHigh: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
+local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
-	local RCHigh, RCLow = HIGH_ROUND, LOW_ROUND
+	local RC = ROUND_CONSTANTS
 
 	for Position = Offset, Offset + Size - 1, BlockSizeInBytes do
-		for Index = 0, (QuadWordsQuantity - 1) * 4, 4 do
-			local BufferPos = Position + Index * 2
+		for Index = 0, (QuadWordsQuantity - 1) * 8, 8 do
+			local BufferPos = Position + Index
 
-			buffer.writeu32(LanesLow, Index, bit32.bxor(
-				buffer.readu32(LanesLow, Index),
-				buffer.readu32(InputBuffer, BufferPos)
-				))
-
-			buffer.writeu32(LanesHigh, Index, bit32.bxor(
-				buffer.readu32(LanesHigh, Index),
-				buffer.readu32(InputBuffer, BufferPos + 4)
-				))
+			buffer.writeinteger(Lanes, Index, integer.bxor(
+				buffer.readinteger(Lanes, Index),
+				buffer.readinteger(InputBuffer, BufferPos)
+			))
 		end
 
-		local Lane01Low, Lane01High = buffer.readu32(LanesLow, 0), buffer.readu32(LanesHigh, 0)
-		local Lane02Low, Lane02High = buffer.readu32(LanesLow, 4), buffer.readu32(LanesHigh, 4)
-		local Lane03Low, Lane03High = buffer.readu32(LanesLow, 8), buffer.readu32(LanesHigh, 8)
+		local Lane01, Lane02, Lane03 = buffer.readinteger(Lanes, 0), buffer.readinteger(Lanes, 8), buffer.readinteger(Lanes, 16)
+		local Lane04, Lane05, Lane06 = buffer.readinteger(Lanes, 24), buffer.readinteger(Lanes, 32), buffer.readinteger(Lanes, 40)
+		local Lane07, Lane08, Lane09 = buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 56), buffer.readinteger(Lanes, 64)
+		local Lane10, Lane11, Lane12 = buffer.readinteger(Lanes, 72), buffer.readinteger(Lanes, 80), buffer.readinteger(Lanes, 88)
+		local Lane13, Lane14, Lane15 = buffer.readinteger(Lanes, 96), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 112)
+		local Lane16, Lane17, Lane18 = buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 128), buffer.readinteger(Lanes, 136)
+		local Lane19, Lane20, Lane21 = buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 152), buffer.readinteger(Lanes, 160)
+		local Lane22, Lane23, Lane24 = buffer.readinteger(Lanes, 168), buffer.readinteger(Lanes, 176), buffer.readinteger(Lanes, 184)
+		local Lane25 = buffer.readinteger(Lanes, 192)
 
-		local Lane04Low, Lane04High = buffer.readu32(LanesLow, 12), buffer.readu32(LanesHigh, 12)
-		local Lane05Low, Lane05High = buffer.readu32(LanesLow, 16), buffer.readu32(LanesHigh, 16)
-		local Lane06Low, Lane06High = buffer.readu32(LanesLow, 20), buffer.readu32(LanesHigh, 20)
+		for RoundIndex = 0, 184, 8 do
+			local Column1 = integer.bxor(Lane01, Lane06, Lane11, Lane16, Lane21)
+			local Column2 = integer.bxor(Lane02, Lane07, Lane12, Lane17, Lane22)
+			local Column3 = integer.bxor(Lane03, Lane08, Lane13, Lane18, Lane23)
+			local Column4 = integer.bxor(Lane04, Lane09, Lane14, Lane19, Lane24)
+			local Column5 = integer.bxor(Lane05, Lane10, Lane15, Lane20, Lane25)
 
-		local Lane07Low, Lane07High = buffer.readu32(LanesLow, 24), buffer.readu32(LanesHigh, 24)
-		local Lane08Low, Lane08High = buffer.readu32(LanesLow, 28), buffer.readu32(LanesHigh, 28)
-		local Lane09Low, Lane09High = buffer.readu32(LanesLow, 32), buffer.readu32(LanesHigh, 32)
+			local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
 
-		local Lane10Low, Lane10High = buffer.readu32(LanesLow, 36), buffer.readu32(LanesHigh, 36)
-		local Lane11Low, Lane11High = buffer.readu32(LanesLow, 40), buffer.readu32(LanesHigh, 40)
-		local Lane12Low, Lane12High = buffer.readu32(LanesLow, 44), buffer.readu32(LanesHigh, 44)
+			local Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane02), integer.bxor(Delta, Lane07), integer.bxor(Delta, Lane12), integer.bxor(Delta, Lane17), integer.bxor(Delta, Lane22)
+			Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
+			Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
 
-		local Lane13Low, Lane13High = buffer.readu32(LanesLow, 48), buffer.readu32(LanesHigh, 48)
-		local Lane14Low, Lane14High = buffer.readu32(LanesLow, 52), buffer.readu32(LanesHigh, 52)
-		local Lane15Low, Lane15High = buffer.readu32(LanesLow, 56), buffer.readu32(LanesHigh, 56)
+			Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23)
+			Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
+			Delta = integer.bxor(Column3, integer.rrotate(Column5, 63i))
 
-		local Lane16Low, Lane16High = buffer.readu32(LanesLow, 60), buffer.readu32(LanesHigh, 60)
-		local Lane17Low, Lane17High = buffer.readu32(LanesLow, 64), buffer.readu32(LanesHigh, 64)
-		local Lane18Low, Lane18High = buffer.readu32(LanesLow, 68), buffer.readu32(LanesHigh, 68)
+			Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane04), integer.bxor(Delta, Lane09), integer.bxor(Delta, Lane14), integer.bxor(Delta, Lane19), integer.bxor(Delta, Lane24)
+			Lane04, Lane09, Lane14, Lane19, Lane24 = integer.rrotate(Temp3, 43i), integer.rrotate(Temp0, 36i), integer.rrotate(Temp2, 39i), integer.rrotate(Temp4, 8i), integer.rrotate(Temp1, 9i)
+			Delta = integer.bxor(Column4, integer.rrotate(Column1, 63i))
 
-		local Lane19Low, Lane19High = buffer.readu32(LanesLow, 72), buffer.readu32(LanesHigh, 72)
-		local Lane20Low, Lane20High = buffer.readu32(LanesLow, 76), buffer.readu32(LanesHigh, 76)
-		local Lane21Low, Lane21High = buffer.readu32(LanesLow, 80), buffer.readu32(LanesHigh, 80)
+			Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane05), integer.bxor(Delta, Lane10), integer.bxor(Delta, Lane15), integer.bxor(Delta, Lane20), integer.bxor(Delta, Lane25)
+			Lane05, Lane10, Lane15, Lane20, Lane25 = integer.rrotate(Temp4, 50i), integer.rrotate(Temp1, 44i), integer.rrotate(Temp3, 56i), integer.rrotate(Temp0, 37i), integer.rrotate(Temp2, 25i)
+			Delta = integer.bxor(Column5, integer.rrotate(Column2, 63i))
 
-		local Lane22Low, Lane22High = buffer.readu32(LanesLow, 84), buffer.readu32(LanesHigh, 84)
-		local Lane23Low, Lane23High = buffer.readu32(LanesLow, 88), buffer.readu32(LanesHigh, 88)
-		local Lane24Low, Lane24High = buffer.readu32(LanesLow, 92), buffer.readu32(LanesHigh, 92)
+			Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane06), integer.bxor(Delta, Lane11), integer.bxor(Delta, Lane16), integer.bxor(Delta, Lane21)
+			Lane06, Lane11, Lane16, Lane21 = integer.rrotate(Temp2, 61i), integer.rrotate(Temp4, 46i), integer.rrotate(Temp1, 28i), integer.rrotate(Temp3, 23i)
+			Lane01 = integer.bxor(Delta, Lane01)
 
-		local Lane25Low, Lane25High = buffer.readu32(LanesLow, 96), buffer.readu32(LanesHigh, 96)
+			Lane01, Lane02, Lane03, Lane04, Lane05 =
+				integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
+				integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
+				integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
+				integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
+				integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02))
+			
+			Lane06, Lane07, Lane08, Lane09, Lane10 =
+				integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
+				integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
+				integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
+				integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
+				integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10))
 
-		for RoundIndex = 0, 92, 4 do
-			local Column1Low, Column1High = bit32.bxor(Lane01Low, Lane06Low, Lane11Low, Lane16Low, Lane21Low), bit32.bxor(Lane01High, Lane06High, Lane11High, Lane16High, Lane21High)
-			local Column2Low, Column2High = bit32.bxor(Lane02Low, Lane07Low, Lane12Low, Lane17Low, Lane22Low), bit32.bxor(Lane02High, Lane07High, Lane12High, Lane17High, Lane22High)
-			local Column3Low, Column3High = bit32.bxor(Lane03Low, Lane08Low, Lane13Low, Lane18Low, Lane23Low), bit32.bxor(Lane03High, Lane08High, Lane13High, Lane18High, Lane23High)
-			local Column4Low, Column4High = bit32.bxor(Lane04Low, Lane09Low, Lane14Low, Lane19Low, Lane24Low), bit32.bxor(Lane04High, Lane09High, Lane14High, Lane19High, Lane24High)
-			local Column5Low, Column5High = bit32.bxor(Lane05Low, Lane10Low, Lane15Low, Lane20Low, Lane25Low), bit32.bxor(Lane05High, Lane10High, Lane15High, Lane20High, Lane25High)
+			Lane11, Lane12, Lane13, Lane14, Lane15 =
+				integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
+				integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
+				integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
+				integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
+				integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13))
 
-			local DeltaLow, DeltaHigh = bit32.bxor(Column1Low, Column3Low * 2 + Column3High // 2147483648), bit32.bxor(Column1High, Column3High * 2 + Column3Low // 2147483648)
-			local Temp0Low, Temp0High = bit32.bxor(DeltaLow, Lane02Low), bit32.bxor(DeltaHigh, Lane02High)
-			local Temp1Low, Temp1High = bit32.bxor(DeltaLow, Lane07Low), bit32.bxor(DeltaHigh, Lane07High)
-			local Temp2Low, Temp2High = bit32.bxor(DeltaLow, Lane12Low), bit32.bxor(DeltaHigh, Lane12High)
-			local Temp3Low, Temp3High = bit32.bxor(DeltaLow, Lane17Low), bit32.bxor(DeltaHigh, Lane17High)
-			local Temp4Low, Temp4High = bit32.bxor(DeltaLow, Lane22Low), bit32.bxor(DeltaHigh, Lane22High)
+			Lane16, Lane17, Lane18, Lane19, Lane20 =
+				integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),
+				integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
+				integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
+				integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
+				integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16))
 
-			Lane02Low = Temp1Low // 1048576 + (Temp1High * 4096); Lane02High = Temp1High // 1048576 + (Temp1Low * 4096)
-			Lane07Low = Temp3Low // 524288 + (Temp3High * 8192); Lane07High = Temp3High // 524288 + (Temp3Low * 8192)
-			Lane12Low = Temp0Low * 2 + Temp0High // 2147483648; Lane12High = Temp0High * 2 + Temp0Low // 2147483648
-			Lane17Low = Temp2Low * 1024 + Temp2High // 4194304; Lane17High = Temp2High * 1024 + Temp2Low // 4194304
-			Lane22Low = Temp4Low * 4 + Temp4High // 1073741824; Lane22High = Temp4High * 4 + Temp4Low // 1073741824
+			Lane21, Lane22, Lane23, Lane24, Lane25 =
+				integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
+				integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
+				integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
+				integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
+				integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24))
 
-			DeltaLow = bit32.bxor(Column2Low, Column4Low * 2 + Column4High // 2147483648); DeltaHigh = bit32.bxor(Column2High, Column4High * 2 + Column4Low // 2147483648)
-			Temp0Low = bit32.bxor(DeltaLow, Lane03Low); Temp0High = bit32.bxor(DeltaHigh, Lane03High)
-			Temp1Low = bit32.bxor(DeltaLow, Lane08Low); Temp1High = bit32.bxor(DeltaHigh, Lane08High)
-			Temp2Low = bit32.bxor(DeltaLow, Lane13Low); Temp2High = bit32.bxor(DeltaHigh, Lane13High)
-			Temp3Low = bit32.bxor(DeltaLow, Lane18Low); Temp3High = bit32.bxor(DeltaHigh, Lane18High)
-			Temp4Low = bit32.bxor(DeltaLow, Lane23Low); Temp4High = bit32.bxor(DeltaHigh, Lane23High)
-
-			Lane03Low = Temp2Low // 2097152 + (Temp2High * 2048); Lane03High = Temp2High // 2097152 + (Temp2Low * 2048)
-			Lane08Low = Temp4Low // 8 + bit32.bor(Temp4High * 536870912, 0); Lane08High = Temp4High // 8 + bit32.bor(Temp4Low * 536870912, 0)
-			Lane13Low = Temp1Low * 64 + Temp1High // 67108864; Lane13High = Temp1High * 64 + Temp1Low // 67108864
-			Lane18Low = (Temp3Low * 32768) + Temp3High // 131072; Lane18High = (Temp3High * 32768) + Temp3Low // 131072
-			Lane23Low = Temp0Low // 4 + bit32.bor(Temp0High * 1073741824, 0); Lane23High = Temp0High // 4 + bit32.bor(Temp0Low * 1073741824, 0)
-
-			DeltaLow = bit32.bxor(Column3Low, Column5Low * 2 + Column5High // 2147483648); DeltaHigh = bit32.bxor(Column3High, Column5High * 2 + Column5Low // 2147483648)
-			Temp0Low = bit32.bxor(DeltaLow, Lane04Low); Temp0High = bit32.bxor(DeltaHigh, Lane04High)
-			Temp1Low = bit32.bxor(DeltaLow, Lane09Low); Temp1High = bit32.bxor(DeltaHigh, Lane09High)
-			Temp2Low = bit32.bxor(DeltaLow, Lane14Low); Temp2High = bit32.bxor(DeltaHigh, Lane14High)
-			Temp3Low = bit32.bxor(DeltaLow, Lane19Low); Temp3High = bit32.bxor(DeltaHigh, Lane19High)
-			Temp4Low = bit32.bxor(DeltaLow, Lane24Low); Temp4High = bit32.bxor(DeltaHigh, Lane24High)
-
-			Lane04Low = bit32.bor(Temp3Low * 2097152, 0) + Temp3High // 2048; Lane04High = bit32.bor(Temp3High * 2097152, 0) + Temp3Low // 2048
-			Lane09Low = bit32.bor(Temp0Low * 268435456, 0) + Temp0High // 16; Lane09High = bit32.bor(Temp0High * 268435456, 0) + Temp0Low // 16
-			Lane14Low = bit32.bor(Temp2Low * 33554432, 0) + Temp2High // 128; Lane14High = bit32.bor(Temp2High * 33554432, 0) + Temp2Low // 128
-			Lane19Low = Temp4Low // 256 + bit32.bor(Temp4High * 16777216, 0); Lane19High = Temp4High // 256 + bit32.bor(Temp4Low * 16777216, 0)
-			Lane24Low = Temp1Low // 512 + bit32.bor(Temp1High * 8388608, 0); Lane24High = Temp1High // 512 + bit32.bor(Temp1Low * 8388608, 0)
-			DeltaLow = bit32.bxor(Column4Low, Column1Low * 2 + Column1High // 2147483648); DeltaHigh = bit32.bxor(Column4High, Column1High * 2 + Column1Low // 2147483648)
-
-			Temp0Low = bit32.bxor(DeltaLow, Lane05Low); Temp0High = bit32.bxor(DeltaHigh, Lane05High)
-			Temp1Low = bit32.bxor(DeltaLow, Lane10Low); Temp1High = bit32.bxor(DeltaHigh, Lane10High)
-			Temp2Low = bit32.bxor(DeltaLow, Lane15Low); Temp2High = bit32.bxor(DeltaHigh, Lane15High)
-			Temp3Low = bit32.bxor(DeltaLow, Lane20Low); Temp3High = bit32.bxor(DeltaHigh, Lane20High)
-			Temp4Low = bit32.bxor(DeltaLow, Lane25Low); Temp4High = bit32.bxor(DeltaHigh, Lane25High)
-
-			Lane05Low = (Temp4Low * 16384) + Temp4High // 262144; Lane05High = (Temp4High * 16384) + Temp4Low // 262144
-			Lane10Low = bit32.bor(Temp1Low * 1048576, 0) + Temp1High // 4096; Lane10High = bit32.bor(Temp1High * 1048576, 0) + Temp1Low // 4096
-			Lane15Low = Temp3Low * 256 + Temp3High // 16777216; Lane15High = Temp3High * 256 + Temp3Low // 16777216
-			Lane20Low = bit32.bor(Temp0Low * 134217728, 0) + Temp0High // 32; Lane20High = bit32.bor(Temp0High * 134217728, 0) + Temp0Low // 32
-			Lane25Low = Temp2Low // 33554432 + Temp2High * 128; Lane25High = Temp2High // 33554432 + Temp2Low * 128
-
-			DeltaLow = bit32.bxor(Column5Low, Column2Low * 2 + Column2High // 2147483648); DeltaHigh = bit32.bxor(Column5High, Column2High * 2 + Column2Low // 2147483648)
-			Temp1Low = bit32.bxor(DeltaLow, Lane06Low); Temp1High = bit32.bxor(DeltaHigh, Lane06High)
-			Temp2Low = bit32.bxor(DeltaLow, Lane11Low); Temp2High = bit32.bxor(DeltaHigh, Lane11High)
-			Temp3Low = bit32.bxor(DeltaLow, Lane16Low); Temp3High = bit32.bxor(DeltaHigh, Lane16High)
-			Temp4Low = bit32.bxor(DeltaLow, Lane21Low); Temp4High = bit32.bxor(DeltaHigh, Lane21High)
-			Lane06Low = Temp2Low * 8 + Temp2High // 536870912; Lane06High = Temp2High * 8 + Temp2Low // 536870912
-			Lane11Low = (Temp4Low * 262144) + Temp4High // 16384; Lane11High = (Temp4High * 262144) + Temp4Low // 16384
-			Lane16Low = Temp1Low // 268435456 + Temp1High * 16; Lane16High = Temp1High // 268435456 + Temp1Low * 16
-			Lane21Low = Temp3Low // 8388608 + Temp3High * 512; Lane21High = Temp3High // 8388608 + Temp3Low * 512
-			Lane01Low = bit32.bxor(DeltaLow, Lane01Low); Lane01High = bit32.bxor(DeltaHigh, Lane01High)
-
-			Lane01Low, Lane02Low, Lane03Low, Lane04Low, Lane05Low = bit32.bxor(Lane01Low, bit32.band(-1 - Lane02Low, Lane03Low)), bit32.bxor(Lane02Low, bit32.band(-1 - Lane03Low, Lane04Low)), bit32.bxor(Lane03Low, bit32.band(-1 - Lane04Low, Lane05Low)), bit32.bxor(Lane04Low, bit32.band(-1 - Lane05Low, Lane01Low)), bit32.bxor(Lane05Low, bit32.band(-1 - Lane01Low, Lane02Low)) :: number
-			Lane01High, Lane02High, Lane03High, Lane04High, Lane05High = bit32.bxor(Lane01High, bit32.band(-1 - Lane02High, Lane03High)), bit32.bxor(Lane02High, bit32.band(-1 - Lane03High, Lane04High)), bit32.bxor(Lane03High, bit32.band(-1 - Lane04High, Lane05High)), bit32.bxor(Lane04High, bit32.band(-1 - Lane05High, Lane01High)), bit32.bxor(Lane05High, bit32.band(-1 - Lane01High, Lane02High)) :: number
-			Lane06Low, Lane07Low, Lane08Low, Lane09Low, Lane10Low = bit32.bxor(Lane09Low, bit32.band(-1 - Lane10Low, Lane06Low)), bit32.bxor(Lane10Low, bit32.band(-1 - Lane06Low, Lane07Low)), bit32.bxor(Lane06Low, bit32.band(-1 - Lane07Low, Lane08Low)), bit32.bxor(Lane07Low, bit32.band(-1 - Lane08Low, Lane09Low)), bit32.bxor(Lane08Low, bit32.band(-1 - Lane09Low, Lane10Low)) :: number
-			Lane06High, Lane07High, Lane08High, Lane09High, Lane10High = bit32.bxor(Lane09High, bit32.band(-1 - Lane10High, Lane06High)), bit32.bxor(Lane10High, bit32.band(-1 - Lane06High, Lane07High)), bit32.bxor(Lane06High, bit32.band(-1 - Lane07High, Lane08High)), bit32.bxor(Lane07High, bit32.band(-1 - Lane08High, Lane09High)), bit32.bxor(Lane08High, bit32.band(-1 - Lane09High, Lane10High)) :: number
-			Lane11Low, Lane12Low, Lane13Low, Lane14Low, Lane15Low = bit32.bxor(Lane12Low, bit32.band(-1 - Lane13Low, Lane14Low)), bit32.bxor(Lane13Low, bit32.band(-1 - Lane14Low, Lane15Low)), bit32.bxor(Lane14Low, bit32.band(-1 - Lane15Low, Lane11Low)), bit32.bxor(Lane15Low, bit32.band(-1 - Lane11Low, Lane12Low)), bit32.bxor(Lane11Low, bit32.band(-1 - Lane12Low, Lane13Low)) :: number
-			Lane11High, Lane12High, Lane13High, Lane14High, Lane15High = bit32.bxor(Lane12High, bit32.band(-1 - Lane13High, Lane14High)), bit32.bxor(Lane13High, bit32.band(-1 - Lane14High, Lane15High)), bit32.bxor(Lane14High, bit32.band(-1 - Lane15High, Lane11High)), bit32.bxor(Lane15High, bit32.band(-1 - Lane11High, Lane12High)), bit32.bxor(Lane11High, bit32.band(-1 - Lane12High, Lane13High)) :: number
-			Lane16Low, Lane17Low, Lane18Low, Lane19Low, Lane20Low = bit32.bxor(Lane20Low, bit32.band(-1 - Lane16Low, Lane17Low)), bit32.bxor(Lane16Low, bit32.band(-1 - Lane17Low, Lane18Low)), bit32.bxor(Lane17Low, bit32.band(-1 - Lane18Low, Lane19Low)), bit32.bxor(Lane18Low, bit32.band(-1 - Lane19Low, Lane20Low)), bit32.bxor(Lane19Low, bit32.band(-1 - Lane20Low, Lane16Low)) :: number
-			Lane16High, Lane17High, Lane18High, Lane19High, Lane20High = bit32.bxor(Lane20High, bit32.band(-1 - Lane16High, Lane17High)), bit32.bxor(Lane16High, bit32.band(-1 - Lane17High, Lane18High)), bit32.bxor(Lane17High, bit32.band(-1 - Lane18High, Lane19High)), bit32.bxor(Lane18High, bit32.band(-1 - Lane19High, Lane20High)), bit32.bxor(Lane19High, bit32.band(-1 - Lane20High, Lane16High)) :: number
-			Lane21Low, Lane22Low, Lane23Low, Lane24Low, Lane25Low = bit32.bxor(Lane23Low, bit32.band(-1 - Lane24Low, Lane25Low)), bit32.bxor(Lane24Low, bit32.band(-1 - Lane25Low, Lane21Low)), bit32.bxor(Lane25Low, bit32.band(-1 - Lane21Low, Lane22Low)), bit32.bxor(Lane21Low, bit32.band(-1 - Lane22Low, Lane23Low)), bit32.bxor(Lane22Low, bit32.band(-1 - Lane23Low, Lane24Low)) :: number
-			Lane21High, Lane22High, Lane23High, Lane24High, Lane25High = bit32.bxor(Lane23High, bit32.band(-1 - Lane24High, Lane25High)), bit32.bxor(Lane24High, bit32.band(-1 - Lane25High, Lane21High)), bit32.bxor(Lane25High, bit32.band(-1 - Lane21High, Lane22High)), bit32.bxor(Lane21High, bit32.band(-1 - Lane22High, Lane23High)), bit32.bxor(Lane22High, bit32.band(-1 - Lane23High, Lane24High)) :: number
-
-			Lane01Low = bit32.bxor(Lane01Low, buffer.readu32(RCLow, RoundIndex))
-			Lane01High = bit32.bxor(Lane01High, buffer.readu32(RCHigh, RoundIndex))
+			Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex))
 		end
 
-		buffer.writeu32(LanesLow, 0, Lane01Low); buffer.writeu32(LanesHigh, 0, Lane01High)
-		buffer.writeu32(LanesLow, 4, Lane02Low); buffer.writeu32(LanesHigh, 4, Lane02High)
-		buffer.writeu32(LanesLow, 8, Lane03Low); buffer.writeu32(LanesHigh, 8, Lane03High)
-		buffer.writeu32(LanesLow, 12, Lane04Low); buffer.writeu32(LanesHigh, 12, Lane04High)
-		buffer.writeu32(LanesLow, 16, Lane05Low); buffer.writeu32(LanesHigh, 16, Lane05High)
-		buffer.writeu32(LanesLow, 20, Lane06Low); buffer.writeu32(LanesHigh, 20, Lane06High)
-		buffer.writeu32(LanesLow, 24, Lane07Low); buffer.writeu32(LanesHigh, 24, Lane07High)
-		buffer.writeu32(LanesLow, 28, Lane08Low); buffer.writeu32(LanesHigh, 28, Lane08High)
-		buffer.writeu32(LanesLow, 32, Lane09Low); buffer.writeu32(LanesHigh, 32, Lane09High)
-		buffer.writeu32(LanesLow, 36, Lane10Low); buffer.writeu32(LanesHigh, 36, Lane10High)
-		buffer.writeu32(LanesLow, 40, Lane11Low); buffer.writeu32(LanesHigh, 40, Lane11High)
-		buffer.writeu32(LanesLow, 44, Lane12Low); buffer.writeu32(LanesHigh, 44, Lane12High)
-		buffer.writeu32(LanesLow, 48, Lane13Low); buffer.writeu32(LanesHigh, 48, Lane13High)
-		buffer.writeu32(LanesLow, 52, Lane14Low); buffer.writeu32(LanesHigh, 52, Lane14High)
-		buffer.writeu32(LanesLow, 56, Lane15Low); buffer.writeu32(LanesHigh, 56, Lane15High)
-		buffer.writeu32(LanesLow, 60, Lane16Low); buffer.writeu32(LanesHigh, 60, Lane16High)
-		buffer.writeu32(LanesLow, 64, Lane17Low); buffer.writeu32(LanesHigh, 64, Lane17High)
-		buffer.writeu32(LanesLow, 68, Lane18Low); buffer.writeu32(LanesHigh, 68, Lane18High)
-		buffer.writeu32(LanesLow, 72, Lane19Low); buffer.writeu32(LanesHigh, 72, Lane19High)
-		buffer.writeu32(LanesLow, 76, Lane20Low); buffer.writeu32(LanesHigh, 76, Lane20High)
-		buffer.writeu32(LanesLow, 80, Lane21Low); buffer.writeu32(LanesHigh, 80, Lane21High)
-		buffer.writeu32(LanesLow, 84, Lane22Low); buffer.writeu32(LanesHigh, 84, Lane22High)
-		buffer.writeu32(LanesLow, 88, Lane23Low); buffer.writeu32(LanesHigh, 88, Lane23High)
-		buffer.writeu32(LanesLow, 92, Lane24Low); buffer.writeu32(LanesHigh, 92, Lane24High)
-		buffer.writeu32(LanesLow, 96, Lane25Low); buffer.writeu32(LanesHigh, 96, Lane25High)
+		buffer.writeinteger(Lanes, 0, Lane01)
+		buffer.writeinteger(Lanes, 8, Lane02)
+		buffer.writeinteger(Lanes, 16, Lane03)
+		buffer.writeinteger(Lanes, 24, Lane04)
+		buffer.writeinteger(Lanes, 32, Lane05)
+		buffer.writeinteger(Lanes, 40, Lane06)
+		buffer.writeinteger(Lanes, 48, Lane07)
+		buffer.writeinteger(Lanes, 56, Lane08)
+		buffer.writeinteger(Lanes, 64, Lane09)
+		buffer.writeinteger(Lanes, 72, Lane10)
+		buffer.writeinteger(Lanes, 80, Lane11)
+		buffer.writeinteger(Lanes, 88, Lane12)
+		buffer.writeinteger(Lanes, 96, Lane13)
+		buffer.writeinteger(Lanes, 104, Lane14)
+		buffer.writeinteger(Lanes, 112, Lane15)
+		buffer.writeinteger(Lanes, 120, Lane16)
+		buffer.writeinteger(Lanes, 128, Lane17)
+		buffer.writeinteger(Lanes, 136, Lane18)
+		buffer.writeinteger(Lanes, 144, Lane19)
+		buffer.writeinteger(Lanes, 152, Lane20)
+		buffer.writeinteger(Lanes, 160, Lane21)
+		buffer.writeinteger(Lanes, 168, Lane22)
+		buffer.writeinteger(Lanes, 176, Lane23)
+		buffer.writeinteger(Lanes, 184, Lane24)
+		buffer.writeinteger(Lanes, 192, Lane25)
 	end
 end
 
 local XOF = {}
 
 function XOF.Reset128()
-	buffer.fill(LanesLow128, 0, 0, 100)
-	buffer.fill(LanesHigh128, 0, 0, 100)
+	buffer.fill(Lanes128, 0, 0)
 	SqueezeOffset128 = 0
 end
 
 function XOF.Reset256()
-	buffer.fill(LanesLow256, 0, 0, 100)
-	buffer.fill(LanesHigh256, 0, 0, 100)
+	buffer.fill(Lanes256, 0, 0)
 	SqueezeOffset256 = 0
 end
 
@@ -260,7 +207,7 @@ function XOF.Absorb128(Message: buffer)
 		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
 	end
 
-	Keccak(LanesLow128, LanesHigh128, PaddedMessage, 0, RateBytes, RateBytes)
+	Keccak(Lanes128, PaddedMessage, 0, RateBytes, RateBytes)
 end
 
 function XOF.Absorb256(Message: buffer)
@@ -281,21 +228,20 @@ function XOF.Absorb256(Message: buffer)
 		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
 	end
 
-	Keccak(LanesLow256, LanesHigh256, PaddedMessage, 0, RateBytes, RateBytes)
+	Keccak(Lanes256, PaddedMessage, 0, RateBytes, RateBytes)
 end
 
 function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
 	local OutOffset = OutputOffset or 0
 	local RateBytes = RATE_128
-	local LanesLow = LanesLow128
-	local LanesHigh = LanesHigh128
+	local Lanes = Lanes128
 	local SqueezeOffset = SqueezeOffset128
 	local ZeroBuffer = ZeroBuffer128
 
 	local Written = 0
 	while Written < OutputBytes do
 		if SqueezeOffset >= RateBytes then
-			Keccak(LanesLow, LanesHigh, ZeroBuffer, 0, RateBytes, RateBytes)
+			Keccak(Lanes, ZeroBuffer, 0, RateBytes, RateBytes)
 			SqueezeOffset = 0
 		end
 
@@ -311,24 +257,26 @@ function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: n
 			local ByteInLane = bit32.band(AbsoluteIndex, 7)
 			local LaneOffset = bit32.lshift(Lane, 2)
 
+			local Value = buffer.readinteger(Lanes, LaneOffset)
 			if ByteInLane == 0 and ByteIndex + 8 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex + 4, buffer.readu32(LanesHigh, LaneOffset))
+				print("3")
+				buffer.writeinteger(Output, OutOffset + Written + ByteIndex, Value)
 				ByteIndex += 8
 			elseif ByteInLane == 0 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
+				print("2")
+				--buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
+				buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.band(Value, 0xFFFFFFFFi)))
+				
 				ByteIndex += 4
 			elseif ByteInLane == 4 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesHigh, LaneOffset))
+				print("1")
+				--buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesHigh, LaneOffset))
+				buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.rshift(Value, 32i)))
 				ByteIndex += 4
 			else
-				local Value
-				if ByteInLane < 4 then
-					Value = bit32.extract(buffer.readu32(LanesLow, LaneOffset), bit32.lshift(ByteInLane, 3), 8)
-				else
-					Value = bit32.extract(buffer.readu32(LanesHigh, LaneOffset), bit32.lshift(ByteInLane - 4, 3), 8)
-				end
-				buffer.writeu8(Output, OutOffset + Written + ByteIndex, Value)
+				print("here")
+				local LaneValue = integer.extract(buffer.readinteger(Lanes, LaneOffset), integer.create(ByteInLane * 8), 8i)
+				buffer.writeu8(Output, OutOffset + Written + ByteIndex, integer.tonumber(LaneValue))
 				ByteIndex += 1
 			end
 		end
@@ -349,15 +297,14 @@ end
 function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
 	local OutOffset = OutputOffset or 0
 	local RateBytes = RATE_256
-	local LanesLow = LanesLow256
-	local LanesHigh = LanesHigh256
+	local Lanes = Lanes256
 	local SqueezeOffset = SqueezeOffset256
 	local ZeroBuffer = ZeroBuffer256
 
 	local Written = 0
 	while Written < OutputBytes do
 		if SqueezeOffset >= RateBytes then
-			Keccak(LanesLow, LanesHigh, ZeroBuffer, 0, RateBytes, RateBytes)
+			Keccak(Lanes, ZeroBuffer, 0, RateBytes, RateBytes)
 			SqueezeOffset = 0
 		end
 
@@ -373,24 +320,21 @@ function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: n
 			local ByteInLane = bit32.band(AbsoluteIndex, 7)
 			local LaneOffset = bit32.lshift(Lane, 2)
 
+			local Value = buffer.readinteger(Lanes, LaneOffset)
 			if ByteInLane == 0 and ByteIndex + 8 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex + 4, buffer.readu32(LanesHigh, LaneOffset))
+				buffer.writeinteger(Output, OutOffset + Written + ByteIndex, Value)
 				ByteIndex += 8
 			elseif ByteInLane == 0 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
+				buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.band(Value, 0xFFFFFFFFi)))
+				--buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.rshift(Value, 32i)))
 				ByteIndex += 4
 			elseif ByteInLane == 4 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesHigh, LaneOffset))
+				buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.rshift(Value, 32i)))
+				--buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.band(Value, 0xFFFFFFFFi)))
 				ByteIndex += 4
 			else
-				local Value
-				if ByteInLane < 4 then
-					Value = bit32.extract(buffer.readu32(LanesLow, LaneOffset), bit32.lshift(ByteInLane, 3), 8)
-				else
-					Value = bit32.extract(buffer.readu32(LanesHigh, LaneOffset), bit32.lshift(ByteInLane - 4, 3), 8)
-				end
-				buffer.writeu8(Output, OutOffset + Written + ByteIndex, Value)
+				local LaneValue = integer.extract(buffer.readinteger(Lanes, LaneOffset), integer.create(ByteInLane * 8), 8i)
+				buffer.writeu8(Output, OutOffset + Written + ByteIndex, integer.tonumber(LaneValue))
 				ByteIndex += 1
 			end
 		end

@@ -6,7 +6,10 @@ type TestVector = {
 }
 
 type TestVectors = {[string]: TestVector}
-local Algorithm = require("../Hashing/SHA3")
+
+local IsLuauCLI = warn == nil
+local Algorithm = if IsLuauCLI then require("../src/Hashing/SHA3") else require("../Hashing/SHA3")
+
 local SHA3_224_TestVectors: TestVectors = {
 	[""] = { Description = "Empty String", Expected = "6b4e03423667dbb73b6e15454f0eb1abd4597f9a1b078e3f5b5a6bc7" },
 	["abc"] = { Description = "Short String", Expected = "e642824c3f8cf24ad09234ee7d3c766fc9a3a5168d0c94ad73b46fdf" },

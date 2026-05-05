@@ -1,5 +1,11 @@
 --!strict
+--!nolint BuiltinGlobalWrite
 -- Thanks @Sythivo :)
+
+if not warn then
+	-- Lua CLI compatibility
+	warn = print 
+end
 
 type BasicCases = {
 	ToBe: (Expected: any) -> (),
