@@ -199,10 +199,6 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	Keccak(Lanes, PaddedMessage, 0, PaddedLength, RateBytes)
 
 	local Output = buffer.create(OutputBytes)
-	local Length = buffer.len(Output)
-
-
-	local Leftover = Length % 8
 	local OutputOffset = 0
 
 	local ZeroBuffer = buffer.create(RateBytes)

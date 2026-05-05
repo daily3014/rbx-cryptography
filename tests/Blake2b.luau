@@ -8,8 +8,9 @@ type TestVector = {
 }
 
 type TestVectors = {[string]: TestVector}
-local Algorithm = require("../Hashing/Blake2b")
 
+local IsLuauCLI = warn == nil
+local Algorithm = if IsLuauCLI then require("../src/Hashing/Blake2b") else require("../Hashing/Blake2b")
 local TestVectors: TestVectors = {
 	["abc"] = { 
 		Description = "Basic ABC Test", 

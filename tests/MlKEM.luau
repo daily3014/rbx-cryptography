@@ -16,10 +16,9 @@
 --!strict
 --!optimize 2
 
-local Http = game:GetService("HttpService")
-
+local IsLuauCLI = warn == nil
 local Testing = require("./")
-local Cryptography = require("../")
+local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
 local MLKEM = Cryptography.Verification.MlKEM
 local Conversions = Cryptography.Utilities.Conversions
@@ -74,6 +73,11 @@ local function BuffersEqual(A: buffer, B: buffer): boolean
 end
 
 local function FetchTestVectors(): WycheproofData
+	if IsLuauCLI then
+		return require("../testing/data/mlkem_1024_test") :: WycheproofData
+	end
+
+	local Http = game:GetService("HttpService")
 	local Response = Http:GetAsync(WYCHEPROOF_URL)
 	return Http:JSONDecode(Response) :: WycheproofData
 end

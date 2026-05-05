@@ -4,7 +4,8 @@
 
 if not warn then
 	-- Lua CLI compatibility
-	warn = print 
+	warn = print
+	task = { wait = function() end }
 end
 
 type BasicCases = {

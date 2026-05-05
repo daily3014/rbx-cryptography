@@ -177,6 +177,7 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 	end
 end
 
+
 local XOF = {}
 
 function XOF.Reset128()
@@ -255,26 +256,19 @@ function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: n
 			local AbsoluteIndex = SqueezeOffset + ByteIndex
 			local Lane = bit32.rshift(AbsoluteIndex, 3)
 			local ByteInLane = bit32.band(AbsoluteIndex, 7)
-			local LaneOffset = bit32.lshift(Lane, 2)
+			local LaneOffset = bit32.lshift(Lane, 3)
 
 			local Value = buffer.readinteger(Lanes, LaneOffset)
 			if ByteInLane == 0 and ByteIndex + 8 <= BytesThisRound then
-				print("3")
 				buffer.writeinteger(Output, OutOffset + Written + ByteIndex, Value)
 				ByteIndex += 8
 			elseif ByteInLane == 0 and ByteIndex + 4 <= BytesThisRound then
-				print("2")
-				--buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
 				buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.band(Value, 0xFFFFFFFFi)))
-				
 				ByteIndex += 4
 			elseif ByteInLane == 4 and ByteIndex + 4 <= BytesThisRound then
-				print("1")
-				--buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesHigh, LaneOffset))
 				buffer.writeu32(Output, OutOffset + Written + ByteIndex, integer.tonumber(integer.rshift(Value, 32i)))
 				ByteIndex += 4
 			else
-				print("here")
 				local LaneValue = integer.extract(buffer.readinteger(Lanes, LaneOffset), integer.create(ByteInLane * 8), 8i)
 				buffer.writeu8(Output, OutOffset + Written + ByteIndex, integer.tonumber(LaneValue))
 				ByteIndex += 1
@@ -318,7 +312,7 @@ function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: n
 			local AbsoluteIndex = SqueezeOffset + ByteIndex
 			local Lane = bit32.rshift(AbsoluteIndex, 3)
 			local ByteInLane = bit32.band(AbsoluteIndex, 7)
-			local LaneOffset = bit32.lshift(Lane, 2)
+			local LaneOffset = bit32.lshift(Lane, 3)
 
 			local Value = buffer.readinteger(Lanes, LaneOffset)
 			if ByteInLane == 0 and ByteIndex + 8 <= BytesThisRound then
