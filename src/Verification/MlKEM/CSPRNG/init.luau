@@ -25,7 +25,6 @@
 --!native
 
 local Conversions = require("@self/Conversions")
-local ChaCha20 = require("@self/ChaCha20")
 local Blake3 = require("@self/Blake3")
 
 export type EntropyProvider = (BytesLeft: number) -> buffer?
@@ -82,9 +81,7 @@ local CSPRNG: CSPRNGModule = {
 	EntropyProviders = {}
 } :: CSPRNGModule
 
-local INPUT_BUFFER = buffer.create(BLOCK_SIZE)
-local REKEY_THRESHOLD = math.max(math.floor(CSPRNG.RekeyAfter), 2)
-local SIZE_TARGET_CLAMPED = math.clamp(math.floor(CSPRNG.SizeTarget), 64, 4294967295)
+local INPUT_BUFFER = buffer.create(KEY_SIZE + NONCE_SIZE + 8)
 
 local function Reset()
 	CSPRNG.Key = buffer.create(0)
@@ -314,16 +311,23 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 end
 
 local function GenerateBlock()
-	buffer.fill(INPUT_BUFFER, 0, 0, BLOCK_SIZE)
-	local ChaChaOutput = ChaCha20(INPUT_BUFFER, CSPRNG.Key, CSPRNG.Nonce, CSPRNG.Counter, 20)
+	local RekeyThreshold = math.max(math.floor(CSPRNG.RekeyAfter), 2)
+	local OutputSize = if CSPRNG.BlockExpansion
+		then math.clamp(math.floor(CSPRNG.SizeTarget), 64, 4294967295)
+		else BLOCK_SIZE
 
-	CSPRNG.Buffer = if CSPRNG.BlockExpansion then Blake3(ChaChaOutput, SIZE_TARGET_CLAMPED) else ChaChaOutput
+	buffer.copy(INPUT_BUFFER, 0, CSPRNG.Key, 0, KEY_SIZE)
+	buffer.copy(INPUT_BUFFER, KEY_SIZE, CSPRNG.Nonce, 0, NONCE_SIZE)
+	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE, CSPRNG.Counter % 0x100000000)
+	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE + 4, math.floor(CSPRNG.Counter / 0x100000000))
+
+	CSPRNG.Buffer = Blake3(INPUT_BUFFER, OutputSize)
 	CSPRNG.BufferPosition = 0
 	CSPRNG.BufferSize = buffer.len(CSPRNG.Buffer)
 	CSPRNG.Counter += 1
 
-	if CSPRNG.Counter % REKEY_THRESHOLD == 0 then
-		GatherEntropy() 
+	if CSPRNG.Counter % RekeyThreshold == 0 then
+		GatherEntropy()
 		CSPRNG.Counter = 0
 	end
 end

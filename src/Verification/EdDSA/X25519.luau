@@ -29,7 +29,7 @@ local Curve25519 = require("./Curve25519")
 local SHA512 = require("./SHA512")
 local CSPRNG = require("./CSPRNG")
 
-local COORD_SIZE = 104
+local COORD_SIZE = 80
 
 local X25519_SECRET_KEY_SIZE = 32
 local X25519_PUBLIC_KEY_SIZE = 32

@@ -24,8 +24,8 @@ local MultiPrecision = require("./MultiPrecision")
 
 local CONSTANT_ZERO = MultiPrecision.Num(0)
 
-local OUTPUT_BUFFER = buffer.create(8192)
-local RULE_BUFFER = buffer.create(8192)
+local OUTPUT_BUFFER = buffer.create(1024)
+local RULE_BUFFER = buffer.create(1024)
 local DECODE_WIDE_LOW = buffer.create(96)
 local DECODE_WIDE_HIGH = buffer.create(96)
 local DECODE_BUFFER = buffer.create(96)
@@ -43,54 +43,48 @@ local FIELD_ORDER_BYTES = buffer.create(32) do
 	end
 end
 
-local FIELD_ORDER = buffer.create(96) do
-	local ByteIndex = 0
+local function WriteIntLimbs(Buf: buffer, Values: {number})
+	for Index = 1, 11 do
+		buffer.writeinteger(Buf, (Index - 1) * 8, integer.create(Values[Index]) :: integer)
+	end
+end
 
-	for LimbIndex = 0, 9 do
-		local Value = buffer.readu8(FIELD_ORDER_BYTES, ByteIndex)
+local FIELD_ORDER = buffer.create(96) do
+	local Limbs = table.create(11, 0)
+	local ByteIndex = 0
+	for LimbIndex = 1, 10 do
+		Limbs[LimbIndex] = buffer.readu8(FIELD_ORDER_BYTES, ByteIndex)
 			+ buffer.readu8(FIELD_ORDER_BYTES, ByteIndex + 1) * 256
 			+ buffer.readu8(FIELD_ORDER_BYTES, ByteIndex + 2) * 65536
-
-		buffer.writef64(FIELD_ORDER, LimbIndex * 8, Value)
 		ByteIndex += 3
 	end
-
-	local LastValue = buffer.readu8(FIELD_ORDER_BYTES, 30)
+	Limbs[11] = buffer.readu8(FIELD_ORDER_BYTES, 30)
 		+ buffer.readu8(FIELD_ORDER_BYTES, 31) * 256
-	buffer.writef64(FIELD_ORDER, 10 * 8, LastValue)
+	WriteIntLimbs(FIELD_ORDER, Limbs)
 end
 
 local MONTGOMERY_T0 = buffer.create(96) do
-	local Values = {
+	WriteIntLimbs(MONTGOMERY_T0, {
 		05537307, 01942290, 16765621, 16628356, 10618610,
 		07072433, 03735459, 01369940, 15276086, 13038191,
 		13409718
-	}
-	for Index = 1, 11 do
-		buffer.writef64(MONTGOMERY_T0, (Index - 1) * 8, Values[Index])
-	end
+	})
 end
 
 local MONTGOMERY_T1 = buffer.create(96) do
-	local Values = {
+	WriteIntLimbs(MONTGOMERY_T1, {
 		11711996, 01747860, 08326961, 03814718, 01859974,
 		13327461, 16105061, 07590423, 04050668, 08138906,
 		00000283
-	}
-	for Index = 1, 11 do
-		buffer.writef64(MONTGOMERY_T1, (Index - 1) * 8, Values[Index])
-	end
+	})
 end
 
 local DIVIDE_8 = buffer.create(96) do
-	local Values = {
+	WriteIntLimbs(DIVIDE_8, {
 		5110253, 3039345, 2503500, 11779568, 15416472,
 		16766550, 16777215, 16777215, 16777215, 16777215,
 		4095
-	}
-	for Index = 1, 11 do
-		buffer.writef64(DIVIDE_8, (Index - 1) * 8, Values[Index])
-	end
+	})
 end
 
 local function Reduce(LargeNumber: buffer): buffer
@@ -110,25 +104,26 @@ local function Demontgomery(MontgomeryScalar: buffer): buffer
 	return Reduce(ResultHigh)
 end
 
-local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)
+local function RebaseLE24ToBits(InputBuffer: buffer, InputLength: number): (buffer, number)
 	local OutputLength = 0
-	local Accumulator = 0
-	local Multiplier = 1
+	local Accumulator = 0i
+	local Multiplier = 1i
+	local TwoPow24 = 0x1000000i
 
 	for Index = 0, InputLength - 1 do
-		Accumulator += buffer.readf64(InputBuffer, Index * 8) * Multiplier
-		Multiplier *= FromBase
-		while Multiplier >= ToBase do
-			local Remainder = Accumulator % ToBase
-			Accumulator = (Accumulator - Remainder) / ToBase
-			Multiplier /= ToBase
-			buffer.writef64(OUTPUT_BUFFER, OutputLength * 8, Remainder)
+		Accumulator = integer.add(Accumulator, integer.mul(buffer.readinteger(InputBuffer, Index * 8), Multiplier))
+		Multiplier = integer.mul(Multiplier, TwoPow24)
+		while integer.ge(Multiplier, 2i) do
+			local Remainder = integer.band(Accumulator, 1i)
+			Accumulator = integer.arshift(Accumulator, 1i)
+			Multiplier = integer.arshift(Multiplier, 1i)
+			buffer.writeu8(OUTPUT_BUFFER, OutputLength, integer.tonumber(Remainder))
 			OutputLength += 1
 		end
 	end
 
-	if Multiplier > 0 then
-		buffer.writef64(OUTPUT_BUFFER, OutputLength * 8, Accumulator)
+	if integer.gt(Multiplier, 0i) then
+		buffer.writeu8(OUTPUT_BUFFER, OutputLength, integer.tonumber(Accumulator))
 		OutputLength += 1
 	end
 
@@ -180,19 +175,19 @@ function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 	local EncodedBuffer = buffer.create(32)
 	local ByteIndex = 0
 	for LimbIndex = 0, 9 do
-		local Value = buffer.readf64(DemontResult, LimbIndex * 8)
-		buffer.writeu8(EncodedBuffer, ByteIndex, Value % 256)
-		Value = Value // 256
-		buffer.writeu8(EncodedBuffer, ByteIndex + 1, Value % 256)
-		Value = Value // 256
-		buffer.writeu8(EncodedBuffer, ByteIndex + 2, Value % 256)
+		local Value = buffer.readinteger(DemontResult, LimbIndex * 8)
+		buffer.writeu8(EncodedBuffer, ByteIndex, integer.tonumber(integer.band(Value, 0xFFi)))
+		Value = integer.arshift(Value, 8i)
+		buffer.writeu8(EncodedBuffer, ByteIndex + 1, integer.tonumber(integer.band(Value, 0xFFi)))
+		Value = integer.arshift(Value, 8i)
+		buffer.writeu8(EncodedBuffer, ByteIndex + 2, integer.tonumber(integer.band(Value, 0xFFi)))
 		ByteIndex += 3
 	end
 
-	local LastValue = buffer.readf64(DemontResult, 10 * 8)
-	buffer.writeu8(EncodedBuffer, 30, LastValue % 256)
-	LastValue = LastValue // 256
-	buffer.writeu8(EncodedBuffer, 31, LastValue % 256)
+	local LastValue = buffer.readinteger(DemontResult, 10 * 8)
+	buffer.writeu8(EncodedBuffer, 30, integer.tonumber(integer.band(LastValue, 0xFFi)))
+	LastValue = integer.arshift(LastValue, 8i)
+	buffer.writeu8(EncodedBuffer, 31, integer.tonumber(integer.band(LastValue, 0xFFi)))
 
 	return EncodedBuffer
 end
@@ -206,13 +201,13 @@ function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
 			+ buffer.readu8(EncodedBuffer, ByteIndex + 1) * 256
 			+ buffer.readu8(EncodedBuffer, ByteIndex + 2) * 65536
 
-		buffer.writef64(DecodedBuffer, LimbIndex * 8, Value)
+		buffer.writeinteger(DecodedBuffer, LimbIndex * 8, integer.create(Value) :: integer)
 		ByteIndex += 3
 	end
 
 	local LastValue = buffer.readu8(EncodedBuffer, 30)
 		+ buffer.readu8(EncodedBuffer, 31) * 256
-	buffer.writef64(DecodedBuffer, 10 * 8, LastValue)
+	buffer.writeinteger(DecodedBuffer, 10 * 8, integer.create(LastValue) :: integer)
 
 	return FieldQuadratic.Montgomery(DecodedBuffer)
 end
@@ -226,7 +221,7 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 		local Value = buffer.readu8(WideBuffer, ByteIndex)
 			+ buffer.readu8(WideBuffer, ByteIndex + 1) * 256
 			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
-		buffer.writef64(LowPart, LimbIndex * 8, Value)
+		buffer.writeinteger(LowPart, LimbIndex * 8, integer.create(Value) :: integer)
 	end
 
 	for LimbIndex = 0, 9 do
@@ -234,9 +229,9 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 		local Value = buffer.readu8(WideBuffer, ByteIndex)
 			+ buffer.readu8(WideBuffer, ByteIndex + 1) * 256
 			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
-		buffer.writef64(HighPart, LimbIndex * 8, Value)
+		buffer.writeinteger(HighPart, LimbIndex * 8, integer.create(Value) :: integer)
 	end
-	buffer.writef64(HighPart, 10 * 8, buffer.readu8(WideBuffer, 63))
+	buffer.writeinteger(HighPart, 10 * 8, integer.create(buffer.readu8(WideBuffer, 63)) :: integer)
 
 	local MontLow = FieldQuadratic.Montgomery(LowPart)
 	local MontHigh = FieldQuadratic.Montgomery(HighPart)
@@ -264,7 +259,7 @@ end
 
 function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 	local DemontResult = Demontgomery(MontgomeryScalar)
-	local BitOutput, BitCount = RebaseLE(DemontResult, 11, 2 ^ 24, 2)
+	local BitOutput, BitCount = RebaseLE24ToBits(DemontResult, 11)
 
 	if BitCount > 253 then
 		BitCount = 253
@@ -367,12 +362,12 @@ function FieldQuadratic.MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, 
 			FFloat = MultiPrecision.Approx(FTable)
 		end
 
-		buffer.writef64(RuleBuffer, RuleCount * 8, Rule)
+		buffer.writeu8(RuleBuffer, RuleCount, Rule)
 		RuleCount += 1
 	end
 
-	local FinalBits, FinalBitCount = RebaseLE(DTable, 11, 2 ^ 24, 2)
-	while FinalBitCount > 0 and buffer.readf64(FinalBits, (FinalBitCount - 1) * 8) == 0 do
+	local FinalBits, FinalBitCount = RebaseLE24ToBits(DTable, 11)
+	while FinalBitCount > 0 and buffer.readu8(FinalBits, FinalBitCount - 1) == 0 do
 		FinalBitCount -= 1
 	end
 

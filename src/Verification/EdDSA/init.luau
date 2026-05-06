@@ -236,10 +236,10 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	Difference = Edwards25519.Double(Difference)
 	Difference = Edwards25519.Double(Difference)
 
-	local DifferenceX = buffer.create(104)
-	local DifferenceT = buffer.create(104)
-	buffer.copy(DifferenceX, 0, Difference, 0 * 104, 104)
-	buffer.copy(DifferenceT, 0, Difference, 3 * 104, 104)
+	local DifferenceX = buffer.create(80)
+	local DifferenceT = buffer.create(80)
+	buffer.copy(DifferenceX, 0, Difference, 0 * 80, 80)
+	buffer.copy(DifferenceT, 0, Difference, 3 * 80, 80)
 
 	local XIsZero = FieldPrime.Eqz(DifferenceX)
 	local TIsZero = FieldPrime.Eqz(DifferenceT)
@@ -374,10 +374,10 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 	Difference = Edwards25519.Double(Difference)
 	Difference = Edwards25519.Double(Difference)
 
-	local DifferenceX = buffer.create(104)
-	local DifferenceT = buffer.create(104)
-	buffer.copy(DifferenceX, 0, Difference, 0 * 104, 104)
-	buffer.copy(DifferenceT, 0, Difference, 3 * 104, 104)
+	local DifferenceX = buffer.create(80)
+	local DifferenceT = buffer.create(80)
+	buffer.copy(DifferenceX, 0, Difference, 0 * 80, 80)
+	buffer.copy(DifferenceT, 0, Difference, 3 * 80, 80)
 
 	local XIsZero = FieldPrime.Eqz(DifferenceX)
 	local TIsZero = FieldPrime.Eqz(DifferenceT)

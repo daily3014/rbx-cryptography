@@ -24,8 +24,8 @@
 local FieldPrime = require("./FieldPrime")
 local CSPRNG = require("./CSPRNG")
 
-local MONTGOMERY_POINT_SIZE = 208
-local COORD_SIZE = 104
+local COORD_SIZE = 80
+local MONTGOMERY_POINT_SIZE = 2 * COORD_SIZE
 
 local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
 	local Coord = buffer.create(COORD_SIZE)
@@ -99,7 +99,7 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 	local LadderStep = LadderStep
 
 	for BitIndex = ScalarBitCount, 1, -1 do
-		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
+		local BitValue = buffer.readu8(ScalarBits, BitIndex - 1)
 		if BitValue == 0 then
 			CurrentP, CurrentQ = LadderStep(DifferencePoint, CurrentP, CurrentQ)
 		else
@@ -172,7 +172,7 @@ function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffe
 	end
 
 	local CurrentB, CurrentC
-	local FirstRule = buffer.readf64(Rules, (RuleCount - 1) * 8)
+	local FirstRule = buffer.readu8(Rules, RuleCount - 1)
 	if FirstRule == 2 then
 		local DoubledA = Double(RandomizedA)
 		RandomizedA, CurrentB, CurrentC = DifferentialAdd(RandomizedA, DoubledA, RandomizedA), RandomizedA, DoubledA
@@ -200,7 +200,7 @@ function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffe
 	end
 
 	for RuleIndex = RuleCount - 1, 1, -1 do
-		local CurrentRule = buffer.readf64(Rules, (RuleIndex - 1) * 8)
+		local CurrentRule = buffer.readu8(Rules, RuleIndex - 1)
 		if CurrentRule == 0 then
 			RandomizedA, CurrentB = CurrentB, RandomizedA
 		elseif CurrentRule == 1 then

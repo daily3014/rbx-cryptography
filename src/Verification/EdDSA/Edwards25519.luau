@@ -25,9 +25,9 @@
 
 local FieldPrime = require("./FieldPrime")
 
-local POINT_SIZE = 416
-local COORD_SIZE = 104
-local AFFINE_NIELS_SIZE = 312
+local COORD_SIZE = 80
+local POINT_SIZE = 4 * COORD_SIZE
+local AFFINE_NIELS_SIZE = 3 * COORD_SIZE
 local BASE_RADIX_WIDTH = 6
 local BASE_POINT_ROW = 2 ^ BASE_RADIX_WIDTH / 2
 
@@ -96,8 +96,8 @@ local NAF_TABLE_DBL_M = buffer.create(COORD_SIZE)
 local NAF_TABLE_DBL_Z = buffer.create(COORD_SIZE)
 local NAF_TABLE_DBL_T = buffer.create(COORD_SIZE)
 
-local NAF_OUTPUT = buffer.create(512 * 8)
-local RADIX_OUTPUT = buffer.create(272 * 8)
+local NAF_OUTPUT = buffer.create(512)
+local RADIX_OUTPUT = buffer.create(272)
 
 local BASEPONT_G: buffer? = nil
 local AFFINE_BASEPOINT_TABLE: buffer? = nil
@@ -409,7 +409,7 @@ function Edwards25519.Encode(Point1: buffer): buffer
 
 	local EncodedY = FieldPrime.Encode(Point1Y)
 	local CanonicalX = FieldPrime.Canonicalize(Point1X)
-	local XSignBit = buffer.readf64(CanonicalX, 0) % 2
+	local XSignBit = integer.tonumber(integer.band(buffer.readinteger(CanonicalX, 0), 1i))
 
 	local ResultBuffer = buffer.create(32)
 	buffer.copy(ResultBuffer, 0, EncodedY, 0, 32)
@@ -440,7 +440,7 @@ function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	end
 
 	local CanonicalX = FieldPrime.Canonicalize(XCoord)
-	local XSignBit = buffer.readf64(CanonicalX, 0) % 2
+	local XSignBit = integer.tonumber(integer.band(buffer.readinteger(CanonicalX, 0), 1i))
 
 	if XSignBit ~= SignBit then
 		XCoord = FieldPrime.Carry(FieldPrime.Neg(XCoord))
@@ -566,7 +566,7 @@ function Edwards25519.SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, R
 			break
 		end
 
-		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
+		local BitValue = buffer.readu8(ScalarBits, BitIndex - 1)
 		Accumulator += BitValue * Multiplier
 		Multiplier *= 2
 
@@ -581,7 +581,7 @@ function Edwards25519.SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, R
 			end
 			Accumulator = (Accumulator - Remainder) / RadixValue
 			Multiplier /= RadixValue
-			buffer.writef64(OutputDigits, OutputLength * 8, Remainder)
+			buffer.writei8(OutputDigits, OutputLength, Remainder)
 			OutputLength += 1
 		end
 	end
@@ -598,7 +598,7 @@ function Edwards25519.WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, Wi
 	local Multiplier = 1
 
 	for BitIndex = 1, ScalarBitCount do
-		local BitValue = buffer.readf64(ScalarBits, (BitIndex - 1) * 8)
+		local BitValue = buffer.readu8(ScalarBits, BitIndex - 1)
 		Accumulator += BitValue * Multiplier
 		Multiplier *= 2
 
@@ -606,7 +606,7 @@ function Edwards25519.WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, Wi
 			if Accumulator % 2 == 0 then
 				Accumulator /= 2
 				Multiplier /= 2
-				buffer.writef64(OutputNAF, OutputLength * 8, 0)
+				buffer.writei8(OutputNAF, OutputLength, 0)
 				OutputLength += 1
 			else
 				local Remainder = Accumulator % WindowValue
@@ -614,13 +614,13 @@ function Edwards25519.WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, Wi
 					Remainder -= WindowValue
 				end
 				Accumulator -= Remainder
-				buffer.writef64(OutputNAF, OutputLength * 8, Remainder)
+				buffer.writei8(OutputNAF, OutputLength, Remainder)
 				OutputLength += 1
 			end
 		end
 	end
 
-	while OutputLength > 0 and buffer.readf64(OutputNAF, (OutputLength - 1) * 8) == 0 do
+	while OutputLength > 0 and buffer.readi8(OutputNAF, OutputLength - 1) == 0 do
 		OutputLength -= 1
 	end
 
@@ -752,7 +752,7 @@ function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local TMP = MULG_TMP
 
 	for WindowIndex = 1, WindowCount do
-		local WindowValue = buffer.readf64(SignedWindows, (WindowIndex - 1) * 8)
+		local WindowValue = buffer.readi8(SignedWindows, WindowIndex - 1)
 
 		if WindowValue > 0 then
 			local BaseOffset = ((WindowIndex - 1) * BasePointRow * AffineNielsSize)
@@ -903,7 +903,7 @@ function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount:
 	local TMP = MUL_TMP
 
 	for NAFIndex = NAFLength, 1, -1 do
-		local NAFDigit = buffer.readf64(NAFForm, (NAFIndex - 1) * 8)
+		local NAFDigit = buffer.readi8(NAFForm, NAFIndex - 1)
 
 		if NAFDigit == 0 then
 			buffer.copy(DoubleX, 0, ResultPoint, 0, CoordSize)

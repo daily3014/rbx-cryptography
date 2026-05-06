@@ -1,6 +1,9 @@
 --[=[
 	Cryptography library: Multi-Precision Arithmetic (264-bit integers)
 
+	Numbers are stored as 96-byte buffers holding 11 signed 64-bit integer
+	limbs in radix 2^24, plus an overflow slot at offset 88 used by Carry.
+
 	Return type: varies by function
 	Example usage:
 		local MultiPrecision = require("MultiPrecision")
@@ -22,341 +25,263 @@
 
 local CARRY = 88
 local SIZE = 96
+local M24 = 0xFFFFFFi
+local THIRD_MULTIPLIER = 0xAAAAAAi
 
 local MultiPrecision = {}
 
-function MultiPrecision.CarryWeak(LargeNumber: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(LargeNumber, 0), buffer.readf64(LargeNumber, 8),
-		buffer.readf64(LargeNumber, 16), buffer.readf64(LargeNumber, 24),
-		buffer.readf64(LargeNumber, 32), buffer.readf64(LargeNumber, 40),
-		buffer.readf64(LargeNumber, 48), buffer.readf64(LargeNumber, 56),
-		buffer.readf64(LargeNumber, 64), buffer.readf64(LargeNumber, 72),
-		buffer.readf64(LargeNumber, 80)
+local function ReadLimbs(Number: buffer): (integer, integer, integer, integer, integer, integer, integer, integer, integer, integer, integer)
+	return buffer.readinteger(Number, 0), buffer.readinteger(Number, 8),
+		buffer.readinteger(Number, 16), buffer.readinteger(Number, 24),
+		buffer.readinteger(Number, 32), buffer.readinteger(Number, 40),
+		buffer.readinteger(Number, 48), buffer.readinteger(Number, 56),
+		buffer.readinteger(Number, 64), buffer.readinteger(Number, 72),
+		buffer.readinteger(Number, 80)
+end
 
-	local Carry00 = A00 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A01 += Carry00 * 2 ^ -24
-	local Carry01 = A01 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A02 += Carry01 * 2 ^ -24
-	local Carry02 = A02 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A03 += Carry02 * 2 ^ -24
-	local Carry03 = A03 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A04 += Carry03 * 2 ^ -24
-	local Carry04 = A04 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A05 += Carry04 * 2 ^ -24
-	local Carry05 = A05 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A06 += Carry05 * 2 ^ -24
-	local Carry06 = A06 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A07 += Carry06 * 2 ^ -24
-	local Carry07 = A07 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A08 += Carry07 * 2 ^ -24
-	local Carry08 = A08 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A09 += Carry08 * 2 ^ -24
-	local Carry09 = A09 + 3 * 2 ^ 75 - 3 * 2 ^ 75; A10 += Carry09 * 2 ^ -24
-	local Carry10 = A10 + 3 * 2 ^ 75 - 3 * 2 ^ 75
+local function WriteLimbs(Buf: buffer, L00: integer, L01: integer, L02: integer, L03: integer,
+	L04: integer, L05: integer, L06: integer, L07: integer, L08: integer, L09: integer, L10: integer)
+	buffer.writeinteger(Buf, 0, L00)
+	buffer.writeinteger(Buf, 8, L01)
+	buffer.writeinteger(Buf, 16, L02)
+	buffer.writeinteger(Buf, 24, L03)
+	buffer.writeinteger(Buf, 32, L04)
+	buffer.writeinteger(Buf, 40, L05)
+	buffer.writeinteger(Buf, 48, L06)
+	buffer.writeinteger(Buf, 56, L07)
+	buffer.writeinteger(Buf, 64, L08)
+	buffer.writeinteger(Buf, 72, L09)
+	buffer.writeinteger(Buf, 80, L10)
+end
+
+function MultiPrecision.Carry(LargeNumber: buffer, Storage: buffer?): buffer
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(LargeNumber)
+
+	local Low00 = integer.band(A00, M24); A01 = integer.add(A01, integer.arshift(A00, 24i))
+	local Low01 = integer.band(A01, M24); A02 = integer.add(A02, integer.arshift(A01, 24i))
+	local Low02 = integer.band(A02, M24); A03 = integer.add(A03, integer.arshift(A02, 24i))
+	local Low03 = integer.band(A03, M24); A04 = integer.add(A04, integer.arshift(A03, 24i))
+	local Low04 = integer.band(A04, M24); A05 = integer.add(A05, integer.arshift(A04, 24i))
+	local Low05 = integer.band(A05, M24); A06 = integer.add(A06, integer.arshift(A05, 24i))
+	local Low06 = integer.band(A06, M24); A07 = integer.add(A07, integer.arshift(A06, 24i))
+	local Low07 = integer.band(A07, M24); A08 = integer.add(A08, integer.arshift(A07, 24i))
+	local Low08 = integer.band(A08, M24); A09 = integer.add(A09, integer.arshift(A08, 24i))
+	local Low09 = integer.band(A09, M24); A10 = integer.add(A10, integer.arshift(A09, 24i))
+	local Low10 = integer.band(A10, M24)
+	local Overflow = integer.arshift(A10, 24i)
 
 	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, A00 - Carry00)
-	buffer.writef64(Buf, 8, A01 - Carry01)
-	buffer.writef64(Buf, 16, A02 - Carry02)
-	buffer.writef64(Buf, 24, A03 - Carry03)
-	buffer.writef64(Buf, 32, A04 - Carry04)
-	buffer.writef64(Buf, 40, A05 - Carry05)
-	buffer.writef64(Buf, 48, A06 - Carry06)
-	buffer.writef64(Buf, 56, A07 - Carry07)
-	buffer.writef64(Buf, 64, A08 - Carry08)
-	buffer.writef64(Buf, 72, A09 - Carry09)
-	buffer.writef64(Buf, 80, A10 - Carry10)
-	buffer.writef64(Buf, 88, Carry10 * 2 ^ -24)
+	WriteLimbs(Buf, Low00, Low01, Low02, Low03, Low04, Low05, Low06, Low07, Low08, Low09, Low10)
+	buffer.writeinteger(Buf, CARRY, Overflow)
 
 	return Buf
 end
 
-function MultiPrecision.Carry(LargeNumber: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(LargeNumber, 0), buffer.readf64(LargeNumber, 8),
-		buffer.readf64(LargeNumber, 16), buffer.readf64(LargeNumber, 24),
-		buffer.readf64(LargeNumber, 32), buffer.readf64(LargeNumber, 40),
-		buffer.readf64(LargeNumber, 48), buffer.readf64(LargeNumber, 56),
-		buffer.readf64(LargeNumber, 64), buffer.readf64(LargeNumber, 72),
-		buffer.readf64(LargeNumber, 80)
+function MultiPrecision.CarryWeak(LargeNumber: buffer, Storage: buffer?): buffer
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(LargeNumber)
 
-	local Low00 = A00 % 2 ^ 24; A01 += (A00 - Low00) * 2 ^ -24
-	local Low01 = A01 % 2 ^ 24; A02 += (A01 - Low01) * 2 ^ -24
-	local Low02 = A02 % 2 ^ 24; A03 += (A02 - Low02) * 2 ^ -24
-	local Low03 = A03 % 2 ^ 24; A04 += (A03 - Low03) * 2 ^ -24
-	local Low04 = A04 % 2 ^ 24; A05 += (A04 - Low04) * 2 ^ -24
-	local Low05 = A05 % 2 ^ 24; A06 += (A05 - Low05) * 2 ^ -24
-	local Low06 = A06 % 2 ^ 24; A07 += (A06 - Low06) * 2 ^ -24
-	local Low07 = A07 % 2 ^ 24; A08 += (A07 - Low07) * 2 ^ -24
-	local Low08 = A08 % 2 ^ 24; A09 += (A08 - Low08) * 2 ^ -24
-	local Low09 = A09 % 2 ^ 24; A10 += (A09 - Low09) * 2 ^ -24
-	local Low10 = A10 % 2 ^ 24
+	local Half = 0x800000i
+
+	local Hi00 = integer.arshift(integer.add(A00, Half), 24i); A01 = integer.add(A01, Hi00)
+	local Hi01 = integer.arshift(integer.add(A01, Half), 24i); A02 = integer.add(A02, Hi01)
+	local Hi02 = integer.arshift(integer.add(A02, Half), 24i); A03 = integer.add(A03, Hi02)
+	local Hi03 = integer.arshift(integer.add(A03, Half), 24i); A04 = integer.add(A04, Hi03)
+	local Hi04 = integer.arshift(integer.add(A04, Half), 24i); A05 = integer.add(A05, Hi04)
+	local Hi05 = integer.arshift(integer.add(A05, Half), 24i); A06 = integer.add(A06, Hi05)
+	local Hi06 = integer.arshift(integer.add(A06, Half), 24i); A07 = integer.add(A07, Hi06)
+	local Hi07 = integer.arshift(integer.add(A07, Half), 24i); A08 = integer.add(A08, Hi07)
+	local Hi08 = integer.arshift(integer.add(A08, Half), 24i); A09 = integer.add(A09, Hi08)
+	local Hi09 = integer.arshift(integer.add(A09, Half), 24i); A10 = integer.add(A10, Hi09)
+	local Hi10 = integer.arshift(integer.add(A10, Half), 24i)
 
 	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, Low00)
-	buffer.writef64(Buf, 8, Low01)
-	buffer.writef64(Buf, 16, Low02)
-	buffer.writef64(Buf, 24, Low03)
-	buffer.writef64(Buf, 32, Low04)
-	buffer.writef64(Buf, 40, Low05)
-	buffer.writef64(Buf, 48, Low06)
-	buffer.writef64(Buf, 56, Low07)
-	buffer.writef64(Buf, 64, Low08)
-	buffer.writef64(Buf, 72, Low09)
-	buffer.writef64(Buf, 80, Low10)
-	buffer.writef64(Buf, 88, (A10 - Low10) * 2 ^ -24)
+	WriteLimbs(Buf,
+		integer.sub(A00, integer.lshift(Hi00, 24i)),
+		integer.sub(A01, integer.lshift(Hi01, 24i)),
+		integer.sub(A02, integer.lshift(Hi02, 24i)),
+		integer.sub(A03, integer.lshift(Hi03, 24i)),
+		integer.sub(A04, integer.lshift(Hi04, 24i)),
+		integer.sub(A05, integer.lshift(Hi05, 24i)),
+		integer.sub(A06, integer.lshift(Hi06, 24i)),
+		integer.sub(A07, integer.lshift(Hi07, 24i)),
+		integer.sub(A08, integer.lshift(Hi08, 24i)),
+		integer.sub(A09, integer.lshift(Hi09, 24i)),
+		integer.sub(A10, integer.lshift(Hi10, 24i)))
+	buffer.writeinteger(Buf, CARRY, Hi10)
 
 	return Buf
 end
 
 function MultiPrecision.Add(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(NumberA, 0), buffer.readf64(NumberA, 8),
-		buffer.readf64(NumberA, 16), buffer.readf64(NumberA, 24),
-		buffer.readf64(NumberA, 32), buffer.readf64(NumberA, 40),
-		buffer.readf64(NumberA, 48), buffer.readf64(NumberA, 56),
-		buffer.readf64(NumberA, 64), buffer.readf64(NumberA, 72),
-		buffer.readf64(NumberA, 80)
-
-	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 =
-		buffer.readf64(NumberB, 0), buffer.readf64(NumberB, 8),
-		buffer.readf64(NumberB, 16), buffer.readf64(NumberB, 24),
-		buffer.readf64(NumberB, 32), buffer.readf64(NumberB, 40),
-		buffer.readf64(NumberB, 48), buffer.readf64(NumberB, 56),
-		buffer.readf64(NumberB, 64), buffer.readf64(NumberB, 72),
-		buffer.readf64(NumberB, 80)
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
+	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 = ReadLimbs(NumberB)
 
 	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, A00 + B00)
-	buffer.writef64(Buf, 8, A01 + B01)
-	buffer.writef64(Buf, 16, A02 + B02)
-	buffer.writef64(Buf, 24, A03 + B03)
-	buffer.writef64(Buf, 32, A04 + B04)
-	buffer.writef64(Buf, 40, A05 + B05)
-	buffer.writef64(Buf, 48, A06 + B06)
-	buffer.writef64(Buf, 56, A07 + B07)
-	buffer.writef64(Buf, 64, A08 + B08)
-	buffer.writef64(Buf, 72, A09 + B09)
-	buffer.writef64(Buf, 80, A10 + B10)
+	WriteLimbs(Buf,
+		integer.add(A00, B00), integer.add(A01, B01), integer.add(A02, B02),
+		integer.add(A03, B03), integer.add(A04, B04), integer.add(A05, B05),
+		integer.add(A06, B06), integer.add(A07, B07), integer.add(A08, B08),
+		integer.add(A09, B09), integer.add(A10, B10))
 
 	return Buf
 end
 
 function MultiPrecision.Sub(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(NumberA, 0), buffer.readf64(NumberA, 8),
-		buffer.readf64(NumberA, 16), buffer.readf64(NumberA, 24),
-		buffer.readf64(NumberA, 32), buffer.readf64(NumberA, 40),
-		buffer.readf64(NumberA, 48), buffer.readf64(NumberA, 56),
-		buffer.readf64(NumberA, 64), buffer.readf64(NumberA, 72),
-		buffer.readf64(NumberA, 80)
-
-	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 =
-		buffer.readf64(NumberB, 0), buffer.readf64(NumberB, 8),
-		buffer.readf64(NumberB, 16), buffer.readf64(NumberB, 24),
-		buffer.readf64(NumberB, 32), buffer.readf64(NumberB, 40),
-		buffer.readf64(NumberB, 48), buffer.readf64(NumberB, 56),
-		buffer.readf64(NumberB, 64), buffer.readf64(NumberB, 72),
-		buffer.readf64(NumberB, 80)
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
+	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 = ReadLimbs(NumberB)
 
 	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, A00 - B00)
-	buffer.writef64(Buf, 8, A01 - B01)
-	buffer.writef64(Buf, 16, A02 - B02)
-	buffer.writef64(Buf, 24, A03 - B03)
-	buffer.writef64(Buf, 32, A04 - B04)
-	buffer.writef64(Buf, 40, A05 - B05)
-	buffer.writef64(Buf, 48, A06 - B06)
-	buffer.writef64(Buf, 56, A07 - B07)
-	buffer.writef64(Buf, 64, A08 - B08)
-	buffer.writef64(Buf, 72, A09 - B09)
-	buffer.writef64(Buf, 80, A10 - B10)
+	WriteLimbs(Buf,
+		integer.sub(A00, B00), integer.sub(A01, B01), integer.sub(A02, B02),
+		integer.sub(A03, B03), integer.sub(A04, B04), integer.sub(A05, B05),
+		integer.sub(A06, B06), integer.sub(A07, B07), integer.sub(A08, B08),
+		integer.sub(A09, B09), integer.sub(A10, B10))
 
 	return Buf
 end
 
 function MultiPrecision.LMul(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(NumberA, 0), buffer.readf64(NumberA, 8),
-		buffer.readf64(NumberA, 16), buffer.readf64(NumberA, 24),
-		buffer.readf64(NumberA, 32), buffer.readf64(NumberA, 40),
-		buffer.readf64(NumberA, 48), buffer.readf64(NumberA, 56),
-		buffer.readf64(NumberA, 64), buffer.readf64(NumberA, 72),
-		buffer.readf64(NumberA, 80)
-
-	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 =
-		buffer.readf64(NumberB, 0), buffer.readf64(NumberB, 8),
-		buffer.readf64(NumberB, 16), buffer.readf64(NumberB, 24),
-		buffer.readf64(NumberB, 32), buffer.readf64(NumberB, 40),
-		buffer.readf64(NumberB, 48), buffer.readf64(NumberB, 56),
-		buffer.readf64(NumberB, 64), buffer.readf64(NumberB, 72),
-		buffer.readf64(NumberB, 80)
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
+	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 = ReadLimbs(NumberB)
 
 	local Buf = Storage or buffer.create(SIZE)
 
-	buffer.writef64(Buf, 0, A00 * B00)
-	buffer.writef64(Buf, 8, A01 * B00 + A00 * B01)
-	buffer.writef64(Buf, 16, A02 * B00 + A01 * B01 + A00 * B02)
-	buffer.writef64(Buf, 24, A03 * B00 + A02 * B01 + A01 * B02 + A00 * B03)
-	buffer.writef64(Buf, 32, A04 * B00 + A03 * B01 + A02 * B02 + A01 * B03 + A00 * B04)
-	buffer.writef64(Buf, 40, A05 * B00 + A04 * B01 + A03 * B02 + A02 * B03 + A01 * B04 + A00 * B05)
-	buffer.writef64(Buf, 48, A06 * B00 + A05 * B01 + A04 * B02 + A03 * B03 + A02 * B04 + A01 * B05 + A00 * B06)
-	buffer.writef64(Buf, 56, A07 * B00 + A06 * B01 + A05 * B02 + A04 * B03 + A03 * B04 + A02 * B05 + A01 * B06 + A00 * B07)
-	buffer.writef64(Buf, 64, A08 * B00 + A07 * B01 + A06 * B02 + A05 * B03 + A04 * B04 + A03 * B05 + A02 * B06 + A01 * B07 + A00 * B08)
-	buffer.writef64(Buf, 72, A09 * B00 + A08 * B01 + A07 * B02 + A06 * B03 + A05 * B04 + A04 * B05 + A03 * B06 + A02 * B07 + A01 * B08 + A00 * B09)
-	buffer.writef64(Buf, 80, A10 * B00 + A09 * B01 + A08 * B02 + A07 * B03 + A06 * B04 + A05 * B05 + A04 * B06 + A03 * B07 + A02 * B08 + A01 * B09 + A00 * B10)
+	buffer.writeinteger(Buf, 0, integer.mul(A00, B00))
+	buffer.writeinteger(Buf, 8, integer.add(integer.mul(A01, B00), integer.mul(A00, B01)))
+	buffer.writeinteger(Buf, 16, integer.add(integer.add(integer.mul(A02, B00), integer.mul(A01, B01)), integer.mul(A00, B02)))
+	buffer.writeinteger(Buf, 24, integer.add(integer.add(integer.add(integer.mul(A03, B00), integer.mul(A02, B01)), integer.mul(A01, B02)), integer.mul(A00, B03)))
+	buffer.writeinteger(Buf, 32, integer.add(integer.add(integer.add(integer.add(integer.mul(A04, B00), integer.mul(A03, B01)), integer.mul(A02, B02)), integer.mul(A01, B03)), integer.mul(A00, B04)))
+	buffer.writeinteger(Buf, 40, integer.add(integer.add(integer.add(integer.add(integer.add(integer.mul(A05, B00), integer.mul(A04, B01)), integer.mul(A03, B02)), integer.mul(A02, B03)), integer.mul(A01, B04)), integer.mul(A00, B05)))
+	buffer.writeinteger(Buf, 48, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.mul(A06, B00), integer.mul(A05, B01)), integer.mul(A04, B02)), integer.mul(A03, B03)), integer.mul(A02, B04)), integer.mul(A01, B05)), integer.mul(A00, B06)))
+	buffer.writeinteger(Buf, 56, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.mul(A07, B00), integer.mul(A06, B01)), integer.mul(A05, B02)), integer.mul(A04, B03)), integer.mul(A03, B04)), integer.mul(A02, B05)), integer.mul(A01, B06)), integer.mul(A00, B07)))
+	buffer.writeinteger(Buf, 64, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.mul(A08, B00), integer.mul(A07, B01)), integer.mul(A06, B02)), integer.mul(A05, B03)), integer.mul(A04, B04)), integer.mul(A03, B05)), integer.mul(A02, B06)), integer.mul(A01, B07)), integer.mul(A00, B08)))
+	buffer.writeinteger(Buf, 72, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.mul(A09, B00), integer.mul(A08, B01)), integer.mul(A07, B02)), integer.mul(A06, B03)), integer.mul(A05, B04)), integer.mul(A04, B05)), integer.mul(A03, B06)), integer.mul(A02, B07)), integer.mul(A01, B08)), integer.mul(A00, B09)))
+	buffer.writeinteger(Buf, 80, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.mul(A10, B00), integer.mul(A09, B01)), integer.mul(A08, B02)), integer.mul(A07, B03)), integer.mul(A06, B04)), integer.mul(A05, B05)), integer.mul(A04, B06)), integer.mul(A03, B07)), integer.mul(A02, B08)), integer.mul(A01, B09)), integer.mul(A00, B10)))
 
 	return MultiPrecision.Carry(Buf, Buf)
 end
 
 function MultiPrecision.Mul(NumberA: buffer, NumberB: buffer, LowStorage: buffer?, HighStorage: buffer?): (buffer, buffer)
 	local LowResult = MultiPrecision.LMul(NumberA, NumberB, LowStorage)
-	local Overflow = buffer.readf64(LowResult, CARRY)
+	local Overflow = buffer.readinteger(LowResult, CARRY)
 
-	local A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(NumberA, 8), buffer.readf64(NumberA, 16),
-		buffer.readf64(NumberA, 24), buffer.readf64(NumberA, 32),
-		buffer.readf64(NumberA, 40), buffer.readf64(NumberA, 48),
-		buffer.readf64(NumberA, 56), buffer.readf64(NumberA, 64),
-		buffer.readf64(NumberA, 72), buffer.readf64(NumberA, 80)
-
-	local B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 =
-		buffer.readf64(NumberB, 8), buffer.readf64(NumberB, 16),
-		buffer.readf64(NumberB, 24), buffer.readf64(NumberB, 32),
-		buffer.readf64(NumberB, 40), buffer.readf64(NumberB, 48),
-		buffer.readf64(NumberB, 56), buffer.readf64(NumberB, 64),
-		buffer.readf64(NumberB, 72), buffer.readf64(NumberB, 80)
+	local _, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
+	local _, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 = ReadLimbs(NumberB)
 
 	local Buf = HighStorage or buffer.create(SIZE)
 
-	buffer.writef64(Buf, 0, Overflow + A10 * B01 + A09 * B02 + A08 * B03 + A07 * B04 + A06 * B05 + A05 * B06 + A04 * B07 + A03 * B08 + A02 * B09 + A01 * B10)
-	buffer.writef64(Buf, 8, A10 * B02 + A09 * B03 + A08 * B04 + A07 * B05 + A06 * B06 + A05 * B07 + A04 * B08 + A03 * B09 + A02 * B10)
-	buffer.writef64(Buf, 16, A10 * B03 + A09 * B04 + A08 * B05 + A07 * B06 + A06 * B07 + A05 * B08 + A04 * B09 + A03 * B10)
-	buffer.writef64(Buf, 24, A10 * B04 + A09 * B05 + A08 * B06 + A07 * B07 + A06 * B08 + A05 * B09 + A04 * B10)
-	buffer.writef64(Buf, 32, A10 * B05 + A09 * B06 + A08 * B07 + A07 * B08 + A06 * B09 + A05 * B10)
-	buffer.writef64(Buf, 40, A10 * B06 + A09 * B07 + A08 * B08 + A07 * B09 + A06 * B10)
-	buffer.writef64(Buf, 48, A10 * B07 + A09 * B08 + A08 * B09 + A07 * B10)
-	buffer.writef64(Buf, 56, A10 * B08 + A09 * B09 + A08 * B10)
-	buffer.writef64(Buf, 64, A10 * B09 + A09 * B10)
-	buffer.writef64(Buf, 72, A10 * B10)
-	buffer.writef64(Buf, 80, 0)
+	buffer.writeinteger(Buf, 0, integer.add(Overflow, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A10, B01), integer.mul(A09, B02)), integer.mul(A08, B03)), integer.mul(A07, B04)),
+		integer.mul(A06, B05)), integer.mul(A05, B06)), integer.mul(A04, B07)), integer.mul(A03, B08)),
+		integer.mul(A02, B09)), integer.mul(A01, B10))))
+	buffer.writeinteger(Buf, 8, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A10, B02), integer.mul(A09, B03)), integer.mul(A08, B04)), integer.mul(A07, B05)),
+		integer.mul(A06, B06)), integer.mul(A05, B07)), integer.mul(A04, B08)), integer.mul(A03, B09)),
+		integer.mul(A02, B10)))
+	buffer.writeinteger(Buf, 16, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A10, B03), integer.mul(A09, B04)), integer.mul(A08, B05)), integer.mul(A07, B06)),
+		integer.mul(A06, B07)), integer.mul(A05, B08)), integer.mul(A04, B09)), integer.mul(A03, B10)))
+	buffer.writeinteger(Buf, 24, integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A10, B04), integer.mul(A09, B05)), integer.mul(A08, B06)), integer.mul(A07, B07)),
+		integer.mul(A06, B08)), integer.mul(A05, B09)), integer.mul(A04, B10)))
+	buffer.writeinteger(Buf, 32, integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A10, B05), integer.mul(A09, B06)), integer.mul(A08, B07)), integer.mul(A07, B08)),
+		integer.mul(A06, B09)), integer.mul(A05, B10)))
+	buffer.writeinteger(Buf, 40, integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A10, B06), integer.mul(A09, B07)), integer.mul(A08, B08)), integer.mul(A07, B09)),
+		integer.mul(A06, B10)))
+	buffer.writeinteger(Buf, 48, integer.add(integer.add(integer.add(
+		integer.mul(A10, B07), integer.mul(A09, B08)), integer.mul(A08, B09)), integer.mul(A07, B10)))
+	buffer.writeinteger(Buf, 56, integer.add(integer.add(
+		integer.mul(A10, B08), integer.mul(A09, B09)), integer.mul(A08, B10)))
+	buffer.writeinteger(Buf, 64, integer.add(integer.mul(A10, B09), integer.mul(A09, B10)))
+	buffer.writeinteger(Buf, 72, integer.mul(A10, B10))
+	buffer.writeinteger(Buf, 80, 0i)
 
 	return LowResult, MultiPrecision.Carry(Buf, Buf)
 end
 
-function MultiPrecision.DWAdd(NumberA0: buffer, NumberA1: buffer, NumberB0: buffer, NumberB1: buffer, LowStorage: buffer?, HighStorage: buffer?): (buffer, buffer, number)
+function MultiPrecision.DWAdd(NumberA0: buffer, NumberA1: buffer, NumberB0: buffer, NumberB1: buffer, LowStorage: buffer?, HighStorage: buffer?): (buffer, buffer, integer)
 	local LowSum = MultiPrecision.Carry(MultiPrecision.Add(NumberA0, NumberB0, LowStorage), LowStorage)
-	local CarryOut = buffer.readf64(LowSum, CARRY)
+	local CarryOut = buffer.readinteger(LowSum, CARRY)
 
 	local HighSum = MultiPrecision.Add(NumberA1, NumberB1, HighStorage)
-	buffer.writef64(HighSum, 0, buffer.readf64(HighSum, 0) + CarryOut)
+	buffer.writeinteger(HighSum, 0, integer.add(buffer.readinteger(HighSum, 0), CarryOut))
 	local Carried = MultiPrecision.Carry(HighSum, HighSum)
 
-	return LowSum, Carried, buffer.readf64(Carried, CARRY)
+	return LowSum, Carried, buffer.readinteger(Carried, CARRY)
 end
 
 function MultiPrecision.Half(NumberA: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(NumberA, 0),
-		buffer.readf64(NumberA, 8),
-		buffer.readf64(NumberA, 16),
-		buffer.readf64(NumberA, 24),
-		buffer.readf64(NumberA, 32),
-		buffer.readf64(NumberA, 40),
-		buffer.readf64(NumberA, 48),
-		buffer.readf64(NumberA, 56),
-		buffer.readf64(NumberA, 64),
-		buffer.readf64(NumberA, 72),
-		buffer.readf64(NumberA, 80)
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
 
 	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, A00 * 0.5 + A01 * 2 ^ 23)
-	buffer.writef64(Buf, 8, A02 * 2 ^ 23)
-	buffer.writef64(Buf, 16, A03 * 2 ^ 23)
-	buffer.writef64(Buf, 24, A04 * 2 ^ 23)
-	buffer.writef64(Buf, 32, A05 * 2 ^ 23)
-	buffer.writef64(Buf, 40, A06 * 2 ^ 23)
-	buffer.writef64(Buf, 48, A07 * 2 ^ 23)
-	buffer.writef64(Buf, 56, A08 * 2 ^ 23)
-	buffer.writef64(Buf, 64, A09 * 2 ^ 23)
-	buffer.writef64(Buf, 72, A10 * 2 ^ 23)
-	buffer.writef64(Buf, 80, 0)
+	WriteLimbs(Buf,
+		integer.add(integer.arshift(A00, 1i), integer.lshift(A01, 23i)),
+		integer.lshift(A02, 23i),
+		integer.lshift(A03, 23i),
+		integer.lshift(A04, 23i),
+		integer.lshift(A05, 23i),
+		integer.lshift(A06, 23i),
+		integer.lshift(A07, 23i),
+		integer.lshift(A08, 23i),
+		integer.lshift(A09, 23i),
+		integer.lshift(A10, 23i),
+		0i)
 
 	return MultiPrecision.CarryWeak(Buf, Buf)
 end
 
 function MultiPrecision.Third(NumberA: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 =
-		buffer.readf64(NumberA, 0),
-		buffer.readf64(NumberA, 8),
-		buffer.readf64(NumberA, 16),
-		buffer.readf64(NumberA, 24),
-		buffer.readf64(NumberA, 32),
-		buffer.readf64(NumberA, 40),
-		buffer.readf64(NumberA, 48),
-		buffer.readf64(NumberA, 56),
-		buffer.readf64(NumberA, 64),
-		buffer.readf64(NumberA, 72),
-		buffer.readf64(NumberA, 80)
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
 
-	local Division00 = A00 * 0xaaaaaa
-	local Division01 = A01 * 0xaaaaaa + Division00
-	local Division02 = A02 * 0xaaaaaa + Division01
-	local Division03 = A03 * 0xaaaaaa + Division02
-	local Division04 = A04 * 0xaaaaaa + Division03
-	local Division05 = A05 * 0xaaaaaa + Division04
-	local Division06 = A06 * 0xaaaaaa + Division05
-	local Division07 = A07 * 0xaaaaaa + Division06
-	local Division08 = A08 * 0xaaaaaa + Division07
-	local Division09 = A09 * 0xaaaaaa + Division08
-	local Division10 = A10 * 0xaaaaaa + Division09
+	local Division00 = integer.mul(A00, THIRD_MULTIPLIER)
+	local Division01 = integer.add(integer.mul(A01, THIRD_MULTIPLIER), Division00)
+	local Division02 = integer.add(integer.mul(A02, THIRD_MULTIPLIER), Division01)
+	local Division03 = integer.add(integer.mul(A03, THIRD_MULTIPLIER), Division02)
+	local Division04 = integer.add(integer.mul(A04, THIRD_MULTIPLIER), Division03)
+	local Division05 = integer.add(integer.mul(A05, THIRD_MULTIPLIER), Division04)
+	local Division06 = integer.add(integer.mul(A06, THIRD_MULTIPLIER), Division05)
+	local Division07 = integer.add(integer.mul(A07, THIRD_MULTIPLIER), Division06)
+	local Division08 = integer.add(integer.mul(A08, THIRD_MULTIPLIER), Division07)
+	local Division09 = integer.add(integer.mul(A09, THIRD_MULTIPLIER), Division08)
+	local Division10 = integer.add(integer.mul(A10, THIRD_MULTIPLIER), Division09)
 
 	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, A00 + Division00)
-	buffer.writef64(Buf, 8, A01 + Division01)
-	buffer.writef64(Buf, 16, A02 + Division02)
-	buffer.writef64(Buf, 24, A03 + Division03)
-	buffer.writef64(Buf, 32, A04 + Division04)
-	buffer.writef64(Buf, 40, A05 + Division05)
-	buffer.writef64(Buf, 48, A06 + Division06)
-	buffer.writef64(Buf, 56, A07 + Division07)
-	buffer.writef64(Buf, 64, A08 + Division08)
-	buffer.writef64(Buf, 72, A09 + Division09)
-	buffer.writef64(Buf, 80, A10 + Division10)
+	WriteLimbs(Buf,
+		integer.add(A00, Division00), integer.add(A01, Division01), integer.add(A02, Division02),
+		integer.add(A03, Division03), integer.add(A04, Division04), integer.add(A05, Division05),
+		integer.add(A06, Division06), integer.add(A07, Division07), integer.add(A08, Division08),
+		integer.add(A09, Division09), integer.add(A10, Division10))
 
 	return MultiPrecision.CarryWeak(Buf, Buf)
 end
 
 function MultiPrecision.Mod2(NumberA: buffer): number
-	return buffer.readf64(NumberA, 0) % 2
+	return integer.tonumber(integer.mod(buffer.readinteger(NumberA, 0), 2i))
 end
 
 function MultiPrecision.Mod3(NumberA: buffer): number
-	return (
-		buffer.readf64(NumberA, 0) +
-			buffer.readf64(NumberA, 8) +
-			buffer.readf64(NumberA, 16) +
-			buffer.readf64(NumberA, 24) +
-			buffer.readf64(NumberA, 32) +
-			buffer.readf64(NumberA, 40) +
-			buffer.readf64(NumberA, 48) +
-			buffer.readf64(NumberA, 56) +
-			buffer.readf64(NumberA, 64) +
-			buffer.readf64(NumberA, 72) +
-			buffer.readf64(NumberA, 80)
-	) % 3
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
+	local Sum = integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(
+		A00, A01), A02), A03), A04), A05), A06), A07), A08), A09), A10)
+
+	return integer.tonumber(integer.mod(Sum, 3i))
 end
 
 function MultiPrecision.Approx(NumberA: buffer): number
-	return buffer.readf64(NumberA, 0)
-		+ buffer.readf64(NumberA, 8) * 2 ^ 24
-		+ buffer.readf64(NumberA, 16) * 2 ^ 48
-		+ buffer.readf64(NumberA, 24) * 2 ^ 72
-		+ buffer.readf64(NumberA, 32) * 2 ^ 96
-		+ buffer.readf64(NumberA, 40) * 2 ^ 120
-		+ buffer.readf64(NumberA, 48) * 2 ^ 144
-		+ buffer.readf64(NumberA, 56) * 2 ^ 168
-		+ buffer.readf64(NumberA, 64) * 2 ^ 192
-		+ buffer.readf64(NumberA, 72) * 2 ^ 216
-		+ buffer.readf64(NumberA, 80) * 2 ^ 240
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
+	return integer.tonumber(A00)
+		+ integer.tonumber(A01) * 2 ^ 24
+		+ integer.tonumber(A02) * 2 ^ 48
+		+ integer.tonumber(A03) * 2 ^ 72
+		+ integer.tonumber(A04) * 2 ^ 96
+		+ integer.tonumber(A05) * 2 ^ 120
+		+ integer.tonumber(A06) * 2 ^ 144
+		+ integer.tonumber(A07) * 2 ^ 168
+		+ integer.tonumber(A08) * 2 ^ 192
+		+ integer.tonumber(A09) * 2 ^ 216
+		+ integer.tonumber(A10) * 2 ^ 240
 end
 
 function MultiPrecision.Cmp(NumberA: buffer, NumberB: buffer): number
@@ -365,7 +290,10 @@ end
 
 function MultiPrecision.Num(RegularNumber: number): buffer
 	local Buf = buffer.create(SIZE)
-	buffer.writef64(Buf, 0, RegularNumber)
+	local Value = integer.create(RegularNumber)
+	if Value then
+		buffer.writeinteger(Buf, 0, Value)
+	end
 
 	return Buf
 end
