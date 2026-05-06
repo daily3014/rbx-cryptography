@@ -1,4 +1,5 @@
 --!strict
+local IsLuauCLI = warn == nil
 
 local Testing = require("./")
 type TestVector = {
@@ -7,7 +8,7 @@ type TestVector = {
 }
 
 type TestVectors = {[string]: TestVector}
-local Algorithm = require("../Utilities/CSPRNG") 
+local Algorithm = if IsLuauCLI then require("../src/Utilities/CSPRNG") else require("../Utilities/CSPRNG") 
 
 Testing.Describe("CSPRNG Algorithm Tests", function()
 	Testing.Test("Ed25519 Functions", function()

@@ -59,8 +59,6 @@ local ROUND_CONSTANTS = buffer.create(192) do
 	end
 end
 
-local LANES = buffer.create(200)
-
 local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RC = ROUND_CONSTANTS
@@ -182,9 +180,7 @@ end
 
 local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): (string, buffer)
 	local RateBytes = (1600 - CapacityBits) // 8
-	buffer.fill(LANES, 0, 0)
-
-	local Lanes = LANES
+	local Lanes = buffer.create(200)
 
 	local MessageLength: number = buffer.len(Message)
 	local PaddedLength: number = MessageLength + 1

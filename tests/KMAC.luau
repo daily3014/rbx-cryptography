@@ -68,15 +68,7 @@ local KMAC_CONFIGS: {KmacConfig} = {
 }
 
 local function FetchTestVectors(Url: string): MacData
-	if IsLuauCLI then
-		if Url == KMAC_CONFIGS[1].Url then
-			return require("../testing/data/kmac128_no_customization_test") :: MacData
-		elseif Url == KMAC_CONFIGS[2].Url then
-			return require("../testing/data/kmac256_no_customization_test") :: MacData
-		end
-	end
-
-	local Http = game:GetService("HttpService")
+	local Http = require("./_shim")
 	local Response = Http:GetAsync(Url)
 	return Http:JSONDecode(Response) :: MacData
 end

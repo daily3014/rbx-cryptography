@@ -105,6 +105,7 @@ local function Demontgomery(MontgomeryScalar: buffer): buffer
 end
 
 local function RebaseLE24ToBits(InputBuffer: buffer, InputLength: number): (buffer, number)
+	local OutputBuffer = buffer.create(InputLength * 24 + 8)
 	local OutputLength = 0
 	local Accumulator = 0i
 	local Multiplier = 1i
@@ -117,17 +118,17 @@ local function RebaseLE24ToBits(InputBuffer: buffer, InputLength: number): (buff
 			local Remainder = integer.band(Accumulator, 1i)
 			Accumulator = integer.arshift(Accumulator, 1i)
 			Multiplier = integer.arshift(Multiplier, 1i)
-			buffer.writeu8(OUTPUT_BUFFER, OutputLength, integer.tonumber(Remainder))
+			buffer.writeu8(OutputBuffer, OutputLength, integer.tonumber(Remainder))
 			OutputLength += 1
 		end
 	end
 
 	if integer.gt(Multiplier, 0i) then
-		buffer.writeu8(OUTPUT_BUFFER, OutputLength, integer.tonumber(Accumulator))
+		buffer.writeu8(OutputBuffer, OutputLength, integer.tonumber(Accumulator))
 		OutputLength += 1
 	end
 
-	return OUTPUT_BUFFER, OutputLength
+	return OutputBuffer, OutputLength
 end
 
 local FieldQuadratic = {}

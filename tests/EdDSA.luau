@@ -14,11 +14,12 @@
 		BatchVerification - Batch verification functionalty
 --]=]
 --!strict
+local IsLuauCLI = warn == nil
 --!optimize 2
 
-local Http = game:GetService("HttpService")
+local Http = require("./_shim")
 local Testing = require("./")
-local Cryptography = require("../")
+local Cryptography = if IsLuauCLI then require("../src") else require("../")
 local Ed25519 = Cryptography.Verification.EdDSA
 local CSPRNG = Ed25519.CSPRNG
 local Conversions = Cryptography.Utilities.Conversions

@@ -139,7 +139,7 @@ function FieldPrime.Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 	local Buf = Storage or buffer.create(SIZE)
 
 	if L9 == M25 and L8 == M26 and L7 == M25 and L6 == M26 and L5 == M25
-		and L4 == M26 and L3 == M25 and L2 == M26 and L1 == M25 and L0 >= P0 then
+		and L4 == M26 and L3 == M25 and L2 == M26 and L1 == M25 and integer.ge(L0, P0) then
 		WriteLimbs(Buf, integer.sub(L0, P0), 0i, 0i, 0i, 0i, 0i, 0i, 0i, 0i, 0i)
 	else
 		WriteLimbs(Buf, L0, L1, L2, L3, L4, L5, L6, L7, L8, L9)
@@ -338,7 +338,120 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 end
 
 function FieldPrime.Square(ElementA: buffer, Storage: buffer?): buffer
-	return FieldPrime.Mul(ElementA, ElementA, Storage)
+	local A0, A1, A2, A3, A4, A5, A6, A7, A8, A9 = ReadLimbs(ElementA)
+
+	local A0_2 = integer.add(A0, A0)
+	local A1_2 = integer.add(A1, A1)
+	local A2_2 = integer.add(A2, A2)
+	local A3_2 = integer.add(A3, A3)
+	local A4_2 = integer.add(A4, A4)
+	local A5_2 = integer.add(A5, A5)
+	local A6_2 = integer.add(A6, A6)
+	local A7_2 = integer.add(A7, A7)
+
+	local A5_19 = integer.mul(A5, NINETEEN)
+	local A6_19 = integer.mul(A6, NINETEEN)
+	local A7_19 = integer.mul(A7, NINETEEN)
+	local A8_19 = integer.mul(A8, NINETEEN)
+	local A9_19 = integer.mul(A9, NINETEEN)
+
+	local A6_38 = integer.add(A6_19, A6_19)
+	local A7_38 = integer.add(A7_19, A7_19)
+	local A8_38 = integer.add(A8_19, A8_19)
+	local A9_38 = integer.add(A9_19, A9_19)
+
+	local T0 = integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0, A0),
+		integer.mul(A1_2, A9_38)),
+		integer.mul(A2_2, A8_19)),
+		integer.mul(A3_2, A7_38)),
+		integer.mul(A4_2, A6_19)),
+		integer.mul(A5_2, A5_19))
+
+	local T1 = integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A1),
+		integer.mul(A2, A9_38)),
+		integer.mul(A3, A8_38)),
+		integer.mul(A4, A7_38)),
+		integer.mul(A5, A6_38))
+
+	local T2 = integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A2),
+		integer.mul(A1_2, A1)),
+		integer.mul(A3_2, A9_38)),
+		integer.mul(A4_2, A8_19)),
+		integer.mul(A5_2, A7_38)),
+		integer.mul(A6, A6_19))
+
+	local T3 = integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A3),
+		integer.mul(A1_2, A2)),
+		integer.mul(A4, A9_38)),
+		integer.mul(A5, A8_38)),
+		integer.mul(A6, A7_38))
+
+	local T4 = integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A4),
+		integer.mul(A1_2, A3_2)),
+		integer.mul(A2, A2)),
+		integer.mul(A5_2, A9_38)),
+		integer.mul(A6_2, A8_19)),
+		integer.mul(A7, A7_38))
+
+	local T5 = integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A5),
+		integer.mul(A1_2, A4)),
+		integer.mul(A2_2, A3)),
+		integer.mul(A6, A9_38)),
+		integer.mul(A7, A8_38))
+
+	local T6 = integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A6),
+		integer.mul(A1_2, A5_2)),
+		integer.mul(A2_2, A4)),
+		integer.mul(A3_2, A3)),
+		integer.mul(A7_2, A9_38)),
+		integer.mul(A8, A8_19))
+
+	local T7 = integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A7),
+		integer.mul(A1_2, A6)),
+		integer.mul(A2_2, A5)),
+		integer.mul(A3_2, A4)),
+		integer.mul(A8, A9_38))
+
+	local T8 = integer.add(integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A8),
+		integer.mul(A1_2, A7_2)),
+		integer.mul(A2_2, A6)),
+		integer.mul(A3_2, A5_2)),
+		integer.mul(A4, A4)),
+		integer.mul(A9, A9_38))
+
+	local T9 = integer.add(integer.add(integer.add(integer.add(
+		integer.mul(A0_2, A9),
+		integer.mul(A1_2, A8)),
+		integer.mul(A2_2, A7)),
+		integer.mul(A3_2, A6)),
+		integer.mul(A4_2, A5))
+
+	local C
+	C = integer.arshift(T0, 26i); T1 = integer.add(T1, C); T0 = integer.band(T0, M26)
+	C = integer.arshift(T1, 25i); T2 = integer.add(T2, C); T1 = integer.band(T1, M25)
+	C = integer.arshift(T2, 26i); T3 = integer.add(T3, C); T2 = integer.band(T2, M26)
+	C = integer.arshift(T3, 25i); T4 = integer.add(T4, C); T3 = integer.band(T3, M25)
+	C = integer.arshift(T4, 26i); T5 = integer.add(T5, C); T4 = integer.band(T4, M26)
+	C = integer.arshift(T5, 25i); T6 = integer.add(T6, C); T5 = integer.band(T5, M25)
+	C = integer.arshift(T6, 26i); T7 = integer.add(T7, C); T6 = integer.band(T6, M26)
+	C = integer.arshift(T7, 25i); T8 = integer.add(T8, C); T7 = integer.band(T7, M25)
+	C = integer.arshift(T8, 26i); T9 = integer.add(T9, C); T8 = integer.band(T8, M26)
+	C = integer.arshift(T9, 25i); T0 = integer.add(T0, integer.mul(C, NINETEEN)); T9 = integer.band(T9, M25)
+	C = integer.arshift(T0, 26i); T1 = integer.add(T1, C); T0 = integer.band(T0, M26)
+
+	local Buf = Storage or buffer.create(SIZE)
+	WriteLimbs(Buf, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9)
+
+	return Buf
 end
 
 function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): buffer

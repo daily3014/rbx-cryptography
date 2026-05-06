@@ -1,4 +1,5 @@
 --!strict
+local IsLuauCLI = warn == nil
 local Testing = require("./")
 type TestVector = {
 	Description: string,
@@ -16,7 +17,7 @@ local function ToHex(Buffer: buffer) : string
 	return Hex
 end
 
-local XOR = require("../Encryption/XOR")
+local XOR = if IsLuauCLI then require("../src/Encryption/XOR") else require("../Encryption/XOR")
 
 local TestVectors: {TestVector} = {
 	{

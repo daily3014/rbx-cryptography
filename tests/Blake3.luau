@@ -1,6 +1,7 @@
 --!strict
+local IsLuauCLI = warn == nil
 local Testing = require("./")
-local Algorithm = require("../Hashing/Blake3")
+local Algorithm = if IsLuauCLI then require("../src/Hashing/Blake3") else require("../Hashing/Blake3")
 
 local New = {
 	Key = "whats the Elvish word for friend",

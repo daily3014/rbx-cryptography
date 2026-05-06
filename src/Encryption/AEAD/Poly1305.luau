@@ -115,7 +115,7 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	C = integer.arshift(H4, 26i); H0 = integer.add(H0, integer.mul(C, FIVE)); H4 = integer.band(H4, M26)
 	C = integer.arshift(H0, 26i); H1 = integer.add(H1, C); H0 = integer.band(H0, M26)
 
-	if H4 == M26 and H3 == M26 and H2 == M26 and H1 == M26 and H0 >= P0 then
+	if H4 == M26 and H3 == M26 and H2 == M26 and H1 == M26 and integer.ge(H0, P0) then
 		H0 = integer.sub(H0, P0)
 		H1, H2, H3, H4 = 0i, 0i, 0i, 0i
 	end

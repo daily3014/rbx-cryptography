@@ -220,17 +220,13 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	local ChallengeScalar = FieldQuadratic.DecodeWide(ChallengeHash)
 
 	local ResponseScalar = FieldQuadratic.Decode(ResponseBytes)
-	local ResponseBits, ResponseBitCount = FieldQuadratic.Bits(ResponseScalar)
-	local SB = Edwards25519.MulG(ResponseBits, ResponseBitCount)
-
+	local NegResponseScalar = FieldQuadratic.Neg(ResponseScalar)
+	local NegResponseBits, NegResponseBitCount = FieldQuadratic.Bits(NegResponseScalar)
 	local ChallengeBits, ChallengeBitCount = FieldQuadratic.Bits(ChallengeScalar)
-	local KA = Edwards25519.Mul(PublicPoint, ChallengeBits, ChallengeBitCount)
 
-	local KANiels = Edwards25519.Niels(KA)
-	local RKA = Edwards25519.Add(CommitmentPoint, KANiels)
-
-	local SBNiels = Edwards25519.Niels(SB)
-	local Difference = Edwards25519.Sub(RKA, SBNiels)
+	local CAMinusSB = Edwards25519.MulDoubleStraussG(PublicPoint, ChallengeBits, ChallengeBitCount, NegResponseBits, NegResponseBitCount)
+	local CAMinusSBNiels = Edwards25519.Niels(CAMinusSB)
+	local Difference = Edwards25519.Add(CommitmentPoint, CAMinusSBNiels)
 
 	Difference = Edwards25519.Double(Difference)
 	Difference = Edwards25519.Double(Difference)

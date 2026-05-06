@@ -14,7 +14,7 @@
 --!optimize 2
 --!native
 
-local K = {
+local K_VALUES = {
 	0x428a2f98d728ae22i, 0x7137449123ef65cdi, 0xb5c0fbcfec4d3b2fi, 0xe9b5dba58189dbbci,
 	0x3956c25bf348b538i, 0x59f111f1b605d019i, 0x923f82a4af194f9bi, 0xab1c5ed5da6d8118i,
 	0xd807aa98a3030242i, 0x12835b0145706fbei, 0x243185be4ee4b28ci, 0x550c7dc3d5ffb4e2i,
@@ -37,7 +37,12 @@ local K = {
 	0x4cc5d4becb3e42b6i, 0x597f299cfc657e2ai, 0x5fcb6fab3ad6faeci, 0x6c44198c4a475817i,
 }
 
-local W = table.create(80) :: {integer}
+local K = buffer.create(80 * 8)
+for I = 1, 80 do
+	buffer.writeinteger(K, (I - 1) * 8, K_VALUES[I])
+end
+
+local W = buffer.create(80 * 8)
 local DIGEST = buffer.create(64)
 
 local function PreProcess(Contents: buffer): (buffer, number)
@@ -66,32 +71,31 @@ local function DigestBlocks(Blocks: buffer, Length: number)
 	local H5, H6, H7, H8 = 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
 
 	for Offset = 0, Length - 1, 128 do
-		for T = 1, 16 do
-			local ByteOffset = Offset + (T - 1) * 8
-			W[T] = integer.bswap(buffer.readinteger(Blocks, ByteOffset))
+		for T = 0, 15 do
+			buffer.writeinteger(W, T * 8, integer.bswap(buffer.readinteger(Blocks, Offset + T * 8)))
 		end
 
-		for T = 17, 80 do
-			local P15 = W[T - 15]
-			local P2 = W[T - 2]
+		for T = 16, 79 do
+			local P15 = buffer.readinteger(W, (T - 15) * 8)
+			local P2 = buffer.readinteger(W, (T - 2) * 8)
 
 			local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
 			local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
 
-			W[T] = integer.add(integer.add(W[T - 16], S0), integer.add(W[T - 7], S1))
+			buffer.writeinteger(W, T * 8, integer.add(integer.add(buffer.readinteger(W, (T - 16) * 8), S0), integer.add(buffer.readinteger(W, (T - 7) * 8), S1)))
 		end
 
 		local A, B, C, D = H1, H2, H3, H4
 		local E, F, G, H = H5, H6, H7, H8
 
-		for T = 1, 80 do
+		for T = 0, 79 do
 			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
 			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
 
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 
-			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(K[T], W[T]))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(K, T * 8), buffer.readinteger(W, T * 8)))
 			local T2 = integer.add(Sigma0, Maj)
 
 			H = G

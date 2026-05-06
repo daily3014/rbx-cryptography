@@ -101,6 +101,8 @@ local RADIX_OUTPUT = buffer.create(272)
 
 local BASEPONT_G: buffer? = nil
 local AFFINE_BASEPOINT_TABLE: buffer? = nil
+local BASEPOINT_NAF_TABLE: buffer? = nil
+local STRAUSS_NAF_WIDTH = 5
 
 local function GetCoord(Point: buffer, Index: number, Storage: buffer?): buffer
 	local Coord = Storage or buffer.create(COORD_SIZE)
@@ -490,33 +492,86 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 	local CurrentBasePoint = buffer.create(POINT_SIZE)
 	buffer.copy(CurrentBasePoint, 0, BasePoint, 0, POINT_SIZE)
 
-	local AffineNiels = Edwards25519.AffineNiels
 	local Add = Edwards25519.Add
 	local Double = Edwards25519.Double
-	local Scale = Edwards25519.Scale
 	local Niels = Edwards25519.Niels
 	local NielsSize = AFFINE_NIELS_SIZE
+	local FMul = FieldPrime.Mul
+	local FAdd = FieldPrime.Add
+	local FSub = FieldPrime.Sub
+	local FInvert = FieldPrime.Invert
+
+	-- Per-window scratch (sized to MaxRowSize)
+	local WorkingPoints = table.create(MaxRowSize) :: {buffer}
+	local Zs = table.create(MaxRowSize) :: {buffer}
+	local Partials = table.create(MaxRowSize) :: {buffer}
+	local ZInvs = table.create(MaxRowSize) :: {buffer}
 
 	for WindowIndex = 1, MaxWindows do
 		local BaseOffset = ((WindowIndex - 1) * MaxRowSize * NielsSize)
-		local WorkingPoint = buffer.create(POINT_SIZE)
-		buffer.copy(WorkingPoint, 0, CurrentBasePoint, 0, POINT_SIZE)
 
-		local ScaledPoint = Scale(WorkingPoint)
-		local FirstAffineNiels = AffineNiels(ScaledPoint)
-		buffer.copy(TableData, BaseOffset, FirstAffineNiels, 0, NielsSize)
+		-- 1. Build all MaxRowSize working points (1*P, 2*P, ..., MaxRowSize*P) for this window
+		--    in projective coords. No inversions yet.
+		WorkingPoints[1] = buffer.create(POINT_SIZE)
+		buffer.copy(WorkingPoints[1], 0, CurrentBasePoint, 0, POINT_SIZE)
 
-		local FirstNiels = Niels(ScaledPoint)
+		local FirstNiels = Niels(CurrentBasePoint)
 
 		for Multiple = 2, MaxRowSize do
-			Add(WorkingPoint, FirstNiels, WorkingPoint)
-			local Scaled = Scale(WorkingPoint)
-			local AffineNielsBuffer = AffineNiels(Scaled)
-
-			local Offset = BaseOffset + ((Multiple - 1) * NielsSize)
-			buffer.copy(TableData, Offset, AffineNielsBuffer, 0, NielsSize)
+			local NewPoint = buffer.create(POINT_SIZE)
+			Add(WorkingPoints[Multiple - 1], FirstNiels, NewPoint)
+			WorkingPoints[Multiple] = NewPoint
 		end
 
+		-- 2. Extract Z coordinates and batch-invert via Montgomery's trick.
+		--    Replaces MaxRowSize separate inversions with 1 inversion + 3*(N-1) muls.
+		for I = 1, MaxRowSize do
+			local Z = buffer.create(COORD_SIZE)
+			buffer.copy(Z, 0, WorkingPoints[I], 2 * COORD_SIZE, COORD_SIZE)
+			Zs[I] = Z
+		end
+
+		Partials[1] = buffer.create(COORD_SIZE)
+		buffer.copy(Partials[1], 0, Zs[1], 0, COORD_SIZE)
+		for I = 2, MaxRowSize do
+			Partials[I] = FMul(Partials[I - 1], Zs[I])
+		end
+
+		local FinalInv = FInvert(Partials[MaxRowSize])
+
+		ZInvs[MaxRowSize] = FMul(FinalInv, Partials[MaxRowSize - 1])
+		local CurrentInv = FMul(FinalInv, Zs[MaxRowSize])
+		for I = MaxRowSize - 1, 2, -1 do
+			ZInvs[I] = FMul(CurrentInv, Partials[I - 1])
+			CurrentInv = FMul(CurrentInv, Zs[I])
+		end
+		ZInvs[1] = CurrentInv
+
+		-- 3. Convert each working point to affine niels using its inverted Z.
+		for I = 1, MaxRowSize do
+			local WP = WorkingPoints[I]
+			local ZI = ZInvs[I]
+
+			local X = buffer.create(COORD_SIZE)
+			local Y = buffer.create(COORD_SIZE)
+			buffer.copy(X, 0, WP, 0, COORD_SIZE)
+			buffer.copy(Y, 0, WP, COORD_SIZE, COORD_SIZE)
+
+			local AffX = FMul(X, ZI)
+			local AffY = FMul(Y, ZI)
+			local AffT = FMul(AffX, AffY)
+
+			local YPlusX = FAdd(AffY, AffX)
+			local YMinusX = FSub(AffY, AffX)
+			local T2d = FMul(AffT, CURVE_K)
+
+			local Offset = BaseOffset + ((I - 1) * NielsSize)
+			buffer.copy(TableData, Offset, YPlusX, 0, COORD_SIZE)
+			buffer.copy(TableData, Offset + COORD_SIZE, YMinusX, 0, COORD_SIZE)
+			buffer.copy(TableData, Offset + 2 * COORD_SIZE, T2d, 0, COORD_SIZE)
+		end
+
+		-- 4. Advance basepoint by RadixWidth doublings to set up next window.
 		for _ = 1, RadixWidth do
 			CurrentBasePoint = Double(CurrentBasePoint)
 		end
@@ -720,6 +775,12 @@ function Edwards25519.WindowedNAFTable(BasePoint: buffer, WindowWidth: number): 
 	return TableData
 end
 
+do
+	if BASEPONT_G then
+		BASEPOINT_NAF_TABLE = Edwards25519.WindowedNAFTable(BASEPONT_G, STRAUSS_NAF_WIDTH)
+	end
+end
+
 function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local PointSize = POINT_SIZE
 	local CoordSize = COORD_SIZE
@@ -731,152 +792,122 @@ function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 
 	local SignedWindows, WindowCount = Edwards25519.SignedRadixW(ScalarBits, ScalarBitCount, BaseRadixWidth)
 
-	local ResultPoint = MULG_RESULT_POINT
-	buffer.copy(ResultPoint, 0, IdentityO, 0, PointSize)
-
-	local AffineNielsPoint = MULG_AFFINE_NIELS
-	local DummyPoint = MULG_DUMMY_POINT
-	buffer.copy(DummyPoint, 0, IdentityO, 0, PointSize)
-
 	local FAdd = FieldPrime.Add
 	local FSub = FieldPrime.Sub
 	local FMul = FieldPrime.Mul
 
-	local P1X = MULG_P1X
-	local P1Y = MULG_P1Y
-	local P1Z = MULG_P1Z
-	local P1T = MULG_P1T
+	local RX = MULG_P1X
+	local RY = MULG_P1Y
+	local RZ = MULG_P1Z
+	local RT = MULG_P1T
+	local TMP = MULG_TMP
+	buffer.copy(RX, 0, IdentityO, 0, CoordSize)
+	buffer.copy(RY, 0, IdentityO, CoordSize, CoordSize)
+	buffer.copy(RZ, 0, IdentityO, 2 * CoordSize, CoordSize)
+	buffer.copy(RT, 0, IdentityO, 3 * CoordSize, CoordSize)
+
+	local DX = buffer.create(CoordSize)
+	local DY = buffer.create(CoordSize)
+	local DZ = buffer.create(CoordSize)
+	local DT = buffer.create(CoordSize)
+	local DTMP = buffer.create(CoordSize)
+	buffer.copy(DX, 0, IdentityO, 0, CoordSize)
+	buffer.copy(DY, 0, IdentityO, CoordSize, CoordSize)
+	buffer.copy(DZ, 0, IdentityO, 2 * CoordSize, CoordSize)
+	buffer.copy(DT, 0, IdentityO, 3 * CoordSize, CoordSize)
+
 	local N2P = MULG_N2P
 	local N2M = MULG_N2M
 	local N2T = MULG_N2T
-	local TMP = MULG_TMP
 
 	for WindowIndex = 1, WindowCount do
 		local WindowValue = buffer.readi8(SignedWindows, WindowIndex - 1)
+		local BaseOffset = ((WindowIndex - 1) * BasePointRow * AffineNielsSize)
 
-		if WindowValue > 0 then
-			local BaseOffset = ((WindowIndex - 1) * BasePointRow * AffineNielsSize)
-			local Offset = BaseOffset + ((WindowValue - 1) * AffineNielsSize)
-			buffer.copy(AffineNielsPoint, 0, AffineTable, Offset, AffineNielsSize)
+		if WindowValue ~= 0 then
+			local TableEntry = if WindowValue > 0 then (WindowValue - 1) else ((-WindowValue) - 1)
+			local Offset = BaseOffset + (TableEntry * AffineNielsSize)
+			buffer.copy(N2P, 0, AffineTable, Offset, CoordSize)
+			buffer.copy(N2M, 0, AffineTable, Offset + CoordSize, CoordSize)
+			buffer.copy(N2T, 0, AffineTable, Offset + 2 * CoordSize, CoordSize)
 
-			buffer.copy(P1X, 0, ResultPoint, 0, CoordSize)
-			buffer.copy(P1Y, 0, ResultPoint, CoordSize, CoordSize)
-			buffer.copy(P1Z, 0, ResultPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(P1T, 0, ResultPoint, 3 * CoordSize, CoordSize)
-			buffer.copy(N2P, 0, AffineNielsPoint, 0, CoordSize)
-			buffer.copy(N2M, 0, AffineNielsPoint, CoordSize, CoordSize)
-			buffer.copy(N2T, 0, AffineNielsPoint, 2 * CoordSize, CoordSize)
+			if WindowValue > 0 then
+				FSub(RY, RX, TMP)
+				FMul(TMP, N2M, TMP)
+				FAdd(RY, RX, RX)
+				FMul(RX, N2P, RX)
+				FMul(RT, N2T, RT)
+				FAdd(RZ, RZ, RZ)
 
-			FSub(P1Y, P1X, TMP)
-			FMul(TMP, N2M, TMP)
-			FAdd(P1Y, P1X, P1X)
-			FMul(P1X, N2P, P1X)
-			FMul(P1T, N2T, P1T)
-			FAdd(P1Z, P1Z, P1Z)
+				FSub(RX, TMP, RY)
+				FSub(RZ, RT, N2P)
+				FAdd(RZ, RT, RZ)
+				FAdd(RX, TMP, RX)
 
-			FSub(P1X, TMP, P1Y)
-			FSub(P1Z, P1T, N2P)
-			FAdd(P1Z, P1T, P1Z)
-			FAdd(P1X, TMP, P1X)
+				FMul(RY, N2P, TMP)
+				FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ)
+				FMul(RY, RX, RX)
+			else
+				FSub(RY, RX, TMP)
+				FMul(TMP, N2P, TMP)
+				FAdd(RY, RX, RX)
+				FMul(RX, N2M, RX)
+				FMul(RT, N2T, RT)
+				FAdd(RZ, RZ, RZ)
 
-			FMul(P1Y, N2P, TMP)
-			FMul(P1Z, P1X, P1T)
-			FMul(N2P, P1Z, P1Z)
-			FMul(P1Y, P1X, P1X)
+				FSub(RX, TMP, RY)
+				FAdd(RZ, RT, N2P)
+				FSub(RZ, RT, RZ)
+				FAdd(RX, TMP, RX)
 
-			buffer.copy(ResultPoint, 0, TMP, 0, CoordSize)
-			buffer.copy(ResultPoint, CoordSize, P1T, 0, CoordSize)
-			buffer.copy(ResultPoint, 2 * CoordSize, P1Z, 0, CoordSize)
-			buffer.copy(ResultPoint, 3 * CoordSize, P1X, 0, CoordSize)
+				FMul(RY, N2P, TMP)
+				FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ)
+				FMul(RY, RX, RX)
+			end
 
-		elseif WindowValue < 0 then
-			local BaseOffset = ((WindowIndex - 1) * BasePointRow * AffineNielsSize)
-			local Offset = BaseOffset + (((-WindowValue) - 1) * AffineNielsSize)
-			buffer.copy(AffineNielsPoint, 0, AffineTable, Offset, AffineNielsSize)
-
-			buffer.copy(P1X, 0, ResultPoint, 0, CoordSize)
-			buffer.copy(P1Y, 0, ResultPoint, CoordSize, CoordSize)
-			buffer.copy(P1Z, 0, ResultPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(P1T, 0, ResultPoint, 3 * CoordSize, CoordSize)
-			buffer.copy(N2P, 0, AffineNielsPoint, 0, CoordSize)
-			buffer.copy(N2M, 0, AffineNielsPoint, CoordSize, CoordSize)
-			buffer.copy(N2T, 0, AffineNielsPoint, 2 * CoordSize, CoordSize)
-
-			FSub(P1Y, P1X, TMP)
-			FMul(TMP, N2P, TMP)
-			FAdd(P1Y, P1X, P1X)
-			FMul(P1X, N2M, P1X)
-			FMul(P1T, N2T, P1T)
-			FAdd(P1Z, P1Z, P1Z)
-
-			FSub(P1X, TMP, P1Y)
-			FAdd(P1Z, P1T, N2P)
-			FSub(P1Z, P1T, P1Z)
-			FAdd(P1X, TMP, P1X)
-
-			FMul(P1Y, N2P, TMP)
-			FMul(P1Z, P1X, P1T)
-			FMul(N2P, P1Z, P1Z)
-			FMul(P1Y, P1X, P1X)
-
-			buffer.copy(ResultPoint, 0, TMP, 0, CoordSize)
-			buffer.copy(ResultPoint, CoordSize, P1T, 0, CoordSize)
-			buffer.copy(ResultPoint, 2 * CoordSize, P1Z, 0, CoordSize)
-			buffer.copy(ResultPoint, 3 * CoordSize, P1X, 0, CoordSize)
-
+			RX, RY, RT, TMP = TMP, RT, RX, RY
 		else
-			local BaseOffset = ((WindowIndex - 1) * BasePointRow * AffineNielsSize)
-			buffer.copy(AffineNielsPoint, 0, AffineTable, BaseOffset, AffineNielsSize)
+			buffer.copy(N2P, 0, AffineTable, BaseOffset, CoordSize)
+			buffer.copy(N2M, 0, AffineTable, BaseOffset + CoordSize, CoordSize)
+			buffer.copy(N2T, 0, AffineTable, BaseOffset + 2 * CoordSize, CoordSize)
 
-			buffer.copy(P1X, 0, DummyPoint, 0, CoordSize)
-			buffer.copy(P1Y, 0, DummyPoint, CoordSize, CoordSize)
-			buffer.copy(P1Z, 0, DummyPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(P1T, 0, DummyPoint, 3 * CoordSize, CoordSize)
-			buffer.copy(N2P, 0, AffineNielsPoint, 0, CoordSize)
-			buffer.copy(N2M, 0, AffineNielsPoint, CoordSize, CoordSize)
-			buffer.copy(N2T, 0, AffineNielsPoint, 2 * CoordSize, CoordSize)
+			FSub(DY, DX, DTMP)
+			FMul(DTMP, N2M, DTMP)
+			FAdd(DY, DX, DX)
+			FMul(DX, N2P, DX)
+			FMul(DT, N2T, DT)
+			FAdd(DZ, DZ, DZ)
 
-			FSub(P1Y, P1X, TMP)
-			FMul(TMP, N2M, TMP)
-			FAdd(P1Y, P1X, P1X)
-			FMul(P1X, N2P, P1X)
-			FMul(P1T, N2T, P1T)
-			FAdd(P1Z, P1Z, P1Z)
+			FSub(DX, DTMP, DY)
+			FSub(DZ, DT, N2P)
+			FAdd(DZ, DT, DZ)
+			FAdd(DX, DTMP, DX)
 
-			FSub(P1X, TMP, P1Y)
-			FSub(P1Z, P1T, N2P)
-			FAdd(P1Z, P1T, P1Z)
-			FAdd(P1X, TMP, P1X)
+			FMul(DY, N2P, DTMP)
+			FMul(DZ, DX, DT)
+			FMul(N2P, DZ, DZ)
+			FMul(DY, DX, DX)
 
-			FMul(P1Y, N2P, TMP)
-			FMul(P1Z, P1X, P1T)
-			FMul(N2P, P1Z, P1Z)
-			FMul(P1Y, P1X, P1X)
-
-			buffer.copy(DummyPoint, 0, TMP, 0, CoordSize)
-			buffer.copy(DummyPoint, CoordSize, P1T, 0, CoordSize)
-			buffer.copy(DummyPoint, 2 * CoordSize, P1Z, 0, CoordSize)
-			buffer.copy(DummyPoint, 3 * CoordSize, P1X, 0, CoordSize)
+			DX, DY, DT, DTMP = DTMP, DT, DX, DY
 		end
 	end
 
 	local Output = buffer.create(PointSize)
-	buffer.copy(Output, 0, ResultPoint, 0, PointSize)
+	buffer.copy(Output, 0, RX, 0, CoordSize)
+	buffer.copy(Output, CoordSize, RY, 0, CoordSize)
+	buffer.copy(Output, 2 * CoordSize, RZ, 0, CoordSize)
+	buffer.copy(Output, 3 * CoordSize, RT, 0, CoordSize)
 	return Output
 end
 
 function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	local PointSize = POINT_SIZE
 	local CoordSize = COORD_SIZE
-	local IdentityO = IDENTITY_O
 
 	local NAFForm, NAFLength = Edwards25519.WindowedNAF(ScalarBits, ScalarBitCount, 5)
 	local MultipleTable = Edwards25519.WindowedNAFTable(BasePoint, 5)
-
-	local ResultPoint = MUL_RESULT_POINT
-	buffer.copy(ResultPoint, 0, IdentityO, 0, PointSize)
-
-	local NielsPoint = MUL_NIELS_POINT
 
 	local Square = FieldPrime.Square
 	local FAdd = FieldPrime.Add
@@ -884,127 +915,280 @@ function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount:
 	local FMul = FieldPrime.Mul
 	local Carry = FieldPrime.Carry
 
-	local DoubleX = MUL_DOUBLE_X
-	local DoubleY = MUL_DOUBLE_Y
-	local DoubleZ = MUL_DOUBLE_Z
-	local DoubleA = MUL_DOUBLE_A
-	local DoubleB = MUL_DOUBLE_B
-	local DoubleE = MUL_DOUBLE_E
-	local DoubleG = MUL_DOUBLE_G
+	local RX = MUL_P1X
+	local RY = MUL_P1Y
+	local RZ = MUL_P1Z
+	local RT = MUL_P1T
+	local TMP = MUL_TMP
+	buffer.copy(RX, 0, IDENTITY_O, 0, CoordSize)
+	buffer.copy(RY, 0, IDENTITY_O, CoordSize, CoordSize)
+	buffer.copy(RZ, 0, IDENTITY_O, 2 * CoordSize, CoordSize)
+	buffer.copy(RT, 0, IDENTITY_O, 3 * CoordSize, CoordSize)
 
-	local P1X = MUL_P1X
-	local P1Y = MUL_P1Y
-	local P1Z = MUL_P1Z
-	local P1T = MUL_P1T
+	local DA = MUL_DOUBLE_A
+	local DB = MUL_DOUBLE_B
+	local DE = MUL_DOUBLE_E
+	local DG = MUL_DOUBLE_G
 	local N2P = MUL_N2P
 	local N2M = MUL_N2M
 	local N2Z = MUL_N2Z
 	local N2T = MUL_N2T
-	local TMP = MUL_TMP
 
 	for NAFIndex = NAFLength, 1, -1 do
 		local NAFDigit = buffer.readi8(NAFForm, NAFIndex - 1)
 
 		if NAFDigit == 0 then
-			buffer.copy(DoubleX, 0, ResultPoint, 0, CoordSize)
-			buffer.copy(DoubleY, 0, ResultPoint, CoordSize, CoordSize)
-			buffer.copy(DoubleZ, 0, ResultPoint, 2 * CoordSize, CoordSize)
+			Square(RX, DA)
+			Square(RY, DB)
+			Square(RZ, RZ)
+			FAdd(RZ, RZ, RZ)
+			FAdd(DA, DB, DE)
+			FAdd(RX, RY, RX)
+			Square(RX, DG)
+			FSub(DG, DE, DG)
+			Carry(DG, DG)
+			FSub(DB, DA, DB)
+			FSub(RZ, DB, RZ)
+			Carry(RZ, RZ)
 
-			Square(DoubleX, DoubleA)
-			Square(DoubleY, DoubleB)
-			Square(DoubleZ, DoubleZ)
-			FAdd(DoubleZ, DoubleZ, DoubleZ)
-			FAdd(DoubleA, DoubleB, DoubleE)
-			FAdd(DoubleX, DoubleY, DoubleX)
-			Square(DoubleX, DoubleG)
-			FSub(DoubleG, DoubleE, DoubleG)
-			Carry(DoubleG, DoubleG)
-			FSub(DoubleB, DoubleA, DoubleB)
-			FSub(DoubleZ, DoubleB, DoubleZ)
-			Carry(DoubleZ, DoubleZ)
-
-			FMul(DoubleG, DoubleZ, DoubleX)
-			FMul(DoubleB, DoubleE, DoubleY)
-			FMul(DoubleZ, DoubleB, DoubleZ)
-			FMul(DoubleG, DoubleE, DoubleE)
-
-			buffer.copy(ResultPoint, 0, DoubleX, 0, CoordSize)
-			buffer.copy(ResultPoint, CoordSize, DoubleY, 0, CoordSize)
-			buffer.copy(ResultPoint, 2 * CoordSize, DoubleZ, 0, CoordSize)
-			buffer.copy(ResultPoint, 3 * CoordSize, DoubleE, 0, CoordSize)
-
-		elseif NAFDigit > 0 then
-			buffer.copy(NielsPoint, 0, MultipleTable, ((NAFDigit - 1) * PointSize), PointSize)
-
-			buffer.copy(P1X, 0, ResultPoint, 0, CoordSize)
-			buffer.copy(P1Y, 0, ResultPoint, CoordSize, CoordSize)
-			buffer.copy(P1Z, 0, ResultPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(P1T, 0, ResultPoint, 3 * CoordSize, CoordSize)
-			buffer.copy(N2P, 0, NielsPoint, 0, CoordSize)
-			buffer.copy(N2M, 0, NielsPoint, CoordSize, CoordSize)
-			buffer.copy(N2Z, 0, NielsPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(N2T, 0, NielsPoint, 3 * CoordSize, CoordSize)
-
-			FSub(P1Y, P1X, TMP)
-			FMul(TMP, N2M, TMP)
-			FAdd(P1Y, P1X, P1X)
-			FMul(P1X, N2P, P1X)
-			FMul(P1T, N2T, P1T)
-			FMul(P1Z, N2Z, P1Z)
-
-			FSub(P1X, TMP, P1Y)
-			FSub(P1Z, P1T, N2P)
-			FAdd(P1Z, P1T, P1Z)
-			FAdd(P1X, TMP, P1X)
-
-			FMul(P1Y, N2P, TMP)
-			FMul(P1Z, P1X, P1T)
-			FMul(N2P, P1Z, P1Z)
-			FMul(P1Y, P1X, P1X)
-
-			buffer.copy(ResultPoint, 0, TMP, 0, CoordSize)
-			buffer.copy(ResultPoint, CoordSize, P1T, 0, CoordSize)
-			buffer.copy(ResultPoint, 2 * CoordSize, P1Z, 0, CoordSize)
-			buffer.copy(ResultPoint, 3 * CoordSize, P1X, 0, CoordSize)
-
+			FMul(DG, RZ, RX)
+			FMul(DB, DE, RY)
+			FMul(RZ, DB, RZ)
+			FMul(DG, DE, RT)
 		else
-			buffer.copy(NielsPoint, 0, MultipleTable, (((-NAFDigit) - 1) * PointSize), PointSize)
+			local TableIndex = if NAFDigit > 0 then (NAFDigit - 1) else ((-NAFDigit) - 1)
+			local Offset = TableIndex * PointSize
+			buffer.copy(N2P, 0, MultipleTable, Offset, CoordSize)
+			buffer.copy(N2M, 0, MultipleTable, Offset + CoordSize, CoordSize)
+			buffer.copy(N2Z, 0, MultipleTable, Offset + 2 * CoordSize, CoordSize)
+			buffer.copy(N2T, 0, MultipleTable, Offset + 3 * CoordSize, CoordSize)
 
-			buffer.copy(P1X, 0, ResultPoint, 0, CoordSize)
-			buffer.copy(P1Y, 0, ResultPoint, CoordSize, CoordSize)
-			buffer.copy(P1Z, 0, ResultPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(P1T, 0, ResultPoint, 3 * CoordSize, CoordSize)
-			buffer.copy(N2P, 0, NielsPoint, 0, CoordSize)
-			buffer.copy(N2M, 0, NielsPoint, CoordSize, CoordSize)
-			buffer.copy(N2Z, 0, NielsPoint, 2 * CoordSize, CoordSize)
-			buffer.copy(N2T, 0, NielsPoint, 3 * CoordSize, CoordSize)
+			if NAFDigit > 0 then
+				FSub(RY, RX, TMP)
+				FMul(TMP, N2M, TMP)
+				FAdd(RY, RX, RX)
+				FMul(RX, N2P, RX)
+				FMul(RT, N2T, RT)
+				FMul(RZ, N2Z, RZ)
 
-			FSub(P1Y, P1X, TMP)
-			FMul(TMP, N2P, TMP)
-			FAdd(P1Y, P1X, P1X)
-			FMul(P1X, N2M, P1X)
-			FMul(P1T, N2T, P1T)
-			FMul(P1Z, N2Z, P1Z)
+				FSub(RX, TMP, RY)
+				FSub(RZ, RT, N2P)
+				FAdd(RZ, RT, RZ)
+				FAdd(RX, TMP, RX)
 
-			FSub(P1X, TMP, P1Y)
-			FAdd(P1Z, P1T, N2P)
-			FSub(P1Z, P1T, P1Z)
-			FAdd(P1X, TMP, P1X)
+				FMul(RY, N2P, TMP)
+				FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ)
+				FMul(RY, RX, RX)
+			else
+				FSub(RY, RX, TMP)
+				FMul(TMP, N2P, TMP)
+				FAdd(RY, RX, RX)
+				FMul(RX, N2M, RX)
+				FMul(RT, N2T, RT)
+				FMul(RZ, N2Z, RZ)
 
-			FMul(P1Y, N2P, TMP)
-			FMul(P1Z, P1X, P1T)
-			FMul(N2P, P1Z, P1Z)
-			FMul(P1Y, P1X, P1X)
+				FSub(RX, TMP, RY)
+				FAdd(RZ, RT, N2P)
+				FSub(RZ, RT, RZ)
+				FAdd(RX, TMP, RX)
 
-			buffer.copy(ResultPoint, 0, TMP, 0, CoordSize)
-			buffer.copy(ResultPoint, CoordSize, P1T, 0, CoordSize)
-			buffer.copy(ResultPoint, 2 * CoordSize, P1Z, 0, CoordSize)
-			buffer.copy(ResultPoint, 3 * CoordSize, P1X, 0, CoordSize)
+				FMul(RY, N2P, TMP)
+				FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ)
+				FMul(RY, RX, RX)
+			end
+
+			RX, RY, RT, TMP = TMP, RT, RX, RY
 		end
 	end
 
 	local Output = buffer.create(PointSize)
-	buffer.copy(Output, 0, ResultPoint, 0, PointSize)
+	buffer.copy(Output, 0, RX, 0, CoordSize)
+	buffer.copy(Output, CoordSize, RY, 0, CoordSize)
+	buffer.copy(Output, 2 * CoordSize, RZ, 0, CoordSize)
+	buffer.copy(Output, 3 * CoordSize, RT, 0, CoordSize)
+	return Output
+end
+
+local function StandardWNAF(ScalarBits: buffer, BitCount: number, W: number): (buffer, number)
+	local PadSize = BitCount + W + 8
+	local Bits = buffer.create(PadSize)
+	for I = 0, BitCount - 1 do
+		buffer.writeu8(Bits, I, buffer.readu8(ScalarBits, I))
+	end
+
+	local Out = buffer.create(PadSize)
+	local Pow2W = 2 ^ W
+	local HalfPow2W = 2 ^ (W - 1)
+
+	local OutLen = 0
+	local Pos = 0
+	while Pos < PadSize - W do
+		if buffer.readu8(Bits, Pos) == 0 then
+			buffer.writei8(Out, OutLen, 0)
+		else
+			local V = 0
+			for K = 0, W - 1 do
+				V += buffer.readu8(Bits, Pos + K) * (2 ^ K)
+			end
+			local Val
+			if V >= HalfPow2W then
+				Val = V - Pow2W
+				for K = 0, W - 1 do buffer.writeu8(Bits, Pos + K, 0) end
+				local J = Pos + W
+				while J < PadSize do
+					if buffer.readu8(Bits, J) == 0 then
+						buffer.writeu8(Bits, J, 1)
+						break
+					else
+						buffer.writeu8(Bits, J, 0)
+						J += 1
+					end
+				end
+			else
+				Val = V
+				for K = 0, W - 1 do buffer.writeu8(Bits, Pos + K, 0) end
+			end
+			buffer.writei8(Out, OutLen, Val)
+		end
+		OutLen += 1
+		Pos += 1
+	end
+
+	while OutLen > 0 and buffer.readi8(Out, OutLen - 1) == 0 do
+		OutLen -= 1
+	end
+
+	return Out, OutLen
+end
+
+function Edwards25519.MulDoubleStraussG(VarPoint: buffer, K1Bits: buffer, K1Count: number, K2Bits: buffer, K2Count: number): buffer
+	local PointSize = POINT_SIZE
+	local CoordSize = COORD_SIZE
+	local W = STRAUSS_NAF_WIDTH
+
+	local NAF1, L1 = StandardWNAF(K1Bits, K1Count, W)
+	local NAF2, L2 = StandardWNAF(K2Bits, K2Count, W)
+	local VarTable = Edwards25519.WindowedNAFTable(VarPoint, W)
+	local GTable = BASEPOINT_NAF_TABLE :: buffer
+
+	local Square = FieldPrime.Square
+	local FAdd = FieldPrime.Add
+	local FSub = FieldPrime.Sub
+	local FMul = FieldPrime.Mul
+	local Carry = FieldPrime.Carry
+
+	local RX = buffer.create(CoordSize)
+	local RY = buffer.create(CoordSize)
+	local RZ = buffer.create(CoordSize)
+	local RT = buffer.create(CoordSize)
+	buffer.copy(RX, 0, IDENTITY_O, 0, CoordSize)
+	buffer.copy(RY, 0, IDENTITY_O, CoordSize, CoordSize)
+	buffer.copy(RZ, 0, IDENTITY_O, 2 * CoordSize, CoordSize)
+	buffer.copy(RT, 0, IDENTITY_O, 3 * CoordSize, CoordSize)
+
+	local DA = buffer.create(CoordSize)
+	local DB = buffer.create(CoordSize)
+	local DE = buffer.create(CoordSize)
+	local DG = buffer.create(CoordSize)
+	local N2P = buffer.create(CoordSize)
+	local N2M = buffer.create(CoordSize)
+	local N2Z = buffer.create(CoordSize)
+	local N2T = buffer.create(CoordSize)
+	local TMP = buffer.create(CoordSize)
+
+	local MaxLen = if L1 > L2 then L1 else L2
+	local Started = false
+
+	for I = MaxLen, 1, -1 do
+		local D1 = if I <= L1 then buffer.readi8(NAF1, I - 1) else 0
+		local D2 = if I <= L2 then buffer.readi8(NAF2, I - 1) else 0
+
+		if Started then
+			Square(RX, DA)
+			Square(RY, DB)
+			Square(RZ, RZ)
+			FAdd(RZ, RZ, RZ)
+			FAdd(DA, DB, DE)
+			FAdd(RX, RY, RX)
+			Square(RX, DG)
+			FSub(DG, DE, DG)
+			Carry(DG, DG)
+			FSub(DB, DA, DB)
+			FSub(RZ, DB, RZ)
+			Carry(RZ, RZ)
+
+			FMul(DG, RZ, RX)
+			FMul(DB, DE, RY)
+			FMul(RZ, DB, RZ)
+			FMul(DG, DE, RT)
+		end
+
+		if D1 ~= 0 then
+			Started = true
+			local TableIndex = if D1 > 0 then (D1 - 1) else ((-D1) - 1)
+			local Offset = TableIndex * PointSize
+			buffer.copy(N2P, 0, VarTable, Offset, CoordSize)
+			buffer.copy(N2M, 0, VarTable, Offset + CoordSize, CoordSize)
+			buffer.copy(N2Z, 0, VarTable, Offset + 2 * CoordSize, CoordSize)
+			buffer.copy(N2T, 0, VarTable, Offset + 3 * CoordSize, CoordSize)
+
+			if D1 > 0 then
+				FSub(RY, RX, TMP); FMul(TMP, N2M, TMP)
+				FAdd(RY, RX, RX); FMul(RX, N2P, RX)
+				FMul(RT, N2T, RT); FMul(RZ, N2Z, RZ)
+				FSub(RX, TMP, RY); FSub(RZ, RT, N2P)
+				FAdd(RZ, RT, RZ); FAdd(RX, TMP, RX)
+				FMul(RY, N2P, TMP); FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ); FMul(RY, RX, RX)
+			else
+				FSub(RY, RX, TMP); FMul(TMP, N2P, TMP)
+				FAdd(RY, RX, RX); FMul(RX, N2M, RX)
+				FMul(RT, N2T, RT); FMul(RZ, N2Z, RZ)
+				FSub(RX, TMP, RY); FAdd(RZ, RT, N2P)
+				FSub(RZ, RT, RZ); FAdd(RX, TMP, RX)
+				FMul(RY, N2P, TMP); FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ); FMul(RY, RX, RX)
+			end
+			RX, RY, RT, TMP = TMP, RT, RX, RY
+		end
+
+		if D2 ~= 0 then
+			Started = true
+			local TableIndex = if D2 > 0 then (D2 - 1) else ((-D2) - 1)
+			local Offset = TableIndex * PointSize
+			buffer.copy(N2P, 0, GTable, Offset, CoordSize)
+			buffer.copy(N2M, 0, GTable, Offset + CoordSize, CoordSize)
+			buffer.copy(N2Z, 0, GTable, Offset + 2 * CoordSize, CoordSize)
+			buffer.copy(N2T, 0, GTable, Offset + 3 * CoordSize, CoordSize)
+
+			if D2 > 0 then
+				FSub(RY, RX, TMP); FMul(TMP, N2M, TMP)
+				FAdd(RY, RX, RX); FMul(RX, N2P, RX)
+				FMul(RT, N2T, RT); FMul(RZ, N2Z, RZ)
+				FSub(RX, TMP, RY); FSub(RZ, RT, N2P)
+				FAdd(RZ, RT, RZ); FAdd(RX, TMP, RX)
+				FMul(RY, N2P, TMP); FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ); FMul(RY, RX, RX)
+			else
+				FSub(RY, RX, TMP); FMul(TMP, N2P, TMP)
+				FAdd(RY, RX, RX); FMul(RX, N2M, RX)
+				FMul(RT, N2T, RT); FMul(RZ, N2Z, RZ)
+				FSub(RX, TMP, RY); FAdd(RZ, RT, N2P)
+				FSub(RZ, RT, RZ); FAdd(RX, TMP, RX)
+				FMul(RY, N2P, TMP); FMul(RZ, RX, RT)
+				FMul(N2P, RZ, RZ); FMul(RY, RX, RX)
+			end
+			RX, RY, RT, TMP = TMP, RT, RX, RY
+		end
+	end
+
+	local Output = buffer.create(PointSize)
+	buffer.copy(Output, 0, RX, 0, CoordSize)
+	buffer.copy(Output, CoordSize, RY, 0, CoordSize)
+	buffer.copy(Output, 2 * CoordSize, RZ, 0, CoordSize)
+	buffer.copy(Output, 3 * CoordSize, RT, 0, CoordSize)
 	return Output
 end
 

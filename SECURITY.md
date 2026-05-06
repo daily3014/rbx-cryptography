@@ -34,7 +34,7 @@ This library is **NOT intended for**:
 
 This library is designed for legitimate cryptographic needs in Roblox applications, such as:
 - Secure data transmission eg TeleportService
-- Data integrity eg CRC32, Adler, SHA2
+- Data integrity eg SHA2, BLAKE2b, BLAKE3
 - Learning purposes
 
 ## Reporting a Vulnerability

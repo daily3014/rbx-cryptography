@@ -1,23 +1,23 @@
 --[=[
 	Cryptography library: BLAKE2b
-	
+
 	Return type: string
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		
+
 		-- BLAKE2b-128 (128-bit output)
 		local Result128 = BLAKE2b(Message, 16)
-		
+
 		-- BLAKE2b-256 (256-bit output)
 		local Result256 = BLAKE2b(Message, 32)
-		
+
 		-- BLAKE2b-384 (384-bit output)
 		local Result384 = BLAKE2b(Message, 48)
-		
+
 		-- BLAKE2b-512 (512-bit output, default)
 		local Result512 = BLAKE2b(Message, 64)
 		-- or simply: local Result512 = BLAKE2b(Message)
-		
+
 		-- With optional key
 		local OptionalKey = buffer.fromstring("MyKey")
 		local Result = BLAKE2b(Message, 64, OptionalKey)
@@ -34,7 +34,7 @@ local BLAKE2B_MIN_OUTPUT_BYTES = 1
 local BLAKE2B_MAX_OUTPUT_BYTES = 64
 local BLAKE2B_MAX_KEY_BYTES = 64
 
-local PERMUTATION_TABLE = {
+local PERMUTATION_VALUES = {
 	1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
 	15, 11, 5, 9, 10, 16, 14, 7, 2, 13, 1, 3, 12, 8, 6, 4,
 	12, 9, 13, 1, 6, 3, 16, 14, 11, 15, 4, 7, 8, 2, 10, 5,
@@ -49,16 +49,14 @@ local PERMUTATION_TABLE = {
 	15, 11, 5, 9, 10, 16, 14, 7, 2, 13, 1, 3, 12, 8, 6, 4
 }
 
-local Work9, Work10, Work11, Work12, Work13, Work14, Work15, Work16 = 0x6a09e667f3bcc908i, 0xbb67ae8584caa73bi, 0x3c6ef372fe94f82bi, 0xa54ff53a5f1d36f1i, 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
-
-local function ExtractWordsFromBlock(InputBuffer: buffer, StartOffset: number, Block: {integer})
-	for WordIdx = 1, 16 do
-		local BytePos = StartOffset + (WordIdx - 1) * 8
-		Block[WordIdx] = buffer.readinteger(InputBuffer, BytePos)
-	end
+local PERMUTATION_TABLE = buffer.create(192)
+for I = 1, 192 do
+	buffer.writeu8(PERMUTATION_TABLE, I - 1, (PERMUTATION_VALUES[I] - 1) * 8)
 end
 
-local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, FinalBlock: boolean, State: {integer})
+local Work9, Work10, Work11, Work12, Work13, Work14, Work15, Work16 = 0x6a09e667f3bcc908i, 0xbb67ae8584caa73bi, 0x3c6ef372fe94f82bi, 0xa54ff53a5f1d36f1i, 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
+
+local function ProcessCompressionRound(Block: buffer, ByteCounter: number, FinalBlock: boolean, State: {integer})
 	local W1, W2, W3, W4, W5, W6, W7, W8 = State[1], State[2], State[3], State[4], State[5], State[6], State[7], State[8]
 	local W9, W10, W11, W12, W13, W14, W15, W16 = Work9, Work10, Work11, Work12, integer.bxor(Work13, integer.create(ByteCounter)), Work14, Work15, Work16
 
@@ -72,9 +70,8 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 	for RoundNum = 1, 12 do
 		local ScheduleBase = (RoundNum - 1) * 16
 
-		-- Mix(W1, W5, W9,  W13, S[S0], S[S1])
-		local S1, S2 = Permutation[ScheduleBase + 1], Permutation[ScheduleBase + 2]
-		MsgX, MsgY = Block[S1], Block[S2]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 0))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 1))
 
 		W1 = integer.add(integer.add(W1, W5), MsgX)
 		W13 = integer.rrotate(integer.bxor(W13, W1), 32i)
@@ -88,9 +85,8 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W9 = integer.add(W9, W13)
 		W5 = integer.rrotate(integer.bxor(W5, W9), 63i)
 
-		-- Mix(W2, W6, W10, W14, S[S2], S[S3])
-		local S3, S4 = Permutation[ScheduleBase + 3], Permutation[ScheduleBase + 4]
-		MsgX, MsgY = Block[S3], Block[S4]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 2))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 3))
 
 		W2 = integer.add(integer.add(W2, W6), MsgX)
 		W14 = integer.rrotate(integer.bxor(W14, W2), 32i)
@@ -104,9 +100,8 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W10 = integer.add(W10, W14)
 		W6 = integer.rrotate(integer.bxor(W6, W10), 63i)
 
-		-- Mix(W3, W7, W11, W15, S[S4], S[S5])
-		local S5, S6 = Permutation[ScheduleBase + 5], Permutation[ScheduleBase + 6]
-		MsgX, MsgY = Block[S5], Block[S6]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 4))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 5))
 
 		W3 = integer.add(integer.add(W3, W7), MsgX)
 		W15 = integer.rrotate(integer.bxor(W15, W3), 32i)
@@ -120,9 +115,8 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W11 = integer.add(W11, W15)
 		W7 = integer.rrotate(integer.bxor(W7, W11), 63i)
 
-		-- Mix(W4, W8, W12, W16, S[S6], S[S7])
-		local S7, S8 = Permutation[ScheduleBase + 7], Permutation[ScheduleBase + 8]
-		MsgX, MsgY = Block[S7], Block[S8]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 6))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 7))
 
 		W4 = integer.add(integer.add(W4, W8), MsgX)
 		W16 = integer.rrotate(integer.bxor(W16, W4), 32i)
@@ -136,9 +130,9 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W12 = integer.add(W12, W16)
 		W8 = integer.rrotate(integer.bxor(W8, W12), 63i)
 
-		-- Mix(W1, W6, W11, W16, S[S8],  S[S9])
-		local S9, S10 = Permutation[ScheduleBase + 9], Permutation[ScheduleBase + 10]
-		MsgX, MsgY = Block[S9], Block[S10]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 8))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 9))
+
 		W1 = integer.add(integer.add(W1, W6), MsgX)
 		W16 = integer.rrotate(integer.bxor(W16, W1), 32i)
 
@@ -151,9 +145,9 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W11 = integer.add(W11, W16)
 		W6 = integer.rrotate(integer.bxor(W6, W11), 63i)
 
-		-- Mix(W2, W7, W12, W13, S[S10], S[S11])
-		local S11, S12 = Permutation[ScheduleBase + 11], Permutation[ScheduleBase + 12]
-		MsgX, MsgY = Block[S11], Block[S12]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 10))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 11))
+
 		W2 = integer.add(integer.add(W2, W7), MsgX)
 		W13 = integer.rrotate(integer.bxor(W13, W2), 32i)
 
@@ -166,9 +160,8 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W12 = integer.add(W12, W13)
 		W7 = integer.rrotate(integer.bxor(W7, W12), 63i)
 
-		-- Mix(W3, W8, W9,  W14, S[S12], S[S13])
-		local S13, S14 = Permutation[ScheduleBase + 13], Permutation[ScheduleBase + 14]
-		MsgX, MsgY = Block[S13], Block[S14]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 12))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 13))
 
 		W3 = integer.add(integer.add(W3, W8), MsgX)
 		W14 = integer.rrotate(integer.bxor(W14, W3), 32i)
@@ -182,9 +175,8 @@ local function ProcessCompressionRound(Block: {integer}, ByteCounter: number, Fi
 		W9 = integer.add(W9, W14)
 		W8 = integer.rrotate(integer.bxor(W8, W9), 63i)
 
-		-- Mix(W4, W5, W10, W15, S[S14], S[S15])
-		local S15, S16 = Permutation[ScheduleBase + 15], Permutation[ScheduleBase + 16]
-		MsgX, MsgY = Block[S15], Block[S16]
+		MsgX = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 14))
+		MsgY = buffer.readinteger(Block, buffer.readu8(Permutation, ScheduleBase + 15))
 
 		W4 = integer.add(integer.add(W4, W5), MsgX)
 		W15 = integer.rrotate(integer.bxor(W15, W4), 32i)
@@ -218,15 +210,13 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	local S1Low = integer.band(State[1], 0xFFFFFFFFi)
 	State[1] = integer.bor(integer.band(State[1], integer.bnot(0xFFFFFFFFi)), integer.bxor(S1Low, 0x01010000i, integer.lshift(integer.create(KeyLength), 8i), integer.create(OutputLength)))
 
-	local Block = table.create(16) :: {integer}
+	local Block = buffer.create(BLOCK_SIZE_BYTES)
 
 	local ProcessedBytes = KeyLength > 0 and 128 or 0
 
 	if KeyLength > 0 and KeyData then
-		local KeyPadding = buffer.create(BLOCK_SIZE_BYTES)
-		buffer.copy(KeyPadding, 0, KeyData)
-
-		ExtractWordsFromBlock(KeyPadding, 0, Block)
+		buffer.fill(Block, 0, 0, BLOCK_SIZE_BYTES)
+		buffer.copy(Block, 0, KeyData)
 		ProcessCompressionRound(Block, ProcessedBytes, DataLength == 0, State)
 	end
 
@@ -234,20 +224,19 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	local FinalBlockSize = RemainingBytes == 0 and BLOCK_SIZE_BYTES or RemainingBytes
 
 	for BlockStart = 0, DataLength - FinalBlockSize - 1, BLOCK_SIZE_BYTES do
-		ExtractWordsFromBlock(InputData, BlockStart, Block)
+		buffer.copy(Block, 0, InputData, BlockStart, BLOCK_SIZE_BYTES)
 		ProcessedBytes += BLOCK_SIZE_BYTES
 		ProcessCompressionRound(Block, ProcessedBytes, false, State)
 	end
 
 	if KeyLength == 0 or DataLength > 0 then
-		local PaddedBlock = buffer.create(BLOCK_SIZE_BYTES)
+		buffer.fill(Block, 0, 0, BLOCK_SIZE_BYTES)
 		local CopyBytes = math.min(FinalBlockSize, DataLength)
 		local CopyStart = math.max(0, DataLength - FinalBlockSize)
 		if CopyBytes > 0 then
-			buffer.copy(PaddedBlock, 0, InputData, CopyStart, CopyBytes)
+			buffer.copy(Block, 0, InputData, CopyStart, CopyBytes)
 		end
 
-		ExtractWordsFromBlock(PaddedBlock, 0, Block)
 		ProcessCompressionRound(Block, ProcessedBytes + CopyBytes, true, State)
 	end
 

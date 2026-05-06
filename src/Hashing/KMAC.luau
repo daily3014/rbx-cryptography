@@ -68,8 +68,6 @@ end
 
 local FUNCTION_NAME = buffer.fromstring("KMAC")
 
-local LANES = buffer.create(200)
-
 local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RC = ROUND_CONSTANTS
@@ -265,9 +263,8 @@ local function Bytepad(Data: buffer, Rate: number): buffer
 	return Result
 end
 
-local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateBytes: number): ()	
-	buffer.fill(LANES, 0, 0)
-	local Lanes = LANES
+local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateBytes: number): ()
+	local Lanes = buffer.create(200)
 
 	local OutputBytes = buffer.len(Output)
 

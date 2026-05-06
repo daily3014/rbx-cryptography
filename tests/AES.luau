@@ -25,12 +25,13 @@
 --]=]
 
 --!strict
+local IsLuauCLI = warn == nil
 --!optimize 2
 
-local Http = game:GetService("HttpService")
+local Http = require("./_shim")
 
 local Testing = require("./")
-local Cryptography = require("../")
+local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
 local AES = Cryptography.Encryption.AES
 local Conversions = Cryptography.Utilities.Conversions

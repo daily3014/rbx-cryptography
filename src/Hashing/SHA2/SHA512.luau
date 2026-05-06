@@ -14,7 +14,7 @@
 --!optimize 2
 --!native
 
-local K = {
+local K_VALUES = {
 	0x428a2f98d728ae22i, 0x7137449123ef65cdi, 0xb5c0fbcfec4d3b2fi, 0xe9b5dba58189dbbci,
 	0x3956c25bf348b538i, 0x59f111f1b605d019i, 0x923f82a4af194f9bi, 0xab1c5ed5da6d8118i,
 	0xd807aa98a3030242i, 0x12835b0145706fbei, 0x243185be4ee4b28ci, 0x550c7dc3d5ffb4e2i,
@@ -37,7 +37,12 @@ local K = {
 	0x4cc5d4becb3e42b6i, 0x597f299cfc657e2ai, 0x5fcb6fab3ad6faeci, 0x6c44198c4a475817i,
 }
 
-local W = table.create(80) :: {integer}
+local K = buffer.create(80 * 8)
+for I = 1, 80 do
+	buffer.writeinteger(K, (I - 1) * 8, K_VALUES[I])
+end
+
+local W = buffer.create(80 * 8)
 local DIGEST = buffer.create(64)
 
 local function PreProcess(Contents: buffer): (buffer, number)
@@ -66,32 +71,31 @@ local function DigestBlocks(Blocks: buffer, Length: number)
 	local H5, H6, H7, H8 = 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
 
 	for Offset = 0, Length - 1, 128 do
-		for T = 1, 16 do
-			local ByteOffset = Offset + (T - 1) * 8
-			W[T] = integer.bswap(buffer.readinteger(Blocks, ByteOffset))
+		for T = 0, 15 do
+			buffer.writeinteger(W, T * 8, integer.bswap(buffer.readinteger(Blocks, Offset + T * 8)))
 		end
 
-		for T = 17, 80 do
-			local P15 = W[T - 15]
-			local P2 = W[T - 2]
+		for T = 16, 79 do
+			local P15 = buffer.readinteger(W, (T - 15) * 8)
+			local P2 = buffer.readinteger(W, (T - 2) * 8)
 
 			local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
 			local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
 
-			W[T] = integer.add(integer.add(W[T - 16], S0), integer.add(W[T - 7], S1))
+			buffer.writeinteger(W, T * 8, integer.add(integer.add(buffer.readinteger(W, (T - 16) * 8), S0), integer.add(buffer.readinteger(W, (T - 7) * 8), S1)))
 		end
 
 		local A, B, C, D = H1, H2, H3, H4
 		local E, F, G, H = H5, H6, H7, H8
 
-		for T = 1, 80 do
+		for T = 0, 79 do
 			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
 			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
 
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 
-			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(K[T], W[T]))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(K, T * 8), buffer.readinteger(W, T * 8)))
 			local T2 = integer.add(Sigma0, Maj)
 
 			H = G
@@ -114,28 +118,36 @@ local function DigestBlocks(Blocks: buffer, Length: number)
 		H8 = integer.add(H8, H)
 	end
 
-	buffer.writeinteger(DIGEST, 0, integer.bswap(H1))
-	buffer.writeinteger(DIGEST, 8, integer.bswap(H2))
-	buffer.writeinteger(DIGEST, 16, integer.bswap(H3))
-	buffer.writeinteger(DIGEST, 24, integer.bswap(H4))
-	buffer.writeinteger(DIGEST, 32, integer.bswap(H5))
-	buffer.writeinteger(DIGEST, 40, integer.bswap(H6))
-	buffer.writeinteger(DIGEST, 48, integer.bswap(H7))
-	buffer.writeinteger(DIGEST, 56, integer.bswap(H8))
+	buffer.writeu32(DIGEST, 0, integer.tonumber(integer.rshift(H1, 32i)))
+	buffer.writeu32(DIGEST, 4, integer.tonumber(integer.band(H1, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 8, integer.tonumber(integer.rshift(H2, 32i)))
+	buffer.writeu32(DIGEST, 12, integer.tonumber(integer.band(H2, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 16, integer.tonumber(integer.rshift(H3, 32i)))
+	buffer.writeu32(DIGEST, 20, integer.tonumber(integer.band(H3, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 24, integer.tonumber(integer.rshift(H4, 32i)))
+	buffer.writeu32(DIGEST, 28, integer.tonumber(integer.band(H4, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 32, integer.tonumber(integer.rshift(H5, 32i)))
+	buffer.writeu32(DIGEST, 36, integer.tonumber(integer.band(H5, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 40, integer.tonumber(integer.rshift(H6, 32i)))
+	buffer.writeu32(DIGEST, 44, integer.tonumber(integer.band(H6, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 48, integer.tonumber(integer.rshift(H7, 32i)))
+	buffer.writeu32(DIGEST, 52, integer.tonumber(integer.band(H7, 0xFFFFFFFFi)))
+	buffer.writeu32(DIGEST, 56, integer.tonumber(integer.rshift(H8, 32i)))
+	buffer.writeu32(DIGEST, 60, integer.tonumber(integer.band(H8, 0xFFFFFFFFi)))
 end
 
 local function SHA512(Message: buffer): (string, buffer)
 	local Processed, Length = PreProcess(Message)
 	DigestBlocks(Processed, Length)
 
-	local H1 = integer.bswap(buffer.readinteger(DIGEST, 0))
-	local H2 = integer.bswap(buffer.readinteger(DIGEST, 8))
-	local H3 = integer.bswap(buffer.readinteger(DIGEST, 16))
-	local H4 = integer.bswap(buffer.readinteger(DIGEST, 24))
-	local H5 = integer.bswap(buffer.readinteger(DIGEST, 32))
-	local H6 = integer.bswap(buffer.readinteger(DIGEST, 40))
-	local H7 = integer.bswap(buffer.readinteger(DIGEST, 48))
-	local H8 = integer.bswap(buffer.readinteger(DIGEST, 56))
+	local H1 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 0)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 4)) :: integer)
+	local H2 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 8)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 12)) :: integer)
+	local H3 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 16)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 20)) :: integer)
+	local H4 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 24)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 28)) :: integer)
+	local H5 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 32)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 36)) :: integer)
+	local H6 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 40)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 44)) :: integer)
+	local H7 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 48)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 52)) :: integer)
+	local H8 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 56)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 60)) :: integer)
 
 	local Result = buffer.create(64)
 	buffer.copy(Result, 0, DIGEST)

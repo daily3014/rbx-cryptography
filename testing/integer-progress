@@ -22,6 +22,16 @@ CSPRNG: PASSING (14/14 functional + EdDSA RFC 8032 still passes)
   - 4 CSPRNG copies updated (Utilities, EdDSA, MlDSA, MlKEM), 4 ChaCha20.luau files deleted
   - ~3% faster on default 2048-byte block, much simpler architecture
 
+Wycheproof test suite: ALL PASSING (3294/3294 in 3.9s standalone)
+  Standalone runner: testing/runner.luau loads all 27 tests/*.luau in sequence
+  HttpService shim: tests/_shim.luau intercepts game:GetService for offline JSON
+  20 test files patched with IsLuauCLI dual-path require (Roblox + standalone)
+  Caught 2 latent bugs:
+    - HKDF-SHA512 broken since SHA512 integer port (canonical-BE output vs HKDF's
+      per-u32 byteswap assumption). Fixed Hashing/SHA512+SHA384 to write per-u32 LE.
+    - integer >= integer crashed in FieldPrime/Poly1305 saturation check
+      (per RFC, integer only supports ==/~= operators). Fixed via integer.ge.
+
 TODO (later, additive — do NOT remove existing 32-bit versions):
   - XXH64 alongside XXH32 (different algorithm, ~1.3-1.7x/byte est. on long inputs)
   - MurmurHash64 alongside Murmur (different algorithm, similar speedup est.)
