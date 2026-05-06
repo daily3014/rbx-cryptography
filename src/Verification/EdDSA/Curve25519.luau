@@ -88,7 +88,9 @@ local function LadderStep(DifferencePoint: buffer, Point1: buffer, Point2: buffe
 	return Point, SecondPoint
 end
 
-local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
+local Curve25519 = {}
+
+function Curve25519.Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	local CurrentP = buffer.create(MONTGOMERY_POINT_SIZE)
 	buffer.copy(CurrentP, 0 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
 	buffer.copy(CurrentP, 1 * COORD_SIZE, FieldPrime.Num(0), 0, COORD_SIZE)
@@ -109,8 +111,6 @@ local function Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCoun
 
 	return CurrentP
 end
-
-local Curve25519 = {}
 
 function Curve25519.DifferentialAdd(DifferencePoint: buffer, Point1: buffer, Point2: buffer): buffer
 	local DiffX = GetMontgomeryCoord(DifferencePoint, 0)

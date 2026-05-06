@@ -137,11 +137,12 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Ben
 
 ### Digital Signatures & Key Exchange
 
-| Algorithm              | Operation   | Time        | Alternative | Improvement |
-|------------------------|-------------|-------------|-------------|-------------|
-| EdDSA (Roundtrip)      | Sign+Verify | **371 μs**  | -           | -           |
-| ML-DSA-44 (Roundtrip)  | Sign+Verify | **1.78 ms** | -           | -           |
-| ML-KEM-512 (Roundtrip) | Encap+Decap | **273 μs**  | -           | -           |
+| Algorithm               | Operation   | Time         | Alternative                             | Improvement      |
+|-------------------------|-------------|--------------|-----------------------------------------|------------------|
+| EdDSA (Roundtrip)       | Sign+Verify | **371 μs**   | -                                       | -                |
+| X25519 (Exchange)       | ECDH        | **437 μs**   | 628 μs (ccryptolib)                     | **1.44x faster** |
+| ML-DSA-87 (Roundtrip)   | Sign+Verify | **9.93 ms** | 863 ms (WASM-Luau)    | **86x faster**   |
+| ML-KEM-1024 (Roundtrip) | Encap+Decap | **564 μs**   | 122 ms (WASM-Luau)  | **216x faster**  |
 
 ### Utilities
 
