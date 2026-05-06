@@ -6,9 +6,8 @@ We actively maintain and provide security updates for the following versions of 
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 3.2.x   | :white_check_mark: |
-| 3.1.x   | :white_check_mark: |
-| < 3.1   | :x:                |
+| 4.0.x   | :white_check_mark: |
+| < 3.1.0 | :x:                |
 
 We recommend always using the latest version to make sure you have the most recent security patches and improvements.
 
