@@ -7,7 +7,7 @@ type TestVector = {
 }
 
 type TestVectors = {[string]: TestVector}
-local Algorithm = if IsLuauCLI then require("../src/Hashing/SHA1") else require("../Hashing/SHA1")
+local Algorithm: any = if IsLuauCLI then require("../src/Hashing/SHA1") else require("../Hashing/SHA1")
 
 local TestVectors: TestVectors = {
 	[""] = { Description = "Empty String", Expected = "da39a3ee5e6b4b0d3255bfef95601890afd80709" },

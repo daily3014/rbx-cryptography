@@ -254,16 +254,17 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 		end
 	end
 
+	-- TYPE ERROR: string.format definition doesn't support integers yet
 	local FinalDigest = string.format(
 		"%016x%016x%016x%016x%016x%016x%016x%016x",
-		integer.bswap(State[1]),
-		integer.bswap(State[2]),
-		integer.bswap(State[3]),
-		integer.bswap(State[4]),
-		integer.bswap(State[5]),
-		integer.bswap(State[6]),
-		integer.bswap(State[7]),
-		integer.bswap(State[8])
+		integer.bswap(State[1]) :: any,
+		integer.bswap(State[2]) :: any,
+		integer.bswap(State[3]) :: any,
+		integer.bswap(State[4]) :: any,
+		integer.bswap(State[5]) :: any,
+		integer.bswap(State[6]) :: any,
+		integer.bswap(State[7]) :: any,
+		integer.bswap(State[8]) :: any
 	)
 
 	return string.sub(FinalDigest, 1, OutputLength * 2), Digest

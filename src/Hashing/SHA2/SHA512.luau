@@ -152,9 +152,10 @@ local function SHA512(Message: buffer): (string, buffer)
 	local Result = buffer.create(64)
 	buffer.copy(Result, 0, DIGEST)
 
+	-- TYPE ERROR: string.format definition doesn't support integers yet
 	return string.format(
 		"%016x%016x%016x%016x%016x%016x%016x%016x",
-		H1, H2, H3, H4, H5, H6, H7, H8
+		H1 :: any, H2 :: any, H3 :: any, H4 :: any, H5 :: any, H6 :: any, H7 :: any, H8 :: any
 	), Result
 end
 

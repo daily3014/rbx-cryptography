@@ -23,8 +23,8 @@
 --]=]
 
 --!strict
-local IsLuauCLI = warn == nil
 --!optimize 2
+local IsLuauCLI = warn == nil
 
 local Http = require("./_shim")
 
