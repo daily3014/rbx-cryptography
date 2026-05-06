@@ -15,11 +15,11 @@
 
 --!strict
 --!optimize 2
-
-local IsLuauCLI = warn == nil
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
+local Cryptography = if IsCLI then require("../src") else require("../")
 local MLKEM = Cryptography.Verification.MlKEM
 local Conversions = Cryptography.Utilities.Conversions
 local FromHex = Conversions.FromHex
@@ -73,9 +73,8 @@ local function BuffersEqual(A: buffer, B: buffer): boolean
 end
 
 local function FetchTestVectors(): WycheproofData
-	local Http = require("./_shim")
-	local Response = Http:GetAsync(WYCHEPROOF_URL)
-	return Http:JSONDecode(Response) :: WycheproofData
+	local Response = Bridge.Get(WYCHEPROOF_URL)
+	return Bridge.JSONDecode(Response) :: WycheproofData
 end
 
 local function HasFlag(Flags: {string}?, FlagName: string): boolean

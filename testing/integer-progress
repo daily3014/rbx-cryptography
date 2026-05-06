@@ -24,8 +24,7 @@ CSPRNG: PASSING (14/14 functional + EdDSA RFC 8032 still passes)
 
 Wycheproof test suite: ALL PASSING (3294/3294 in 3.9s standalone)
   Standalone runner: testing/runner.luau loads all 27 tests/*.luau in sequence
-  HttpService shim: tests/_shim.luau intercepts game:GetService for offline JSON
-  20 test files patched with IsLuauCLI dual-path require (Roblox + standalone)
+  20 test files patched with IsCLI dual-path require (Roblox + standalone)
   Caught 2 latent bugs:
     - HKDF-SHA512 broken since SHA512 integer port (canonical-BE output vs HKDF's
       per-u32 byteswap assumption). Fixed Hashing/SHA512+SHA384 to write per-u32 LE.

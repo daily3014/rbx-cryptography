@@ -24,13 +24,12 @@
 
 --!strict
 --!optimize 2
-local IsLuauCLI = warn == nil
 
-local Http = require("./_shim")
-
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
+local Cryptography = if IsCLI then require("../src") else require("../")
 local AEAD = Cryptography.Encryption.AEAD
 local Conversions = Cryptography.Utilities.Conversions
 local FromHex = Conversions.FromHex
@@ -81,8 +80,8 @@ local function BuffersEqual(A: buffer, B: buffer): boolean
 end
 
 local function FetchTestVectors(Url: string): AeadData
-	local Response = Http:GetAsync(Url)
-	return Http:JSONDecode(Response) :: AeadData
+	local Response = Bridge.Get(Url)
+	return Bridge.JSONDecode(Response) :: AeadData
 end
 
 local function RunAeadTests(

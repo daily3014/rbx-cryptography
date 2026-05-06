@@ -1,12 +1,13 @@
 --!strict
-local IsLuauCLI = warn == nil
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
+
 type TestVector = {
 	Description: string,
 	Input: string,
 	Key: string,
 }
-
 
 local function ToHex(Buffer: buffer) : string
 	local Hex = ""
@@ -17,7 +18,8 @@ local function ToHex(Buffer: buffer) : string
 	return Hex
 end
 
-local XOR = if IsLuauCLI then require("../src/Encryption/XOR") else require("../Encryption/XOR")
+
+local XOR: any = if IsCLI then require("../src/Encryption/XOR") else require("../Encryption/XOR")
 
 local TestVectors: {TestVector} = {
 	{

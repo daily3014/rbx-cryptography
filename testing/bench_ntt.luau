@@ -2,8 +2,8 @@
 --!optimize 2
 --!native
 
-local IsLuauCLI = warn == nil
-local NTT = if IsLuauCLI then require("../src/Verification/MlDSA/NTT") else require("../Verification/MlDSA/NTT")
+local IsCLI = warn == nil
+local NTT = if IsCLI then require("../src/Verification/MlDSA/NTT") else require("../Verification/MlDSA/NTT")
 
 local Q = 8380417
 

@@ -20,12 +20,11 @@
 
 --!strict
 --!optimize 2
-local IsLuauCLI = warn == nil
-
-local Http = require("./_shim")
-
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
+
+local Cryptography = if IsCLI then require("../src") else require("../")
 local HMAC = Cryptography.Hashing.HMAC
 local SHA2 = Cryptography.Hashing.SHA2
 local SHA3 = Cryptography.Hashing.SHA3
@@ -82,8 +81,8 @@ local HMAC_CONFIGS: {HmacConfig} = {
 }
 
 local function FetchTestVectors(Url: string): MacData
-	local Response = Http:GetAsync(Url)
-	return Http:JSONDecode(Response) :: MacData
+	local Response = Bridge.Get(Url)
+	return Bridge.JSONDecode(Response) :: MacData
 end
 
 local function RunHmacTests(Config: HmacConfig)

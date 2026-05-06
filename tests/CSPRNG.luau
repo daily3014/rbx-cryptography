@@ -1,6 +1,6 @@
 --!strict
-local IsLuauCLI = warn == nil
-
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 type TestVector = {
 	Description: string,
@@ -8,7 +8,7 @@ type TestVector = {
 }
 
 type TestVectors = {[string]: TestVector}
-local Algorithm = if IsLuauCLI then require("../src/Utilities/CSPRNG") else require("../Utilities/CSPRNG") 
+local Algorithm = if IsCLI then require("../src/Utilities/CSPRNG") else require("../Utilities/CSPRNG") 
 
 Testing.Describe("CSPRNG Algorithm Tests", function()
 	Testing.Test("Ed25519 Functions", function()

@@ -35,13 +35,11 @@
 
 --!strict
 --!optimize 2
-local IsLuauCLI = warn == nil
-
-local Http = require("./_shim")
-
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
+local Cryptography = if IsCLI then require("../src") else require("../")
 local X25519 = Cryptography.Verification.EdDSA.X25519
 local Conversions = Cryptography.Utilities.Conversions
 local FromHex = Conversions.FromHex
@@ -75,8 +73,8 @@ local WYCHEPROOF_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/h
 local SKIP_TEST_101 = true
 
 local function FetchTestVectors(): XdhData
-	local Response = Http:GetAsync(WYCHEPROOF_URL)
-	return Http:JSONDecode(Response) :: XdhData
+	local Response = Bridge.Get(WYCHEPROOF_URL)
+	return Bridge.JSONDecode(Response) :: XdhData
 end
 
 Testing.Describe("X25519 Wycheproof Tests", function()

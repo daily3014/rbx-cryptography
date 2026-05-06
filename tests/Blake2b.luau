@@ -1,4 +1,6 @@
 --!strict
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 type TestVector = {
 	Description: string,
@@ -9,8 +11,9 @@ type TestVector = {
 
 type TestVectors = {[string]: TestVector}
 
-local IsLuauCLI = warn == nil
-local Algorithm = if IsLuauCLI then require("../src/Hashing/Blake2b") else require("../Hashing/Blake2b")
+
+
+local Algorithm = if IsCLI then require("../src/Hashing/Blake2b") else require("../Hashing/Blake2b")
 local TestVectors: TestVectors = {
 	["abc"] = { 
 		Description = "Basic ABC Test", 

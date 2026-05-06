@@ -1,9 +1,9 @@
 --!strict
-local IsLuauCLI = warn == nil
-local NTT = if IsLuauCLI then require("../src/Verification/MlDSA/NTT") else require("../Verification/MlDSA/NTT")
-local PolyVec = if IsLuauCLI then require("../src/Verification/MlDSA/PolyVec") else require("../Verification/MlDSA/PolyVec")
-local Sampling = if IsLuauCLI then require("../src/Verification/MlDSA/Sampling") else require("../Verification/MlDSA/Sampling")
-local XOF = if IsLuauCLI then require("../src/Verification/MlDSA/XOF") else require("../Verification/MlDSA/XOF")
+local IsCLI = warn == nil
+local NTT = if IsCLI then require("../src/Verification/MlDSA/NTT") else require("../Verification/MlDSA/NTT")
+local PolyVec = if IsCLI then require("../src/Verification/MlDSA/PolyVec") else require("../Verification/MlDSA/PolyVec")
+local Sampling = if IsCLI then require("../src/Verification/MlDSA/Sampling") else require("../Verification/MlDSA/Sampling")
+local XOF = if IsCLI then require("../src/Verification/MlDSA/XOF") else require("../Verification/MlDSA/XOF")
 
 local Q = 8380417
 local N = 256

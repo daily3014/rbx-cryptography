@@ -1,6 +1,6 @@
 --!strict
-local IsLuauCLI = warn == nil
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
+local IsCLI = warn == nil
+local Cryptography = if IsCLI then require("../src") else require("../")
 local MLDSA = Cryptography.Verification.MlDSA
 
 local Variant = MLDSA.ML_DSA_44

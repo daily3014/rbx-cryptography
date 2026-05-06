@@ -8,11 +8,11 @@
 
 --!strict
 --!optimize 2
-
-local IsLuauCLI = warn == nil
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
+local Cryptography = if IsCLI then require("../src") else require("../")
 local MlDSA = Cryptography.Verification.MlDSA
 local Conversions = Cryptography.Utilities.Conversions
 local FromHex = Conversions.FromHex
@@ -83,15 +83,13 @@ local function BuffersEqual(A: buffer, B: buffer): boolean
 end
 
 local function FetchVerifyVectors(): VerifyData
-	local Http = require("./_shim")
-	local Response = Http:GetAsync(VERIFY_URL)
-	return Http:JSONDecode(Response) :: VerifyData
+	local Response = Bridge.Get(VERIFY_URL)
+	return Bridge.JSONDecode(Response) :: VerifyData
 end
 
 local function FetchSignVectors(): SignData
-	local Http = require("./_shim")
-	local Response = Http:GetAsync(SIGN_URL)
-	return Http:JSONDecode(Response) :: SignData
+	local Response = Bridge.Get(SIGN_URL)
+	return Bridge.JSONDecode(Response) :: SignData
 end
 
 Testing.Describe("ML-DSA-87 Wycheproof Tests", function()

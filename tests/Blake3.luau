@@ -1,7 +1,9 @@
 --!strict
-local IsLuauCLI = warn == nil
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Algorithm = if IsLuauCLI then require("../src/Hashing/Blake3") else require("../Hashing/Blake3")
+
+local Algorithm = if IsCLI then require("../src/Hashing/Blake3") else require("../Hashing/Blake3")
 
 local New = {
 	Key = "whats the Elvish word for friend",

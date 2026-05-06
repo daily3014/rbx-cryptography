@@ -15,12 +15,11 @@
 
 --!strict
 --!optimize 2
-local IsLuauCLI = warn == nil
-
-local Http = require("./_shim")
-
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
+
+local Cryptography = if IsCLI then require("../src") else require("../")
 local HKDF = Cryptography.Hashing.HKDF
 local SHA2 = Cryptography.Hashing.SHA2
 local Conversions = Cryptography.Utilities.Conversions
@@ -80,8 +79,8 @@ local HKDF_CONFIGS: {HkdfConfig} = {
 }
 
 local function FetchTestVectors(Url: string): HkdfData
-	local Response = Http:GetAsync(Url)
-	return Http:JSONDecode(Response) :: HkdfData
+	local Response = Bridge.Get(Url)
+	return Bridge.JSONDecode(Response) :: HkdfData
 end
 
 local function RunHkdfTests(Config: HkdfConfig)

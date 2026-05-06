@@ -1,13 +1,15 @@
 --!strict
-local IsLuauCLI = warn == nil
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
+
 type TestVector = {
 	Description: string,
 	Expected: string
 }
 
 type TestVectors = {[string]: TestVector}
-local Algorithm: any = if IsLuauCLI then require("../src/Hashing/SHA1") else require("../Hashing/SHA1")
+local Algorithm: any = if IsCLI then require("../src/Hashing/SHA1") else require("../Hashing/SHA1")
 
 local TestVectors: TestVectors = {
 	[""] = { Description = "Empty String", Expected = "da39a3ee5e6b4b0d3255bfef95601890afd80709" },

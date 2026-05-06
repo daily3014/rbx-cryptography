@@ -15,11 +15,11 @@
 
 --!strict
 --!optimize 2
-
-local IsLuauCLI = warn == nil
+local Bridge = require("./Bridge")
+local IsCLI = Bridge.IsCLI
 local Testing = require("./")
-local Cryptography = if IsLuauCLI then require("../src") else require("../")
 
+local Cryptography = if IsCLI then require("../src") else require("../")
 local KMAC = Cryptography.Hashing.KMAC
 local Conversions = Cryptography.Utilities.Conversions
 local FromHex = Conversions.FromHex
@@ -68,9 +68,8 @@ local KMAC_CONFIGS: {KmacConfig} = {
 }
 
 local function FetchTestVectors(Url: string): MacData
-	local Http = require("./_shim")
-	local Response = Http:GetAsync(Url)
-	return Http:JSONDecode(Response) :: MacData
+	local Response = Bridge.Get(Url)
+	return Bridge.JSONDecode(Response) :: MacData
 end
 
 local function RunKmacTests(Config: KmacConfig)
