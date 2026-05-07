@@ -8,7 +8,7 @@
 	Return type: buffer 
 	Example Usage:
 		local Message = buffer.fromstring("Hello World")
-		local Key = buffer.fromstring("MySecretKey12345") -- Fastest when its a multiple of 4 or is longer than the message
+		local Key = buffer.fromstring("MySecretKey12345") -- Fastest when it's either 1, 4, or 8 bytes long
 		
 		local Encrypted = XOR(Message, Key)
 		local Decrypted = XOR(Encrypted, Key) 
@@ -67,6 +67,26 @@ local function XOR(StringBuffer: buffer, KeyBuffer: buffer): buffer
 		return OutputBuffer
 	end
 
+	if KeyLength == 8 then
+		local KeyInteger = buffer.readinteger(KeyBuffer, 0)
+		local Offset = 0
+
+		while Offset + 7 < StringLength do
+			buffer.writeinteger(OutputBuffer, Offset, integer.bxor(buffer.readinteger(OutputBuffer, Offset), KeyInteger))
+			Offset += 8
+		end
+
+		for Index = 0, StringLength - Offset - 1 do
+			local ByteOffset = Offset + Index
+			buffer.writeu8(OutputBuffer, ByteOffset, bit32.bxor(
+				buffer.readu8(OutputBuffer, ByteOffset),
+				buffer.readu8(KeyBuffer, Index)
+				))
+		end
+
+		return OutputBuffer
+	end
+
 	local ExtendedKeyLength = math.min(StringLength, KeyLength * 256)
 	local ExtendedKeyBuffer = buffer.create(ExtendedKeyLength)
 
@@ -81,6 +101,12 @@ local function XOR(StringBuffer: buffer, KeyBuffer: buffer): buffer
 	while StringOffset < StringLength do
 		local ChunkSize = math.min(ExtendedKeyLength, StringLength - StringOffset)
 		local KeyOffset = 0
+
+		while KeyOffset + 7 < ChunkSize and StringOffset + KeyOffset + 7 < StringLength do
+			local Offset = StringOffset + KeyOffset
+			buffer.writeinteger(OutputBuffer, Offset, integer.bxor(buffer.readinteger(OutputBuffer, Offset), buffer.readinteger(ExtendedKeyBuffer, KeyOffset)))
+			KeyOffset += 8
+		end
 
 		while KeyOffset + 3 < ChunkSize and StringOffset + KeyOffset + 3 < StringLength do
 			local Offset = StringOffset + KeyOffset
