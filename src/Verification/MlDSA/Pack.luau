@@ -104,11 +104,11 @@ function BitPacking.Encode(Poly: buffer, Arr: buffer, Sbw: number)
 			local P2 = bit32.band(buffer.readu32(Poly, PBase + 8), 0x3FF)
 			local P3 = bit32.band(buffer.readu32(Poly, PBase + 12), 0x3FF)
 
-			local Lo = bit32.bor(P0, bit32.lshift(P1, 10), bit32.lshift(P2, 20))
-			local Hi = bit32.bor(bit32.rshift(P2, 12), bit32.lshift(P3, 8))
+			local Lo = bit32.bor(P0, bit32.lshift(P1, 10), bit32.lshift(P2, 20), bit32.lshift(bit32.band(P3, 0x3), 30))
+			local Hi = bit32.rshift(P3, 2)
 
 			buffer.writeu32(Arr, BBase, Lo)
-			buffer.writeu8(Arr, BBase + 4, bit32.band(Hi, 0xFF))
+			buffer.writeu8(Arr, BBase + 4, Hi)
 		end
 
 	elseif Sbw == 13 then
@@ -267,8 +267,8 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 
 			buffer.writeu32(Poly, PBase, bit32.band(Lo, 0x3FF))
 			buffer.writeu32(Poly, PBase + 4, bit32.band(bit32.rshift(Lo, 10), 0x3FF))
-			buffer.writeu32(Poly, PBase + 8, bit32.bor(bit32.rshift(Lo, 20), bit32.lshift(bit32.band(Hi, 0x3), 12)))
-			buffer.writeu32(Poly, PBase + 12, bit32.rshift(Hi, 2))
+			buffer.writeu32(Poly, PBase + 8, bit32.band(bit32.rshift(Lo, 20), 0x3FF))
+			buffer.writeu32(Poly, PBase + 12, bit32.bor(bit32.rshift(Lo, 30), bit32.lshift(Hi, 2)))
 		end
 
 	elseif Sbw == 13 then
@@ -317,7 +317,7 @@ function BitPacking.Decode(Arr: buffer, Poly: buffer, Sbw: number)
 
 			buffer.writeu32(Poly, PBase, bit32.band(W0, 0xFFFFF))
 			buffer.writeu32(Poly, PBase + 4, bit32.bor(bit32.rshift(W0, 20), bit32.lshift(bit32.band(W1, 0xFF), 12)))
-			buffer.writeu32(Poly, PBase + 8, bit32.bor(bit32.rshift(W1, 8), bit32.lshift(bit32.band(W2, 0xF), 24)))
+			buffer.writeu32(Poly, PBase + 8, bit32.band(bit32.rshift(W1, 8), 0xFFFFF))
 			buffer.writeu32(Poly, PBase + 12, bit32.bor(bit32.rshift(W1, 28), bit32.lshift(W2, 4)))
 		end
 

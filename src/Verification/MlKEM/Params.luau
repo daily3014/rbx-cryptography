@@ -34,8 +34,6 @@ function Params.CheckL(L: number): boolean
 	return (L == 1) or (L == 4) or (L == 5) or (L == 10) or (L == 11) or (L == 12)
 end
 
-
-
 function Params.CheckKeygenParams(K: number, Eta1: number): boolean
 	local Flag0 = (K == 2) and (Eta1 == 3)
 	local Flag1 = (K == 3) and (Eta1 == 2)

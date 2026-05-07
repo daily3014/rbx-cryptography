@@ -190,6 +190,185 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		Testing.Expect(ChiSquared).ToBeLessThan(14.07)
 	end)
 
+	local STAT_SAMPLE_BYTES = 65536
+	local STAT_SAMPLE_BITS = STAT_SAMPLE_BYTES * 8
+	local StatSample = Algorithm.RandomBytes(STAT_SAMPLE_BYTES)
+
+	local PopCount = table.create(256)
+	for B = 0, 255 do
+		local C = 0
+		local V = B
+		while V > 0 do
+			C += bit32.band(V, 1)
+			V = bit32.rshift(V, 1)
+		end
+		PopCount[B + 1] = C
+	end
+
+	Testing.Test("Statistical: Monobit (NIST 2.1)", function()
+		local Ones = 0
+		for I = 0, STAT_SAMPLE_BYTES - 1 do
+			Ones += PopCount[buffer.readu8(StatSample, I) + 1]
+		end
+
+		local Expected = STAT_SAMPLE_BITS / 2
+		local Deviation = math.abs(Ones - Expected)
+		local FourSigma = 2 * math.sqrt(STAT_SAMPLE_BITS)  -- σ = sqrt(N/4); 4σ = 2*sqrt(N)
+		Testing.Expect(Deviation).ToBeLessThan(FourSigma)
+	end)
+
+	Testing.Test("Statistical: Byte distribution chi-squared (df=255)", function()
+		local Counts = table.create(256, 0)
+		for I = 0, STAT_SAMPLE_BYTES - 1 do
+			local B = buffer.readu8(StatSample, I) + 1
+			Counts[B] += 1
+		end
+
+		local Expected = STAT_SAMPLE_BYTES / 256
+		local ChiSq = 0
+		for I = 1, 256 do
+			local Diff = Counts[I] - Expected
+			ChiSq += Diff * Diff / Expected
+		end
+
+		Testing.Expect(ChiSq).ToBeGreaterThan(140)
+		Testing.Expect(ChiSq).ToBeLessThan(370)
+	end)
+
+	Testing.Test("Statistical: Runs test (bit transitions)", function()
+		local Transitions = 0
+		local Prev = bit32.band(buffer.readu8(StatSample, 0), 1)
+
+		for I = 0, STAT_SAMPLE_BYTES - 1 do
+			local Byte = buffer.readu8(StatSample, I)
+			for J = 0, 7 do
+				local Bit = bit32.band(bit32.rshift(Byte, J), 1)
+				if Bit ~= Prev then
+					Transitions += 1
+				end
+				Prev = Bit
+			end
+		end
+
+		local Expected = (STAT_SAMPLE_BITS - 1) / 2
+		local FourSigma = 2 * math.sqrt(STAT_SAMPLE_BITS)
+		Testing.Expect(math.abs(Transitions - Expected)).ToBeLessThan(FourSigma)
+	end)
+
+	Testing.Test("Statistical: Serial correlation between adjacent bytes", function()
+		local N = STAT_SAMPLE_BYTES - 1
+		local SumX, SumY = 0, 0
+		local SumXY, SumX2, SumY2 = 0, 0, 0
+
+		for I = 0, N - 1 do
+			local X = buffer.readu8(StatSample, I)
+			local Y = buffer.readu8(StatSample, I + 1)
+			SumX += X
+			SumY += Y
+			SumXY += X * Y
+			SumX2 += X * X
+			SumY2 += Y * Y
+		end
+
+		local NumeratorRaw = SumXY - (SumX * SumY) / N
+		local DenomXSq = SumX2 - (SumX * SumX) / N
+		local DenomYSq = SumY2 - (SumY * SumY) / N
+		local Correlation = NumeratorRaw / math.sqrt(DenomXSq * DenomYSq)
+
+		Testing.Expect(math.abs(Correlation)).ToBeLessThan(0.02)
+	end)
+
+	Testing.Test("Statistical: Shannon entropy >= 7.99 bits/byte", function()
+		local Counts = table.create(256, 0)
+		for I = 0, STAT_SAMPLE_BYTES - 1 do
+			local B = buffer.readu8(StatSample, I) + 1
+			Counts[B] += 1
+		end
+
+		local Entropy = 0
+		local InvLn2 = 1 / math.log(2)
+		for I = 1, 256 do
+			local C = Counts[I]
+			if C > 0 then
+				local P = C / STAT_SAMPLE_BYTES
+				Entropy -= P * math.log(P) * InvLn2
+			end
+		end
+
+		Testing.Expect(Entropy).ToBeGreaterThan(7.99)
+	end)
+
+	Testing.Test("Statistical: Block frequency (NIST 2.2, M=128)", function()
+		local M = 128
+		local BytesPerBlock = M / 8  -- 16
+		local NumBlocks = math.floor(STAT_SAMPLE_BYTES / BytesPerBlock)
+
+		local Sum = 0
+		for B = 0, NumBlocks - 1 do
+			local BlockOnes = 0
+			local BaseOff = B * BytesPerBlock
+			for J = 0, BytesPerBlock - 1 do
+				BlockOnes += PopCount[buffer.readu8(StatSample, BaseOff + J) + 1]
+			end
+			local Pi = BlockOnes / M
+			local Diff = Pi - 0.5
+			Sum += Diff * Diff
+		end
+
+		local ChiSq = 4 * M * Sum
+		local Sigma = math.sqrt(2 * NumBlocks)
+		Testing.Expect(math.abs(ChiSq - NumBlocks)).ToBeLessThan(5 * Sigma)
+	end)
+
+	Testing.Test("Statistical: Suite rejects biased input", function()
+		local Biased = buffer.create(STAT_SAMPLE_BYTES)
+		buffer.fill(Biased, 0, 0xAA, STAT_SAMPLE_BYTES)
+
+		local Counts = table.create(256, 0)
+		for I = 0, STAT_SAMPLE_BYTES - 1 do
+			Counts[buffer.readu8(Biased, I) + 1] += 1
+		end
+		local Expected = STAT_SAMPLE_BYTES / 256
+		local ChiSq = 0
+		for I = 1, 256 do
+			local Diff = Counts[I] - Expected
+			ChiSq += Diff * Diff / Expected
+		end
+		Testing.Expect(ChiSq).ToBeGreaterThan(370)
+
+		local Entropy = 0
+		for I = 1, 256 do
+			local C = Counts[I]
+			if C > 0 then
+				local P = C / STAT_SAMPLE_BYTES
+				Entropy -= P * math.log(P) / math.log(2)
+			end
+		end
+		Testing.Expect(Entropy).ToBeLessThan(0.01)
+	end)
+
+	Testing.Test("Statistical: Birthday spacings collision count", function()
+		local N = 2048
+		local Collisions = 0
+		local Seen = table.create(65536, false)
+
+		local FreshSample = Algorithm.RandomBytes(N * 2)
+		for I = 0, N - 1 do
+			local Lo = buffer.readu8(FreshSample, I * 2)
+			local Hi = buffer.readu8(FreshSample, I * 2 + 1)
+			local Birthday = Lo + Hi * 256 + 1
+			if Seen[Birthday] then
+				Collisions += 1
+			else
+				Seen[Birthday] = true
+			end
+		end
+
+		local Expected = N * (N - 1) / (2 * 65536)
+		local Sigma = math.sqrt(Expected)
+		Testing.Expect(math.abs(Collisions - Expected)).ToBeLessThan(5 * Sigma)
+	end)
+
 	Testing.Test("RandomInt", function()
 		Testing.Expect(function()
 			Algorithm.RandomInt(0, -1)

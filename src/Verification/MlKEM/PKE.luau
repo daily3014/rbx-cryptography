@@ -36,7 +36,8 @@ local SHA3 = require("./SHA3")
 
 local LOG2N = 8
 local N = 2^LOG2N
-local POLY_SIZE = N * 2 
+local POLY_SIZE = N * 2
+local Q = 3329
 
 local TEMP_V = buffer.create(N * 2)
 local TEMP_V2 = buffer.create(N * 2)
@@ -140,19 +141,17 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	PolyVec.VecAddTo(E1, U, K)
 
 	local V = TEMP_V
-	local TempV = TEMP_V2
-	local SinglePoly = TEMP_SINGLE_POLY
-	local RPoly = TEMP_R_POLY
 	buffer.fill(V, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
+	local PolyMulAdd = Ntt.PolyMulAddAt
 	for I = 0, K - 1 do
-		local TPolyOffset = I * PolySize
-		local RPolyOffset = I * PolySize
-		buffer.copy(SinglePoly, 0, TPrime, TPolyOffset, PolySize)
-		buffer.copy(RPoly, 0, R, RPolyOffset, PolySize)
-		Ntt.PolyMul(SinglePoly, RPoly, TempV)
-		Ntt.PolyAdd(V, TempV, V)
+		PolyMulAdd(TPrime, I * PolySize, R, I * PolySize, V, 0)
+	end
+
+	for J = 0, N - 1 do
+		local Off = J * 2
+		buffer.writeu16(V, Off, buffer.readu16(V, Off) % Q)
 	end
 
 	Ntt.Intt(V)
@@ -207,21 +206,17 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	PolyVec.VecNtt(U, K)
 
 	local T = TEMP_T
-	local TempT = TEMP_T2
-	local SinglePoly = TEMP_SINGLE_POLY
-	local UPoly = TEMP_U_POLY
 	buffer.fill(T, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
+	local PolyMulAdd = Ntt.PolyMulAddAt
 	for I = 0, K - 1 do
-		local SPolyOffset = I * PolySize
-		local UPolyOffset = I * PolySize
+		PolyMulAdd(SPrime, I * PolySize, U, I * PolySize, T, 0)
+	end
 
-		buffer.copy(SinglePoly, 0, SPrime, SPolyOffset, PolySize)
-		buffer.copy(UPoly, 0, U, UPolyOffset, PolySize)
-
-		Ntt.PolyMul(SinglePoly, UPoly, TempT)
-		Ntt.PolyAdd(T, TempT, T)
+	for J = 0, N - 1 do
+		local Off = J * 2
+		buffer.writeu16(T, Off, buffer.readu16(T, Off) % Q)
 	end
 
 	Ntt.Intt(T)

@@ -50,7 +50,7 @@ function Ntt.ForwardNTT(Poly: buffer)
 	local Zeta = ZETA_EXP
 	local Modulus = Q
 
-	for L = LOG2N - 1, 0, -1 do
+	for L = LOG2N - 1, 1, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
 		local KBeg = bit32.rshift(N, L + 1)
@@ -68,14 +68,26 @@ function Ntt.ForwardNTT(Poly: buffer)
 
 				local Tmp = (ZetaExpValue * PolyILen) % Modulus
 
-				local Sub = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Modulus
-				local Add = PolyI + Tmp
-				Add = if Add >= Modulus then Add - Modulus else Add
-
-				buffer.writeu32(Poly, ILenOffset, Sub)
-				buffer.writeu32(Poly, IOffset, Add)
+				buffer.writeu32(Poly, ILenOffset, PolyI - Tmp + Modulus)
+				buffer.writeu32(Poly, IOffset, PolyI + Tmp)
 			end
 		end
+	end
+
+	for Start = 0, N - 1, 2 do
+		local KNow = 128 + bit32.rshift(Start, 1)
+		local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
+
+		local IOffset = Start * 4
+		local ILenOffset = IOffset + 4
+
+		local PolyI = buffer.readu32(Poly, IOffset)
+		local PolyILen = buffer.readu32(Poly, ILenOffset)
+
+		local Tmp = (ZetaExpValue * PolyILen) % Modulus
+
+		buffer.writeu32(Poly, ILenOffset, (PolyI - Tmp + Modulus) % Modulus)
+		buffer.writeu32(Poly, IOffset, (PolyI + Tmp) % Modulus)
 	end
 end
 
@@ -83,7 +95,7 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 	local Zeta = ZETA_EXP
 	local Modulus = Q
 
-	for L = LOG2N - 1, 0, -1 do
+	for L = LOG2N - 1, 1, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
 		local KBeg = bit32.rshift(N, L + 1)
@@ -101,14 +113,26 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 
 				local Tmp = (ZetaExpValue * PolyILen) % Modulus
 
-				local Sub = if PolyI >= Tmp then PolyI - Tmp else PolyI - Tmp + Modulus
-				local Add = PolyI + Tmp
-				Add = if Add >= Modulus then Add - Modulus else Add
-
-				buffer.writeu32(Poly, ILenOffset, Sub)
-				buffer.writeu32(Poly, IOffset, Add)
+				buffer.writeu32(Poly, ILenOffset, PolyI - Tmp + Modulus)
+				buffer.writeu32(Poly, IOffset, PolyI + Tmp)
 			end
 		end
+	end
+
+	for Start = 0, N - 1, 2 do
+		local KNow = 128 + bit32.rshift(Start, 1)
+		local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
+
+		local IOffset = BaseOffset + Start * 4
+		local ILenOffset = IOffset + 4
+
+		local PolyI = buffer.readu32(Poly, IOffset)
+		local PolyILen = buffer.readu32(Poly, ILenOffset)
+
+		local Tmp = (ZetaExpValue * PolyILen) % Modulus
+
+		buffer.writeu32(Poly, ILenOffset, (PolyI - Tmp + Modulus) % Modulus)
+		buffer.writeu32(Poly, IOffset, (PolyI + Tmp) % Modulus)
 	end
 end
 
@@ -117,7 +141,7 @@ function Ntt.InverseNTT(Poly: buffer)
 	local Inv_n = INV_N
 	local Modulus = Q
 
-	for L = 0, LOG2N - 1 do
+	for L = 0, LOG2N - 2 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
 		local KBeg = bit32.rshift(N, L) - 1
@@ -133,24 +157,24 @@ function Ntt.InverseNTT(Poly: buffer)
 				local PolyI = buffer.readu32(Poly, IOffset)
 				local PolyILen = buffer.readu32(Poly, ILenOffset)
 
-				local Sum = PolyI + PolyILen
-				Sum = if Sum >= Modulus then Sum - Modulus else Sum
+				local Product = ((PolyI - PolyILen) * NegZetaExpValue) % Modulus
 
-				local Diff = if PolyI >= PolyILen then PolyI - PolyILen else PolyI - PolyILen + Modulus
-
-				local Product = (Diff * NegZetaExpValue) % Modulus
-
-				buffer.writeu32(Poly, IOffset, Sum)
+				buffer.writeu32(Poly, IOffset, (PolyI + PolyILen) % Modulus)
 				buffer.writeu32(Poly, ILenOffset, Product)
 			end
 		end
 	end
 
-	for I = 0, N - 1 do
-		local Offset = I * 4
-		local PolyValue = buffer.readu32(Poly, Offset)
-		local Result = (PolyValue * Inv_n) % Modulus
-		buffer.writeu32(Poly, Offset, Result)
+	local NegZeta7 = (buffer.readu32(Zeta, 4) * Inv_n) % Modulus
+	for I = 0, 127 do
+		local IOffset = I * 4
+		local ILenOffset = (I + 128) * 4
+
+		local PolyI = buffer.readu32(Poly, IOffset)
+		local PolyILen = buffer.readu32(Poly, ILenOffset)
+
+		buffer.writeu32(Poly, IOffset, ((PolyI + PolyILen) * Inv_n) % Modulus)
+		buffer.writeu32(Poly, ILenOffset, ((PolyI - PolyILen) * NegZeta7) % Modulus)
 	end
 end
 

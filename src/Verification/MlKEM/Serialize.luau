@@ -150,16 +150,20 @@ end
 
 function Serialize.EncodeAt(Poly: buffer, PolyOffset: number, Output: buffer, OutOffset: number, L: number)
 	if L == 12 then
-		for I = 0, 127 do
-			local PolyIdx = PolyOffset + I * 4
-			local ByteIdx = OutOffset + I * 3
+		for I = 0, 63 do
+			local PolyIdx = PolyOffset + I * 8
+			local ByteIdx = OutOffset + I * 6
 
 			local T0 = buffer.readu16(Poly, PolyIdx)
 			local T1 = buffer.readu16(Poly, PolyIdx + 2)
+			local T2 = buffer.readu16(Poly, PolyIdx + 4)
+			local T3 = buffer.readu16(Poly, PolyIdx + 6)
 
-			buffer.writeu8(Output, ByteIdx, bit32.band(T0, 0xFF))
-			buffer.writeu8(Output, ByteIdx + 1, bit32.bor(bit32.rshift(T0, 8), bit32.lshift(bit32.band(T1, 0x0F), 4)))
-			buffer.writeu8(Output, ByteIdx + 2, bit32.rshift(T1, 4))
+			local Lo = bit32.bor(T0, bit32.lshift(T1, 12), bit32.lshift(bit32.band(T2, 0xFF), 24))
+			local Hi = bit32.bor(bit32.rshift(T2, 8), bit32.lshift(T3, 4))
+
+			buffer.writeu32(Output, ByteIdx, Lo)
+			buffer.writeu16(Output, ByteIdx + 4, Hi)
 		end
 	end
 end
@@ -315,23 +319,26 @@ end
 
 function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, PolyOffset: number, L: number)
 	if L == 12 then
-		for I = 0, 127 do
-			local ByteIdx = DataOffset + I * 3
-			local PolyIdx = PolyOffset + I * 4
+		for I = 0, 63 do
+			local ByteIdx = DataOffset + I * 6
+			local PolyIdx = PolyOffset + I * 8
 
-			local B0 = buffer.readu8(Data, ByteIdx)
-			local B1 = buffer.readu8(Data, ByteIdx + 1)
-			local B2 = buffer.readu8(Data, ByteIdx + 2)
+			local Lo = buffer.readu32(Data, ByteIdx)
+			local Hi = buffer.readu16(Data, ByteIdx + 4)
 
-			local T0 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
-			local T1 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
+			local T0 = bit32.band(Lo, 0xFFF)
+			local T1 = bit32.band(bit32.rshift(Lo, 12), 0xFFF)
+			local T2 = bit32.bor(bit32.rshift(Lo, 24), bit32.lshift(bit32.band(Hi, 0xF), 8))
+			local T3 = bit32.rshift(Hi, 4)
 
-			if T0 >= 3329 or T1 >= 3329 then
+			if T0 >= 3329 or T1 >= 3329 or T2 >= 3329 or T3 >= 3329 then
 				error("Invalid polynomial coefficient encoding")
 			end
 
 			buffer.writeu16(Poly, PolyIdx, T0)
 			buffer.writeu16(Poly, PolyIdx + 2, T1)
+			buffer.writeu16(Poly, PolyIdx + 4, T2)
+			buffer.writeu16(Poly, PolyIdx + 6, T3)
 		end
 	end
 end

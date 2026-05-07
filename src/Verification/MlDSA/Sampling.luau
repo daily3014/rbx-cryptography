@@ -51,21 +51,16 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 				local OutputLen = buffer.len(TotalOutput)
 
 				while CoeffCount < Num and ByteOffset + 5 < OutputLen do
-					local Chunk = buffer.readu32(TotalOutput, ByteOffset)
-					local B3 = buffer.readu8(TotalOutput, ByteOffset + 4)
-					local B4 = buffer.readu8(TotalOutput, ByteOffset + 5)
+					local Chunk1 = buffer.readu32(TotalOutput, ByteOffset)
+					local Chunk2 = buffer.readu32(TotalOutput, ByteOffset + 2)
 
-					local T3 = bit32.band(Chunk, 0x7FFFFF)
+					local T3 = bit32.band(Chunk1, 0x7FFFFF)
 					if T3 < Modulus then
 						buffer.writeu32(Mat, Offset + CoeffCount * 4, T3)
 						CoeffCount += 1
 					end
 
-					local T4 = bit32.bor(
-						bit32.rshift(Chunk, 24),
-						bit32.lshift(B3, 8),
-						bit32.lshift(bit32.band(B4, 0x7F), 16)
-					)
+					local T4 = bit32.band(bit32.rshift(Chunk2, 8), 0x7FFFFF)
 					if T4 < Modulus and CoeffCount < Num then
 						buffer.writeu32(Mat, Offset + CoeffCount * 4, T4)
 						CoeffCount += 1
@@ -287,61 +282,48 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 				local BOffset = J * 9
 				local POffset = Offset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
 				local B8 = buffer.readu8(Src, BOffset + 8)
 
-				local V0 = bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0x3), 16))
-				local V1 = bit32.bor(bit32.rshift(B2, 2), bit32.lshift(B3, 6), bit32.lshift(bit32.band(B4, 0xF), 14))
-				local V2 = bit32.bor(bit32.rshift(B4, 4), bit32.lshift(B5, 4), bit32.lshift(bit32.band(B6, 0x3F), 12))
-				local V3 = bit32.bor(bit32.rshift(B6, 6), bit32.lshift(B7, 2), bit32.lshift(B8, 10))
+				local V0 = bit32.band(W0, 0x3FFFF)
+				local V1 = bit32.band(bit32.bor(bit32.rshift(W0, 18), bit32.lshift(W1, 14)), 0x3FFFF)
+				local V2 = bit32.band(bit32.rshift(W1, 4), 0x3FFFF)
+				local V3 = bit32.bor(bit32.rshift(W1, 22), bit32.lshift(B8, 10))
 
 				local D0 = G1 - V0
 				local D1 = G1 - V1
 				local D2 = G1 - V2
 				local D3 = G1 - V3
 
-				buffer.writeu32(Vec, POffset + 0, if D0 < 0 then D0 + Modulus else D0)
-				buffer.writeu32(Vec, POffset + 4, if D1 < 0 then D1 + Modulus else D1)
-				buffer.writeu32(Vec, POffset + 8, if D2 < 0 then D2 + Modulus else D2)
-				buffer.writeu32(Vec, POffset + 12, if D3 < 0 then D3 + Modulus else D3)
+				buffer.writeu32(Vec, POffset + 0, D0 % Modulus)
+				buffer.writeu32(Vec, POffset + 4, D1 % Modulus)
+				buffer.writeu32(Vec, POffset + 8, D2 % Modulus)
+				buffer.writeu32(Vec, POffset + 12, D3 % Modulus)
 			end
 		else
 			for J = 0, 63 do
 				local BOffset = J * 10
 				local POffset = Offset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
-				local B8 = buffer.readu8(Src, BOffset + 8)
-				local B9 = buffer.readu8(Src, BOffset + 9)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
+				local Hi = buffer.readu16(Src, BOffset + 8)
 
-				local V0 = bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0xF), 16))
-				local V1 = bit32.bor(bit32.rshift(B2, 4), bit32.lshift(B3, 4), bit32.lshift(B4, 12))
-				local V2 = bit32.bor(B5, bit32.lshift(B6, 8), bit32.lshift(bit32.band(B7, 0xF), 16))
-				local V3 = bit32.bor(bit32.rshift(B7, 4), bit32.lshift(B8, 4), bit32.lshift(B9, 12))
+				local V0 = bit32.band(W0, 0xFFFFF)
+				local V1 = bit32.band(bit32.bor(bit32.rshift(W0, 20), bit32.lshift(W1, 12)), 0xFFFFF)
+				local V2 = bit32.band(bit32.rshift(W1, 8), 0xFFFFF)
+				local V3 = bit32.bor(bit32.rshift(W1, 28), bit32.lshift(Hi, 4))
 
 				local D0 = G1 - V0
 				local D1 = G1 - V1
 				local D2 = G1 - V2
 				local D3 = G1 - V3
 
-				buffer.writeu32(Vec, POffset + 0, if D0 < 0 then D0 + Modulus else D0)
-				buffer.writeu32(Vec, POffset + 4, if D1 < 0 then D1 + Modulus else D1)
-				buffer.writeu32(Vec, POffset + 8, if D2 < 0 then D2 + Modulus else D2)
-				buffer.writeu32(Vec, POffset + 12, if D3 < 0 then D3 + Modulus else D3)
+				buffer.writeu32(Vec, POffset + 0, D0 % Modulus)
+				buffer.writeu32(Vec, POffset + 4, D1 % Modulus)
+				buffer.writeu32(Vec, POffset + 8, D2 % Modulus)
+				buffer.writeu32(Vec, POffset + 12, D3 % Modulus)
 			end
 		end
 	end

@@ -234,6 +234,10 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 	local H = buffer.create(K * N * 4)
 	local CTilda = buffer.create(CTildaSize)
 	local W1Encoded = buffer.create(K * W1Bw * 32)
+	local ChallengeInput = buffer.create(64 + buffer.len(W1Encoded))
+	buffer.copy(ChallengeInput, 0, Mu, 0, 64)
+	local W1EncodedLen = buffer.len(W1Encoded)
+	local KN4 = K * N * 4
 
 	while not HasSigned do
 		Sampling.ExpandMask(RhoPrime, Kappa, Y, Gamma1, L)
@@ -246,9 +250,7 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 		PolyVec.HighBits(W, W1, K, Alpha)
 		PolyVec.Encode(W1, W1Encoded, K, W1Bw)
 
-		local ChallengeInput = buffer.create(64 + buffer.len(W1Encoded))
-		buffer.copy(ChallengeInput, 0, Mu, 0, 64)
-		buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
+		buffer.copy(ChallengeInput, 64, W1Encoded, 0, W1EncodedLen)
 
 		local CTildaFull = SHA3.SHAKE256(ChallengeInput, CTildaSize)
 		buffer.copy(CTilda, 0, CTildaFull, 0, CTildaSize)
@@ -275,9 +277,14 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 			PolyVec.MultiplyByPoly(C, T0, H0, K)
 			PolyVec.InverseNTT(H0, K)
 
-			PolyVec.Copy(H0, H1, K)
-			PolyVec.Negate(H0, K)
-			PolyVec.AddTo(H1, R1, K)
+			for Idx = 0, KN4 - 4, 4 do
+				local H0Val = buffer.readu32(H0, Idx)
+				local R1Val = buffer.readu32(R1, Idx)
+				buffer.writeu32(H1, Idx, H0Val)
+				buffer.writeu32(H0, Idx, (Q - H0Val) % Q)
+				buffer.writeu32(R1, Idx, (R1Val + H0Val) % Q)
+			end
+
 			PolyVec.MakeHint(H0, R1, H, K, Alpha)
 
 			local CT0Norm = PolyVec.InfinityNorm(H1, K)

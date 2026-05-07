@@ -10,11 +10,6 @@
 		local Sum = Field.Add(1234, 567)
 		local Product = Field.Multiply(1234, 567)
 		local Inverse = Field.Invert(1234)
-		
-		local Buffer = Field.BufferCreate(256)
-		Field.BufferReduce(Buffer, 256)
-		
-		local Sum = Field.BufferAdd(BufferA, BufferB, Result, 256)
 --]=]
 
 --!strict
@@ -66,14 +61,6 @@ function Field.Invert(A: number): number
 	end
 
 	return Field.Power(A, Q - 2)
-end
-
-function Field.BufferReduce(Buffer: buffer, Count: number)
-	local Modulus = Q
-	for Index = 0, Count - 1 do
-		local Value = buffer.readu16(Buffer, Index * 2)
-		buffer.writeu16(Buffer, Index * 2, (Value % Modulus))
-	end
 end
 
 return Field

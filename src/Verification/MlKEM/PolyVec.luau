@@ -44,25 +44,21 @@ end
 
 function PolyVec.MatVecMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number)
 	local PolySize = POLY_SIZE
-	local AccumPoly = TEMP_POLY_ACCUM
-	local TempPoly = TEMP_POLY_MUL
-	
-	local PolyMul = Ntt.PolyMulAt
-	local PolyAdd = Ntt.PolyAddAt
-	
+	local Modulus = Q
+	local PolyMulAdd = Ntt.PolyMulAddAt
+
 	for I = 0, ARows - 1 do
 		local COffset = I * PolySize
-		buffer.fill(AccumPoly, 0, 0, PolySize)
+		buffer.fill(C, COffset, 0, PolySize)
 
 		for K = 0, ACols - 1 do
-			local AOffset = (I * ACols + K) * PolySize
-			local BOffset = K * PolySize
-
-			PolyMul(A, AOffset, B, BOffset, TempPoly, 0)
-			PolyAdd(AccumPoly, 0, TempPoly, 0, AccumPoly, 0)
+			PolyMulAdd(A, (I * ACols + K) * PolySize, B, K * PolySize, C, COffset)
 		end
 
-		buffer.copy(C, COffset, AccumPoly, 0, PolySize)
+		for J = 0, N - 1 do
+			local Off = COffset + J * 2
+			buffer.writeu16(C, Off, buffer.readu16(C, Off) % Modulus)
+		end
 	end
 end
 
@@ -90,8 +86,7 @@ function PolyVec.VecAddTo(Src: buffer, Dst: buffer, K: number)
 	for Offset = 0, Total - 2, 2 do
 		local SrcValue = buffer.readu16(Src, Offset)
 		local DstValue = buffer.readu16(Dst, Offset)
-		local Sum = SrcValue + DstValue
-		buffer.writeu16(Dst, Offset, if Sum >= Modulus then Sum - Modulus else Sum)
+		buffer.writeu16(Dst, Offset, (SrcValue + DstValue) % Modulus)
 	end
 end
 
@@ -106,9 +101,7 @@ function PolyVec.VecAdd(A: buffer, B: buffer, Result: buffer, K: number)
 		local Offset = Index * 2
 		local AValue = buffer.readu16(A, Offset)
 		local BValue = buffer.readu16(B, Offset)
-		local Sum = AValue + BValue
-		local AddResult = if Sum >= Modulus then Sum - Modulus else Sum
-		buffer.writeu16(Result, Offset, AddResult)
+		buffer.writeu16(Result, Offset, (AValue + BValue) % Modulus)
 	end
 end
 

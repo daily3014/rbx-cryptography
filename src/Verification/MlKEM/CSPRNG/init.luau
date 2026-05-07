@@ -139,24 +139,6 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		WriteToBuffer(buffer.create(24))
 	end
 
-	local FracTimeBuffer = buffer.create(16)
-	buffer.writef32(FracTimeBuffer, 0, ClockTime / 100)
-	buffer.writef32(FracTimeBuffer, 4, CurrentTime / 1000)
-	buffer.writef32(FracTimeBuffer, 8, (ClockTime * 12345.6789) % 1)
-	buffer.writef32(FracTimeBuffer, 12, (CurrentTime * 98765.4321) % 1)
-	WriteToBuffer(FracTimeBuffer)
-
-	local NoiseBuffer = buffer.create(32)
-	for Index = 0, 7 do
-		local Noise1 = math.noise(ClockTime + Index, UnixTime + Index, ClockTime + UnixTime + Index)
-		local Noise2 = math.noise(CurrentTime + Index * 0.1, DateTimeMillis * 0.0001 + Index, ClockTime * 1.5 + Index)
-		local Noise3 = math.noise(UnixTime * 0.01 + Index, ClockTime + DateTimeMillis * 0.001, CurrentTime + Index * 2)
-		local Noise4 = math.noise(DateTimeMillis * 0.00001 + Index, UnixTime + ClockTime + Index, CurrentTime * 0.1 + Index)
-
-		buffer.writef32(NoiseBuffer, Index * 4, Noise1 + Noise2 + Noise3 + Noise4)
-	end
-	WriteToBuffer(NoiseBuffer)
-
 	local BenchmarkTimings = buffer.create(32)
 	for Index = 0, 7 do
 		local StartTime = os.clock()
@@ -186,12 +168,6 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 	end
 	WriteToBuffer(AllocTimings)
 
-	local MicroTime = math.floor(CurrentTime * 1000000)
-	local MicroTimeBuffer = buffer.create(8)
-	buffer.writeu32(MicroTimeBuffer, 0, MicroTime % 0x100000000)
-	buffer.writeu32(MicroTimeBuffer, 4, math.floor(MicroTime / 0x100000000))
-	WriteToBuffer(MicroTimeBuffer)
-
 	if game then
 		if game.JobId and #game.JobId > 0 then
 			local JobIdBuffer = buffer.fromstring(game.JobId)
@@ -218,51 +194,35 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		end
 	end
 
-	local AddressEntropy = buffer.create(128)
-	for Index = 0, 7 do
-		local TempTable = {}
-		local TempFunc = function() end
-		local TempBuffer = buffer.create(0)
-		local TempUserdata = newproxy()
+	local AddressBuffer = buffer.create(2048)
+	local AddressOffset = 0
 
-		local TableAddr = string.gsub(tostring(TempTable), "table: ", "")
-		local FuncAddr = string.gsub(tostring(TempFunc), "function: ", "")
-		local BufferAddr = string.gsub(tostring(TempBuffer), "buffer: ", "")
-		local UserdataAddr = string.gsub(tostring(TempUserdata), "userdata: ", "")
+	for Index = 1, 8 do
+		local TableStr = tostring({})
+		buffer.writestring(AddressBuffer, AddressOffset, TableStr)
+		AddressOffset += #TableStr
 
-		local TableHash = 0
-		local ThreadHash = 0
-		local FuncHash = 0
-		local BufferHash = 0
-		local UserdataHash = 0
+		local FuncStr = tostring(function() end)
+		buffer.writestring(AddressBuffer, AddressOffset, FuncStr)
+		AddressOffset += #FuncStr
 
-		for AddrIndex = 1, #TableAddr do
-			TableHash = bit32.bxor(TableHash, string.byte(TableAddr, AddrIndex)) * 31
-		end
+		local BufferStr = tostring(buffer.create(0))
+		buffer.writestring(AddressBuffer, AddressOffset, BufferStr)
+		AddressOffset += #BufferStr
+
+		local UserdataStr = tostring(newproxy())
+		buffer.writestring(AddressBuffer, AddressOffset, UserdataStr)
+		AddressOffset += #UserdataStr
 
 		if coroutine then
-			local ThreadAddr = string.gsub(tostring(coroutine.create(function() end)), "thread: ", "")
-			for AddrIndex = 1, #ThreadAddr do
-				ThreadHash = bit32.bxor(ThreadHash, string.byte(ThreadAddr, AddrIndex)) * 31
-			end
+			local ThreadStr = tostring(coroutine.create(function() end))
+			buffer.writestring(AddressBuffer, AddressOffset, ThreadStr)
+			AddressOffset += #ThreadStr
 		end
-
-		for AddrIndex = 1, #FuncAddr do
-			FuncHash = bit32.bxor(FuncHash, string.byte(FuncAddr, AddrIndex)) * 37
-		end
-		for AddrIndex = 1, #BufferAddr do
-			BufferHash = bit32.bxor(BufferHash, string.byte(BufferAddr, AddrIndex)) * 41
-		end
-		for AddrIndex = 1, #UserdataAddr do
-			UserdataHash = bit32.bxor(UserdataHash, string.byte(UserdataAddr, AddrIndex)) * 43
-		end
-
-		buffer.writeu32(AddressEntropy, Index * 16, TableHash)
-		buffer.writeu32(AddressEntropy, Index * 16 + 4, ThreadHash)
-		buffer.writeu32(AddressEntropy, Index * 16 + 8, FuncHash)
-		buffer.writeu32(AddressEntropy, Index * 16 + 12, bit32.bxor(BufferHash, UserdataHash))
 	end
-	WriteToBuffer(AddressEntropy)
+
+	local AddressDigest = Blake3(AddressBuffer, 32)
+	WriteToBuffer(AddressDigest)
 
 	local function AddExtraEntropy(Entropy: buffer?, Warn: boolean, Provider: string?)
 		if not Entropy then
