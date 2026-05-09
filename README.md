@@ -108,41 +108,40 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 - Random strings and bytes generation
 
 ## Performance
-Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Benchmarker by @boatbomber.
 
 ### Hashing
 
 | Algorithm   | Data Size | This Library | HashLib  | Alternative              | Other Libraries   | Improvement                   |
 |-------------|-----------|--------------|----------|--------------------------|-------------------|-------------------------------|
-| SHA-256     | 20k       | **235 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **8.8x faster** than HashLib  |
-| SHA-512     | 20k       | **131 μs**   | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **33.2x faster** than HashLib |
+| SHA-256     | 20k       | **218 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **9.4x faster** than HashLib  |
+| SHA-512     | 20k       | **121 μs**   | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **35.9x faster** than HashLib |
 | SHA3-512    | 20k       | **186 μs**   | 10.60 ms | -                        | -                 | **57.0x faster** than HashLib |
-| BLAKE3      | 20k       | **122 μs**   | -        | -                        | -                 | -                             |
-| HMAC-BLAKE3 | 20k       | **127 μs**   | -        | -                        | -                 | -                             |
-| KMAC-128    | 20k       | **89 μs**    | -        | -                        | -                 | -                             |
-| KMAC-256    | 20k       | **107 μs**   | -        | -                        | -                 | -                             |
+| BLAKE3      | 20k       | **105 μs**   | -        | -                        | -                 | -                             |
+| HMAC-BLAKE3 | 20k       | **113 μs**   | -        | -                        | -                 | -                             |
+| KMAC-128    | 20k       | **95 μs**    | -        | -                        | -                 | -                             |
+| KMAC-256    | 20k       | **110 μs**   | -        | -                        | -                 | -                             |
 
 ### Encryption
 
 | Algorithm                     | Data Size | This Library | Alternative                                | Other Libraries    | Improvement         |
 |-------------------------------|-----------|--------------|--------------------------------------------|--------------------|---------------------|
-| ChaCha20 (Encrypt)            | 20k       | **100 μs**   | 7.87 ms (EncryptedNet)                     | -                  | **78.7x faster**    |
-| ChaCha20 (Roundtrip)          | 20k       | **200 μs**   | ~15 ms (EncryptedNet)                      | -                  | **75.0x faster**    |
-| ChaCha20-Poly1305 (Encrypt)   | 20k       | **120 μs**   | -                                          | -                  | -                   |
-| ChaCha20-Poly1305 (Roundtrip) | 20k       | **240 μs**   | -                                          | -                  | -                   |
-| AES-GCM (Encrypt)             | 20k       | **532 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **3.5x faster**     |
-| AES-GCM (Roundtrip)           | 20k       | **1.07 ms**  | -                                          | -                  | -                   |
-| XOR (Encrypt)                 | 1 million | **1.05 ms**  | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **162,857x faster** |
-| XOR (Roundtrip)               | 1 million | **2.12 ms**  | 98.9 ms (Devfourm)                         | ~342000 ms (daily) | **161,320x faster** |
+| ChaCha20 (Encrypt)            | 20k       | **89 μs**    | 7.87 ms (EncryptedNet)                     | -                  | **88.4x faster**    |
+| ChaCha20 (Roundtrip)          | 20k       | **178 μs**   | ~15 ms (EncryptedNet)                      | -                  | **84.3x faster**    |
+| ChaCha20-Poly1305 (Encrypt)   | 20k       | **110 μs**   | -                                          | -                  | -                   |
+| ChaCha20-Poly1305 (Roundtrip) | 20k       | **220 μs**   | -                                          | -                  | -                   |
+| AES-GCM (Encrypt)             | 20k       | **520 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **3.6x faster**     |
+| AES-GCM (Roundtrip)           | 20k       | **1.05 ms**  | -                                          | -                  | -                   |
+| XOR (Encrypt)                 | 1 million | **537 μs**   | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **318,000x faster** |
+| XOR (Roundtrip)               | 1 million | **1.08 ms**  | 98.9 ms (Devfourm)                         | ~342000 ms (daily) | **316,000x faster** |
 
 ### Digital Signatures & Key Exchange
 
 | Algorithm               | Operation   | Time         | Alternative                             | Improvement      |
 |-------------------------|-------------|--------------|-----------------------------------------|------------------|
-| EdDSA (Roundtrip)       | Sign+Verify | **371 μs**   | -                                       | -                |
-| X25519 (Exchange)       | ECDH        | **437 μs**   | 628 μs (ccryptolib)                     | **1.44x faster** |
-| ML-DSA-87 (Roundtrip)   | Sign+Verify | **2.46 ms**  | 863 ms (WASM-Luau)                      | **350x faster**  |
-| ML-KEM-1024 (Roundtrip) | Encap+Decap | **397 μs**   | 122 ms (WASM-Luau)                      | **307x faster**  |
+| EdDSA (Roundtrip)       | Sign+Verify | **346 μs**   | -                                       | -                |
+| X25519 (Exchange)       | ECDH        | **466 μs**   | 628 μs (ccryptolib)                     | **1.35x faster** |
+| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.89 ms**  | 863 ms (WASM-Luau)                      | **457x faster**  |
+| ML-KEM-1024 (Roundtrip) | Encap+Decap | **361 μs**   | 122 ms (WASM-Luau)                      | **338x faster**  |
 
 ### Utilities
 
