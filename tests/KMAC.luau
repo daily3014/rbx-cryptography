@@ -21,8 +21,7 @@ local Testing = require("./")
 
 local Cryptography = if IsCLI then require("../src") else require("../")
 local KMAC = Cryptography.Hashing.KMAC
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
+local FromHex = Testing.FromHex
 
 type MacTest = {
 	tcId: number,

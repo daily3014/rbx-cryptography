@@ -56,8 +56,9 @@ end
 
 local Work9, Work10, Work11, Work12, Work13, Work14, Work15, Work16 = 0x6a09e667f3bcc908i, 0xbb67ae8584caa73bi, 0x3c6ef372fe94f82bi, 0xa54ff53a5f1d36f1i, 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
 
-local function ProcessCompressionRound(Block: buffer, ByteCounter: number, FinalBlock: boolean, State: {integer})
-	local W1, W2, W3, W4, W5, W6, W7, W8 = State[1], State[2], State[3], State[4], State[5], State[6], State[7], State[8]
+local function ProcessCompressionRound(Block: buffer, ByteCounter: number, FinalBlock: boolean, State: buffer)
+	local W1, W2, W3, W4 = buffer.readinteger(State, 0), buffer.readinteger(State, 8), buffer.readinteger(State, 16), buffer.readinteger(State, 24)
+	local W5, W6, W7, W8 = buffer.readinteger(State, 32), buffer.readinteger(State, 40), buffer.readinteger(State, 48), buffer.readinteger(State, 56)
 	local W9, W10, W11, W12, W13, W14, W15, W16 = Work9, Work10, Work11, Work12, integer.bxor(Work13, integer.create(ByteCounter)), Work14, Work15, Work16
 
 	if FinalBlock then
@@ -191,24 +192,33 @@ local function ProcessCompressionRound(Block: buffer, ByteCounter: number, Final
 		W5 = integer.rrotate(integer.bxor(W5, W10), 63i)
 	end
 
-	State[1] = integer.bxor(State[1], W1, W9)
-	State[2] = integer.bxor(State[2], W2, W10)
-	State[3] = integer.bxor(State[3], W3, W11)
-	State[4] = integer.bxor(State[4], W4, W12)
-	State[5] = integer.bxor(State[5], W5, W13)
-	State[6] = integer.bxor(State[6], W6, W14)
-	State[7] = integer.bxor(State[7], W7, W15)
-	State[8] = integer.bxor(State[8], W8, W16)
+	buffer.writeinteger(State, 0,  integer.bxor(buffer.readinteger(State, 0),  W1, W9))
+	buffer.writeinteger(State, 8,  integer.bxor(buffer.readinteger(State, 8),  W2, W10))
+	buffer.writeinteger(State, 16, integer.bxor(buffer.readinteger(State, 16), W3, W11))
+	buffer.writeinteger(State, 24, integer.bxor(buffer.readinteger(State, 24), W4, W12))
+	buffer.writeinteger(State, 32, integer.bxor(buffer.readinteger(State, 32), W5, W13))
+	buffer.writeinteger(State, 40, integer.bxor(buffer.readinteger(State, 40), W6, W14))
+	buffer.writeinteger(State, 48, integer.bxor(buffer.readinteger(State, 48), W7, W15))
+	buffer.writeinteger(State, 56, integer.bxor(buffer.readinteger(State, 56), W8, W16))
 end
 
 local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): (string, buffer)
 	local KeyLength = KeyData and buffer.len(KeyData) or 0
 	local DataLength = buffer.len(InputData)
 
-	local State = { Work9, Work10, Work11, Work12, Work13, Work14, Work15, Work16 }
+	local State = buffer.create(64)
+	buffer.writeinteger(State, 0,  Work9)
+	buffer.writeinteger(State, 8,  Work10)
+	buffer.writeinteger(State, 16, Work11)
+	buffer.writeinteger(State, 24, Work12)
+	buffer.writeinteger(State, 32, Work13)
+	buffer.writeinteger(State, 40, Work14)
+	buffer.writeinteger(State, 48, Work15)
+	buffer.writeinteger(State, 56, Work16)
 
-	local S1Low = integer.band(State[1], 0xFFFFFFFFi)
-	State[1] = integer.bor(integer.band(State[1], integer.bnot(0xFFFFFFFFi)), integer.bxor(S1Low, 0x01010000i, integer.lshift(integer.create(KeyLength), 8i), integer.create(OutputLength)))
+	local S1 = buffer.readinteger(State, 0)
+	local S1Low = integer.band(S1, 0xFFFFFFFFi)
+	buffer.writeinteger(State, 0, integer.bor(integer.band(S1, integer.bnot(0xFFFFFFFFi)), integer.bxor(S1Low, 0x01010000i, integer.lshift(integer.create(KeyLength), 8i), integer.create(OutputLength))))
 
 	local Block = buffer.create(BLOCK_SIZE_BYTES)
 
@@ -241,30 +251,27 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 	end
 
 	local Digest = buffer.create(OutputLength)
-	local Offset = 0
-
-	for Index = 1, 8 do
-		if Offset + 8 <= OutputLength then
-			buffer.writeinteger(Digest, Offset, State[Index])
-			Offset += 8
-		end
-
-		if Offset >= OutputLength then
-			break
-		end
+	local FullLanes = OutputLength // 8
+	for Index = 0, FullLanes - 1 do
+		buffer.writeinteger(Digest, Index * 8, buffer.readinteger(State, Index * 8))
+	end
+	if FullLanes * 8 < OutputLength then
+		local Tail = buffer.create(8)
+		buffer.writeinteger(Tail, 0, buffer.readinteger(State, FullLanes * 8))
+		buffer.copy(Digest, FullLanes * 8, Tail, 0, OutputLength - FullLanes * 8)
 	end
 
 	-- TYPE ERROR: string.format definition doesn't support integers yet
 	local FinalDigest = string.format(
 		"%016x%016x%016x%016x%016x%016x%016x%016x",
-		integer.bswap(State[1]) :: any,
-		integer.bswap(State[2]) :: any,
-		integer.bswap(State[3]) :: any,
-		integer.bswap(State[4]) :: any,
-		integer.bswap(State[5]) :: any,
-		integer.bswap(State[6]) :: any,
-		integer.bswap(State[7]) :: any,
-		integer.bswap(State[8]) :: any
+		integer.bswap(buffer.readinteger(State, 0)) :: any,
+		integer.bswap(buffer.readinteger(State, 8)) :: any,
+		integer.bswap(buffer.readinteger(State, 16)) :: any,
+		integer.bswap(buffer.readinteger(State, 24)) :: any,
+		integer.bswap(buffer.readinteger(State, 32)) :: any,
+		integer.bswap(buffer.readinteger(State, 40)) :: any,
+		integer.bswap(buffer.readinteger(State, 48)) :: any,
+		integer.bswap(buffer.readinteger(State, 56)) :: any
 	)
 
 	return string.sub(FinalDigest, 1, OutputLength * 2), Digest

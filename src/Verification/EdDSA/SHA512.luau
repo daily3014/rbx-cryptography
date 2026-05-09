@@ -43,7 +43,6 @@ for I = 1, 80 do
 end
 
 local W = buffer.create(80 * 8)
-local DIGEST = buffer.create(64)
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -66,7 +65,7 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return Result, NewLength
 end
 
-local function DigestBlocks(Blocks: buffer, Length: number)
+local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, integer, integer, integer, integer, integer, integer)
 	local H1, H2, H3, H4 = 0x6a09e667f3bcc908i, 0xbb67ae8584caa73bi, 0x3c6ef372fe94f82bi, 0xa54ff53a5f1d36f1i
 	local H5, H6, H7, H8 = 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
 
@@ -118,22 +117,22 @@ local function DigestBlocks(Blocks: buffer, Length: number)
 		H8 = integer.add(H8, H)
 	end
 
-	buffer.writeinteger(DIGEST, 0, integer.bswap(H1))
-	buffer.writeinteger(DIGEST, 8, integer.bswap(H2))
-	buffer.writeinteger(DIGEST, 16, integer.bswap(H3))
-	buffer.writeinteger(DIGEST, 24, integer.bswap(H4))
-	buffer.writeinteger(DIGEST, 32, integer.bswap(H5))
-	buffer.writeinteger(DIGEST, 40, integer.bswap(H6))
-	buffer.writeinteger(DIGEST, 48, integer.bswap(H7))
-	buffer.writeinteger(DIGEST, 56, integer.bswap(H8))
+	return H1, H2, H3, H4, H5, H6, H7, H8
 end
 
-local function SHA512(Message: buffer): (string, buffer)
+local function SHA512(Message: buffer): buffer
 	local Processed, Length = PreProcess(Message)
-	DigestBlocks(Processed, Length)
+	local H1, H2, H3, H4, H5, H6, H7, H8 = DigestBlocks(Processed, Length)
 
 	local Result = buffer.create(64)
-	buffer.copy(Result, 0, DIGEST)
+	buffer.writeinteger(Result, 0,  integer.bswap(H1))
+	buffer.writeinteger(Result, 8,  integer.bswap(H2))
+	buffer.writeinteger(Result, 16, integer.bswap(H3))
+	buffer.writeinteger(Result, 24, integer.bswap(H4))
+	buffer.writeinteger(Result, 32, integer.bswap(H5))
+	buffer.writeinteger(Result, 40, integer.bswap(H6))
+	buffer.writeinteger(Result, 48, integer.bswap(H7))
+	buffer.writeinteger(Result, 56, integer.bswap(H8))
 
 	return Result
 end

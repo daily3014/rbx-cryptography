@@ -240,18 +240,7 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	while OutputOffset < OutputBytes do
 		local BytesThisRound = math.min(RateBytes, OutputBytes - OutputOffset)
 
-		for ByteIndex = 0, BytesThisRound - 1 do
-			local AbsoluteIndex = OutputOffset + ByteIndex
-			if AbsoluteIndex < OutputBytes then
-				local Lane = ByteIndex // 8
-				local ByteInLane = ByteIndex % 8
-				local LaneOffset = Lane * 8
-
-				local Value = integer.extract(buffer.readinteger(Lanes, LaneOffset), integer.create(ByteInLane * 8), 8i)
-				buffer.writeu8(Output, AbsoluteIndex, integer.tonumber(Value))
-			end
-		end
-
+		buffer.copy(Output, OutputOffset, Lanes, 0, BytesThisRound)
 		OutputOffset += BytesThisRound
 
 		if OutputOffset < OutputBytes then

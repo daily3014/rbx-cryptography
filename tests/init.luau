@@ -61,6 +61,8 @@ type TestingLib = {
 	Expect: ((Value: any) -> FunctionalCases) & ExpectHandler,
 	Expected: (Value: any) -> (),
 	ExpectEqual: (Expected: any, Value: any) -> (),
+	ToHex: (Buf: buffer) -> string,
+	FromHex: (Hex: string | buffer) -> buffer,
 }
 
 type TestInfo = {
@@ -689,6 +691,57 @@ Testing.ExpectEqual = function(Any: any, Second: any)
 	if Any ~= Second then
 		error(string.format("Expected %s to be equal to %s", Readable(Any), Readable(Second)), 2)
 	end
+end
+
+local HEX_ENCODE_LOOKUP = buffer.create(256 * 2)
+do
+	local HexChars = "0123456789abcdef"
+	for Byte = 0, 255 do
+		local HighChar = string.byte(HexChars, bit32.rshift(Byte, 4) + 1)
+		local LowChar = string.byte(HexChars, Byte % 16 + 1)
+		buffer.writeu16(HEX_ENCODE_LOOKUP, Byte * 2, HighChar + bit32.lshift(LowChar, 8))
+	end
+end
+
+local HEX_DECODE_LOOKUP = buffer.create(65536 * 2)
+do
+	for High = 0, 255 do
+		for Low = 0, 255 do
+			local HighNibble = if High >= 48 and High <= 57 then High - 48
+				elseif High >= 65 and High <= 70 then High - 55
+				elseif High >= 97 and High <= 102 then High - 87
+				else 0
+			local LowNibble = if Low >= 48 and Low <= 57 then Low - 48
+				elseif Low >= 65 and Low <= 70 then Low - 55
+				elseif Low >= 97 and Low <= 102 then Low - 87
+				else 0
+			buffer.writeu16(HEX_DECODE_LOOKUP, (bit32.lshift(Low, 8) + High) * 2, bit32.lshift(HighNibble, 4) + LowNibble)
+		end
+	end
+end
+
+Testing.ToHex = function(Buf: buffer): string
+	local Length = buffer.len(Buf)
+	local Hex = buffer.create(Length * 2)
+	local Lookup = HEX_ENCODE_LOOKUP
+	for Index = 0, Length - 1 do
+		buffer.writeu16(Hex, Index * 2, buffer.readu16(Lookup, buffer.readu8(Buf, Index) * 2))
+	end
+	return buffer.tostring(Hex)
+end
+
+Testing.FromHex = function(Hex: string | buffer): buffer
+	local Source = if type(Hex) == "string" then buffer.fromstring(Hex) else Hex
+	local Length = buffer.len(Source)
+	if Length % 2 ~= 0 then
+		error(`Length must be even, got {Length}`)
+	end
+	local Buf = buffer.create(bit32.rshift(Length, 1))
+	local Lookup = HEX_DECODE_LOOKUP
+	for Index = 0, Length - 1, 2 do
+		buffer.writeu8(Buf, bit32.rshift(Index, 1), buffer.readu16(Lookup, buffer.readu16(Source, Index) * 2))
+	end
+	return Buf
 end
 
 return (Testing :: any) :: TestingLib

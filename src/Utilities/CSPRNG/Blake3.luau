@@ -47,7 +47,7 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	end
 end
 
-local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14: number, V15: number, IsFull: boolean?): buffer
+local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, V14: number, V15: number, IsFull: boolean?): buffer
 	local Hash00 = buffer.readu32(Hash, 0)
 	local Hash01 = buffer.readu32(Hash, 4)
 	local Hash02 = buffer.readu32(Hash, 8)
@@ -64,22 +64,22 @@ local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14
 	local V12 = Counter % (2 ^ 32)
 	local V13 = (Counter - V12) * (2 ^ -32)
 
-	local M00 = buffer.readu32(MessageBlock, 0)
-	local M01 = buffer.readu32(MessageBlock, 4)
-	local M02 = buffer.readu32(MessageBlock, 8)
-	local M03 = buffer.readu32(MessageBlock, 12)
-	local M04 = buffer.readu32(MessageBlock, 16)
-	local M05 = buffer.readu32(MessageBlock, 20)
-	local M06 = buffer.readu32(MessageBlock, 24)
-	local M07 = buffer.readu32(MessageBlock, 28)
-	local M08 = buffer.readu32(MessageBlock, 32)
-	local M09 = buffer.readu32(MessageBlock, 36)
-	local M10 = buffer.readu32(MessageBlock, 40)
-	local M11 = buffer.readu32(MessageBlock, 44)
-	local M12 = buffer.readu32(MessageBlock, 48)
-	local M13 = buffer.readu32(MessageBlock, 52)
-	local M14 = buffer.readu32(MessageBlock, 56)
-	local M15 = buffer.readu32(MessageBlock, 60)
+	local M00 = buffer.readu32(MessageBlock, MessageOffset + 0)
+	local M01 = buffer.readu32(MessageBlock, MessageOffset + 4)
+	local M02 = buffer.readu32(MessageBlock, MessageOffset + 8)
+	local M03 = buffer.readu32(MessageBlock, MessageOffset + 12)
+	local M04 = buffer.readu32(MessageBlock, MessageOffset + 16)
+	local M05 = buffer.readu32(MessageBlock, MessageOffset + 20)
+	local M06 = buffer.readu32(MessageBlock, MessageOffset + 24)
+	local M07 = buffer.readu32(MessageBlock, MessageOffset + 28)
+	local M08 = buffer.readu32(MessageBlock, MessageOffset + 32)
+	local M09 = buffer.readu32(MessageBlock, MessageOffset + 36)
+	local M10 = buffer.readu32(MessageBlock, MessageOffset + 40)
+	local M11 = buffer.readu32(MessageBlock, MessageOffset + 44)
+	local M12 = buffer.readu32(MessageBlock, MessageOffset + 48)
+	local M13 = buffer.readu32(MessageBlock, MessageOffset + 52)
+	local M14 = buffer.readu32(MessageBlock, MessageOffset + 56)
+	local M15 = buffer.readu32(MessageBlock, MessageOffset + 60)
 
 	local Temp
 	for Index = 1, 7 do
@@ -194,13 +194,10 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	local StateEndFlag = 0
 	local StateStartFlag = CHUNK_START
 
-	local BlockBuffer = buffer.create(BLOCK_SIZE)
-
 	for BlockOffset = 0, MessageLength - BLOCK_SIZE - 1, BLOCK_SIZE do
-		buffer.copy(BlockBuffer, 0, Message, BlockOffset, BLOCK_SIZE)
 		local StateFlags = Flags + StateStartFlag + StateEndFlag
 
-		StateCv = Compress(StateCv, BlockBuffer, StateCounter, BLOCK_SIZE, StateFlags)
+		StateCv = Compress(StateCv, Message, BlockOffset, StateCounter, BLOCK_SIZE, StateFlags)
 		StateStartFlag = 0
 		StateChunkNumber += 1
 
@@ -219,7 +216,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 				buffer.copy(Block, 0, PopCv, 0, CV_SIZE)
 				buffer.copy(Block, CV_SIZE, MergeCv, 0, CV_SIZE)
 
-				MergeCv = Compress(InitialHashVector, Block, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
+				MergeCv = Compress(InitialHashVector, Block, 0, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
 				MergeAmount = MergeAmount / 2
 			end
 
@@ -248,7 +245,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 
 	if StateCounter > 0 then
 		local StateFlags = Flags + StateStartFlag + CHUNK_END
-		local MergeCv = Compress(StateCv, PaddedMessage, StateCounter, LastLength, StateFlags)
+		local MergeCv = Compress(StateCv, PaddedMessage, 0, StateCounter, LastLength, StateFlags)
 
 		for Index = StackSize, 2, -1 do
 			local StackCv = buffer.create(CV_SIZE)
@@ -258,7 +255,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 			buffer.copy(Block, 0, StackCv, 0, CV_SIZE)
 			buffer.copy(Block, CV_SIZE, MergeCv, 0, CV_SIZE)
 
-			MergeCv = Compress(InitialHashVector, Block, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
+			MergeCv = Compress(InitialHashVector, Block, 0, 0, BLOCK_SIZE, Flags + PARENT_FLAG)
 		end
 
 		OutputCv = InitialHashVector
@@ -282,7 +279,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	local OutputOffset = 0
 
 	for Index = 0, Length // BLOCK_SIZE do
-		local MessageDigest = Compress(OutputCv, OutputBlock, Index, OutputLength, OutputFlags, true)
+		local MessageDigest = Compress(OutputCv, OutputBlock, 0, Index, OutputLength, OutputFlags, true)
 
 		local BytesToCopy = math.min(BLOCK_SIZE, Length - OutputOffset)
 		buffer.copy(Output, OutputOffset, MessageDigest, 0, BytesToCopy)

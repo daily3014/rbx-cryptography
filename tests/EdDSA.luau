@@ -22,8 +22,7 @@ local Testing = require("./")
 local Cryptography = if IsCLI then require("../src") else require("../")
 local Ed25519 = Cryptography.Verification.EdDSA
 local CSPRNG = Ed25519.CSPRNG
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
+local FromHex = Testing.FromHex
 
 type PublicKeyInfo = {
 	type: string,

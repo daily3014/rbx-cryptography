@@ -21,8 +21,7 @@ local Testing = require("./")
 
 local Cryptography = if IsCLI then require("../src") else require("../")
 local MLKEM = Cryptography.Verification.MlKEM
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
+local FromHex = Testing.FromHex
 
 type WycheproofTest = {
 	tcId: number,

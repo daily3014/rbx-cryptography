@@ -22,9 +22,8 @@ local Testing = require("./")
 local Cryptography = if IsCLI then require("../src") else require("../")
 local HKDF = Cryptography.Hashing.HKDF
 local SHA2 = Cryptography.Hashing.SHA2
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
-local ToHex = Conversions.ToHex
+local FromHex = Testing.FromHex
+local ToHex = Testing.ToHex
 
 type HkdfTest = {
 	tcId: number,

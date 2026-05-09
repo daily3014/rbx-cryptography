@@ -23,9 +23,8 @@ local Testing = require("./")
 
 local Cryptography = if IsCLI then require("../src") else require("../")
 local X25519 = Cryptography.Verification.EdDSA.X25519
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
-local ToHex = Conversions.ToHex
+local FromHex = Testing.FromHex
+local ToHex = Testing.ToHex
 
 type XdhTest = {
 	tcId: number,

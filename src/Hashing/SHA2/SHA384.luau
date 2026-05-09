@@ -43,7 +43,6 @@ for I = 1, 80 do
 end
 
 local W = buffer.create(80 * 8)
-local DIGEST = buffer.create(48)
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -66,7 +65,7 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return Result, NewLength
 end
 
-local function DigestBlocks(Blocks: buffer, Length: number)
+local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, integer, integer, integer, integer)
 	local H1, H2, H3, H4 = 0xcbbb9d5dc1059ed8i, 0x629a292a367cd507i, 0x9159015a3070dd17i, 0x152fecd8f70e5939i
 	local H5, H6, H7, H8 = 0x67332667ffc00b31i, 0x8eb44a8768581511i, 0xdb0c2e0d64f98fa7i, 0x47b5481dbefa4fa4i
 
@@ -118,33 +117,26 @@ local function DigestBlocks(Blocks: buffer, Length: number)
 		H8 = integer.add(H8, H)
 	end
 
-	buffer.writeu32(DIGEST, 0, integer.tonumber(integer.rshift(H1, 32i)))
-	buffer.writeu32(DIGEST, 4, integer.tonumber(integer.band(H1, 0xFFFFFFFFi)))
-	buffer.writeu32(DIGEST, 8, integer.tonumber(integer.rshift(H2, 32i)))
-	buffer.writeu32(DIGEST, 12, integer.tonumber(integer.band(H2, 0xFFFFFFFFi)))
-	buffer.writeu32(DIGEST, 16, integer.tonumber(integer.rshift(H3, 32i)))
-	buffer.writeu32(DIGEST, 20, integer.tonumber(integer.band(H3, 0xFFFFFFFFi)))
-	buffer.writeu32(DIGEST, 24, integer.tonumber(integer.rshift(H4, 32i)))
-	buffer.writeu32(DIGEST, 28, integer.tonumber(integer.band(H4, 0xFFFFFFFFi)))
-	buffer.writeu32(DIGEST, 32, integer.tonumber(integer.rshift(H5, 32i)))
-	buffer.writeu32(DIGEST, 36, integer.tonumber(integer.band(H5, 0xFFFFFFFFi)))
-	buffer.writeu32(DIGEST, 40, integer.tonumber(integer.rshift(H6, 32i)))
-	buffer.writeu32(DIGEST, 44, integer.tonumber(integer.band(H6, 0xFFFFFFFFi)))
+	return H1, H2, H3, H4, H5, H6
 end
 
 local function SHA384(Message: buffer): (string, buffer)
 	local Processed, Length = PreProcess(Message)
-	DigestBlocks(Processed, Length)
-
-	local H1 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 0)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 4)) :: integer)
-	local H2 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 8)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 12)) :: integer)
-	local H3 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 16)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 20)) :: integer)
-	local H4 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 24)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 28)) :: integer)
-	local H5 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 32)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 36)) :: integer)
-	local H6 = integer.bor(integer.lshift(integer.create(buffer.readu32(DIGEST, 40)) :: integer, 32i), integer.create(buffer.readu32(DIGEST, 44)) :: integer)
+	local H1, H2, H3, H4, H5, H6 = DigestBlocks(Processed, Length)
 
 	local Result = buffer.create(48)
-	buffer.copy(Result, 0, DIGEST)
+	buffer.writeu32(Result, 0,  integer.tonumber(integer.rshift(H1, 32i)))
+	buffer.writeu32(Result, 4,  integer.tonumber(integer.band(H1, 0xFFFFFFFFi)))
+	buffer.writeu32(Result, 8,  integer.tonumber(integer.rshift(H2, 32i)))
+	buffer.writeu32(Result, 12, integer.tonumber(integer.band(H2, 0xFFFFFFFFi)))
+	buffer.writeu32(Result, 16, integer.tonumber(integer.rshift(H3, 32i)))
+	buffer.writeu32(Result, 20, integer.tonumber(integer.band(H3, 0xFFFFFFFFi)))
+	buffer.writeu32(Result, 24, integer.tonumber(integer.rshift(H4, 32i)))
+	buffer.writeu32(Result, 28, integer.tonumber(integer.band(H4, 0xFFFFFFFFi)))
+	buffer.writeu32(Result, 32, integer.tonumber(integer.rshift(H5, 32i)))
+	buffer.writeu32(Result, 36, integer.tonumber(integer.band(H5, 0xFFFFFFFFi)))
+	buffer.writeu32(Result, 40, integer.tonumber(integer.rshift(H6, 32i)))
+	buffer.writeu32(Result, 44, integer.tonumber(integer.band(H6, 0xFFFFFFFFi)))
 
 	-- TYPE ERROR: string.format definition doesn't support integers yet
 	return string.format(

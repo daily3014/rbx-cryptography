@@ -107,8 +107,7 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 		local Offset = I * Num * 4
 		local NewNonce = StartNonce + I
 
-		buffer.writeu8(Message, 64, bit32.band(NewNonce, 0xFF))
-		buffer.writeu8(Message, 65, bit32.band(bit32.rshift(NewNonce, 8), 0xFF))
+		buffer.writeu16(Message, 64, NewNonce)
 
 		XOF.Reset256()
 		XOF.Absorb256(Message)
@@ -269,8 +268,7 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 		local Offset = I * Num * 4
 		local NewNonce = Nonce + I
 
-		buffer.writeu8(Message, 64, bit32.band(NewNonce, 0xFF))
-		buffer.writeu8(Message, 65, bit32.band(bit32.rshift(NewNonce, 8), 0xFF))
+		buffer.writeu16(Message, 64, NewNonce)
 
 		XOF.Reset256()
 		XOF.Absorb256(Message)

@@ -32,8 +32,7 @@ local Testing = require("./")
 
 local Cryptography = if IsCLI then require("../src") else require("../")
 local AES = Cryptography.Encryption.AES
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
+local FromHex = Testing.FromHex
 
 type AeadTest = {
 	tcId: number,

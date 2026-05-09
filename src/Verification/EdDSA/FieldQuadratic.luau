@@ -174,41 +174,27 @@ end
 function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 	local DemontResult = Demontgomery(MontgomeryScalar)
 	local EncodedBuffer = buffer.create(32)
-	local ByteIndex = 0
 	for LimbIndex = 0, 9 do
 		local Value = buffer.readinteger(DemontResult, LimbIndex * 8)
-		buffer.writeu8(EncodedBuffer, ByteIndex, integer.tonumber(integer.band(Value, 0xFFi)))
-		Value = integer.arshift(Value, 8i)
-		buffer.writeu8(EncodedBuffer, ByteIndex + 1, integer.tonumber(integer.band(Value, 0xFFi)))
-		Value = integer.arshift(Value, 8i)
-		buffer.writeu8(EncodedBuffer, ByteIndex + 2, integer.tonumber(integer.band(Value, 0xFFi)))
-		ByteIndex += 3
+		buffer.writeu32(EncodedBuffer, LimbIndex * 3, integer.tonumber(integer.band(Value, 0xFFFFFFi)))
 	end
 
-	local LastValue = buffer.readinteger(DemontResult, 10 * 8)
-	buffer.writeu8(EncodedBuffer, 30, integer.tonumber(integer.band(LastValue, 0xFFi)))
-	LastValue = integer.arshift(LastValue, 8i)
-	buffer.writeu8(EncodedBuffer, 31, integer.tonumber(integer.band(LastValue, 0xFFi)))
+	local LastValue = buffer.readinteger(DemontResult, 80)
+	buffer.writeu16(EncodedBuffer, 30, integer.tonumber(integer.band(LastValue, 0xFFFFi)))
 
 	return EncodedBuffer
 end
 
 function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
 	local DecodedBuffer = DECODE_BUFFER
-	local ByteIndex = 0
 
 	for LimbIndex = 0, 9 do
-		local Value = buffer.readu8(EncodedBuffer, ByteIndex)
-			+ buffer.readu8(EncodedBuffer, ByteIndex + 1) * 256
-			+ buffer.readu8(EncodedBuffer, ByteIndex + 2) * 65536
-
+		local Value = bit32.band(buffer.readu32(EncodedBuffer, LimbIndex * 3), 0xFFFFFF)
 		buffer.writeinteger(DecodedBuffer, LimbIndex * 8, integer.create(Value) :: integer)
-		ByteIndex += 3
 	end
 
-	local LastValue = buffer.readu8(EncodedBuffer, 30)
-		+ buffer.readu8(EncodedBuffer, 31) * 256
-	buffer.writeinteger(DecodedBuffer, 10 * 8, integer.create(LastValue) :: integer)
+	local LastValue = buffer.readu16(EncodedBuffer, 30)
+	buffer.writeinteger(DecodedBuffer, 80, integer.create(LastValue) :: integer)
 
 	return FieldQuadratic.Montgomery(DecodedBuffer)
 end
@@ -218,21 +204,15 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 	local HighPart = DECODE_WIDE_HIGH
 
 	for LimbIndex = 0, 10 do
-		local ByteIndex = LimbIndex * 3
-		local Value = buffer.readu8(WideBuffer, ByteIndex)
-			+ buffer.readu8(WideBuffer, ByteIndex + 1) * 256
-			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
+		local Value = bit32.band(buffer.readu32(WideBuffer, LimbIndex * 3), 0xFFFFFF)
 		buffer.writeinteger(LowPart, LimbIndex * 8, integer.create(Value) :: integer)
 	end
 
 	for LimbIndex = 0, 9 do
-		local ByteIndex = 33 + LimbIndex * 3
-		local Value = buffer.readu8(WideBuffer, ByteIndex)
-			+ buffer.readu8(WideBuffer, ByteIndex + 1) * 256
-			+ buffer.readu8(WideBuffer, ByteIndex + 2) * 65536
+		local Value = bit32.band(buffer.readu32(WideBuffer, 33 + LimbIndex * 3), 0xFFFFFF)
 		buffer.writeinteger(HighPart, LimbIndex * 8, integer.create(Value) :: integer)
 	end
-	buffer.writeinteger(HighPart, 10 * 8, integer.create(buffer.readu8(WideBuffer, 63)) :: integer)
+	buffer.writeinteger(HighPart, 80, integer.create(buffer.readu8(WideBuffer, 63)) :: integer)
 
 	local MontLow = FieldQuadratic.Montgomery(LowPart)
 	local MontHigh = FieldQuadratic.Montgomery(HighPart)

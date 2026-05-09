@@ -24,8 +24,43 @@
 --!optimize 2
 --!native
 
-local Conversions = require("@self/Conversions")
 local Blake3 = require("@self/Blake3")
+
+local HEX_ENCODE_LOOKUP = buffer.create(256 * 2) do
+	local HexChars = "0123456789abcdef"
+	for Byte = 0, 255 do
+		local HighChar = string.byte(HexChars, bit32.rshift(Byte, 4) + 1)
+		local LowChar = string.byte(HexChars, Byte % 16 + 1)
+		buffer.writeu16(HEX_ENCODE_LOOKUP, Byte * 2, HighChar + bit32.lshift(LowChar, 8))
+	end
+end
+
+local function ToHex(Buffer: buffer): string
+	local Length = buffer.len(Buffer)
+	local Hex = buffer.create(Length * 2)
+	local Lookup = HEX_ENCODE_LOOKUP
+	local Leftover = Length % 8
+	local HexCursor = 0
+
+	for Index = 0, Length - Leftover - 1, 8 do
+		buffer.writeu16(Hex, HexCursor,      buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2))
+		buffer.writeu16(Hex, HexCursor + 2,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2))
+		buffer.writeu16(Hex, HexCursor + 4,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2))
+		buffer.writeu16(Hex, HexCursor + 6,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2))
+		buffer.writeu16(Hex, HexCursor + 8,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2))
+		buffer.writeu16(Hex, HexCursor + 10, buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2))
+		buffer.writeu16(Hex, HexCursor + 12, buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2))
+		buffer.writeu16(Hex, HexCursor + 14, buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2))
+		HexCursor += 16
+	end
+
+	for Index = Length - Leftover, Length - 1 do
+		buffer.writeu16(Hex, HexCursor, buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2))
+		HexCursor += 2
+	end
+
+	return buffer.tostring(Hex)
+end
 
 export type EntropyProvider = (BytesLeft: number) -> buffer?
 
@@ -422,7 +457,7 @@ end
 local function GetHexString(Length: number): string
 	local BytesNeeded = Length / 2
 	local Bytes = GetBytes(BytesNeeded)
-	local Hex = Conversions.ToHex(Bytes)
+	local Hex = ToHex(Bytes)
 
 	return Hex
 end

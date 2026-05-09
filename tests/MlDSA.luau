@@ -14,8 +14,7 @@ local Testing = require("./")
 
 local Cryptography = if IsCLI then require("../src") else require("../")
 local MlDSA = Cryptography.Verification.MlDSA
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
+local FromHex = Testing.FromHex
 
 type VerifyTest = {
 	tcId: number,

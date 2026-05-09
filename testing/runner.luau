@@ -3,7 +3,6 @@ local Testing = require("../tests/")
 
 require("../tests/AES")
 require("../tests/AEAD")
-require("../tests/Base64")
 require("../tests/Blake2b")
 require("../tests/Blake3")
 require("../tests/CSPRNG")

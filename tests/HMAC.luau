@@ -28,8 +28,7 @@ local Cryptography = if IsCLI then require("../src") else require("../")
 local HMAC = Cryptography.Hashing.HMAC
 local SHA2 = Cryptography.Hashing.SHA2
 local SHA3 = Cryptography.Hashing.SHA3
-local Conversions = Cryptography.Utilities.Conversions
-local FromHex = Conversions.FromHex
+local FromHex = Testing.FromHex
 
 type MacTest = {
 	tcId: number,
