@@ -13,7 +13,7 @@
 --!optimize 2
 --!native
 
-local XOF = require("./XOF")
+local XOF = require("../../Hashing/XOF")
 local Params = require("./Params")
 
 local N = 256

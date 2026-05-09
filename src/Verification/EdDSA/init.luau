@@ -33,7 +33,7 @@ local FieldPrime = require("@self/FieldPrime")
 local SHA512 = require("@self/SHA512")
 local Edwards25519 = require("@self/Edwards25519")
 local X25519 = require("@self/X25519")
-local CSPRNG = require("@self/CSPRNG")
+local CSPRNG = require("../Utilities/CSPRNG")
 
 local ED25519_SECRET_KEY_SIZE = 32
 local ED25519_PUBLIC_KEY_SIZE = 32

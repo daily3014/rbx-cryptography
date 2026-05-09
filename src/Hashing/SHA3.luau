@@ -21,21 +21,10 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local SHA3 = {}
-
-local ENCODE_LOOKUP = buffer.create(256 * 2) do
-	local HexChars = "0123456789abcdef"
-	for Byte = 0, 255 do
-		local HighNibble = bit32.rshift(Byte, 4)
-		local LowNibble = Byte % 16
-
-		local HighChar = string.byte(HexChars, HighNibble + 1)
-		local LowChar = string.byte(HexChars, LowNibble + 1)
-
-		local Combined = HighChar + bit32.lshift(LowChar, 8)
-		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, Combined)
-	end
-end
 
 local ROUND_CONSTANTS = buffer.create(192) do
 	local ShiftRegister = 29
@@ -58,6 +47,8 @@ local ROUND_CONSTANTS = buffer.create(192) do
 		buffer.writeinteger(ROUND_CONSTANTS, Index * 8, Value)
 	end
 end
+
+local LANES = buffer.create(200)
 
 local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
@@ -196,9 +187,11 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 	end
 end
 
-local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): (string, buffer)
+local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer
 	local RateBytes = (1600 - CapacityBits) // 8
-	local Lanes = buffer.create(200)
+	buffer.fill(LANES, 0, 0)
+
+	local Lanes = LANES
 
 	local MessageLength: number = buffer.len(Message)
 	local PaddedLength: number = MessageLength + 1
@@ -227,13 +220,6 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	Keccak(Lanes, PaddedMessage, 0, PaddedLength, RateBytes)
 
 	local Output = buffer.create(OutputBytes)
-	local Length = buffer.len(Output)
-	local Hex = buffer.create(Length * 2)
-
-	local Lookup = ENCODE_LOOKUP
-
-	local Leftover = Length % 8
-	local HexCursor = 0
 	local OutputOffset = 0
 
 	local ZeroBuffer = buffer.create(RateBytes)
@@ -247,60 +233,64 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 			Keccak(Lanes, ZeroBuffer, 0, RateBytes, RateBytes)
 		end
 	end
-
-	for Index = 0, Length - Leftover - 1, 8 do
-		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
-		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 1) * 2)
-		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 2) * 2)
-		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 3) * 2)
-		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 4) * 2)
-		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 5) * 2)
-		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 6) * 2)
-		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Output, Index + 7) * 2)
-
-		buffer.writeu16(Hex, HexCursor, Hex1)
-		buffer.writeu16(Hex, HexCursor + 2, Hex2)
-		buffer.writeu16(Hex, HexCursor + 4, Hex3)
-		buffer.writeu16(Hex, HexCursor + 6, Hex4)
-		buffer.writeu16(Hex, HexCursor + 8, Hex5)
-		buffer.writeu16(Hex, HexCursor + 10, Hex6)
-		buffer.writeu16(Hex, HexCursor + 12, Hex7)
-		buffer.writeu16(Hex, HexCursor + 14, Hex8)
-
-		HexCursor += 16
-	end
-
-	for Index = Length - Leftover, Length - 1 do
-		local HexPair = buffer.readu16(Lookup, buffer.readu8(Output, Index) * 2)
-		buffer.writeu16(Hex, HexCursor, HexPair)
-		HexCursor += 2
-	end
 	
-	return buffer.tostring(Hex), Output
+	return Output
 end
 
-function SHA3.SHA3_224(Message: buffer): (string, buffer)
+SHA3.Keccak_Internal = Keccak
+
+function SHA3.SHA3_224_Internal(Message: buffer): buffer
 	return ProcessSponge(Message, 448, 28, 0x06)
 end
 
-function SHA3.SHA3_256(Message: buffer): (string, buffer)
+function SHA3.SHA3_256_Internal(Message: buffer): buffer
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-function SHA3.SHA3_384(Message: buffer): (string, buffer)
+function SHA3.SHA3_384_Internal(Message: buffer): buffer
 	return ProcessSponge(Message, 768, 48, 0x06)
 end
 
-function SHA3.SHA3_512(Message: buffer): (string, buffer)
+function SHA3.SHA3_512_Internal(Message: buffer): buffer
 	return ProcessSponge(Message, 1024, 64, 0x06)
 end
 
-function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
+function SHA3.SHAKE128_Internal(Message: buffer, OutputBytes: number): buffer
 	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
-function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
+function SHA3.SHAKE256_Internal(Message: buffer, OutputBytes: number): buffer
 	return ProcessSponge(Message, 512, OutputBytes, 0x1F)
+end
+
+function SHA3.SHA3_224(Message: buffer): (string, buffer)
+	local Buf = ProcessSponge(Message, 448, 28, 0x06)
+	return ToHex(Buf), Buf
+end
+
+function SHA3.SHA3_256(Message: buffer): (string, buffer)
+	local Buf = ProcessSponge(Message, 512, 32, 0x06)
+	return ToHex(Buf), Buf
+end
+
+function SHA3.SHA3_384(Message: buffer): (string, buffer)
+	local Buf = ProcessSponge(Message, 768, 48, 0x06)
+	return ToHex(Buf), Buf
+end
+
+function SHA3.SHA3_512(Message: buffer): (string, buffer)
+	local Buf = ProcessSponge(Message, 1024, 64, 0x06)
+	return ToHex(Buf), Buf
+end
+
+function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
+	local Buf = ProcessSponge(Message, 256, OutputBytes, 0x1F)
+	return ToHex(Buf), Buf
+end
+
+function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
+	local Buf = ProcessSponge(Message, 512, OutputBytes, 0x1F)
+	return ToHex(Buf), Buf
 end
 
 return SHA3

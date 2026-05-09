@@ -22,7 +22,7 @@
 --!native
 
 local FieldPrime = require("./FieldPrime")
-local CSPRNG = require("./CSPRNG")
+local CSPRNG = require("../../Utilities/CSPRNG")
 
 local COORD_SIZE = 80
 local MONTGOMERY_POINT_SIZE = 2 * COORD_SIZE

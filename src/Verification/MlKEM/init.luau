@@ -28,10 +28,10 @@
 
 local Pke = require("@self/PKE")
 local Polyvec = require("@self/PolyVec")
-local CSPRNG = require("@self/CSPRNG")
+local CSPRNG = require("../Utilities/CSPRNG")
 local Params = require("@self/Params")
 local Utils = require("@self/Utils")
-local SHA3 = require("@self/SHA3")
+local SHA3 = require("../Hashing/SHA3")
 
 local DECAP_G_INPUT = buffer.create(64)
 local DECAP_K_PRIME = buffer.create(32)
@@ -59,7 +59,7 @@ function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, b
 	end
 
 	local KpkePublicKey, KpkeSecretKey = Pke.KeyGen(K, Eta1, D)
-	local PublicKeyHash = SHA3.SHA3_256(KpkePublicKey)
+	local PublicKeyHash = SHA3.SHA3_256_Internal(KpkePublicKey)
 
 	local SecretKeyLen = Utils.GetKemSecretKeyLen(K)
 	local SecretKey = buffer.create(SecretKeyLen)
@@ -107,13 +107,13 @@ function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: numbe
 		error("malformed public key encoding")
 	end
 
-	local PublicKeyHash = SHA3.SHA3_256(PublicKey)
+	local PublicKeyHash = SHA3.SHA3_256_Internal(PublicKey)
 
 	local GInput = ENCAP_G_INPUT
 	buffer.copy(GInput, 0, Message, 0, 32)
 	buffer.copy(GInput, 32, PublicKeyHash, 0, 32)
 
-	local GOutput = SHA3.SHA3_512(GInput)
+	local GOutput = SHA3.SHA3_512_Internal(GInput)
 
 	local K_bytes = buffer.create(32)
 	local R = ENCAP_R
@@ -163,7 +163,7 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	buffer.copy(GInput, 0, MPrime, 0, 32)
 	buffer.copy(GInput, 32, H, 0, 32)
 
-	local GOutput = SHA3.SHA3_512(GInput)
+	local GOutput = SHA3.SHA3_512_Internal(GInput)
 
 	local KPrime = DECAP_K_PRIME
 	local RPrime = DECAP_R_PRIME
@@ -174,7 +174,7 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	buffer.copy(JInput, 0, Z, 0, 32)
 	buffer.copy(JInput, 32, Ciphertext, 0, buffer.len(Ciphertext))
 
-	local JOutputBuffer = SHA3.SHAKE256(JInput, 32)
+	local JOutputBuffer = SHA3.SHAKE256_Internal(JInput, 32)
 	local JOutput = DECAP_J_OUTPUT
 	buffer.copy(JOutput, 0, JOutputBuffer, 0, 32)
 
@@ -207,7 +207,7 @@ function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 	buffer.copy(Ek, 0, SecretKey, EkOffset, KpkePublicKeyLen)
 	buffer.copy(StoredH, 0, SecretKey, HOffset, 32)
 
-	local ComputedH = SHA3.SHA3_256(Ek)
+	local ComputedH = SHA3.SHA3_256_Internal(Ek)
 	return Utils.CtMemcmp(StoredH, ComputedH) == 0xFFFFFFFF
 end
 

@@ -26,6 +26,9 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local Blake3 = {}
 
 local BLOCK_SIZE = 64
@@ -53,20 +56,6 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	}
 	for Index, Value in ipairs(IV) do
 		buffer.writeu32(INITIAL_VECTORS, (Index - 1) * 4, Value)
-	end
-end
-
-local ENCODE_LOOKUP = buffer.create(256 * 2) do
-	local HexChars = "0123456789abcdef"
-	for Byte = 0, 255 do
-		local HighNibble = bit32.rshift(Byte, 4)
-		local LowNibble = Byte % 16
-
-		local HighChar = string.byte(HexChars, HighNibble + 1)
-		local LowChar = string.byte(HexChars, LowNibble + 1)
-
-		local Combined = HighChar + bit32.lshift(LowChar, 8)
-		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, Combined)
 	end
 end
 
@@ -318,46 +307,6 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	end
 
 	return Output
-end
-
-local function ToHex(Buffer: buffer): string
-	local Length = buffer.len(Buffer)
-	local Hex = buffer.create(Length * 2)
-
-	local Lookup = ENCODE_LOOKUP
-
-	local Leftover = Length % 8
-	local HexCursor = 0
-
-	for Index = 0, Length - Leftover - 1, 8 do
-		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
-		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2)
-		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2)
-		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2)
-		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2)
-		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2)
-		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2)
-		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2)
-
-		buffer.writeu16(Hex, HexCursor, Hex1)
-		buffer.writeu16(Hex, HexCursor + 2, Hex2)
-		buffer.writeu16(Hex, HexCursor + 4, Hex3)
-		buffer.writeu16(Hex, HexCursor + 6, Hex4)
-		buffer.writeu16(Hex, HexCursor + 8, Hex5)
-		buffer.writeu16(Hex, HexCursor + 10, Hex6)
-		buffer.writeu16(Hex, HexCursor + 12, Hex7)
-		buffer.writeu16(Hex, HexCursor + 14, Hex8)
-
-		HexCursor += 16
-	end
-
-	for Index = Length - Leftover, Length - 1 do
-		local HexPair = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
-		buffer.writeu16(Hex, HexCursor, HexPair)
-		HexCursor += 2
-	end
-
-	return buffer.tostring(Hex)
 end
 
 function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)

@@ -23,8 +23,8 @@
 
 local PolyVec = require("./PolyVec")
 local MlKemParams = require("./Params")
-local SHA3 = require("./SHA3")
-local XOF = require("./XOF")
+local SHA3 = require("../../Hashing/SHA3")
+local XOF = require("../../Hashing/XOF")
 
 local LOG2N = 8
 local N = 2^LOG2N
@@ -235,7 +235,7 @@ function Sampling.GenerateNoisePoly(Eta: number, Sigma: buffer, Nonce: number): 
 	buffer.copy(PrfInput, 0, Sigma, 0, 32)
 	buffer.writeu8(PrfInput, 32, Nonce)
 
-	local PrfOutput = SHA3.SHAKE256(PrfInput, 64 * Eta)
+	local PrfOutput = SHA3.SHAKE256_Internal(PrfInput, 64 * Eta)
 	return Sampling.SamplePolyCbd(PrfOutput, Eta)
 end
 

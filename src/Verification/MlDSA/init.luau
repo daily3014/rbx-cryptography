@@ -21,7 +21,7 @@
 --!optimize 2
 --!native
 
-local SHA3 = require("@self/SHA3")
+local SHA3 = require("../Hashing/SHA3")
 local NTT = require("@self/NTT")
 
 local PolyVec = require("@self/PolyVec")
@@ -31,7 +31,7 @@ local Sampling = require("@self/Sampling")
 local Params = require("@self/Params")
 
 local Utils = require("@self/Utils")
-local CSPRNG = require("@self/CSPRNG")
+local CSPRNG = require("../Utilities/CSPRNG")
 
 local KEYGEN_SEED_BYTE_LEN = 32
 local RND_BYTE_LEN = 32
@@ -99,7 +99,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	buffer.copy(SeedHashInput, 0, Seed, 0, 32)
 	buffer.copy(SeedHashInput, 32, DomainSeparator, 0, 2)
 
-	local SeedHash = SHA3.SHAKE256(SeedHashInput, 128)
+	local SeedHash = SHA3.SHAKE256_Internal(SeedHashInput, 128)
 
 	local Rho = buffer.create(32)
 	local RhoPrime = buffer.create(64)
@@ -136,7 +136,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	PolyVec.Encode(T1, T1Encoded, K, T1Bw)
 	buffer.copy(PubKey, PkOff1, T1Encoded, 0, buffer.len(T1Encoded))
 
-	local Tr = SHA3.SHAKE256(PubKey, 64)
+	local Tr = SHA3.SHAKE256_Internal(PubKey, 64)
 
 	buffer.copy(SecKey, SkOff0, Rho, 0, 32)
 	buffer.copy(SecKey, SkOff1, Key, 0, 32)
@@ -192,7 +192,7 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 	buffer.copy(RhoPrimeInput, 32, Rnd, 0, 32)
 	buffer.copy(RhoPrimeInput, 64, Mu, 0, 64)
 
-	local RhoPrime = SHA3.SHAKE256(RhoPrimeInput, 64)
+	local RhoPrime = SHA3.SHAKE256_Internal(RhoPrimeInput, 64)
 
 	local S1 = buffer.create(L * N * 4)
 	local S2 = buffer.create(K * N * 4)
@@ -252,7 +252,7 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 
 		buffer.copy(ChallengeInput, 64, W1Encoded, 0, W1EncodedLen)
 
-		local CTildaFull = SHA3.SHAKE256(ChallengeInput, CTildaSize)
+		local CTildaFull = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 		buffer.copy(CTilda, 0, CTildaFull, 0, CTildaSize)
 
 		Sampling.SampleInBall(CTilda, C, Tau, Lambda)
@@ -346,7 +346,7 @@ local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: 
 	Offset += buffer.len(Ctx)
 	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
 
-	local Mu = SHA3.SHAKE256(MuInput, 64)
+	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
 
 	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
 end
@@ -365,7 +365,7 @@ local function SignInternal(MPrime: buffer, Rnd: buffer, SecKey: buffer, Sig: bu
 	buffer.copy(MuInput, 0, Tr, 0, 64)
 	buffer.copy(MuInput, 64, MPrime, 0, buffer.len(MPrime))
 
-	local Mu = SHA3.SHAKE256(MuInput, 64)
+	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
 
 	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
 end
@@ -449,7 +449,7 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 	local A = buffer.create(K * L * N * 4)
 	Sampling.ExpandA(Rho, A, K, L)
 
-	local Tr = SHA3.SHAKE256(PubKey, 64)
+	local Tr = SHA3.SHAKE256_Internal(PubKey, 64)
 
 	local DomainSeparator = buffer.create(2)
 	buffer.writeu8(DomainSeparator, 0, 0)
@@ -465,7 +465,7 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 	Offset += buffer.len(Ctx)
 	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
 
-	local Mu = SHA3.SHAKE256(MuInput, 64)
+	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
 
 	local C = buffer.create(N * 4)
 	Sampling.SampleInBall(CTilda, C, Tau, Lambda)
@@ -495,7 +495,7 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 	buffer.copy(ChallengeInput, 0, Mu, 0, 64)
 	buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
 
-	local CTildaPrime = SHA3.SHAKE256(ChallengeInput, CTildaSize)
+	local CTildaPrime = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 
 	local CompareResult = CompareBufferSlices(CTilda, 0, CTildaPrime, 0, CTildaSize)
 	VerificationFailed = VerificationFailed or (not CompareResult)

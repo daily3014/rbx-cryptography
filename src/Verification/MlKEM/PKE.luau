@@ -32,7 +32,7 @@ local Compression = require("./Compression")
 
 local Params = require("./Params")
 local Utils = require("./Utils")
-local SHA3 = require("./SHA3")
+local SHA3 = require("../../Hashing/SHA3")
 
 local LOG2N = 8
 local N = 2^LOG2N
@@ -65,7 +65,7 @@ function Pke.KeyGen(K: number, Eta1: number, Seed: buffer): (buffer, buffer)
 	buffer.copy(GInput, 0, Seed, 0, 32)
 	buffer.writeu8(GInput, 32, K)
 
-	local GOutput = SHA3.SHA3_512(GInput)
+	local GOutput = SHA3.SHA3_512_Internal(GInput)
 	local Rho = KEYGEN_RHO
 	local Sigma = KEYGEN_SIGMA
 	buffer.copy(Rho, 0, GOutput, 0, 32)

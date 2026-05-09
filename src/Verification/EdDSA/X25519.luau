@@ -31,7 +31,7 @@
 
 local FieldPrime = require("./FieldPrime")
 local Curve25519 = require("./Curve25519")
-local CSPRNG = require("./CSPRNG")
+local CSPRNG = require("../../Utilities/CSPRNG")
 
 local COORD_SIZE = 80
 local X25519_SECRET_KEY_SIZE = 32

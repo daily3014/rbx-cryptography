@@ -13,7 +13,7 @@
 --!optimize 2
 --!native
 
-local HMAC = require("@self/HMAC")
+local HMAC = require("./HMAC")
 
 type HashFunction = (...any) -> (string, buffer)
 

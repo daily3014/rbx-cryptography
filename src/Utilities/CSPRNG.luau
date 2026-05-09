@@ -24,43 +24,9 @@
 --!optimize 2
 --!native
 
-local Blake3 = require("@self/Blake3")
-
-local HEX_ENCODE_LOOKUP = buffer.create(256 * 2) do
-	local HexChars = "0123456789abcdef"
-	for Byte = 0, 255 do
-		local HighChar = string.byte(HexChars, bit32.rshift(Byte, 4) + 1)
-		local LowChar = string.byte(HexChars, Byte % 16 + 1)
-		buffer.writeu16(HEX_ENCODE_LOOKUP, Byte * 2, HighChar + bit32.lshift(LowChar, 8))
-	end
-end
-
-local function ToHex(Buffer: buffer): string
-	local Length = buffer.len(Buffer)
-	local Hex = buffer.create(Length * 2)
-	local Lookup = HEX_ENCODE_LOOKUP
-	local Leftover = Length % 8
-	local HexCursor = 0
-
-	for Index = 0, Length - Leftover - 1, 8 do
-		buffer.writeu16(Hex, HexCursor,      buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2))
-		buffer.writeu16(Hex, HexCursor + 2,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2))
-		buffer.writeu16(Hex, HexCursor + 4,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2))
-		buffer.writeu16(Hex, HexCursor + 6,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2))
-		buffer.writeu16(Hex, HexCursor + 8,  buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2))
-		buffer.writeu16(Hex, HexCursor + 10, buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2))
-		buffer.writeu16(Hex, HexCursor + 12, buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2))
-		buffer.writeu16(Hex, HexCursor + 14, buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2))
-		HexCursor += 16
-	end
-
-	for Index = Length - Leftover, Length - 1 do
-		buffer.writeu16(Hex, HexCursor, buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2))
-		HexCursor += 2
-	end
-
-	return buffer.tostring(Hex)
-end
+local Blake3 = require("../Hashing/Blake3")
+local Conversions = require("./Conversions")
+local ToHex = Conversions.ToHex
 
 export type EntropyProvider = (BytesLeft: number) -> buffer?
 
@@ -256,7 +222,7 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		end
 	end
 
-	local AddressDigest = Blake3(AddressBuffer, 32)
+	local AddressDigest = select(2, Blake3.Digest(AddressBuffer, 32))
 	WriteToBuffer(AddressDigest)
 
 	local function AddExtraEntropy(Entropy: buffer?, Warn: boolean, Provider: string?)
@@ -294,7 +260,7 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		AddExtraEntropy(CustomEntropy, false)
 	end
 
-	local KeyMaterial = Blake3(EntropyBuffers, KEY_SIZE + NONCE_SIZE)
+	local KeyMaterial = select(2, Blake3.Digest(EntropyBuffers, KEY_SIZE + NONCE_SIZE))
 
 	CSPRNG.Key = buffer.create(KEY_SIZE)
 	buffer.copy(CSPRNG.Key, 0, KeyMaterial, 0, KEY_SIZE)
@@ -316,7 +282,7 @@ local function GenerateBlock()
 	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE, CSPRNG.Counter % 0x100000000)
 	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE + 4, math.floor(CSPRNG.Counter / 0x100000000))
 
-	CSPRNG.Buffer = Blake3(INPUT_BUFFER, OutputSize)
+	CSPRNG.Buffer = select(2, Blake3.Digest(INPUT_BUFFER, OutputSize))
 	CSPRNG.BufferPosition = 0
 	CSPRNG.BufferSize = buffer.len(CSPRNG.Buffer)
 	CSPRNG.Counter += 1
