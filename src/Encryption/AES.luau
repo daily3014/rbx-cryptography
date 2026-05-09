@@ -190,6 +190,11 @@ end
 
 local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
 	local Nr = MaterialLength / 16 + 2
+	local LT0 = TTABLE0
+	local LT1 = TTABLE1
+	local LT2 = TTABLE2
+	local LT3 = TTABLE3
+	local LSBox = SUBSTITUTION_BOX
 
 	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
 	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
@@ -204,10 +209,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		local Cc = bit32.band(bit32.rshift(C2, 16), 0xFF)
 		local D = bit32.rshift(C3, 24)
 		local NewC0 = bit32.bxor(
-			buffer.readu32(TTABLE0, A * 4),
-			buffer.readu32(TTABLE1, B * 4),
-			buffer.readu32(TTABLE2, Cc * 4),
-			buffer.readu32(TTABLE3, D * 4),
+			buffer.readu32(LT0, A * 4),
+			buffer.readu32(LT1, B * 4),
+			buffer.readu32(LT2, Cc * 4),
+			buffer.readu32(LT3, D * 4),
 			buffer.readu32(RoundKeys, KOff))
 
 		A = bit32.band(C1, 0xFF)
@@ -215,10 +220,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		Cc = bit32.band(bit32.rshift(C3, 16), 0xFF)
 		D = bit32.rshift(C0, 24)
 		local NewC1 = bit32.bxor(
-			buffer.readu32(TTABLE0, A * 4),
-			buffer.readu32(TTABLE1, B * 4),
-			buffer.readu32(TTABLE2, Cc * 4),
-			buffer.readu32(TTABLE3, D * 4),
+			buffer.readu32(LT0, A * 4),
+			buffer.readu32(LT1, B * 4),
+			buffer.readu32(LT2, Cc * 4),
+			buffer.readu32(LT3, D * 4),
 			buffer.readu32(RoundKeys, KOff + 4))
 
 		A = bit32.band(C2, 0xFF)
@@ -226,10 +231,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		Cc = bit32.band(bit32.rshift(C0, 16), 0xFF)
 		D = bit32.rshift(C1, 24)
 		local NewC2 = bit32.bxor(
-			buffer.readu32(TTABLE0, A * 4),
-			buffer.readu32(TTABLE1, B * 4),
-			buffer.readu32(TTABLE2, Cc * 4),
-			buffer.readu32(TTABLE3, D * 4),
+			buffer.readu32(LT0, A * 4),
+			buffer.readu32(LT1, B * 4),
+			buffer.readu32(LT2, Cc * 4),
+			buffer.readu32(LT3, D * 4),
 			buffer.readu32(RoundKeys, KOff + 8))
 
 		A = bit32.band(C3, 0xFF)
@@ -237,10 +242,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		Cc = bit32.band(bit32.rshift(C1, 16), 0xFF)
 		D = bit32.rshift(C2, 24)
 		local NewC3 = bit32.bxor(
-			buffer.readu32(TTABLE0, A * 4),
-			buffer.readu32(TTABLE1, B * 4),
-			buffer.readu32(TTABLE2, Cc * 4),
-			buffer.readu32(TTABLE3, D * 4),
+			buffer.readu32(LT0, A * 4),
+			buffer.readu32(LT1, B * 4),
+			buffer.readu32(LT2, Cc * 4),
+			buffer.readu32(LT3, D * 4),
 			buffer.readu32(RoundKeys, KOff + 12))
 
 		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
@@ -248,34 +253,34 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 
 	local KOff = Nr * 16
 
-	local A = buffer.readu8(SUBSTITUTION_BOX, bit32.band(C0, 0xFF))
-	local B = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C1, 8), 0xFF))
-	local Cc = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C2, 16), 0xFF))
-	local D = buffer.readu8(SUBSTITUTION_BOX, bit32.rshift(C3, 24))
+	local A = buffer.readu8(LSBox, bit32.band(C0, 0xFF))
+	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
+	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
+	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
 	buffer.writeu32(Output, OutputOffset + 0, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
 		buffer.readu32(RoundKeys, KOff)))
 
-	A = buffer.readu8(SUBSTITUTION_BOX, bit32.band(C1, 0xFF))
-	B = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C2, 8), 0xFF))
-	Cc = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C3, 16), 0xFF))
-	D = buffer.readu8(SUBSTITUTION_BOX, bit32.rshift(C0, 24))
+	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
 	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
 		buffer.readu32(RoundKeys, KOff + 4)))
 
-	A = buffer.readu8(SUBSTITUTION_BOX, bit32.band(C2, 0xFF))
-	B = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C3, 8), 0xFF))
-	Cc = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C0, 16), 0xFF))
-	D = buffer.readu8(SUBSTITUTION_BOX, bit32.rshift(C1, 24))
+	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
 	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
 		buffer.readu32(RoundKeys, KOff + 8)))
 
-	A = buffer.readu8(SUBSTITUTION_BOX, bit32.band(C3, 0xFF))
-	B = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C0, 8), 0xFF))
-	Cc = buffer.readu8(SUBSTITUTION_BOX, bit32.band(bit32.rshift(C1, 16), 0xFF))
-	D = buffer.readu8(SUBSTITUTION_BOX, bit32.rshift(C2, 24))
+	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
 	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
 		buffer.readu32(RoundKeys, KOff + 12)))

@@ -103,27 +103,29 @@ local function SamplePolyCbd3(Prf: buffer, Poly: buffer, Offset: number?)
 end
 
 local function SampleNtt(XofInput: buffer, Poly: buffer)
+	local LN = N
+	local LQ = Q
 	local CoeffIndex = 0
 	local Chunk = SAMPLE_NTT_CHUNK
 
 	XOF.Reset128()
 	XOF.Absorb128(XofInput)
 
-	while CoeffIndex < N do
+	while CoeffIndex < LN do
 		XOF.Squeeze128Into(Chunk, 168, 0)
 		local Offset = 0
 
-		while Offset + 4 <= 168 and CoeffIndex < N do
+		while Offset + 4 <= 168 and CoeffIndex < LN do
 			local Word = buffer.readu32(Chunk, Offset)
 			local D1 = bit32.band(Word, 0xFFF)
 			local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
 
-			if D1 < Q then
+			if D1 < LQ then
 				buffer.writeu16(Poly, CoeffIndex * 2, D1)
 				CoeffIndex += 1
 			end
 
-			if D2 < Q and CoeffIndex < N then
+			if D2 < LQ and CoeffIndex < LN then
 				buffer.writeu16(Poly, CoeffIndex * 2, D2)
 				CoeffIndex += 1
 			end
@@ -131,7 +133,7 @@ local function SampleNtt(XofInput: buffer, Poly: buffer)
 			Offset += 3
 		end
 
-		while Offset + 2 < 168 and CoeffIndex < N do
+		while Offset + 2 < 168 and CoeffIndex < LN do
 			local B0 = buffer.readu8(Chunk, Offset)
 			local B1 = buffer.readu8(Chunk, Offset + 1)
 			local B2 = buffer.readu8(Chunk, Offset + 2)
@@ -139,12 +141,12 @@ local function SampleNtt(XofInput: buffer, Poly: buffer)
 			local D1 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
 			local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
 
-			if D1 < Q then
+			if D1 < LQ then
 				buffer.writeu16(Poly, CoeffIndex * 2, D1)
 				CoeffIndex += 1
 			end
 
-			if D2 < Q and CoeffIndex < N then
+			if D2 < LQ and CoeffIndex < LN then
 				buffer.writeu16(Poly, CoeffIndex * 2, D2)
 				CoeffIndex += 1
 			end

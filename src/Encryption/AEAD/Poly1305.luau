@@ -27,6 +27,10 @@ local HIGH_BIT = 0x1000000i
 local P0 = 0x3FFFFFBi
 
 local function ProcessMessage(Message: buffer, Key: buffer): buffer
+	local LM26 = M26
+	local LFIVE = FIVE
+	local LHIGH_BIT = HIGH_BIT
+	local LP0 = P0
 	local MessageLength = buffer.len(Message)
 
 	local PaddedMessage = Message
@@ -51,10 +55,10 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	local R3 = integer.band(integer.rshift(KeyHigh8, 14i), 0x3F03FFFi)
 	local R4 = integer.band(integer.rshift(KeyHigh8, 40i), 0x00FFFFFi)
 
-	local S1 = integer.mul(R1, FIVE)
-	local S2 = integer.mul(R2, FIVE)
-	local S3 = integer.mul(R3, FIVE)
-	local S4 = integer.mul(R4, FIVE)
+	local S1 = integer.mul(R1, LFIVE)
+	local S2 = integer.mul(R2, LFIVE)
+	local S3 = integer.mul(R3, LFIVE)
+	local S4 = integer.mul(R4, LFIVE)
 
 	local H0, H1, H2, H3, H4 = 0i, 0i, 0i, 0i, 0i
 
@@ -62,14 +66,14 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 		local MLow8 = buffer.readinteger(PaddedMessage, BlockOffset)
 		local MHigh8 = buffer.readinteger(PaddedMessage, BlockOffset + 8)
 
-		local M0 = integer.band(MLow8, M26)
-		local M1 = integer.band(integer.rshift(MLow8, 26i), M26)
-		local M2 = integer.band(integer.bor(integer.rshift(MLow8, 52i), integer.lshift(MHigh8, 12i)), M26)
-		local M3 = integer.band(integer.rshift(MHigh8, 14i), M26)
+		local M0 = integer.band(MLow8, LM26)
+		local M1 = integer.band(integer.rshift(MLow8, 26i), LM26)
+		local M2 = integer.band(integer.bor(integer.rshift(MLow8, 52i), integer.lshift(MHigh8, 12i)), LM26)
+		local M3 = integer.band(integer.rshift(MHigh8, 14i), LM26)
 		local M4 = integer.rshift(MHigh8, 40i)
 
 		if BlockOffset ~= PartialBlockOffset then
-			M4 = integer.bor(M4, HIGH_BIT)
+			M4 = integer.bor(M4, LHIGH_BIT)
 		end
 
 		H0 = integer.add(H0, M0)
@@ -100,23 +104,23 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 			integer.mul(H4, R0))
 
 		local C
-		C = integer.arshift(D0, 26i); D1 = integer.add(D1, C); H0 = integer.band(D0, M26)
-		C = integer.arshift(D1, 26i); D2 = integer.add(D2, C); H1 = integer.band(D1, M26)
-		C = integer.arshift(D2, 26i); D3 = integer.add(D3, C); H2 = integer.band(D2, M26)
-		C = integer.arshift(D3, 26i); D4 = integer.add(D4, C); H3 = integer.band(D3, M26)
-		C = integer.arshift(D4, 26i); H0 = integer.add(H0, integer.mul(C, FIVE)); H4 = integer.band(D4, M26)
-		C = integer.arshift(H0, 26i); H1 = integer.add(H1, C); H0 = integer.band(H0, M26)
+		C = integer.arshift(D0, 26i); D1 = integer.add(D1, C); H0 = integer.band(D0, LM26)
+		C = integer.arshift(D1, 26i); D2 = integer.add(D2, C); H1 = integer.band(D1, LM26)
+		C = integer.arshift(D2, 26i); D3 = integer.add(D3, C); H2 = integer.band(D2, LM26)
+		C = integer.arshift(D3, 26i); D4 = integer.add(D4, C); H3 = integer.band(D3, LM26)
+		C = integer.arshift(D4, 26i); H0 = integer.add(H0, integer.mul(C, LFIVE)); H4 = integer.band(D4, LM26)
+		C = integer.arshift(H0, 26i); H1 = integer.add(H1, C); H0 = integer.band(H0, LM26)
 	end
 
 	local C
-	C = integer.arshift(H1, 26i); H2 = integer.add(H2, C); H1 = integer.band(H1, M26)
-	C = integer.arshift(H2, 26i); H3 = integer.add(H3, C); H2 = integer.band(H2, M26)
-	C = integer.arshift(H3, 26i); H4 = integer.add(H4, C); H3 = integer.band(H3, M26)
-	C = integer.arshift(H4, 26i); H0 = integer.add(H0, integer.mul(C, FIVE)); H4 = integer.band(H4, M26)
-	C = integer.arshift(H0, 26i); H1 = integer.add(H1, C); H0 = integer.band(H0, M26)
+	C = integer.arshift(H1, 26i); H2 = integer.add(H2, C); H1 = integer.band(H1, LM26)
+	C = integer.arshift(H2, 26i); H3 = integer.add(H3, C); H2 = integer.band(H2, LM26)
+	C = integer.arshift(H3, 26i); H4 = integer.add(H4, C); H3 = integer.band(H3, LM26)
+	C = integer.arshift(H4, 26i); H0 = integer.add(H0, integer.mul(C, LFIVE)); H4 = integer.band(H4, LM26)
+	C = integer.arshift(H0, 26i); H1 = integer.add(H1, C); H0 = integer.band(H0, LM26)
 
-	if H4 == M26 and H3 == M26 and H2 == M26 and H1 == M26 and integer.ge(H0, P0) then
-		H0 = integer.sub(H0, P0)
+	if H4 == LM26 and H3 == LM26 and H2 == LM26 and H1 == LM26 and integer.ge(H0, LP0) then
+		H0 = integer.sub(H0, LP0)
 		H1, H2, H3, H4 = 0i, 0i, 0i, 0i
 	end
 
