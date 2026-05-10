@@ -78,6 +78,10 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 - **SHA-3 Family**: SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE-128, SHAKE-256 ([FIPS 202](https://doi.org/10.6028/NIST.FIPS.202))
 - **BLAKE Family**: [BLAKE3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake2b.luau)
 
+**Password Hashing**
+
+- [Argon2id](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Argon2id.luau): Memory-hard password hashing function ([RFC 9106](https://doi.org/10.17487/RFC9106)).
+
 **Message Authentication**
 
 - [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
@@ -120,6 +124,14 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 | HMAC-BLAKE3 | 20k       | **113 μs**   | -        | -                        | -                 | -                             |
 | KMAC-128    | 20k       | **95 μs**    | -        | -                        | -                 | -                             |
 | KMAC-256    | 20k       | **110 μs**   | -        | -                        | -                 | -                             |
+
+### Password Hashing (Argon2id)
+
+| Tier        | Parameters                | This Library |
+|-------------|---------------------------|--------------|
+| Interactive | m=8 MiB, t=2, p=1         | **21 ms**    |
+| Default     | m=19 MiB, t=2, p=1        | **49 ms**    |
+| Sensitive   | m=64 MiB, t=3, p=1        | **265 ms**   |
 
 ### Encryption
 

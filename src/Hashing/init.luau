@@ -9,7 +9,8 @@ local Algorithms = table.freeze({
 	SHA2 = require("@self/SHA2"),
 	SHA3 = require("@self/SHA3"),
 	Blake2b = require("@self/Blake2b"),
-	Blake3 = require("@self/Blake3")
+	Blake3 = require("@self/Blake3"),
+	Argon2id = require("@self/Argon2id")
 })
 
 return Algorithms
