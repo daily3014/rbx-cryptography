@@ -18,6 +18,7 @@
 			OutputLength = 32,
 			Secret = SecretBuf,           -- optional
 			AssociatedData = AdBuf,       -- optional
+			Formatted = true,             -- optional # returns formatted string instead of hex representation
 		})
 --]=]
 
@@ -25,7 +26,18 @@
 --!optimize 2
 --!native
 
+type Argon2idOptions = {
+	TimeCost: number?,
+	MemoryCost: number?,
+	Parallelism: number?,
+	OutputLength: number?,
+	Secret: buffer?,
+	AssociatedData: buffer?,
+	Formatted: boolean?,
+}
+
 local Blake2b = require("./Blake2b")
+local Base64 = require("../Utilities/Base64")
 local Conversions = require("../Utilities/Conversions")
 
 local BLOCK_BYTES = 1024
@@ -770,25 +782,15 @@ local function FillSegment(Memory: buffer, Pass: number, Lane: number, Slice: nu
 	end
 end
 
-
-type Argon2idOptions = {
-	TimeCost: number?,
-	MemoryCost: number?,
-	Parallelism: number?,
-	OutputLength: number?,
-	Secret: buffer?,
-	AssociatedData: buffer?,
-}
-
 local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions?): (string, buffer)
 	if typeof(Password) ~= "buffer" then error("Password must be a buffer", 2) end
 	if typeof(Salt) ~= "buffer" then error("Salt must be a buffer", 2) end
 
 	local Opts: Argon2idOptions = Options or {}
-	local TimeCost = Opts.TimeCost or 2
-	local MemoryCost = Opts.MemoryCost or 19456
-	local Parallelism = Opts.Parallelism or 1
-	local OutputLength = Opts.OutputLength or 32
+	local TimeCost = math.floor(Opts.TimeCost or 2)
+	local MemoryCost = math.floor(Opts.MemoryCost or 19456)
+	local Parallelism = math.floor(Opts.Parallelism or 1)
+	local OutputLength = math.floor(Opts.OutputLength or 32)
 	local Secret = Opts.Secret
 	local AssociatedData = Opts.AssociatedData
 
@@ -861,6 +863,11 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 
 	local Tag = buffer.create(OutputLength)
 	VariableHash(Tag, 0, OutputLength, FinalBlock)
+
+	if Opts.Formatted then
+		local SaltBase64, TagBase64 = buffer.tostring(Base64.Encode(Salt)), buffer.tostring(Base64.Encode(Tag))
+		return `$argon2id$v=19$m={MemoryCost},t={TimeCost},p={Parallelism}${SaltBase64}${TagBase64}`, Tag
+	end
 
 	return Conversions.ToHex(Tag), Tag
 end
