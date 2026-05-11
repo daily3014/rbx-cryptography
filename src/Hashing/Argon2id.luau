@@ -876,7 +876,11 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 	VariableHash(Tag, 0, OutputLength, FinalBlock)
 
 	if Opts.Formatted then
-		return `$argon2id$v=19$m={MemoryCost},t={TimeCost},p={Parallelism}${ToBase64(Salt)}${ToBase64(Tag)}`, Tag
+		local AdditionalData = if Opts.AssociatedData
+			then `,data={ToBase64(Opts.AssociatedData)}`
+			else ""
+		
+		return `$argon2id$v=19$m={MemoryCost},t={TimeCost},p={Parallelism}{AdditionalData}${ToBase64(Salt)}${ToBase64(Tag)}`, Tag
 	end
 
 	return Conversions.ToHex(Tag), Tag
