@@ -52,6 +52,17 @@ local AddressInput = buffer.create(BLOCK_BYTES)
 local AddressTmp = buffer.create(BLOCK_BYTES)
 local AddressBlock = buffer.create(BLOCK_BYTES)
 
+local function ToBase64(Input: buffer | string): string
+	Input = if typeof(Input) == "string"
+		then buffer.fromstring(Input)
+		else Input
+
+	local RawBase64 = buffer.tostring(Base64.Encode(Input))
+	local Stripped = string.gsub(RawBase64, "=", "")
+
+	return Stripped
+end
+
 local function VariableHash(OutBuf: buffer, OutOffset: number, OutLen: number, Input: buffer): ()
 	local InputLen = buffer.len(Input)
 	local Tmp = buffer.create(4 + InputLen)
@@ -865,8 +876,7 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 	VariableHash(Tag, 0, OutputLength, FinalBlock)
 
 	if Opts.Formatted then
-		local SaltBase64, TagBase64 = buffer.tostring(Base64.Encode(Salt)), buffer.tostring(Base64.Encode(Tag))
-		return `$argon2id$v=19$m={MemoryCost},t={TimeCost},p={Parallelism}${SaltBase64}${TagBase64}`, Tag
+		return `$argon2id$v=19$m={MemoryCost},t={TimeCost},p={Parallelism}${ToBase64(Salt)}${ToBase64(Tag)}`, Tag
 	end
 
 	return Conversions.ToHex(Tag), Tag
