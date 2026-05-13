@@ -114,7 +114,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 			return math.ceil((WeightedChances[Rarity] / TotalWeight) * ROLLS)
 		end
 
-		local Accumlated = table.clone(Occurences)
+		local Accumulated = table.clone(Occurences)
 		for _ = 1, ITERATIONS do
 			for _ = 1, ROLLS do
 				local ChosenRarity = ChooseRandom()
@@ -126,13 +126,13 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 				Count = Count :: number
 
 				local ActualRate = math.abs(1 - (Count / ExpectedOccurences(Name)))
-				Accumlated[Name] += ActualRate
+				Accumulated[Name] += ActualRate
 			end
 
 			Reset()
 		end
 
-		for Name, Chance in Accumlated do
+		for Name, Chance in Accumulated do
 			local AverageRate = Chance / ITERATIONS
 			Testing.Expect(AverageRate).ToBeLessThan(EPSILON)
 		end
@@ -194,7 +194,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 	local STAT_SAMPLE_BITS = STAT_SAMPLE_BYTES * 8
 	local StatSample = Algorithm.RandomBytes(STAT_SAMPLE_BYTES)
 
-	local PopCount = table.create(256)
+	local PopCount = table.create(256, 0)
 	for B = 0, 255 do
 		local C = 0
 		local V = B
