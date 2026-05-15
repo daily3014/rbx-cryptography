@@ -31,8 +31,10 @@ type Argon2idOptions = {
 	MemoryCost: number?,
 	Parallelism: number?,
 	OutputLength: number?,
+
 	Secret: buffer?,
 	AssociatedData: buffer?,
+
 	Formatted: boolean?,
 }
 
@@ -52,15 +54,51 @@ local AddressInput = buffer.create(BLOCK_BYTES)
 local AddressTmp = buffer.create(BLOCK_BYTES)
 local AddressBlock = buffer.create(BLOCK_BYTES)
 
-local function ToBase64(Input: buffer | string): string
-	Input = if typeof(Input) == "string"
-		then buffer.fromstring(Input)
-		else Input
+local EMPTY_BUFFER = buffer.create(0)
 
-	local RawBase64 = buffer.tostring(Base64.Encode(Input))
-	local Stripped = string.gsub(RawBase64, "=", "")
+local function IsIllegalNumber(Number: number): boolean
+	return math.isnan(Number) or math.isinf(Number)
+end
 
-	return Stripped
+local function ParseOptions(Options: Argon2idOptions?): (number, number, number, number, buffer, buffer, boolean)
+	local TimeCost, MemoryCost, Parallelism, OutputLength =
+		math.floor(Options and Options.TimeCost or 2),
+		math.floor(Options and Options.MemoryCost or 19456),
+		math.floor(Options and Options.Parallelism or 1),
+		math.floor(Options and Options.OutputLength or 32)
+
+	local Secret = Options and Options.Secret or EMPTY_BUFFER
+	local AssociatedData = Options and Options.AssociatedData or EMPTY_BUFFER
+	local Formatted = Options and Options.Formatted
+
+	if TimeCost < 1 or IsIllegalNumber(TimeCost) then
+		error("TimeCost must be >= 1", 3)
+	end
+	
+	if Parallelism < 1 or Parallelism > 16777215 or IsIllegalNumber(Parallelism) then
+		error("Parallelism must be in [1, 2^24 - 1]", 3)
+	end
+
+	if MemoryCost < 8 * Parallelism or IsIllegalNumber(MemoryCost) then
+		error(`MemoryCost must be >= 8 * Parallelism (got {MemoryCost} < {8 * Parallelism})`, 3)
+	end
+
+	if OutputLength < 4 or IsIllegalNumber(OutputLength) then
+		error("OutputLength must be >= 4", 3)
+	end
+
+	return TimeCost, MemoryCost, Parallelism, OutputLength, Secret, AssociatedData, Formatted == true
+end
+
+local function ToBase64(Input: buffer): string
+	local RawBase64 = Base64.Encode(Input)
+	local Length = buffer.len(RawBase64)
+
+	local StrippedLength = if buffer.readu8(RawBase64, Length - 1) == 61
+		then buffer.readu8(RawBase64, Length - 2) == 61 and Length-2 or Length-1
+		else Length
+
+	return buffer.readstring(RawBase64, 0, StrippedLength)
 end
 
 local function VariableHash(OutBuf: buffer, OutOffset: number, OutLen: number, Input: buffer): ()
@@ -796,53 +834,49 @@ end
 local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions?): (string, buffer)
 	if typeof(Password) ~= "buffer" then error("Password must be a buffer", 2) end
 	if typeof(Salt) ~= "buffer" then error("Salt must be a buffer", 2) end
-
-	local Opts: Argon2idOptions = Options or {}
-	local TimeCost = math.floor(Opts.TimeCost or 2)
-	local MemoryCost = math.floor(Opts.MemoryCost or 19456)
-	local Parallelism = math.floor(Opts.Parallelism or 1)
-	local OutputLength = math.floor(Opts.OutputLength or 32)
-	local Secret = Opts.Secret
-	local AssociatedData = Opts.AssociatedData
-
-	if TimeCost < 1 then error("TimeCost must be >= 1", 2) end
-	if Parallelism < 1 or Parallelism > 16777215 then error("Parallelism must be in [1, 2^24 - 1]", 2) end
-	if MemoryCost < 8 * Parallelism then error(`MemoryCost must be >= 8 * Parallelism (got {MemoryCost} < {8 * Parallelism})`, 2) end
-	if OutputLength < 4 then error("OutputLength must be >= 4", 2) end
 	if buffer.len(Salt) < 8 then error("Salt must be >= 8 bytes", 2) end
+
+	local TimeCost, MemoryCost, Parallelism, OutputLength, Secret, AssociatedData, Formatted = ParseOptions(Options)
+	local PassLen, SaltLen, SecretLen, AssocLen =
+		buffer.len(Password),
+		buffer.len(Salt),
+		buffer.len(Secret),
+		buffer.len(AssociatedData)
 
 	local TotalBlocks = math.floor(MemoryCost / (4 * Parallelism)) * 4 * Parallelism
 	local LaneLength = TotalBlocks // Parallelism
 	local SegmentLength = LaneLength // SYNC_POINTS
 
-	local PassLen = buffer.len(Password)
-	local SaltLen = buffer.len(Salt)
-	local SecretLen = Secret and buffer.len(Secret) or 0
-	local AssocLen = AssociatedData and buffer.len(AssociatedData) or 0
+	local Pointer = 0
+	local GetPointer = function(Advance: number)
+		local Ret = Pointer
+		Pointer += Advance
+		return Ret
+	end
 
 	local H0Input = buffer.create(4 * 10 + PassLen + SaltLen + SecretLen + AssocLen)
-	buffer.writeu32(H0Input, 0, Parallelism)
-	buffer.writeu32(H0Input, 4, OutputLength)
-	buffer.writeu32(H0Input, 8, MemoryCost)
-	buffer.writeu32(H0Input, 12, TimeCost)
-	buffer.writeu32(H0Input, 16, ARGON2_VERSION)
-	buffer.writeu32(H0Input, 20, ARGON2ID_TYPE)
-	buffer.writeu32(H0Input, 24, PassLen)
-	buffer.copy(H0Input, 28, Password, 0, PassLen)
-	local Off = 28 + PassLen
-	buffer.writeu32(H0Input, Off, SaltLen)
-	buffer.copy(H0Input, Off + 4, Salt, 0, SaltLen)
-	Off += 4 + SaltLen
-	buffer.writeu32(H0Input, Off, SecretLen)
-	if Secret and SecretLen > 0 then buffer.copy(H0Input, Off + 4, Secret, 0, SecretLen) end
-	Off += 4 + SecretLen
-	buffer.writeu32(H0Input, Off, AssocLen)
-	if AssociatedData and AssocLen > 0 then buffer.copy(H0Input, Off + 4, AssociatedData, 0, AssocLen) end
+	buffer.writeu32(H0Input, GetPointer(4), Parallelism)
+	buffer.writeu32(H0Input, GetPointer(4), OutputLength)
+	buffer.writeu32(H0Input, GetPointer(4), MemoryCost)
+	buffer.writeu32(H0Input, GetPointer(4), TimeCost)
+	buffer.writeu32(H0Input, GetPointer(4), ARGON2_VERSION)
+	buffer.writeu32(H0Input, GetPointer(4), ARGON2ID_TYPE)
+	
+	buffer.writeu32(H0Input, GetPointer(4), PassLen)
+	buffer.copy(H0Input, GetPointer(PassLen), Password, 0, PassLen)
 
-	local _, H0 = Blake2b(H0Input, 64)
+	buffer.writeu32(H0Input, GetPointer(4), SaltLen)
+	buffer.copy(H0Input, GetPointer(SaltLen), Salt, 0, SaltLen)
+
+	buffer.writeu32(H0Input, GetPointer(4), SecretLen)
+	buffer.copy(H0Input, GetPointer(SecretLen), Secret, 0, SecretLen)
+
+	buffer.writeu32(H0Input, GetPointer(4), AssocLen)
+	buffer.copy(H0Input, GetPointer(AssocLen), AssociatedData, 0, AssocLen)
+
+	local H0 = select(2, Blake2b(H0Input, 64))
 
 	local Memory = buffer.create(TotalBlocks * BLOCK_BYTES)
-
 	local InitInput = buffer.create(64 + 4 + 4)
 	buffer.copy(InitInput, 0, H0, 0, 64)
 
@@ -865,6 +899,7 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 
 	local FinalBlock = buffer.create(BLOCK_BYTES)
 	buffer.copy(FinalBlock, 0, Memory, (LaneLength - 1) * BLOCK_BYTES, BLOCK_BYTES)
+
 	for I = 1, Parallelism - 1 do
 		local LastBlockOff = (I * LaneLength + LaneLength - 1) * BLOCK_BYTES
 		for J = 0, 1016, 8 do
@@ -875,12 +910,12 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 	local Tag = buffer.create(OutputLength)
 	VariableHash(Tag, 0, OutputLength, FinalBlock)
 
-	if Opts.Formatted then
-		local AdditionalData = if Opts.AssociatedData
-			then `,data={ToBase64(Opts.AssociatedData)}`
+	if Formatted then
+		local AdditionalData = if AssociatedData
+			then `,data={ToBase64(AssociatedData)}`
 			else ""
 		
-		return `$argon2id$v=19$m={MemoryCost},t={TimeCost},p={Parallelism}{AdditionalData}${ToBase64(Salt)}${ToBase64(Tag)}`, Tag
+		return `$argon2id$v={ARGON2_VERSION}$m={MemoryCost},t={TimeCost},p={Parallelism}{AdditionalData}${ToBase64(Salt)}${ToBase64(Tag)}`, Tag
 	end
 
 	return Conversions.ToHex(Tag), Tag
