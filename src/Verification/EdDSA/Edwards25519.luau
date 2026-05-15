@@ -99,7 +99,7 @@ local NAF_TABLE_DBL_T = buffer.create(COORD_SIZE)
 local NAF_OUTPUT = buffer.create(512)
 local RADIX_OUTPUT = buffer.create(272)
 
-local BASEPONT_G: buffer
+local BASEPOINT_G: buffer
 local AFFINE_BASEPOINT_TABLE: buffer 
 local BASEPOINT_NAF_TABLE: buffer
 local STRAUSS_NAF_WIDTH = 5
@@ -473,8 +473,10 @@ local BASEPOINT_BYTES = buffer.create(32) do
 	end
 
 	local Result = Edwards25519.Decode(BASEPOINT_BYTES)
-	assert(Result, "Failed to decode basepoint")
-	BASEPONT_G = Result
+	if not Result then
+		error("Failed to decode basepoint")
+	end
+	BASEPOINT_G = Result
 end
 
 function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): buffer
@@ -576,8 +578,8 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 end
 
 do
-	if BASEPONT_G then
-		AFFINE_BASEPOINT_TABLE = Edwards25519.AffineRadixWTable(BASEPONT_G, BASE_RADIX_WIDTH)
+	if BASEPOINT_G then
+		AFFINE_BASEPOINT_TABLE = Edwards25519.AffineRadixWTable(BASEPOINT_G, BASE_RADIX_WIDTH)
 	end
 end
 
@@ -771,8 +773,8 @@ function Edwards25519.WindowedNAFTable(BasePoint: buffer, WindowWidth: number): 
 end
 
 do
-	if BASEPONT_G then
-		BASEPOINT_NAF_TABLE = Edwards25519.WindowedNAFTable(BASEPONT_G, STRAUSS_NAF_WIDTH)
+	if BASEPOINT_G then
+		BASEPOINT_NAF_TABLE = Edwards25519.WindowedNAFTable(BASEPOINT_G, STRAUSS_NAF_WIDTH)
 	end
 end
 
