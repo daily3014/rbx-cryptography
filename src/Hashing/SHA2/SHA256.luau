@@ -106,14 +106,14 @@ local function SHA256(Message: buffer): (string, buffer)
 
 	local Digest = buffer.create(32)
 
-	buffer.writeu32(Digest, 0, A)
-	buffer.writeu32(Digest, 4, B)
-	buffer.writeu32(Digest, 8, C)
-	buffer.writeu32(Digest, 12, D)
-	buffer.writeu32(Digest, 16, E)
-	buffer.writeu32(Digest, 20, F)
-	buffer.writeu32(Digest, 24, G)
-	buffer.writeu32(Digest, 28, H)
+	buffer.writeu32(Digest, 0, bit32.byteswap(A))
+	buffer.writeu32(Digest, 4, bit32.byteswap(B))
+	buffer.writeu32(Digest, 8, bit32.byteswap(C))
+	buffer.writeu32(Digest, 12, bit32.byteswap(D))
+	buffer.writeu32(Digest, 16, bit32.byteswap(E))
+	buffer.writeu32(Digest, 20, bit32.byteswap(F))
+	buffer.writeu32(Digest, 24, bit32.byteswap(G))
+	buffer.writeu32(Digest, 28, bit32.byteswap(H))
 
 	return string.format("%08x%08x%08x%08x%08x%08x%08x%08x", A, B, C, D, E, F, G, H), Digest
 end

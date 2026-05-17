@@ -17,27 +17,17 @@ local HMAC = require("./HMAC")
 
 type HashFunction = (...any) -> (string, buffer)
 
-local function ToBigEndian(Buffer: buffer)
-	for Index = 0, buffer.len(Buffer) - 1, 4 do
-		buffer.writeu32(Buffer, Index, bit32.byteswap(buffer.readu32(Buffer, Index)))
-	end
-end
-
-local function HKDF(IKM: buffer, Salt: buffer?, Info: buffer?, Length: number, HashFunction: HashFunction, BlockSize: number, HashLength: number, BigEndian: boolean?): buffer
+local function HKDF(IKM: buffer, Salt: buffer?, Info: buffer?, Length: number, HashFunction: HashFunction, BlockSize: number, HashLength: number, _BigEndian: boolean?): buffer
 	local ActualSalt = if Salt and buffer.len(Salt) > 0 then Salt else buffer.create(HashLength)
 	local ActualInfo = Info or buffer.create(0)
 	local InfoLength = buffer.len(ActualInfo)
-	local NeedsByteSwap = BigEndian ~= false
 
 	local Iterations = math.ceil(Length / HashLength)
 	if Iterations > 255 then
 		error(`HKDF output length {Length} exceeds maximum {255 * HashLength}`)
 	end
 
-	local _, PRK = HMAC(IKM, ActualSalt, HashFunction, BlockSize, BigEndian)
-	if NeedsByteSwap then
-		ToBigEndian(PRK)
-	end
+	local _, PRK = HMAC(IKM, ActualSalt, HashFunction, BlockSize)
 
 	local MaxInputSize = HashLength + InfoLength + 1
 	local Input = buffer.create(MaxInputSize)
@@ -61,10 +51,7 @@ local function HKDF(IKM: buffer, Salt: buffer?, Info: buffer?, Length: number, H
 			buffer.copy(InputSlice, 0, Input, 0, InputSize)
 		end
 
-		local _, Block = HMAC(InputSlice, PRK, HashFunction, BlockSize, BigEndian)
-		if NeedsByteSwap then
-			ToBigEndian(Block)
-		end
+		local _, Block = HMAC(InputSlice, PRK, HashFunction, BlockSize)
 
 		local Offset = (Index - 1) * HashLength
 		buffer.copy(OKM, Offset, Block, 0, math.min(HashLength, Length - Offset))

@@ -7,7 +7,7 @@
 		local Key = buffer.fromstring("Key")
 		local BlockSize = 64 -- SHA256 block length (= string.len(SHA256(...)))
 		
-		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize) -- SHA3/Blake family should have BigEndian = false
+		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize)
 --]=]
 
 --!strict
@@ -20,12 +20,6 @@ local function FromByteAndSize(Byte: number, Size: number)
 	local Buffer = buffer.create(Size)
 	buffer.fill(Buffer, 0, Byte)
 	return Buffer
-end
-
-local function ToBigEndian(Buffer: buffer)
-	for Index = 0, buffer.len(Buffer) - 1, 4 do
-		buffer.writeu32(Buffer, Index, bit32.byteswap(buffer.readu32(Buffer, Index)))
-	end
 end
 
 local function ConcatenateBuffers(LeftBuffer: buffer, RightBuffer: buffer)
@@ -51,14 +45,10 @@ local function XORBuffer(LeftBuffer: buffer, RightBuffer: buffer)
 	return NewBuffer
 end
 
-local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number, BigEndian: boolean?): buffer
+local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): buffer
 	local KeyLength = buffer.len(Key)
 	if KeyLength > BlockSizeBytes then
 		local _, Digest = HashFunction(Key)
-		if BigEndian ~= false then
-			ToBigEndian(Digest)
-		end
-
 		local PaddedKey = buffer.create(BlockSizeBytes)
 		buffer.copy(PaddedKey, 0, Digest)
 		return PaddedKey
@@ -71,16 +61,11 @@ local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, Blo
 	return Key
 end
 
-local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number, BigEndian: boolean?): (string, buffer)
-	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes, BigEndian)
+local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number, _BigEndian: boolean?): (string, buffer)
+	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes)
 	local OuterPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x5C, BlockSizeBytes))
 	local InnerPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x36, BlockSizeBytes))
 	local _, HashedMessageWithInnerKey = HashFunction(ConcatenateBuffers(InnerPaddedKey, Message))
-
-	if BigEndian ~= false then
-		ToBigEndian(HashedMessageWithInnerKey)
-	end
-
 	local FinalMessage = ConcatenateBuffers(OuterPaddedKey, HashedMessageWithInnerKey)
 	return HashFunction(FinalMessage)
 end
