@@ -154,6 +154,31 @@ Testing.Describe("Argon2id Validation Errors", function()
 			})
 		end).ToThrow()
 	end)
+
+	Testing.Test("Floating point parameters don't error", function()
+		local Defaults: {[string]: number} = {TimeCost=1, MemoryCost=8, Parallelism=1, OutputLength=32}
+
+		for _, Param in ipairs({"TimeCost", "MemoryCost", "Parallelism", "OutputLength"}) do
+			Testing.Expect(function()
+				local Options = {[Param] = Defaults[Param] + 0.5}
+				Algorithm(buffer.fromstring("pw"), buffer.fromstring("saltsalt"), Options)
+			end).Never.ToThrow()
+		end
+	end)
+
+	Testing.Test("NaN and Inf values error", function()
+		for _, Param in ipairs({"TimeCost", "MemoryCost", "Parallelism", "OutputLength"}) do
+			Testing.Expect(function()
+				local Options = {[Param] = math.huge}
+				Algorithm(buffer.fromstring("pw"), buffer.fromstring("saltsalt"), Options)
+			end).ToThrow()
+
+			Testing.Expect(function()
+				local Options = {[Param] = math.nan}
+				Algorithm(buffer.fromstring("pw"), buffer.fromstring("saltsalt"), Options)
+			end).ToThrow()
+		end
+	end)
 end)
 
 Testing.Complete()

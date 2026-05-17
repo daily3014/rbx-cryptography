@@ -1,16 +1,22 @@
 testing/*.exe
+testing/*.py
+testing/__pycache__
+
+/*.exe
 /*.rbxlx.lock
 /*.rbxl.lock
 /*.rbxl
 /*.rbxm
-pesde.lock
 
 luau_packages/
 lune_packages/
-.pesde/
 DevPackages/
 Packages/
 
-dump.txt
+profile.out
+profile.svg
+
 sourcemap.json
 wally.lock
+pesde.lock
+.pesde/

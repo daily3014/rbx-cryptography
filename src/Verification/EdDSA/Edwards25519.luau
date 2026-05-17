@@ -99,9 +99,9 @@ local NAF_TABLE_DBL_T = buffer.create(COORD_SIZE)
 local NAF_OUTPUT = buffer.create(512)
 local RADIX_OUTPUT = buffer.create(272)
 
-local BASEPONT_G: buffer? = nil
-local AFFINE_BASEPOINT_TABLE: buffer? = nil
-local BASEPOINT_NAF_TABLE: buffer? = nil
+local BASEPOINT_G: buffer
+local AFFINE_BASEPOINT_TABLE: buffer 
+local BASEPOINT_NAF_TABLE: buffer
 local STRAUSS_NAF_WIDTH = 5
 
 local function GetCoord(Point: buffer, Index: number, Storage: buffer?): buffer
@@ -472,7 +472,11 @@ local BASEPOINT_BYTES = buffer.create(32) do
 		buffer.writeu8(BASEPOINT_BYTES, Index - 1, BasePointHex[Index])
 	end
 
-	BASEPONT_G = Edwards25519.Decode(BASEPOINT_BYTES)
+	local Result = Edwards25519.Decode(BASEPOINT_BYTES)
+	if not Result then
+		error("Failed to decode basepoint")
+	end
+	BASEPOINT_G = Result
 end
 
 function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): buffer
@@ -501,7 +505,6 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 	local FSub = FieldPrime.Sub
 	local FInvert = FieldPrime.Invert
 
-	-- Per-window scratch (sized to MaxRowSize)
 	local WorkingPoints = table.create(MaxRowSize) :: {buffer}
 	local Zs = table.create(MaxRowSize) :: {buffer}
 	local Partials = table.create(MaxRowSize) :: {buffer}
@@ -510,8 +513,6 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 	for WindowIndex = 1, MaxWindows do
 		local BaseOffset = ((WindowIndex - 1) * MaxRowSize * NielsSize)
 
-		-- 1. Build all MaxRowSize working points (1*P, 2*P, ..., MaxRowSize*P) for this window
-		--    in projective coords. No inversions yet.
 		WorkingPoints[1] = buffer.create(POINT_SIZE)
 		buffer.copy(WorkingPoints[1], 0, CurrentBasePoint, 0, POINT_SIZE)
 
@@ -523,8 +524,6 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 			WorkingPoints[Multiple] = NewPoint
 		end
 
-		-- 2. Extract Z coordinates and batch-invert via Montgomery's trick.
-		--    Replaces MaxRowSize separate inversions with 1 inversion + 3*(N-1) muls.
 		for I = 1, MaxRowSize do
 			local Z = buffer.create(COORD_SIZE)
 			buffer.copy(Z, 0, WorkingPoints[I], 2 * COORD_SIZE, COORD_SIZE)
@@ -547,7 +546,6 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 		end
 		ZInvs[1] = CurrentInv
 
-		-- 3. Convert each working point to affine niels using its inverted Z.
 		for I = 1, MaxRowSize do
 			local WP = WorkingPoints[I]
 			local ZI = ZInvs[I]
@@ -571,7 +569,6 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 			buffer.copy(TableData, Offset + 2 * COORD_SIZE, T2d, 0, COORD_SIZE)
 		end
 
-		-- 4. Advance basepoint by RadixWidth doublings to set up next window.
 		for _ = 1, RadixWidth do
 			CurrentBasePoint = Double(CurrentBasePoint)
 		end
@@ -581,8 +578,8 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 end
 
 do
-	if BASEPONT_G then
-		AFFINE_BASEPOINT_TABLE = Edwards25519.AffineRadixWTable(BASEPONT_G, BASE_RADIX_WIDTH)
+	if BASEPOINT_G then
+		AFFINE_BASEPOINT_TABLE = Edwards25519.AffineRadixWTable(BASEPOINT_G, BASE_RADIX_WIDTH)
 	end
 end
 
@@ -776,8 +773,8 @@ function Edwards25519.WindowedNAFTable(BasePoint: buffer, WindowWidth: number): 
 end
 
 do
-	if BASEPONT_G then
-		BASEPOINT_NAF_TABLE = Edwards25519.WindowedNAFTable(BASEPONT_G, STRAUSS_NAF_WIDTH)
+	if BASEPOINT_G then
+		BASEPOINT_NAF_TABLE = Edwards25519.WindowedNAFTable(BASEPOINT_G, STRAUSS_NAF_WIDTH)
 	end
 end
 
@@ -788,7 +785,7 @@ function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	local IdentityO = IDENTITY_O
 	local BaseRadixWidth = BASE_RADIX_WIDTH
 	local BasePointRow = BASE_POINT_ROW
-	local AffineTable = AFFINE_BASEPOINT_TABLE :: buffer
+	local AffineTable = AFFINE_BASEPOINT_TABLE 
 
 	local SignedWindows, WindowCount = Edwards25519.SignedRadixW(ScalarBits, ScalarBitCount, BaseRadixWidth)
 
@@ -1071,7 +1068,7 @@ function Edwards25519.MulDoubleStraussG(VarPoint: buffer, K1Bits: buffer, K1Coun
 	local NAF1, L1 = StandardWNAF(K1Bits, K1Count, W)
 	local NAF2, L2 = StandardWNAF(K2Bits, K2Count, W)
 	local VarTable = Edwards25519.WindowedNAFTable(VarPoint, W)
-	local GTable = BASEPOINT_NAF_TABLE :: buffer
+	local GTable = BASEPOINT_NAF_TABLE 
 
 	local Square = FieldPrime.Square
 	local FAdd = FieldPrime.Add
