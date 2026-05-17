@@ -1,41 +1,27 @@
 --[=[
-	ChaCha20-Poly1305 & XChaCha20-Poly1305 Wycheproof Test Suite
-	
+	ChaCha20-Poly1305 & XChaCha20-Poly1305 Tadashi Test Suite
+
 	Test Vector Sources:
-		ChaCha20: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/chacha20_poly1305_test.json
-		XChaCha20: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/xchacha20_poly1305_test.json
-	
-	Test Categories:
-		Ktv - Known test vectors from RFC 7539 / draft-arciszewski-xchacha
-		Pseudorandom - Various input sizes
-		ModifiedTag - Tampered authentication tags
-		EdgeCasePoly1305 - Integer overflow edge cases
-		EdgeCaseTag - Final modular addition edge cases
-		InvalidNonceSize - Non-standard nonce sizes
-	
-	Nonce Size Restrictions:
-		ChaCha20-Poly1305: 96-bit (12 bytes) per RFC 7539
-		XChaCha20-Poly1305: 192-bit (24 bytes) per spec
-		Tests with other nonce sizes are skipped as invalid.
-	
-	Empty Message Limitation:
-		Tests with empty messages are skipped because it won't be supported.
+		ChaCha20:  https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/chacha20_poly1305_test.json
+		XChaCha20: https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/xchacha20_poly1305_test.json
 --]=]
 
 --!strict
 --!optimize 2
+--!native
 
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local AEAD = Cryptography.Encryption.AEAD
+local AEAD: any = if IsCLI then require("../src/Encryption/AEAD") else require("../Encryption/AEAD")
 local FromHex = Testing.FromHex
+local BuffersEqual = Testing.BuffersEqual
 
 type AeadTest = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
 	key: string,
 	iv: string,
@@ -61,59 +47,27 @@ type AeadData = {
 	testGroups: {AeadGroup},
 }
 
-local CHACHA20_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/chacha20_poly1305_test.json"
-local XCHACHA20_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/xchacha20_poly1305_test.json"
-
-local function BuffersEqual(A: buffer, B: buffer): boolean
-	if buffer.len(A) ~= buffer.len(B) then
-		return false
-	end
-
-	for Index = 0, buffer.len(A) - 1 do
-		if buffer.readu8(A, Index) ~= buffer.readu8(B, Index) then
-			return false
-		end
-	end
-
-	return true
-end
+local CHACHA20_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/chacha20_poly1305_test.json"
+local XCHACHA20_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/xchacha20_poly1305_test.json"
 
 local function FetchTestVectors(Url: string): AeadData
 	local Response = Bridge.Get(Url)
 	return Bridge.JSONDecode(Response) :: AeadData
 end
 
-local function RunAeadTests(
-	Data: AeadData,
-	RequiredIvSize: number,
-	IsXChaCha: boolean
-): (number, number)
-	local SkippedNonceCount = 0
-	local SkippedEmptyCount = 0
-
+local function RunAeadTests(Data: AeadData, IsXChaCha: boolean)
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		local IvSize = Group.ivSize
 		local KeySize = Group.keySize
 		local TagSize = Group.tagSize
 
-		if IvSize ~= RequiredIvSize then
-			SkippedNonceCount += #Group.tests
-			continue
-		end
-
-		local SourceName = if Group.source then Group.source.name else "unknown"
+		local SourceName = if Group.source then Group.source.name else "tadashi"
 
 		Testing.Describe(`Group_{GroupIndex}: {KeySize}bit_Key_{IvSize}bit_IV_{TagSize}bit_Tag (Source: {SourceName})`, function()
 			for _, Test in ipairs(Group.tests) do
 				local TestId = Test.tcId
 				local Comment = Test.comment or ""
 				local ExpectedResult = Test.result
-				local Msg = FromHex(Test.msg)
-
-				if buffer.len(Msg) == 0 then
-					SkippedEmptyCount += 1
-					continue
-				end
 
 				local TestName = `Test_{TestId}`
 				if Comment ~= "" then
@@ -124,85 +78,56 @@ local function RunAeadTests(
 					local Key = FromHex(Test.key)
 					local Iv = FromHex(Test.iv)
 					local Aad = FromHex(Test.aad or "")
+					local Msg = FromHex(Test.msg)
 					local ExpectedCt = FromHex(Test.ct)
 					local ExpectedTag = FromHex(Test.tag)
 
 					if ExpectedResult == "valid" then
-						local EncOk, Ct, Tag = pcall(function()
-							if IsXChaCha then
-								return AEAD.Encrypt(Msg, Key, Iv, Aad, 20, true)
-							else
-								return AEAD.Encrypt(Msg, Key, Iv, Aad)
-							end
-						end)
+						local Ct, Tag
+						if IsXChaCha then
+							Ct, Tag = AEAD.Encrypt(Msg, Key, Iv, Aad, 20, true)
+						else
+							Ct, Tag = AEAD.Encrypt(Msg, Key, Iv, Aad)
+						end
 
-						Testing.Expect(EncOk).ToBe(true)
-						Testing.Expect(Ct).ToBeDefined()
-						Testing.Expect(Tag).ToBeDefined()
+						Testing.Expect(BuffersEqual(Ct, ExpectedCt)).ToBe(true)
+						Testing.Expect(BuffersEqual(Tag, ExpectedTag)).ToBe(true)
 
-						if EncOk and Ct and Tag then
-							Testing.Expect(BuffersEqual(Ct, ExpectedCt)).ToBe(true)
-							Testing.Expect(BuffersEqual(Tag, ExpectedTag)).ToBe(true)
+						local Plaintext
+						if IsXChaCha then
+							Plaintext = AEAD.Decrypt(Ct, Key, Iv, Tag, Aad, 20, true)
+						else
+							Plaintext = AEAD.Decrypt(Ct, Key, Iv, Tag, Aad)
+						end
 
-							local DecOk, Plaintext = pcall(function()
-								if IsXChaCha then
-									return AEAD.Decrypt(Ct, Key, Iv, Tag, Aad, 20, true)
-								else
-									return AEAD.Decrypt(Ct, Key, Iv, Tag, Aad)
-								end
-							end)
-
-							Testing.Expect(DecOk).ToBe(true)
-							Testing.Expect(Plaintext).ToBeDefined()
-
-							if Plaintext then
-								Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
-							end
+						Testing.Expect(Plaintext).ToBeDefined()
+						if Plaintext then
+							Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
 						end
 					elseif ExpectedResult == "invalid" then
-						local DecOk, Result = pcall(function()
-							if IsXChaCha then
-								return AEAD.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad, 20, true)
-							else
-								return AEAD.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
-							end
-						end)
+						local Plaintext
+						if IsXChaCha then
+							Plaintext = AEAD.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad, 20, true)
+						else
+							Plaintext = AEAD.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
+						end
 
-						local DecryptionFailed = not DecOk or not Result
-						Testing.Expect(DecryptionFailed).ToBe(true)
-					elseif ExpectedResult == "acceptable" then
-						Testing.Expect(true).ToBe(true)
+						Testing.Expect(Plaintext).ToBeNil()
 					end
 				end)
 			end
 		end)
 	end
-
-	return SkippedNonceCount, SkippedEmptyCount
 end
 
-Testing.Describe("ChaCha20-Poly1305 Wycheproof Tests", function()
+Testing.Describe("ChaCha20-Poly1305 Tadashi Tests", function()
 	local Data = FetchTestVectors(CHACHA20_URL)
-	local SkippedNonce, SkippedEmpty = RunAeadTests(Data, 96, false)
-
-	if SkippedNonce > 0 then
-		print(`[Info] Skipped {SkippedNonce} tests with non-96-bit nonces (invalid per RFC 7539)`)
-	end
-	if SkippedEmpty > 0 then
-		print(`[Info] Skipped {SkippedEmpty} tests with empty messages (unsupported)`)
-	end
+	RunAeadTests(Data, false)
 end)
 
-Testing.Describe("XChaCha20-Poly1305 Wycheproof Tests", function()
+Testing.Describe("XChaCha20-Poly1305 Tadashi Tests", function()
 	local Data = FetchTestVectors(XCHACHA20_URL)
-	local SkippedNonce, SkippedEmpty = RunAeadTests(Data, 192, true)
-
-	if SkippedNonce > 0 then
-		print(`[Info] Skipped {SkippedNonce} tests with non-192-bit nonces (invalid per spec)`)
-	end
-	if SkippedEmpty > 0 then
-		print(`[Info] Skipped {SkippedEmpty} tests with empty messages (unsupported)`)
-	end
+	RunAeadTests(Data, true)
 end)
 
 Testing.Complete()

@@ -1,219 +1,135 @@
 --[=[
-	ML-DSA-87 Wycheproof Test Suite
+	ML-DSA Tadashi Test Suite
 
 	Test Vector Sources:
-		Sign: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/mldsa_87_sign_seed_test.json
-		Verify: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/mldsa_87_verify_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/mldsa_44_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/mldsa_65_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/mldsa_87_test.json
+
+	Each file has three test groups: MlDsaKeyGen, MlDsaSign, MlDsaVerify. All
+	Sign tests use rnd = 0^32 for FIPS-204 deterministic mode (matches both
+	rbx-crypto and @noble/post-quantum's extraEntropy=zeros).
 --]=]
 
 --!strict
 --!optimize 2
+--!native
+
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local MlDSA = Cryptography.Verification.MlDSA
+local MlDsa: any = if IsCLI then require("../src/Verification/MlDSA") else require("../Verification/MlDSA")
+local SHA3: any = if IsCLI then require("../src/Hashing/SHA3") else require("../Hashing/SHA3")
 local FromHex = Testing.FromHex
+local ToHex = Testing.ToHex
 
-type VerifyTest = {
+type MlDsaTest = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
-	msg: string,
-	sig: string,
-	ctx: string?,
-	result: string,
-}
-
-type VerifyGroup = {
-	type: string,
-	publicKey: string,
-	tests: {VerifyTest},
-}
-
-type VerifyData = {
-	algorithm: string,
-	numberOfTests: number,
-	testGroups: {VerifyGroup},
-}
-
-type SignTest = {
-	tcId: number,
-	comment: string?,
-	flags: {string}?,
-	msg: string?,
-	mu: string?,
-	sig: string,
-	ctx: string?,
+	seed: string?,
+	pkSha3_256: string?,
+	skSha3_256: string?,
 	rnd: string?,
+	ctx: string?,
+	msg: string?,
+	pk: string?,
+	sig: string?,
 	result: string?,
 }
 
-type SignGroup = {
+type MlDsaGroup = {
 	type: string,
-	privateSeed: string,
-	publicKey: string,
-	source: {name: string, version: string}?,
-	tests: {SignTest},
+	tests: {MlDsaTest},
 }
 
-type SignData = {
+type MlDsaData = {
 	algorithm: string,
 	numberOfTests: number,
-	testGroups: {SignGroup},
+	testGroups: {MlDsaGroup},
 }
 
-local SIGN_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/mldsa_87_sign_seed_test.json"
-local VERIFY_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/mldsa_87_verify_test.json"
+local MLDSA_VARIANTS = {
+	{
+		Name = "ML-DSA-44",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/mldsa_44_test.json",
+		Params = MlDsa.ML_DSA_44,
+	},
+	{
+		Name = "ML-DSA-65",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/mldsa_65_test.json",
+		Params = MlDsa.ML_DSA_65,
+	},
+	{
+		Name = "ML-DSA-87",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/mldsa_87_test.json",
+		Params = MlDsa.ML_DSA_87,
+	},
+}
 
-local function BuffersEqual(A: buffer, B: buffer): boolean
-	if buffer.len(A) ~= buffer.len(B) then
-		return false
-	end
-
-	for Index = 0, buffer.len(A) - 1 do
-		if buffer.readu8(A, Index) ~= buffer.readu8(B, Index) then
-			return false
-		end
-	end
-
-	return true
+local function FetchTestVectors(Url: string): MlDsaData
+	local Response = Bridge.Get(Url)
+	return Bridge.JSONDecode(Response) :: MlDsaData
 end
 
-local function FetchVerifyVectors(): VerifyData
-	local Response = Bridge.Get(VERIFY_URL)
-	return Bridge.JSONDecode(Response) :: VerifyData
+local function Sha3_256Hex(Data: buffer): string
+	return (SHA3.SHA3_256(Data))
 end
 
-local function FetchSignVectors(): SignData
-	local Response = Bridge.Get(SIGN_URL)
-	return Bridge.JSONDecode(Response) :: SignData
-end
+local function RunMlDsaTests(Data: MlDsaData, Params: any)
+	for GroupIndex, Group in ipairs(Data.testGroups) do
+		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm} ({Group.type})`, function()
+			for _, Test in ipairs(Group.tests) do
+				local TestId = Test.tcId
+				local Comment = Test.comment or ""
 
-Testing.Describe("ML-DSA-87 Wycheproof Tests", function()
-	Testing.Describe("Verify Tests", function()
-		local VerifyData = FetchVerifyVectors()
-
-		for GroupIndex, Group in ipairs(VerifyData.testGroups) do
-			local PublicKeyBytes = FromHex(Group.publicKey)
-
-			Testing.Describe(`VerifyGroup_{GroupIndex}`, function()
-				for _, Test in ipairs(Group.tests) do
-					local TestId = Test.tcId
-					local Comment = Test.comment or ""
-
-					local TestName = `Test_{TestId}`
-					if Comment ~= "" then
-						TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
-					end
-
-					Testing.Test(TestName, function()
-						local MessageBytes = FromHex(Test.msg)
-						local SignatureBytes = FromHex(Test.sig)
-						local Context = if Test.ctx then FromHex(Test.ctx) else buffer.create(0)
-						local ExpectedResult = Test.result
-
-						local Success, IsValid = pcall(function()
-							return MlDSA.ML_DSA_87.Verify(MessageBytes, PublicKeyBytes, Context, SignatureBytes)
-						end)
-
-						if ExpectedResult == "valid" then
-							Testing.Expect(Success).ToBe(true)
-							Testing.Expect(IsValid).ToBe(true)
-						elseif ExpectedResult == "invalid" then
-							local VerificationFailed = not Success or not IsValid
-							Testing.Expect(VerificationFailed).ToBe(true)
-						elseif ExpectedResult == "acceptable" then
-							Testing.Expect(true).ToBe(true)
-						end
-					end)
+				local TestName = `Test_{TestId}`
+				if Comment ~= "" then
+					TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 				end
-			end)
-		end
-	end)
 
-	Testing.Describe("Sign Tests", function()
-		local SignData = FetchSignVectors()
+				Testing.Test(TestName, function()
+					if Group.type == "MlDsaKeyGen" then
+						local Seed = FromHex(Test.seed :: string)
+						local Pk = buffer.create(Params.PubKeyByteLen)
+						local Sk = buffer.create(Params.SecKeyByteLen)
+						Params.KeyGen(Seed, Pk, Sk)
+						Testing.Expect(Sha3_256Hex(Pk)).ToBe(Test.pkSha3_256 :: string)
+						Testing.Expect(Sha3_256Hex(Sk)).ToBe(Test.skSha3_256 :: string)
+					elseif Group.type == "MlDsaSign" then
+						local Seed = FromHex(Test.seed :: string)
+						local Rnd = FromHex(Test.rnd :: string)
+						local Ctx = FromHex(Test.ctx :: string)
+						local Msg = FromHex(Test.msg :: string)
+						local Pk = buffer.create(Params.PubKeyByteLen)
+						local Sk = buffer.create(Params.SecKeyByteLen)
+						Params.KeyGen(Seed, Pk, Sk)
 
-		for GroupIndex, Group in ipairs(SignData.testGroups) do
-			if not Group.privateSeed or not Group.publicKey then
-				continue
-			end
-
-			local PrivateSeedBytes = FromHex(Group.privateSeed)
-			local ExpectedPubKeyBytes = FromHex(Group.publicKey)
-			local Flags = if Group.tests[1] then Group.tests[1].flags or {} else {}
-
-			Testing.Describe(`SignGroup_{GroupIndex}`, function()
-				Testing.Test("KeyGen_PublicKey_Match", function()
-					local PubKey = buffer.create(MlDSA.ML_DSA_87.PubKeyByteLen)
-					local SecKey = buffer.create(MlDSA.ML_DSA_87.SecKeyByteLen)
-					MlDSA.ML_DSA_87.KeyGen(PrivateSeedBytes, PubKey, SecKey)
-
-					Testing.Expect(BuffersEqual(PubKey, ExpectedPubKeyBytes)).ToBe(true)
+						local Sig = buffer.create(Params.SigByteLen)
+						local Ok = Params.Sign(Msg, Rnd, Sk, Ctx, Sig)
+						Testing.Expect(Ok).ToBe(true)
+						Testing.Expect(ToHex(Sig)).ToBe(Test.sig :: string)
+					elseif Group.type == "MlDsaVerify" then
+						local Pk = FromHex(Test.pk :: string)
+						local Ctx = FromHex(Test.ctx :: string)
+						local Msg = FromHex(Test.msg :: string)
+						local Sig = FromHex(Test.sig :: string)
+						local Verified = Params.Verify(Msg, Pk, Ctx, Sig)
+						Testing.Expect(Verified).ToBe(Test.result == "valid")
+					end
 				end)
+			end
+		end)
+	end
+end
 
-				for _, Test in ipairs(Group.tests) do
-					local TestId = Test.tcId
-					local Comment = Test.comment or ""
-					local TestFlags = Test.flags or {}
-					local ExpectedResult = Test.result or "valid"
-
-					local TestName = `Test_{TestId}`
-					if Comment ~= "" then
-						TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
-					end
-
-					local HasInvalidContext = table.find(TestFlags, "InvalidContext") ~= nil
-					local IsInternal = table.find(TestFlags, "Internal") ~= nil
-
-					Testing.Test(TestName, function()
-						local Context = if Test.ctx then FromHex(Test.ctx) else buffer.create(0)
-
-						local PubKey = buffer.create(MlDSA.ML_DSA_87.PubKeyByteLen)
-						local SecKey = buffer.create(MlDSA.ML_DSA_87.SecKeyByteLen)
-						MlDSA.ML_DSA_87.KeyGen(PrivateSeedBytes, PubKey, SecKey)
-
-						local Rnd: buffer
-						if Test.rnd then
-							Rnd = FromHex(Test.rnd)
-						else
-							Rnd = buffer.create(32)
-						end
-
-						local ComputedSig = buffer.create(MlDSA.ML_DSA_87.SigByteLen)
-						local SignSuccess: boolean
-
-						if IsInternal then
-							if Test.mu then
-								local MuBytes = FromHex(Test.mu)
-								SignSuccess = MlDSA.ML_DSA_87.SignMu(MuBytes, Rnd, SecKey, ComputedSig)
-							elseif Test.msg then
-								local MessageBytes = FromHex(Test.msg)
-								SignSuccess = MlDSA.ML_DSA_87.SignInternal(MessageBytes, Rnd, SecKey, ComputedSig)
-							else
-								SignSuccess = false
-							end
-						else
-							local MessageBytes = FromHex(Test.msg :: string)
-							SignSuccess = MlDSA.ML_DSA_87.Sign(MessageBytes, Rnd, SecKey, Context, ComputedSig)
-						end
-
-						if HasInvalidContext or ExpectedResult == "invalid" then
-							Testing.Expect(SignSuccess).ToBe(false)
-						else
-							Testing.Expect(SignSuccess).ToBe(true)
-
-							local ExpectedSigBytes = FromHex(Test.sig)
-							Testing.Expect(BuffersEqual(ComputedSig, ExpectedSigBytes)).ToBe(true)
-						end
-					end)
-				end
-			end)
-		end
+for _, Variant in ipairs(MLDSA_VARIANTS) do
+	Testing.Describe(`{Variant.Name} Tadashi Tests`, function()
+		RunMlDsaTests(FetchTestVectors(Variant.Url), Variant.Params)
 	end)
-end)
+end
 
 Testing.Complete()
 

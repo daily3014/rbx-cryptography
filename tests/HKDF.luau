@@ -1,45 +1,41 @@
 --[=[
-	HKDF Wycheproof Test Suite
-	
-	Validates HKDF implementation against Google's Wycheproof test vectors.
-	Covers extract-then-expand key derivation with various IKM, salt, info, and output sizes.
-	
+	HKDF Tadashi Test Suite
+
 	Test Vector Sources:
-		HKDF-SHA-256: https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/hkdf_sha256_test.json
-		HKDF-SHA-512: https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/hkdf_sha512_test.json
-	
-	Test Categories:
-		Normal : Standard derivation with various parameter sizes
-		Edge cases : Empty salt, empty info, large output sizes, salt length variations
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hkdf_sha256_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hkdf_sha512_test.json
 --]=]
 
 --!strict
 --!optimize 2
+--!native
+
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local HKDF = Cryptography.Hashing.HKDF
-local SHA2 = Cryptography.Hashing.SHA2
+local HKDF: any = if IsCLI then require("../src/Hashing/HKDF") else require("../Hashing/HKDF")
+local SHA2: any = if IsCLI then require("../src/Hashing/SHA2") else require("../Hashing/SHA2")
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 
 type HkdfTest = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
 	ikm: string,
 	salt: string,
 	info: string,
-	size: number,
+	outputLen: number,
 	okm: string,
 	result: string,
 }
 
 type HkdfGroup = {
 	type: string,
-	keySize: number,
+	hashLen: number,
+	blockSize: number,
 	tests: {HkdfTest},
 }
 
@@ -49,31 +45,20 @@ type HkdfData = {
 	testGroups: {HkdfGroup},
 }
 
-type HkdfConfig = {
-	Name: string,
-	Url: string,
-	HashFunc: (buffer, buffer?) -> (string, buffer),
-	BlockSize: number,
-	HashLength: number,
-	BigEndian: boolean,
-}
-
-local HKDF_CONFIGS: {HkdfConfig} = {
+local HKDF_VARIANTS = {
 	{
-		Name = "HKDF-SHA-256",
-		Url = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/hkdf_sha256_test.json",
-		HashFunc = SHA2.SHA256,
+		Name = "HKDF-SHA256",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hkdf_sha256_test.json",
+		HashFn = SHA2.SHA256,
 		BlockSize = 64,
-		HashLength = 32,
-		BigEndian = true,
+		HashLen = 32,
 	},
 	{
-		Name = "HKDF-SHA-512",
-		Url = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/hkdf_sha512_test.json",
-		HashFunc = SHA2.SHA512,
+		Name = "HKDF-SHA512",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hkdf_sha512_test.json",
+		HashFn = SHA2.SHA512,
 		BlockSize = 128,
-		HashLength = 64,
-		BigEndian = true,
+		HashLen = 64,
 	},
 }
 
@@ -82,62 +67,37 @@ local function FetchTestVectors(Url: string): HkdfData
 	return Bridge.JSONDecode(Response) :: HkdfData
 end
 
-local function RunHkdfTests(Config: HkdfConfig)
-	Testing.Describe(`{Config.Name} Wycheproof Tests`, function()
-		local Data = FetchTestVectors(Config.Url)
+local function RunHkdfTests(Data: HkdfData, HashFn: any, BlockSize: number, HashLen: number)
+	for GroupIndex, Group in ipairs(Data.testGroups) do
+		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm}`, function()
+			for _, Test in ipairs(Group.tests) do
+				local TestId = Test.tcId
+				local Comment = Test.comment or ""
 
-		for GroupIndex, Group in ipairs(Data.testGroups) do
-			local KeySize = Group.keySize
-
-			Testing.Describe(`Group_{GroupIndex}: {KeySize}bit_Key`, function()
-				for _, Test in ipairs(Group.tests) do
-					local TestId = Test.tcId
-					local Comment = Test.comment or ""
-					local ExpectedResult = Test.result
-
-					local TestName = `Test_{TestId}`
-					if Comment ~= "" then
-						TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
-					end
-
-					Testing.Test(TestName, function()
-						local IKM = FromHex(Test.ikm)
-						local Salt = if #Test.salt > 0 then FromHex(Test.salt) else nil
-						local Info = if #Test.info > 0 then FromHex(Test.info) else nil
-						local Size = Test.size
-						local ExpectedOkm = Test.okm:lower()
-
-						local ComputeOk, Result = pcall(function()
-							return HKDF(IKM, Salt, Info, Size, Config.HashFunc, Config.BlockSize, Config.HashLength, Config.BigEndian)
-						end)
-
-						if ExpectedResult == "valid" then
-							Testing.Expect(ComputeOk).ToBe(true)
-							Testing.Expect(Result).ToBeDefined()
-
-							if ComputeOk and Result then
-								local ComputedOkm = ToHex(Result):lower()
-								Testing.Expect(ComputedOkm).ToBe(ExpectedOkm)
-							end
-						elseif ExpectedResult == "invalid" then
-							if ComputeOk and Result then
-								local ComputedOkm = ToHex(Result):lower()
-								Testing.Expect(ComputedOkm).Never.ToBe(ExpectedOkm)
-							else
-								Testing.Expect(true).ToBe(true)
-							end
-						elseif ExpectedResult == "acceptable" then
-							Testing.Expect(true).ToBe(true)
-						end
-					end)
+				local TestName = `Test_{TestId}`
+				if Comment ~= "" then
+					TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 				end
-			end)
-		end
-	end)
+
+				Testing.Test(TestName, function()
+					local Ikm = FromHex(Test.ikm)
+					local SaltBuf = FromHex(Test.salt)
+					local InfoBuf = FromHex(Test.info)
+					local Salt: buffer? = if buffer.len(SaltBuf) > 0 then SaltBuf else nil
+					local Info: buffer? = if buffer.len(InfoBuf) > 0 then InfoBuf else nil
+
+					local Okm = HKDF(Ikm, Salt, Info, Test.outputLen, HashFn, BlockSize, HashLen)
+					Testing.Expect(ToHex(Okm)).ToBe(Test.okm)
+				end)
+			end
+		end)
+	end
 end
 
-for _, Config in ipairs(HKDF_CONFIGS) do
-	RunHkdfTests(Config)
+for _, Variant in ipairs(HKDF_VARIANTS) do
+	Testing.Describe(`{Variant.Name} Tadashi Tests`, function()
+		RunHkdfTests(FetchTestVectors(Variant.Url), Variant.HashFn, Variant.BlockSize, Variant.HashLen)
+	end)
 end
 
 Testing.Complete()

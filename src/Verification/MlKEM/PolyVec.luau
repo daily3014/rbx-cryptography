@@ -20,8 +20,6 @@ local N = 2^LOG2N
 local Q = 3329
 local POLY_SIZE = N * 2
 
-local TEMP_POLY_MUL = buffer.create(N * 2)
-local TEMP_POLY_ACCUM = buffer.create(N * 2)
 local TEMP_POLY_ENCODE = buffer.create(N * 2)
 local TEMP_POLY_COMPRESS = buffer.create(N * 2)
 
@@ -33,13 +31,6 @@ end
 
 function PolyVec.MatCreate(Rows: number, Cols: number): buffer
 	return buffer.create(Rows * Cols * POLY_SIZE)
-end
-
-function PolyVec.MatSetPoly(Mat: buffer, Row: number, Col: number, Cols: number, Poly: buffer)
-	local Index = Row * Cols + Col
-	local Offset = Index * POLY_SIZE
-
-	buffer.copy(Mat, Offset, Poly, 0, POLY_SIZE)
 end
 
 function PolyVec.MatVecMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number)
@@ -87,21 +78,6 @@ function PolyVec.VecAddTo(Src: buffer, Dst: buffer, K: number)
 		local SrcValue = buffer.readu16(Src, Offset)
 		local DstValue = buffer.readu16(Dst, Offset)
 		buffer.writeu16(Dst, Offset, (SrcValue + DstValue) % Modulus)
-	end
-end
-
-function PolyVec.VecAdd(A: buffer, B: buffer, Result: buffer, K: number)
-	if not (MlKemParams.CheckK(K) or K == 1) then
-		error("Invalid vector dimension K")
-	end
-
-	local TotalCoeffs = K * N
-	local Modulus = Q
-	for Index = 0, TotalCoeffs - 1 do
-		local Offset = Index * 2
-		local AValue = buffer.readu16(A, Offset)
-		local BValue = buffer.readu16(B, Offset)
-		buffer.writeu16(Result, Offset, (AValue + BValue) % Modulus)
 	end
 end
 

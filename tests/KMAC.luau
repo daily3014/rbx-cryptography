@@ -1,135 +1,94 @@
 --[=[
-	KMAC Wycheproof Test Suite
-	
-	Validates KMAC implementations against Google's Wycheproof test vectors.
-	Covers MAC generation and verification with various key and message sizes.
-	
+	KMAC Tadashi Test Suite
+
 	Test Vector Sources:
-		KMAC128 (no customization): https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/kmac128_no_customization_test.json
-		KMAC256 (no customization): https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/kmac256_no_customization_test.json
-	
-	Test Categories:
-		Pseudorandom - Various input sizes for correctness testing
-		ModifiedTag - Tampered MACs to verify full tag checking
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/kmac128_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/kmac256_test.json
 --]=]
 
 --!strict
 --!optimize 2
+--!native
+
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local KMAC = Cryptography.Hashing.KMAC
+local KMAC: any = if IsCLI then require("../src/Hashing/KMAC") else require("../Hashing/KMAC")
 local FromHex = Testing.FromHex
 
-type MacTest = {
+type KmacTest = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
 	key: string,
 	msg: string,
+	custom: string,
+	outputLen: number,
 	tag: string,
 	result: string,
 }
 
-type MacGroup = {
+type KmacGroup = {
 	type: string,
-	keySize: number,
-	tagSize: number,
-	source: {name: string, version: string}?,
-	tests: {MacTest},
+	rate: number,
+	tests: {KmacTest},
 }
 
-type MacData = {
+type KmacData = {
 	algorithm: string,
 	numberOfTests: number,
-	testGroups: {MacGroup},
+	testGroups: {KmacGroup},
 }
 
-type KmacConfig = {
-	Name: string,
-	Url: string,
-	KmacFunc: (buffer, buffer, buffer, buffer?) -> (string, buffer),
-}
-
-local KMAC_CONFIGS: {KmacConfig} = {
+local KMAC_VARIANTS = {
 	{
 		Name = "KMAC128",
-		Url = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/kmac128_no_customization_test.json",
-		KmacFunc = KMAC.KMAC128,
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/kmac128_test.json",
+		Fn = KMAC.KMAC128,
 	},
 	{
 		Name = "KMAC256",
-		Url = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/kmac256_no_customization_test.json",
-		KmacFunc = KMAC.KMAC256,
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/kmac256_test.json",
+		Fn = KMAC.KMAC256,
 	},
 }
 
-local function FetchTestVectors(Url: string): MacData
+local function FetchTestVectors(Url: string): KmacData
 	local Response = Bridge.Get(Url)
-	return Bridge.JSONDecode(Response) :: MacData
+	return Bridge.JSONDecode(Response) :: KmacData
 end
 
-local function RunKmacTests(Config: KmacConfig)
-	Testing.Describe(`{Config.Name} Wycheproof Tests`, function()
-		local Data = FetchTestVectors(Config.Url)
+local function RunKmacTests(Data: KmacData, KmacFn: any)
+	for GroupIndex, Group in ipairs(Data.testGroups) do
+		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm}`, function()
+			for _, Test in ipairs(Group.tests) do
+				local TestId = Test.tcId
+				local Comment = Test.comment or ""
 
-		for GroupIndex, Group in ipairs(Data.testGroups) do
-			local KeySize = Group.keySize
-			local TagSize = Group.tagSize
-			local SourceName = if Group.source then Group.source.name else "unknown"
-
-			Testing.Describe(`Group_{GroupIndex}: {KeySize}bit_Key_{TagSize}bit_Tag (Source: {SourceName})`, function()
-				for _, Test in ipairs(Group.tests) do
-					local TestId = Test.tcId
-					local Comment = Test.comment or ""
-					local ExpectedResult = Test.result
-
-					local TestName = `Test_{TestId}`
-					if Comment ~= "" then
-						TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
-					end
-
-					Testing.Test(TestName, function()
-						local Key = FromHex(Test.key)
-						local Msg = FromHex(Test.msg)
-						local ExpectedTag = Test.tag:lower()
-						local ExpectedTagBytes = TagSize // 8
-
-						local Output = buffer.create(ExpectedTagBytes)
-
-						local ComputeOk, Result, _ = pcall(function()
-							return Config.KmacFunc(Msg, Key, Output, buffer.create(0))
-						end)
-
-						if ExpectedResult == "valid" then
-							Testing.Expect(ComputeOk).ToBe(true)
-							Testing.Expect(Result).ToBeDefined()
-
-							if ComputeOk and Result then
-								local ComputedTag = Result:lower()
-								Testing.Expect(ComputedTag).ToBe(ExpectedTag)
-							end
-						elseif ExpectedResult == "invalid" then
-							if ComputeOk and Result then
-								local ComputedTag = Result:lower()
-								Testing.Expect(ComputedTag).Never.ToBe(ExpectedTag)
-							else
-								Testing.Expect(true).ToBe(true)
-							end
-						elseif ExpectedResult == "acceptable" then
-							Testing.Expect(true).ToBe(true)
-						end
-					end)
+				local TestName = `Test_{TestId}`
+				if Comment ~= "" then
+					TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 				end
-			end)
-		end
-	end)
+
+				Testing.Test(TestName, function()
+					local Key = FromHex(Test.key)
+					local Msg = FromHex(Test.msg)
+					local Custom = FromHex(Test.custom)
+					local Output = buffer.create(Test.outputLen)
+					local Tag = KmacFn(Msg, Key, Output, Custom)
+					Testing.Expect(Tag).ToBe(Test.tag)
+				end)
+			end
+		end)
+	end
 end
 
-for _, Config in ipairs(KMAC_CONFIGS) do
-	RunKmacTests(Config)
+for _, Variant in ipairs(KMAC_VARIANTS) do
+	Testing.Describe(`{Variant.Name} Tadashi Tests`, function()
+		RunKmacTests(FetchTestVectors(Variant.Url), Variant.Fn)
+	end)
 end
 
 Testing.Complete()

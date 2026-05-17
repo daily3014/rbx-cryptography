@@ -40,12 +40,7 @@ local POLY_SIZE = N * 2
 local Q = 3329
 
 local TEMP_V = buffer.create(N * 2)
-local TEMP_V2 = buffer.create(N * 2)
-local TEMP_SINGLE_POLY = buffer.create(N * 2)
-local TEMP_R_POLY = buffer.create(N * 2)
 local TEMP_T = buffer.create(N * 2)
-local TEMP_T2 = buffer.create(N * 2)
-local TEMP_U_POLY = buffer.create(N * 2)
 
 local KEYGEN_G_INPUT = buffer.create(33)
 local KEYGEN_RHO = buffer.create(32)

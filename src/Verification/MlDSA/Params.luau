@@ -30,10 +30,6 @@ function Params.CheckGamma1(Gamma1: number): boolean
 	return Gamma1 == bit32.lshift(1, 17) or Gamma1 == bit32.lshift(1, 19)
 end
 
-function Params.CheckGamma2(Gamma2: number): boolean
-	return Gamma2 == math.floor((Q - 1) / 88) or Gamma2 == math.floor((Q - 1) / 32)
-end
-
 function Params.CheckTau(Tau: number): boolean
 	return Tau == 39 or Tau == 49 or Tau == 60
 end

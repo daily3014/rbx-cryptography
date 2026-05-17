@@ -1,4 +1,6 @@
 --!strict
+--!optimize 2
+--!native
 --!nolint BuiltinGlobalWrite
 -- Thanks @Sythivo :)
 
@@ -53,6 +55,7 @@ type TestingLib = {
 	Running: boolean,
 	Failed: number,
 	Count: number,
+	Verbose: boolean,
 	Entry: (Callback: () -> ()) -> (),
 	Complete: () -> (),
 	Test: (Name: string, Callback: () -> ()) -> (),
@@ -63,6 +66,7 @@ type TestingLib = {
 	ExpectEqual: (Expected: any, Value: any) -> (),
 	ToHex: (Buf: buffer) -> string,
 	FromHex: (Hex: string | buffer) -> buffer,
+	BuffersEqual: (A: buffer, B: buffer) -> boolean,
 }
 
 type TestInfo = {
@@ -79,6 +83,7 @@ type StackTraceInfo = {
 local Testing = {}
 
 Testing.Running = true
+Testing.Verbose = false
 
 Testing.Failed = 0
 Testing.Count = 0
@@ -115,6 +120,63 @@ local function FormatTime(Microseconds: number): string
 	end
 end
 
+local ThisSource = debug.info(function() end, "s")
+local SharedStackTrace = {}
+
+local SharedError: string? = nil
+local SharedShortSource: string? = nil
+local SharedSourceScript: Instance? = nil
+
+local function RunTestErrorHandler(ErrorMessage: any)
+	table.clear(SharedStackTrace)
+	SharedShortSource = nil
+	SharedSourceScript = nil
+
+	local LastName = debug.info(1, "n")
+	local WasIntentional = debug.info(2, "n") == "error"
+
+	for Index = 1, 30 do
+		local DebugFunction, Name, Line, Source = debug.info(Index + 1, "fnls")
+		if not DebugFunction then
+			break
+		end
+
+		local LineNumber = LastName
+		if #SharedStackTrace > 0 or NonEmptyString(Name) then
+			LastName = Name
+		end
+		if Line < 0 then
+			continue
+		end
+
+		if Source == ThisSource and WasIntentional then
+			continue
+		end
+
+		local ShortenedSource = SharedShortSource or Source
+
+		if not SharedShortSource then
+			local SourceEnv = getfenv(DebugFunction)
+			if SourceEnv and SourceEnv.script then
+				local Script = SourceEnv.script :: Instance
+				SharedSourceScript = Script
+				ShortenedSource = `{Script.Parent}.{Script}`
+				SharedShortSource = ShortenedSource
+			end
+		end
+
+		table.insert(
+			SharedStackTrace,
+			WriteStackTrace(ShortenedSource, LineNumber :: string, Line, tostring(DebugFunction))
+		)
+	end
+
+	SharedError = ErrorMessage
+	if SharedShortSource and SharedSourceScript then
+		SharedError = (SharedError :: string):gsub((SharedSourceScript :: Instance):GetFullName(), SharedShortSource)
+	end
+end
+
 local function RunTest(Function: () -> (), Info: TestInfo)
 	Testing.Count += 1
 	if Testing.Count % 90 == 0 then
@@ -125,102 +187,53 @@ local function RunTest(Function: () -> (), Info: TestInfo)
 		Testing.Start = os.clock()
 	end
 
-	local Ok, Error
-	local StackTrace = {}
 	local TimeStart = os.clock()
-	local ThisSource = debug.info(function() end, "s")
-
-	Ok = xpcall(Function, function(ErrorMessage)
-		local LastName = debug.info(1, "n")
-		local WasIntentional = debug.info(2, "n") == "error"
-		local ShortSource, SourceScript
-
-		for Index = 1, 30 do
-			local DebugFunction, Name, Line, Source = debug.info(Index + 1, "fnls")
-			if not DebugFunction then
-				break
-			end
-
-			local LineNumber = LastName
-			if #StackTrace > 0 or NonEmptyString(Name) then
-				LastName = Name
-			end
-			if Line < 0 then
-				continue
-			end
-
-			if Source == ThisSource and WasIntentional then
-				continue
-			end
-
-			local ShortenedSource = ShortSource or Source
-
-			if not ShortSource then
-				local SourceEnv = getfenv(DebugFunction)
-				if SourceEnv and SourceEnv.script then
-					SourceScript = SourceEnv.script :: Instance
-
-					ShortenedSource = `{SourceScript.Parent}.{SourceScript}`
-					ShortSource = ShortenedSource
-				end
-			end
-
-			table.insert(StackTrace, WriteStackTrace(ShortenedSource, LineNumber :: string, Line, tostring(DebugFunction)))
-		end
-
-		Error = ErrorMessage
-		if ShortSource and SourceScript then
-			Error = (Error :: string):gsub((SourceScript :: Instance):GetFullName(), ShortSource)
-		end
-	end)
-
+	local Ok = xpcall(Function, RunTestErrorHandler)
 	local TimeLength = SecondsToMicroseconds(os.clock() - TimeStart)
-	local ScopePadded = if #ScopeStack > 0 then " " else ""
-	local Scope = `{ScopePadded}{table.concat(ScopeStack, "/")}`
-	Scope ..= ` ({Info.Name})`
 
-	for Index = #DeferQueue, 1, -1 do
-		local Value = DeferQueue[Index]
-		local Success = pcall(Value)
-		if not Success then
-			print(`Deferred function failed`)
+	if #DeferQueue > 0 then
+		for Index = #DeferQueue, 1, -1 do
+			local Success = pcall(DeferQueue[Index])
+			if not Success then
+				print("Deferred function failed")
+			end
 		end
+		table.clear(DeferQueue)
 	end
-	table.clear(DeferQueue)
 
-	local TestType = Ok and "PASS" or "FAIL"
 	if Ok then
-		print(`{TestType}{Scope} [{FormatTime(TimeLength)}]`)
+		if Testing.Verbose then
+			if #ScopeStack > 0 then
+				print(`PASS {table.concat(ScopeStack, "/")} ({Info.Name}) [{FormatTime(TimeLength)}]`)
+			else
+				print(`PASS ({Info.Name}) [{FormatTime(TimeLength)}]`)
+			end
+		end
 	else
 		Testing.Failed += 1
-		warn(`{TestType}{Scope} [{FormatTime(TimeLength)}]`)
-		warn(`@ error: {Error}`)
+		local ScopePadded = if #ScopeStack > 0 then " " else ""
+		local Scope = `{ScopePadded}{table.concat(ScopeStack, "/")} ({Info.Name})`
+		warn(`FAIL{Scope} [{FormatTime(TimeLength)}]`)
+		warn(`@ error: {SharedError}`)
 
-		local Size = #StackTrace
-		for StackIndex, StackValue in StackTrace do
+		local Size = #SharedStackTrace
+		for StackIndex, StackValue in SharedStackTrace do
 			local NameHasValue = NonEmptyString(StackValue.Name)
-			if StackIndex == Size then
-				warn(
-					`└─ {StackValue.Source}:{StackValue.Line}: {StackValue.Address:sub(11)}{NameHasValue and ` called {StackValue.Name}` or ""}`
-				)
-			else
-				warn(
-					`├─ {StackValue.Source}:{StackValue.Line}: {StackValue.Address:sub(11)}{NameHasValue and ` called {StackValue.Name}` or ""}`
-				)
-			end
+			local Branch = if StackIndex == Size then "└─" else "├─"
+			warn(
+				`{Branch} {StackValue.Source}:{StackValue.Line}: {StackValue.Address:sub(11)}{NameHasValue and ` called {StackValue.Name}` or ""}`
+			)
 		end
 	end
 end
 
 function Testing.Describe(Name: string, Function: (...any) -> ...any): ()
-	local Line = debug.info(2, "l")
 	table.insert(ScopeStack, Name)
-
 	local Ok, Error = pcall(Function :: any)
 	table.remove(ScopeStack)
 	if not Ok then
 		Testing.Failed += 1
-		print(`{Line}: Describe("{Name}", ...):`)
+		print(`{debug.info(2, "l")}: Describe("{Name}", ...):`)
 		print(`{Error}`)
 	end
 end
@@ -616,6 +629,21 @@ local function DeepScan(Any: any, Second: any, State: { [any]: any }, Key: strin
 	return { `{Key or ""}(value: {Readable(Any)}) ~= (value: {Readable(Second)})` }
 end
 
+local NormalState: ConditionState = { Received = nil, Flipped = false, Shared = ({} :: any) }
+local NeverState: ConditionState = { Received = nil, Flipped = true, Shared = ({} :: any) }
+
+local NormalMethods: { [string]: (...any) -> () } = {}
+local NeverMethods: { [string]: (...any) -> () } = {}
+for Key, Function in Conditionals :: { [string]: (...any) -> () } do
+	NormalMethods[Key] = function(...)
+		return Function(NormalState, ...)
+	end
+	NeverMethods[Key] = function(...)
+		return Function(NeverState, ...)
+	end
+end
+(NormalMethods :: any).Never = NeverMethods
+
 local Expect = setmetatable({
 	Nothing = Conditional.New("nothing", function(Value)
 		return Value == nil
@@ -651,32 +679,10 @@ local Expect = setmetatable({
 		end, Table)
 	end,
 }, {
-	__call = function(self: any, Value: any)
-		local Object = {
-			Never = {},
-		}
-
-		local SharedState = {}
-		local NormalState = {
-			Received = Value,
-			Flipped = false,
-			Shared = SharedState,
-		}
-		local NeverState = {
-			Received = Value,
-			Flipped = true,
-			Shared = SharedState,
-		}
-		for Key, Function in Conditionals :: { [string]: (...any) -> () } do
-			Object[Key] = function(...)
-				Function(NormalState, ...)
-			end
-			Object.Never[Key] = function(...)
-				Function(NeverState, ...)
-			end
-		end
-
-		return Object
+	__call = function(_self: any, Value: any)
+		NormalState.Received = Value
+		NeverState.Received = Value
+		return NormalMethods
 	end,
 })
 
@@ -728,6 +734,21 @@ Testing.ToHex = function(Buf: buffer): string
 		buffer.writeu16(Hex, Index * 2, buffer.readu16(Lookup, buffer.readu8(Buf, Index) * 2))
 	end
 	return buffer.tostring(Hex)
+end
+
+Testing.BuffersEqual = function(A: buffer, B: buffer): boolean
+	local Length = buffer.len(A)
+	if Length ~= buffer.len(B) then
+		return false
+	end
+
+	for Index = 0, Length - 1 do
+		if buffer.readu8(A, Index) ~= buffer.readu8(B, Index) then
+			return false
+		end
+	end
+
+	return true
 end
 
 Testing.FromHex = function(Hex: string | buffer): buffer

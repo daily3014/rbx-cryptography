@@ -1,38 +1,27 @@
 --[=[
-	HMAC Wycheproof Test Suite
-	
-	Validates HMAC implementations against Google's Wycheproof test vectors.
-	Covers MAC generation and verification with various key and message sizes.
-	
+	HMAC Tadashi Test Suite
+
 	Test Vector Sources:
-		HMAC-SHA-256: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/hmac_sha256_test.json
-		HMAC-SHA3-512: https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/hmac_sha3_512_test.json
-	
-	Test Categories:
-		Pseudorandom - Various input sizes for correctness testing
-		ModifiedTag - Tampered MACs to verify full tag checking
-	
-	Endianness Note:
-		SHA-256 uses big-endian output (default for HMAC)
-		SHA3-512 uses little-endian output (requires explicit false parameter)
-		This test suite validates both work correctly.
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hmac_sha256_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hmac_sha512_test.json
 --]=]
 
 --!strict
 --!optimize 2
+--!native
+
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local HMAC = Cryptography.Hashing.HMAC
-local SHA2 = Cryptography.Hashing.SHA2
-local SHA3 = Cryptography.Hashing.SHA3
+local HMAC: any = if IsCLI then require("../src/Hashing/HMAC") else require("../Hashing/HMAC")
+local SHA2: any = if IsCLI then require("../src/Hashing/SHA2") else require("../Hashing/SHA2")
 local FromHex = Testing.FromHex
 
-type MacTest = {
+type HmacTest = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
 	key: string,
 	msg: string,
@@ -40,107 +29,66 @@ type MacTest = {
 	result: string,
 }
 
-type MacGroup = {
+type HmacGroup = {
 	type: string,
-	keySize: number,
 	tagSize: number,
-	source: {name: string, version: string}?,
-	tests: {MacTest},
+	blockSize: number,
+	tests: {HmacTest},
 }
 
-type MacData = {
+type HmacData = {
 	algorithm: string,
 	numberOfTests: number,
-	testGroups: {MacGroup},
+	testGroups: {HmacGroup},
 }
 
-type HmacConfig = {
-	Name: string,
-	Url: string,
-	HashFunc: (buffer, buffer?) -> (string, buffer),
-	BlockSize: number,
-	BigEndian: boolean,
-}
-
-local HMAC_CONFIGS: {HmacConfig} = {
+local HMAC_VARIANTS = {
 	{
-		Name = "HMAC-SHA-256",
-		Url = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/hmac_sha256_test.json",
-		HashFunc = SHA2.SHA256,
+		Name = "HMAC-SHA256",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hmac_sha256_test.json",
+		HashFn = SHA2.SHA256,
 		BlockSize = 64,
-		BigEndian = true,
 	},
 	{
-		Name = "HMAC-SHA3-512",
-		Url = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/hmac_sha3_512_test.json",
-		HashFunc = SHA3.SHA3_512,
-		BlockSize = 72,
-		BigEndian = false,
+		Name = "HMAC-SHA512",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hmac_sha512_test.json",
+		HashFn = SHA2.SHA512,
+		BlockSize = 128,
 	},
 }
 
-local function FetchTestVectors(Url: string): MacData
+local function FetchTestVectors(Url: string): HmacData
 	local Response = Bridge.Get(Url)
-	return Bridge.JSONDecode(Response) :: MacData
+	return Bridge.JSONDecode(Response) :: HmacData
 end
 
-local function RunHmacTests(Config: HmacConfig)
-	Testing.Describe(`{Config.Name} Wycheproof Tests`, function()
-		local Data = FetchTestVectors(Config.Url)
+local function RunHmacTests(Data: HmacData, HashFn: any, BlockSize: number)
+	for GroupIndex, Group in ipairs(Data.testGroups) do
+		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm} ({Group.tagSize}-bit tag)`, function()
+			for _, Test in ipairs(Group.tests) do
+				local TestId = Test.tcId
+				local Comment = Test.comment or ""
 
-		for GroupIndex, Group in ipairs(Data.testGroups) do
-			local KeySize = Group.keySize
-			local TagSize = Group.tagSize
-			local SourceName = if Group.source then Group.source.name else "unknown"
-
-			Testing.Describe(`Group_{GroupIndex}: {KeySize}bit_Key_{TagSize}bit_Tag (Source: {SourceName})`, function()
-				for _, Test in ipairs(Group.tests) do
-					local TestId = Test.tcId
-					local Comment = Test.comment or ""
-					local ExpectedResult = Test.result
-
-					local TestName = `Test_{TestId}`
-					if Comment ~= "" then
-						TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
-					end
-
-					Testing.Test(TestName, function()
-						local Key = FromHex(Test.key)
-						local Msg = FromHex(Test.msg)
-						local ExpectedTag = Test.tag:lower()
-						local ExpectedTagBytes = TagSize // 8
-
-						local ComputeOk, Result, _ = pcall(function()
-							return HMAC(Msg, Key, Config.HashFunc, Config.BlockSize, Config.BigEndian)
-						end)
-
-						if ExpectedResult == "valid" then
-							Testing.Expect(ComputeOk).ToBe(true)
-							Testing.Expect(Result).ToBeDefined()
-
-							if ComputeOk and Result then
-								local ComputedTag = string.sub(Result:lower(), 1, ExpectedTagBytes * 2)
-								Testing.Expect(ComputedTag).ToBe(ExpectedTag)
-							end
-						elseif ExpectedResult == "invalid" then
-							if ComputeOk and Result then
-								local ComputedTag = string.sub(Result:lower(), 1, ExpectedTagBytes * 2)
-								Testing.Expect(ComputedTag).Never.ToBe(ExpectedTag)
-							else
-								Testing.Expect(true).ToBe(true)
-							end
-						elseif ExpectedResult == "acceptable" then
-							Testing.Expect(true).ToBe(true)
-						end
-					end)
+				local TestName = `Test_{TestId}`
+				if Comment ~= "" then
+					TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 				end
-			end)
-		end
-	end)
+
+				Testing.Test(TestName, function()
+					local Key = FromHex(Test.key)
+					local Msg = FromHex(Test.msg)
+					local Tag = HMAC(Msg, Key, HashFn, BlockSize)
+					Testing.Expect(Tag).ToBe(Test.tag)
+				end)
+			end
+		end)
+	end
 end
 
-for _, Config in ipairs(HMAC_CONFIGS) do
-	RunHmacTests(Config)
+for _, Variant in ipairs(HMAC_VARIANTS) do
+	Testing.Describe(`{Variant.Name} Tadashi Tests`, function()
+		RunHmacTests(FetchTestVectors(Variant.Url), Variant.HashFn, Variant.BlockSize)
+	end)
 end
 
 Testing.Complete()

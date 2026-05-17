@@ -1,98 +1,62 @@
 --[=[
-	X25519 Wycheproof Test Suite
+	X25519 Tadashi Test Suite
 
 	Test Vector Source:
-		https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/x25519_test.json
-
-	Test Categories:
-		Normal - Standard valid test cases
-		Ktv - Known test vectors from RFC 7748
-		Twist - Public keys on the twist of Curve25519
-		LowOrderPublic - Small subgroup attack vectors
-		NonCanonicalPublic - Non-reduced public keys
-		SmallPublicKey - Insecure public keys
-		ZeroSharedSecret - Cases producing all-zero output
-		EdgeCaseMultiplication / EdgeCasePrivateKey / EdgeCaseShared - Arithmetic edge cases
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/x25519_test.json
 --]=]
 
 --!strict
 --!optimize 2
+--!native
+
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local X25519 = Cryptography.Verification.EdDSA.X25519
+local X25519: any = if IsCLI then require("../src/Verification/EdDSA/X25519") else require("../Verification/EdDSA/X25519")
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 
-type XdhTest = {
+type X25519Test = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
-	public: string,
-	private: string,
+	sk: string,
+	pk: string,
 	shared: string,
 	result: string,
 }
 
-type XdhGroup = {
+type X25519Group = {
 	type: string,
-	curve: string,
-	source: {name: string, version: string}?,
-	tests: {XdhTest},
+	keySize: number?,
+	tests: {X25519Test},
 }
 
-type XdhData = {
+type X25519Data = {
 	algorithm: string,
 	numberOfTests: number,
-	testGroups: {XdhGroup},
+	testGroups: {X25519Group},
 }
 
-local WYCHEPROOF_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/x25519_test.json"
+local X25519_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/x25519_test.json"
 
-local function FetchTestVectors(): XdhData
-	local Response = Bridge.Get(WYCHEPROOF_URL)
-	return Bridge.JSONDecode(Response) :: XdhData
-end
-
-Testing.Describe("X25519 Wycheproof Tests", function()
-	local Data = FetchTestVectors()
+Testing.Describe("X25519 Tadashi Tests", function()
+	local Data = Bridge.JSONDecode(Bridge.Get(X25519_URL)) :: X25519Data
 
 	for GroupIndex, Group in ipairs(Data.testGroups) do
-		local Curve = Group.curve
-		local SourceName = if Group.source then Group.source.name else "unknown"
-
-		Testing.Describe(`Group_{GroupIndex}: {Curve} (Source: {SourceName})`, function()
+		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm}`, function()
 			for _, Test in ipairs(Group.tests) do
-				local TestId = Test.tcId
 				local Comment = Test.comment or ""
-				local ExpectedResult = Test.result
-
-				local TestName = `Test_{TestId}`
+				local TestName = `Test_{Test.tcId}`
 				if Comment ~= "" then
-					TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
+					TestName = `Test_{Test.tcId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 				end
 
 				Testing.Test(TestName, function()
-					local PrivateKey = FromHex(Test.private)
-					local PublicKey = FromHex(Test.public)
-					local ExpectedShared = Test.shared:lower()
-
-					local Ok, Result = pcall(function()
-						local SharedSecret = X25519.Exchange(PrivateKey, PublicKey)
-						return ToHex(SharedSecret):lower()
-					end)
-
-					if ExpectedResult == "valid" then
-						Testing.Expect(Ok).ToBe(true)
-						Testing.Expect(Result).ToBe(ExpectedShared)
-					elseif ExpectedResult == "invalid" then
-						local Failed = not Ok or Result ~= ExpectedShared
-						Testing.Expect(Failed).ToBe(true)
-					elseif ExpectedResult == "acceptable" then
-						Testing.Expect(true).ToBe(true)
-					end
+					local Shared = X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))
+					Testing.Expect(ToHex(Shared)).ToBe(Test.shared)
 				end)
 			end
 		end)

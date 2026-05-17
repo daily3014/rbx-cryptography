@@ -38,7 +38,10 @@ local POLY1305_TAG_SIZE = 16
 local AEAD = {
 	ChaCha20 = ChaCha.ChaCha20,
 	XChaCha20 = ChaCha.XChaCha20,
-	Poly1305 = Poly1305
+	Poly1305 = Poly1305,
+	Internal = {
+		HChaCha20 = ChaCha.HChaCha20,
+	},
 }
 
 local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) | typeof(ChaCha.XChaCha20)
@@ -102,11 +105,6 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
-	end
-
-	local MessageLength = buffer.len(Message)
-	if MessageLength == 0 then
-		error("Message cannot be empty", 2)
 	end
 
 	if Key == nil then
@@ -174,11 +172,6 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 
 	if typeof(Ciphertext) ~= "buffer" then
 		error(`Ciphertext must be a buffer, got {typeof(Ciphertext)}`, 2)
-	end
-
-	local CiphertextLength = buffer.len(Ciphertext)
-	if CiphertextLength == 0 then
-		error("Ciphertext cannot be empty", 2)
 	end
 
 	if Key == nil then

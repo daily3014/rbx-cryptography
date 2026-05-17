@@ -232,43 +232,6 @@ function MultiPrecision.Half(NumberA: buffer, Storage: buffer?): buffer
 	return MultiPrecision.CarryWeak(Buf, Buf)
 end
 
-function MultiPrecision.Third(NumberA: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
-
-	local Division00 = integer.mul(A00, THIRD_MULTIPLIER)
-	local Division01 = integer.add(integer.mul(A01, THIRD_MULTIPLIER), Division00)
-	local Division02 = integer.add(integer.mul(A02, THIRD_MULTIPLIER), Division01)
-	local Division03 = integer.add(integer.mul(A03, THIRD_MULTIPLIER), Division02)
-	local Division04 = integer.add(integer.mul(A04, THIRD_MULTIPLIER), Division03)
-	local Division05 = integer.add(integer.mul(A05, THIRD_MULTIPLIER), Division04)
-	local Division06 = integer.add(integer.mul(A06, THIRD_MULTIPLIER), Division05)
-	local Division07 = integer.add(integer.mul(A07, THIRD_MULTIPLIER), Division06)
-	local Division08 = integer.add(integer.mul(A08, THIRD_MULTIPLIER), Division07)
-	local Division09 = integer.add(integer.mul(A09, THIRD_MULTIPLIER), Division08)
-	local Division10 = integer.add(integer.mul(A10, THIRD_MULTIPLIER), Division09)
-
-	local Buf = Storage or buffer.create(SIZE)
-	WriteLimbs(Buf,
-		integer.add(A00, Division00), integer.add(A01, Division01), integer.add(A02, Division02),
-		integer.add(A03, Division03), integer.add(A04, Division04), integer.add(A05, Division05),
-		integer.add(A06, Division06), integer.add(A07, Division07), integer.add(A08, Division08),
-		integer.add(A09, Division09), integer.add(A10, Division10))
-
-	return MultiPrecision.CarryWeak(Buf, Buf)
-end
-
-function MultiPrecision.Mod2(NumberA: buffer): number
-	return integer.tonumber(integer.mod(buffer.readinteger(NumberA, 0), 2i))
-end
-
-function MultiPrecision.Mod3(NumberA: buffer): number
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
-	local Sum = integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(integer.add(
-		A00, A01), A02), A03), A04), A05), A06), A07), A08), A09), A10)
-
-	return integer.tonumber(integer.mod(Sum, 3i))
-end
-
 function MultiPrecision.Approx(NumberA: buffer): number
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
 	return integer.tonumber(A00)
@@ -282,10 +245,6 @@ function MultiPrecision.Approx(NumberA: buffer): number
 		+ integer.tonumber(A08) * 2 ^ 192
 		+ integer.tonumber(A09) * 2 ^ 216
 		+ integer.tonumber(A10) * 2 ^ 240
-end
-
-function MultiPrecision.Cmp(NumberA: buffer, NumberB: buffer): number
-	return MultiPrecision.Approx(MultiPrecision.Sub(NumberA, NumberB))
 end
 
 function MultiPrecision.Num(RegularNumber: number): buffer

@@ -50,11 +50,6 @@ local COORD_BUFFER_5 = buffer.create(COORD_SIZE)
 local COORD_BUFFER_6 = buffer.create(COORD_SIZE)
 local COORD_BUFFER_7 = buffer.create(COORD_SIZE)
 
-local MUL_RESULT_POINT = buffer.create(POINT_SIZE)
-local MUL_NIELS_POINT = buffer.create(POINT_SIZE)
-local MUL_DOUBLE_X = buffer.create(COORD_SIZE)
-local MUL_DOUBLE_Y = buffer.create(COORD_SIZE)
-local MUL_DOUBLE_Z = buffer.create(COORD_SIZE)
 local MUL_DOUBLE_A = buffer.create(COORD_SIZE)
 local MUL_DOUBLE_B = buffer.create(COORD_SIZE)
 local MUL_DOUBLE_E = buffer.create(COORD_SIZE)
@@ -69,9 +64,6 @@ local MUL_N2Z = buffer.create(COORD_SIZE)
 local MUL_N2T = buffer.create(COORD_SIZE)
 local MUL_TMP = buffer.create(COORD_SIZE)
 
-local MULG_RESULT_POINT = buffer.create(POINT_SIZE)
-local MULG_AFFINE_NIELS = buffer.create(AFFINE_NIELS_SIZE)
-local MULG_DUMMY_POINT = buffer.create(POINT_SIZE)
 local MULG_P1X = buffer.create(COORD_SIZE)
 local MULG_P1Y = buffer.create(COORD_SIZE)
 local MULG_P1Z = buffer.create(COORD_SIZE)
@@ -263,120 +255,6 @@ function Edwards25519.Niels(Point1: buffer, Storage: buffer?): buffer
 	buffer.copy(Result, 1 * COORD_SIZE, MinusN3, 0, COORD_SIZE)
 	buffer.copy(Result, 2 * COORD_SIZE, DoubledN3Z, 0, COORD_SIZE)
 	buffer.copy(Result, 3 * COORD_SIZE, ScaledN3T, 0, COORD_SIZE)
-
-	return Result
-end
-
-function Edwards25519.AffineNiels(Point1: buffer, Storage: buffer?): buffer
-	local Point1X = GetCoord(Point1, 0, COORD_BUFFER_0)
-	local Point1Y = GetCoord(Point1, 1, COORD_BUFFER_1)
-	local Point1T = GetCoord(Point1, 3, COORD_BUFFER_3)
-
-	local YPlusX = FieldPrime.Add(Point1Y, Point1X)
-	local YMinusX = FieldPrime.Sub(Point1Y, Point1X)
-	FieldPrime.Mul(Point1T, CURVE_K, Point1T)
-	local T2d = Point1T
-
-	local Result = Storage or buffer.create(AFFINE_NIELS_SIZE)
-	buffer.copy(Result, 0 * COORD_SIZE, YPlusX, 0, COORD_SIZE)
-	buffer.copy(Result, 1 * COORD_SIZE, YMinusX, 0, COORD_SIZE)
-	buffer.copy(Result, 2 * COORD_SIZE, T2d, 0, COORD_SIZE)
-
-	return Result
-end
-
-function Edwards25519.AddAffine(Point1: buffer, AffineNiels2: buffer, Storage: buffer?): buffer
-	local Point1X = GetCoord(Point1, 0, COORD_BUFFER_0)
-	local Point1Y = GetCoord(Point1, 1, COORD_BUFFER_1)
-	local Point1Z = GetCoord(Point1, 2, COORD_BUFFER_2)
-	local Point1T = GetCoord(Point1, 3, COORD_BUFFER_3)
-
-	local Niels2YPlusX = GetCoord(AffineNiels2, 0, COORD_BUFFER_4)
-	local Niels2YMinusX = GetCoord(AffineNiels2, 1, COORD_BUFFER_5)
-	local Niels2T2d = GetCoord(AffineNiels2, 2, COORD_BUFFER_6)
-
-	local DiffA = FieldPrime.Sub(Point1Y, Point1X)
-	FieldPrime.Mul(DiffA, Niels2YMinusX, DiffA)
-	local ProductB = DiffA
-
-	local SumC = FieldPrime.Add(Point1Y, Point1X)
-	FieldPrime.Mul(SumC, Niels2YPlusX, SumC)
-	local ProductD = SumC
-
-	FieldPrime.Mul(Point1T, Niels2T2d, Point1T)
-	local ProductE = Point1T
-
-	FieldPrime.Add(Point1Z, Point1Z, Point1Z)
-	local ProductF = Point1Z
-
-	local DiffG = FieldPrime.Sub(ProductD, ProductB)
-	local DiffH = FieldPrime.Sub(ProductF, ProductE)
-
-	FieldPrime.Add(ProductF, ProductE, ProductF)
-	local SumI = ProductF
-
-	FieldPrime.Add(ProductD, ProductB, ProductD)
-	local SumJ = ProductD
-
-	local NewX = FieldPrime.Mul(DiffG, DiffH)
-	local NewY = FieldPrime.Mul(SumI, SumJ)
-	FieldPrime.Mul(DiffH, SumI, DiffH)
-	local NewZ = DiffH
-	FieldPrime.Mul(DiffG, SumJ, DiffG)
-	local NewT = DiffG
-
-	local Result = Storage or buffer.create(POINT_SIZE)
-	buffer.copy(Result, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
-	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
-	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
-	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
-
-	return Result
-end
-
-function Edwards25519.SubAffine(Point1: buffer, AffineNiels2: buffer, Storage: buffer?): buffer
-	local Point1X = GetCoord(Point1, 0, COORD_BUFFER_0)
-	local Point1Y = GetCoord(Point1, 1, COORD_BUFFER_1)
-	local Point1Z = GetCoord(Point1, 2, COORD_BUFFER_2)
-	local Point1T = GetCoord(Point1, 3, COORD_BUFFER_3)
-
-	local Niels2YPlusX = GetCoord(AffineNiels2, 0, COORD_BUFFER_4)
-	local Niels2YMinusX = GetCoord(AffineNiels2, 1, COORD_BUFFER_5)
-	local Niels2T2d = GetCoord(AffineNiels2, 2, COORD_BUFFER_6)
-
-	local DiffA = FieldPrime.Sub(Point1Y, Point1X)
-	FieldPrime.Mul(DiffA, Niels2YPlusX, DiffA)
-	local ProductB = DiffA
-
-	FieldPrime.Add(Point1Y, Point1X, Point1Y)
-	local SumC = Point1Y
-	FieldPrime.Mul(SumC, Niels2YMinusX, SumC)
-	local ProductD = SumC
-
-	FieldPrime.Mul(Point1T, Niels2T2d, Point1T)
-	local ProductE = Point1T
-
-	FieldPrime.Add(Point1Z, Point1Z, Point1Z)
-	local ProductF = Point1Z
-
-	local DiffG = FieldPrime.Sub(ProductD, ProductB)
-	local SumH = FieldPrime.Add(ProductF, ProductE)
-	local DiffI = FieldPrime.Sub(ProductF, ProductE)
-	FieldPrime.Add(ProductD, ProductB, ProductD)
-	local SumJ = ProductD
-
-	local NewX = FieldPrime.Mul(DiffG, SumH)
-	local NewY = FieldPrime.Mul(DiffI, SumJ)
-	FieldPrime.Mul(SumH, DiffI, SumH)
-	local NewZ = SumH
-	FieldPrime.Mul(DiffG, SumJ, DiffG)
-	local NewT = DiffG
-
-	local Result = Storage or buffer.create(POINT_SIZE)
-	buffer.copy(Result, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
-	buffer.copy(Result, 1 * COORD_SIZE, NewY, 0, COORD_SIZE)
-	buffer.copy(Result, 2 * COORD_SIZE, NewZ, 0, COORD_SIZE)
-	buffer.copy(Result, 3 * COORD_SIZE, NewT, 0, COORD_SIZE)
 
 	return Result
 end
@@ -581,20 +459,6 @@ do
 	if BASEPOINT_G then
 		AFFINE_BASEPOINT_TABLE = Edwards25519.AffineRadixWTable(BASEPOINT_G, BASE_RADIX_WIDTH)
 	end
-end
-
-function Edwards25519.GetAffineBasePointTableEntry(WindowIndex: number, Multiple: number, Storage: buffer?): buffer
-	if not AFFINE_BASEPOINT_TABLE then
-		return buffer.create(0)
-	end
-
-	local BaseOffset = ((WindowIndex - 1) * BASE_POINT_ROW * AFFINE_NIELS_SIZE)
-	local Offset = BaseOffset + ((Multiple - 1) * AFFINE_NIELS_SIZE)
-
-	local AffineNielsPoint = Storage or buffer.create(AFFINE_NIELS_SIZE)
-	buffer.copy(AffineNielsPoint, 0, AFFINE_BASEPOINT_TABLE, Offset, AFFINE_NIELS_SIZE)
-
-	return AffineNielsPoint
 end
 
 function Edwards25519.SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, RadixWidth: number): (buffer, number)

@@ -1,42 +1,29 @@
 --[=[
-	AES-GCM Wycheproof Test Suite
-	
+	AES-GCM Tadashi Test Suite
+
 	Test Vector Source:
-		https://raw.githubusercontent.com/C2SP/wycheproof/main/testvectors_v1/aes_gcm_test.json
-	
-	Test Categories:
-		Ktv - Known test vectors
-		Pseudorandom - Various input sizes
-		ModifiedTag - Tampered authentication tags
-		SmallIv / LongIv / ZeroLengthIv - Non-standard IV sizes
-		CounterWrap - Counter overflow edge cases
-	
-	IV Size Restriction (96-bit only):
-		This implementation only supports 96-bit (12-byte) IVs for security reasons.
-		Non 96bit IVs require GHASH compression which introduces risks:
-		
-		1. Authentication key leakage: If the same IV is derived from different
-		 	inputs via GHASH, an attacker can recover the authentication key H.
-		
-		2. Counter wrap attacks: Long IVs can produce counter values near 2^32,
-		 	enabling attacks that leak information about the GHASH of the IV.
-		
-		Idk why you would even use a different size nonce.
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/aes_gcm_test.json
+
+	Covers AES-128/192/256 GCM with 96-bit IVs plus the non-96-bit IV path
+	(64-bit, 128-bit, 480-bit), which forces the J0 = GHASH(IV) derivation.
 --]=]
 
 --!strict
 --!optimize 2
+--!native
+
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Cryptography = if IsCLI then require("../src") else require("../")
-local AES = Cryptography.Encryption.AES
+local AES: any = if IsCLI then require("../src/Encryption/AES") else require("../Encryption/AES")
 local FromHex = Testing.FromHex
+local BuffersEqual = Testing.BuffersEqual
 
-type AeadTest = {
+type AesTest = {
 	tcId: number,
 	comment: string?,
+	targets: {string}?,
 	flags: {string}?,
 	key: string,
 	iv: string,
@@ -47,119 +34,64 @@ type AeadTest = {
 	result: string,
 }
 
-type AeadGroup = {
+type AesGroup = {
 	type: string,
 	keySize: number,
 	ivSize: number,
 	tagSize: number,
-	source: {name: string, version: string}?,
-	tests: {AeadTest},
+	tests: {AesTest},
 }
 
-type AeadData = {
+type AesData = {
 	algorithm: string,
 	numberOfTests: number,
-	testGroups: {AeadGroup},
+	testGroups: {AesGroup},
 }
 
-local WYCHEPROOF_URL = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/aes_gcm_test.json"
+local AES_GCM_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/aes_gcm_test.json"
 
-local function BuffersEqual(A: buffer, B: buffer): boolean
-	if buffer.len(A) ~= buffer.len(B) then
-		return false
-	end
-
-	for Index = 0, buffer.len(A) - 1 do
-		if buffer.readu8(A, Index) ~= buffer.readu8(B, Index) then
-			return false
-		end
-	end
-
-	return true
-end
-
-local function FetchTestVectors(): AeadData
-	local Response = Bridge.Get(WYCHEPROOF_URL)
-	return Bridge.JSONDecode(Response) :: AeadData
-end
-
-Testing.Describe("AES-GCM Wycheproof Tests", function()
-	local Data = FetchTestVectors()
-	local SkippedCount = 0
+Testing.Describe("AES-GCM Tadashi Tests", function()
+	local Data = Bridge.JSONDecode(Bridge.Get(AES_GCM_URL)) :: AesData
 
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		local KeySize = Group.keySize
 		local IvSize = Group.ivSize
 		local TagSize = Group.tagSize
 
-		if IvSize ~= 96 then
-			SkippedCount += #Group.tests
-			continue
-		end
-
-		local SourceName = if Group.source then Group.source.name else "unknown"
-
-		Testing.Describe(`Group_{GroupIndex}: {KeySize}bit_Key_{IvSize}bit_IV_{TagSize}bit_Tag (Source: {SourceName})`, function()
+		Testing.Describe(`Group_{GroupIndex}: AES-GCM ({KeySize}bit_Key_{IvSize}bit_IV_{TagSize}bit_Tag)`, function()
 			for _, Test in ipairs(Group.tests) do
-				local TestId = Test.tcId
 				local Comment = Test.comment or ""
-				local ExpectedResult = Test.result
-
-				local TestName = `Test_{TestId}`
+				local TestName = `Test_{Test.tcId}`
 				if Comment ~= "" then
-					TestName = `Test_{TestId}_{Comment:sub(1, 25):gsub(" ", "_")}`
+					TestName = `Test_{Test.tcId}_{Comment:sub(1, 25):gsub(" ", "_")}`
 				end
 
 				Testing.Test(TestName, function()
 					local Key = FromHex(Test.key)
 					local Iv = FromHex(Test.iv)
-					local Aad = FromHex(Test.aad or "")
+					local AadBuf = FromHex(Test.aad or "")
+					local Aad: buffer? = if buffer.len(AadBuf) > 0 then AadBuf else nil
 					local Msg = FromHex(Test.msg)
 					local ExpectedCt = FromHex(Test.ct)
 					local ExpectedTag = FromHex(Test.tag)
 
-					if ExpectedResult == "valid" then
-						local EncOk, Ct, Tag = pcall(function()
-							return AES.Encrypt(Msg, Key, Iv, Aad)
-						end)
+					if Test.result == "valid" then
+						local Ct, Tag = AES.Encrypt(Msg, Key, Iv, Aad)
+						Testing.Expect(BuffersEqual(Ct, ExpectedCt)).ToBe(true)
+						Testing.Expect(BuffersEqual(Tag, ExpectedTag)).ToBe(true)
 
-						Testing.Expect(EncOk).ToBe(true)
-						Testing.Expect(Ct).ToBeDefined()
-						Testing.Expect(Tag).ToBeDefined()
-
-						if EncOk and Ct and Tag then
-							Testing.Expect(BuffersEqual(Ct, ExpectedCt)).ToBe(true)
-							Testing.Expect(BuffersEqual(Tag, ExpectedTag)).ToBe(true)
-
-							local DecOk, DecSuccess, Plaintext = pcall(function()
-								return AES.Decrypt(Ct, Key, Iv, Tag, Aad)
-							end)
-
-							Testing.Expect(DecOk).ToBe(true)
-							Testing.Expect(DecSuccess).ToBe(true)
-							Testing.Expect(Plaintext).ToBeDefined()
-
-							if Plaintext then
-								Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
-							end
+						local Ok, Plaintext = AES.Decrypt(Ct, Key, Iv, Tag, Aad)
+						Testing.Expect(Ok).ToBe(true)
+						if Plaintext then
+							Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
 						end
-					elseif ExpectedResult == "invalid" then
-						local DecOk, DecSuccess, _ = pcall(function()
-							return AES.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
-						end)
-
-						local DecryptionFailed = not DecOk or not DecSuccess
-						Testing.Expect(DecryptionFailed).ToBe(true)
-					elseif ExpectedResult == "acceptable" then
-						Testing.Expect(true).ToBe(true)
+					elseif Test.result == "invalid" then
+						local Ok = AES.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
+						Testing.Expect(Ok).ToBe(false)
 					end
 				end)
 			end
 		end)
-	end
-
-	if SkippedCount > 0 then
-		print(`[Info] Skipped {SkippedCount} tests with non-96-bit IVs (unsupported for security reasons)`)
 	end
 end)
 

@@ -22,7 +22,6 @@
 --!native
 
 local FieldPrime = require("./FieldPrime")
-local CSPRNG = require("../../Utilities/CSPRNG")
 
 local COORD_SIZE = 80
 local MONTGOMERY_POINT_SIZE = 2 * COORD_SIZE
@@ -32,25 +31,6 @@ local function GetMontgomeryCoord(Point: buffer, Index: number): buffer
 	buffer.copy(Coord, 0, Point, Index * COORD_SIZE, COORD_SIZE)
 
 	return Coord
-end
-
-local function Double(PointToDouble: buffer): buffer
-	local CoordX = GetMontgomeryCoord(PointToDouble, 0)
-	local CoordZ = GetMontgomeryCoord(PointToDouble, 1)
-
-	local SumXZ = FieldPrime.Add(CoordX, CoordZ)
-	local SumSquared = FieldPrime.Square(SumXZ)
-	local DiffXZ = FieldPrime.Sub(CoordX, CoordZ)
-	local DiffSquared = FieldPrime.Square(DiffXZ)
-	local Difference = FieldPrime.Sub(SumSquared, DiffSquared)
-	local NewX = FieldPrime.Mul(SumSquared, DiffSquared)
-	local NewZ = FieldPrime.Mul(Difference, FieldPrime.Add(DiffSquared, FieldPrime.KMul(Difference, 121666)))
-
-	local Point = buffer.create(MONTGOMERY_POINT_SIZE)
-	buffer.copy(Point, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
-	buffer.copy(Point, 1 * COORD_SIZE, NewZ, 0, COORD_SIZE)
-
-	return Point
 end
 
 local function LadderStep(DifferencePoint: buffer, Point1: buffer, Point2: buffer): (buffer, buffer)
@@ -112,123 +92,12 @@ function Curve25519.Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBi
 	return CurrentP
 end
 
-function Curve25519.DifferentialAdd(DifferencePoint: buffer, Point1: buffer, Point2: buffer): buffer
-	local DiffX = GetMontgomeryCoord(DifferencePoint, 0)
-	local DiffZ = GetMontgomeryCoord(DifferencePoint, 1)
-	local X1 = GetMontgomeryCoord(Point1, 0)
-	local Z1 = GetMontgomeryCoord(Point1, 1)
-	local X2 = GetMontgomeryCoord(Point2, 0)
-	local Z2 = GetMontgomeryCoord(Point2, 1)
-
-	local SumA = FieldPrime.Add(X1, Z1)
-	local DiffB = FieldPrime.Sub(X1, Z1)
-	local SumC = FieldPrime.Add(X2, Z2)
-	local DiffD = FieldPrime.Sub(X2, Z2)
-	local CrossDA = FieldPrime.Mul(DiffD, SumA)
-	local CrossCB = FieldPrime.Mul(SumC, DiffB)
-
-	local NewX = FieldPrime.Mul(DiffZ, FieldPrime.Square(FieldPrime.Add(CrossDA, CrossCB)))
-	local NewZ = FieldPrime.Mul(DiffX, FieldPrime.Square(FieldPrime.Sub(CrossDA, CrossCB)))
-
-	local Point = buffer.create(MONTGOMERY_POINT_SIZE)
-	buffer.copy(Point, 0 * COORD_SIZE, NewX, 0, COORD_SIZE)
-	buffer.copy(Point, 1 * COORD_SIZE, NewZ, 0, COORD_SIZE)
-
-	return Point
-end
-
 function Curve25519.Decode(EncodedBuffer: buffer): buffer
 	local Point = buffer.create(MONTGOMERY_POINT_SIZE)
 	buffer.copy(Point, 0 * COORD_SIZE, FieldPrime.Decode(EncodedBuffer), 0, COORD_SIZE)
 	buffer.copy(Point, 1 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
 
 	return Point
-end
-
-function Curve25519.Prac(BasePoint: buffer, PracRuleset: {any}): (buffer?, buffer?, buffer?)
-	local DifferentialAdd = Curve25519.DifferentialAdd
-	local RandomBuffer = CSPRNG.Ed25519Random()
-	local RandomFactor = FieldPrime.Decode(RandomBuffer)
-
-	local BaseX = GetMontgomeryCoord(BasePoint, 0)
-	local BaseZ = GetMontgomeryCoord(BasePoint, 1)
-	local RandomizedA = buffer.create(MONTGOMERY_POINT_SIZE)
-	buffer.copy(RandomizedA, 0 * COORD_SIZE, FieldPrime.Mul(BaseX, RandomFactor), 0, COORD_SIZE)
-	buffer.copy(RandomizedA, 1 * COORD_SIZE, FieldPrime.Mul(BaseZ, RandomFactor), 0, COORD_SIZE)
-
-	RandomizedA = Double(Double(Double(RandomizedA)))
-
-	local AZ = GetMontgomeryCoord(RandomizedA, 1)
-	if FieldPrime.Eqz(AZ) then
-		return nil, nil, nil
-	end
-
-	RandomizedA = Ladder(RandomizedA, PracRuleset[1], PracRuleset[2])
-
-	local Rules: buffer = PracRuleset[3]
-	local RuleCount: number = PracRuleset[4]
-	if RuleCount == 0 then
-		return RandomizedA, nil, nil
-	end
-
-	local CurrentB, CurrentC
-	local FirstRule = buffer.readu8(Rules, RuleCount - 1)
-	if FirstRule == 2 then
-		local DoubledA = Double(RandomizedA)
-		RandomizedA, CurrentB, CurrentC = DifferentialAdd(RandomizedA, DoubledA, RandomizedA), RandomizedA, DoubledA
-	elseif FirstRule == 3 or FirstRule == 5 then
-		RandomizedA, CurrentB, CurrentC = Double(RandomizedA), RandomizedA, RandomizedA
-	elseif FirstRule == 6 then
-		local DoubledA = Double(RandomizedA)
-		local TripledA = DifferentialAdd(RandomizedA, DoubledA, RandomizedA)
-		RandomizedA, CurrentB, CurrentC = Double(TripledA), RandomizedA, DifferentialAdd(RandomizedA, TripledA, DoubledA)
-	elseif FirstRule == 7 then
-		local DoubledA = Double(RandomizedA)
-		local TripledA = DifferentialAdd(RandomizedA, DoubledA, RandomizedA)
-		local QuadrupleA = Double(DoubledA)
-		RandomizedA, CurrentB, CurrentC = DifferentialAdd(TripledA, QuadrupleA, RandomizedA), RandomizedA, QuadrupleA
-	elseif FirstRule == 8 then
-		local DoubledA = Double(RandomizedA)
-		local TripledA = DifferentialAdd(RandomizedA, DoubledA, RandomizedA)
-		RandomizedA, CurrentB, CurrentC = Double(DoubledA), RandomizedA, TripledA
-	else
-		RandomizedA, CurrentB, CurrentC = RandomizedA, Double(RandomizedA), RandomizedA
-	end
-
-	if not CurrentC then
-		return nil, nil, nil
-	end
-
-	for RuleIndex = RuleCount - 1, 1, -1 do
-		local CurrentRule = buffer.readu8(Rules, RuleIndex - 1)
-		if CurrentRule == 0 then
-			RandomizedA, CurrentB = CurrentB, RandomizedA
-		elseif CurrentRule == 1 then
-			local SumAB = DifferentialAdd(CurrentC, RandomizedA, CurrentB)
-			RandomizedA, CurrentB = DifferentialAdd(CurrentB, SumAB, RandomizedA), DifferentialAdd(RandomizedA, SumAB, CurrentB)
-		elseif CurrentRule == 2 then
-			RandomizedA, CurrentC = DifferentialAdd(CurrentB, DifferentialAdd(CurrentC, RandomizedA, CurrentB), RandomizedA), Double(RandomizedA)
-		elseif CurrentRule == 3 then
-			RandomizedA, CurrentC = DifferentialAdd(CurrentC, RandomizedA, CurrentB), RandomizedA
-		elseif CurrentRule == 5 then
-			RandomizedA, CurrentC = Double(RandomizedA), DifferentialAdd(CurrentB, RandomizedA, CurrentC)
-		elseif CurrentRule == 6 then
-			local SumAB = DifferentialAdd(CurrentC, RandomizedA, CurrentB)
-			local DoubledSumAABB = Double(SumAB)
-			RandomizedA, CurrentC = DifferentialAdd(SumAB, DoubledSumAABB, SumAB), DifferentialAdd(DifferentialAdd(RandomizedA, SumAB, CurrentB), DoubledSumAABB, RandomizedA)
-		elseif CurrentRule == 7 then
-			local SumAB = DifferentialAdd(CurrentC, RandomizedA, CurrentB)
-			local DoubleAAB = DifferentialAdd(CurrentB, SumAB, RandomizedA)
-			RandomizedA, CurrentC = DifferentialAdd(RandomizedA, DoubleAAB, SumAB), DifferentialAdd(SumAB, DoubleAAB, RandomizedA)
-		elseif CurrentRule == 8 then
-			local DoubledA = Double(RandomizedA)
-			RandomizedA, CurrentC = DifferentialAdd(CurrentC, DoubledA, DifferentialAdd(CurrentC, RandomizedA, CurrentB)), DifferentialAdd(RandomizedA, DoubledA, RandomizedA)
-		else
-			CurrentB, CurrentC = Double(CurrentB), DifferentialAdd(RandomizedA, CurrentC, CurrentB)
-		end
-	end
-
-	return RandomizedA, CurrentB, CurrentC
 end
 
 local Point = buffer.create(MONTGOMERY_POINT_SIZE)

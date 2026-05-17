@@ -264,54 +264,6 @@ function Ntt.PolyMulAddAt(F: buffer, FOffset: number, G: buffer, GOffset: number
 	end
 end
 
-function Ntt.PolyAddAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
-	local Modulus = Q
-	for Index = 0, 255 do
-		local Offset = Index * 2
-		local AValue = buffer.readu16(F, FOffset + Offset)
-		local BValue = buffer.readu16(G, GOffset + Offset)
-		buffer.writeu16(H, HOffset + Offset, (AValue + BValue) % Modulus)
-	end
-end
-
-function Ntt.PolyMul(F: buffer, G: buffer, H: buffer)
-	local PolyZeta = POLY_MUL_ZETA_EXP
-	local Modulus = Q
-
-	for I = 0, N / 2 - 1 do
-		local Offset = I * 4
-		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
-
-		local F0 = buffer.readu16(F, Offset)
-		local F1 = buffer.readu16(F, Offset + 2)
-		local G0 = buffer.readu16(G, Offset)
-		local G1 = buffer.readu16(G, Offset + 2)
-
-		local Mul3 = ((F1 * G1) % Modulus * ZetaExp) % Modulus
-		buffer.writeu16(H, Offset, (F0 * G0 + Mul3) % Modulus)
-		buffer.writeu16(H, Offset + 2, (F0 * G1 + F1 * G0) % Modulus)
-	end
-end
-
-function Ntt.PolyMulAt(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
-	local PolyZeta = POLY_MUL_ZETA_EXP
-	local Modulus = Q
-
-	for I = 0, 127 do
-		local LocalOffset = I * 4
-		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
-
-		local F0 = buffer.readu16(F, FOffset + LocalOffset)
-		local F1 = buffer.readu16(F, FOffset + LocalOffset + 2)
-		local G0 = buffer.readu16(G, GOffset + LocalOffset)
-		local G1 = buffer.readu16(G, GOffset + LocalOffset + 2)
-
-		local Mul3 = ((F1 * G1) % Modulus * ZetaExp) % Modulus
-		buffer.writeu16(H, HOffset + LocalOffset, (F0 * G0 + Mul3) % Modulus)
-		buffer.writeu16(H, HOffset + LocalOffset + 2, (F0 * G1 + F1 * G0) % Modulus)
-	end
-end
-
 function Ntt.PolyAdd(F: buffer, G: buffer, H: buffer)
 	local Modulus = Q
 	for Index = 0, N - 1 do

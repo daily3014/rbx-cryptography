@@ -43,7 +43,6 @@ local function RuntimeHTTPGet(): HttpGet
 		end
 	end
 
-	-- zune doesn't support integers yet, the integer check above will error early
 	if string.match(_VERSION, "zune") ~= nil then
 		local http = zune.net.http
 
@@ -88,27 +87,26 @@ if Bridge.IsCLI then
 	end
 
 	local Locations = {
-		Wycheproof = "../testing/wycheproof/"
+		Tadashi = "../testing/tadashi/"
 	}
 
 	local Patterns = {
-		Wycheproof = "https://raw.githubusercontent.com/C2SP/wycheproof/refs/heads/main/testvectors_v1/(.+).json"
+		Tadashi = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/(.+).json"
 	}
-	
+
 	if not Bridge.Get then
 		function Bridge.Get(Url: string): string
 			-- TYPE ERROR: Pattern is error-type if you use generalized iterator...?
 			for Name, Pattern in pairs(Patterns) do
 				local Match = string.match(Url, Pattern)
-				
+
 				if not Match then
 					continue
 				end
 
-				-- without extensions!!!
 				local BaseLocation = Locations[Name]
 				local FileLocation = BaseLocation .. Match
-				
+
 				local Success, Contents = pcall(require, FileLocation)
 
 				if not Success then
@@ -125,16 +123,15 @@ if Bridge.IsCLI then
 	if not Bridge.JSONDecode then
 		function Bridge.JSONDecode<T>(JSON: any)
 			if type(JSON) ~= "string" then
-				return JSON -- probably already decoded
+				return JSON -- already a table (CLI loads via require)
 			end
 
-			-- implement in the future when needed..
 			error("not implemented")
 		end
 	end
 else
 	local HttpService = game:GetService("HttpService")
-	
+
 	function Bridge.Get(Url: string): string
 		return HttpService:GetAsync(Url)
 	end

@@ -239,24 +239,12 @@ end
 
 SHA3.Keccak_Internal = Keccak
 
-function SHA3.SHA3_224_Internal(Message: buffer): buffer
-	return ProcessSponge(Message, 448, 28, 0x06)
-end
-
 function SHA3.SHA3_256_Internal(Message: buffer): buffer
 	return ProcessSponge(Message, 512, 32, 0x06)
 end
 
-function SHA3.SHA3_384_Internal(Message: buffer): buffer
-	return ProcessSponge(Message, 768, 48, 0x06)
-end
-
 function SHA3.SHA3_512_Internal(Message: buffer): buffer
 	return ProcessSponge(Message, 1024, 64, 0x06)
-end
-
-function SHA3.SHAKE128_Internal(Message: buffer, OutputBytes: number): buffer
-	return ProcessSponge(Message, 256, OutputBytes, 0x1F)
 end
 
 function SHA3.SHAKE256_Internal(Message: buffer, OutputBytes: number): buffer

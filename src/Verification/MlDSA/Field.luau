@@ -69,8 +69,4 @@ function Field.Inverse(A: number): number
 	return Field.Power(A, Q - 2)
 end
 
-function Field.Divide(A: number, B: number): number
-	return Field.Multiply(A, Field.Inverse(B))
-end
-
 return Field

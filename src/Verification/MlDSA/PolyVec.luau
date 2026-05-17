@@ -465,7 +465,6 @@ end
 function PolyVec.HighBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
 	local M = math.floor((Q - 1) / Alpha)
-	local Modulus = Q
 	local Num = N
 
 	for I = 0, K - 1 do
@@ -573,7 +572,6 @@ function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number
 	local M = math.floor((Q - 1) / Alpha)
 	local T0 = bit32.rshift(Alpha, 1)
 	local T1 = Q - T0
-	local T1_Q = Q - 1
 	local Modulus = Q
 
 	for I = 0, K - 1 do

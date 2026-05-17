@@ -1,4 +1,6 @@
 --!strict
+--!optimize 2
+--!native
 local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
