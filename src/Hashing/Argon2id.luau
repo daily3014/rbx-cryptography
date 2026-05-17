@@ -911,7 +911,7 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 	VariableHash(Tag, 0, OutputLength, FinalBlock)
 
 	if Formatted then
-		local AdditionalData = if AssociatedData
+		local AdditionalData = if AssociatedData and buffer.len(AssociatedData) > 0
 			then `,data={ToBase64(AssociatedData)}`
 			else ""
 		
