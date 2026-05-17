@@ -33,11 +33,17 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	local LP0 = P0
 	local MessageLength = buffer.len(Message)
 
+	if MessageLength == 0 then
+		local Output = buffer.create(TAG_SIZE)
+		buffer.copy(Output, 0, Key, 16, 16)
+		return Output
+	end
+
 	local PaddedMessage = Message
 	local ProcessLength = MessageLength
 	local PartialBlockOffset = -1
 
-	if MessageLength % BLOCK_SIZE ~= 0 or MessageLength == 0 then
+	if MessageLength % BLOCK_SIZE ~= 0 then
 		local PaddingSize = BLOCK_SIZE - (MessageLength % BLOCK_SIZE)
 		ProcessLength = MessageLength + PaddingSize
 		PaddedMessage = buffer.create(ProcessLength)
