@@ -475,7 +475,7 @@ function PolyVec.HighBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 			local R = buffer.readu32(Src, JOffset)
 
 			local T3 = math.floor((R + T0 - 1) / Alpha)
-			buffer.writeu32(Dst, JOffset, if T3 == M then 0 else T3)
+			buffer.writeu32(Dst, JOffset, T3 % M)
 		end
 	end
 end
@@ -494,8 +494,9 @@ function PolyVec.LowBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 			local R = buffer.readu32(Src, JOffset)
 
 			local T3 = math.floor((R + T0 - 1) / Alpha)
+			local Flag = math.floor(T3 / M)
 			local R0 = (R - T3 * Alpha) % Modulus
-			buffer.writeu32(Dst, JOffset, if T3 == M then (R0 - 1) % Modulus else R0)
+			buffer.writeu32(Dst, JOffset, (R0 - Flag) % Modulus)
 		end
 	end
 end
@@ -521,10 +522,9 @@ end
 
 function PolyVec.InfinityNorm(Vec: buffer, K: number): number
 	local Result = 0
-	local QBy2 = math.floor(Q / 2)
 	local Modulus = Q
 	local Num = N
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
 
@@ -532,10 +532,8 @@ function PolyVec.InfinityNorm(Vec: buffer, K: number): number
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
 
-			local CurrentValue = if PolyValue > QBy2 then (if PolyValue == 0 then 0 else Modulus - PolyValue) else PolyValue
-			if CurrentValue > Result then
-				Result = CurrentValue
-			end
+			local CenterMag = math.min(PolyValue, Modulus - PolyValue)
+			Result = math.max(Result, CenterMag)
 		end
 	end
 
@@ -557,13 +555,13 @@ function PolyVec.MakeHint(PolyA: buffer, PolyB: buffer, PolyC: buffer, K: number
 			local R = buffer.readu32(PolyB, JOffset)
 
 			local T3_R = math.floor((R + T0 - 1) / Alpha)
-			local R1 = if T3_R == M then 0 else T3_R
+			local R1 = T3_R % M
 
 			local Sum = (R + Z) % Modulus
 			local T3_V = math.floor((Sum + T0 - 1) / Alpha)
-			local V1 = if T3_V == M then 0 else T3_V
+			local V1 = T3_V % M
 
-			buffer.writeu32(PolyC, JOffset, if R1 ~= V1 then 1 else 0)
+			buffer.writeu32(PolyC, JOffset, math.min(1, bit32.bxor(R1, V1)))
 		end
 	end
 end

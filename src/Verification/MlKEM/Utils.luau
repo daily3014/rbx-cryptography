@@ -44,7 +44,8 @@ function Utils.CtMemcmp(Bytes0: buffer, Bytes1: buffer): number
 		Diff = bit32.bor(Diff, bit32.bxor(Byte0, Byte1))
 	end
 
-	return if Diff == 0 then 0xFFFFFFFF else 0x00000000
+	local IsZero = 1 - bit32.rshift(bit32.bor(Diff, -Diff), 31)
+	return IsZero * 0xFFFFFFFF
 end
 
 function Utils.CtCondMemcpy(Cond: number, Sink: buffer, Source0: buffer, Source1: buffer)

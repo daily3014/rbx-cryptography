@@ -134,35 +134,35 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 					local T7 = bit32.band(bit32.rshift(Chunk, 28), 0x0F)
 
 					if T0 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T0 % 5) + (if (T0 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T0 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T1 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T1 % 5) + (if (T1 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T1 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T2 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T2 % 5) + (if (T2 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T2 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T3 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T3 % 5) + (if (T3 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T3 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T4 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T4 % 5) + (if (T4 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T4 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T5 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T5 % 5) + (if (T5 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T5 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T6 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T6 % 5) + (if (T6 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T6 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T7 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T7 % 5) + (if (T7 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T7 % 5) % Modulus)
 						CoeffCount += 1
 					end
 
@@ -182,35 +182,35 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 					local T7 = bit32.band(bit32.rshift(Chunk, 28), 0x0F)
 
 					if T0 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T0 + (if T0 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T0) % Modulus)
 						CoeffCount += 1
 					end
 					if T1 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T1 + (if T1 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T1) % Modulus)
 						CoeffCount += 1
 					end
 					if T2 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T2 + (if T2 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T2) % Modulus)
 						CoeffCount += 1
 					end
 					if T3 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T3 + (if T3 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T3) % Modulus)
 						CoeffCount += 1
 					end
 					if T4 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T4 + (if T4 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T4) % Modulus)
 						CoeffCount += 1
 					end
 					if T5 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T5 + (if T5 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T5) % Modulus)
 						CoeffCount += 1
 					end
 					if T6 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T6 + (if T6 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T6) % Modulus)
 						CoeffCount += 1
 					end
 					if T7 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T7 + (if T7 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T7) % Modulus)
 						CoeffCount += 1
 					end
 
@@ -225,20 +225,20 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 
 				if Eta == 2 then
 					if T0 < 15 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T0 % 5) + (if (T0 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T0 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if CoeffCount < Num and T1 < 15 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T1 % 5) + (if (T1 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T1 % 5) % Modulus)
 						CoeffCount += 1
 					end
 				else
 					if T0 < 9 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T0 + (if T0 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T0) % Modulus)
 						CoeffCount += 1
 					end
 					if CoeffCount < Num and T1 < 9 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T1 + (if T1 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T1) % Modulus)
 						CoeffCount += 1
 					end
 				end
