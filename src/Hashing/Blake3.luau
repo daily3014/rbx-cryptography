@@ -59,7 +59,7 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	end
 end
 
-local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, V14: number, V15: number, IsFull: boolean?): buffer
+local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, V14: number, V15: number, IsFull: boolean?, Storage: buffer?): buffer
 	local Hash00 = buffer.readu32(Hash, 0)
 	local Hash01 = buffer.readu32(Hash, 4)
 	local Hash02 = buffer.readu32(Hash, 8)
@@ -180,7 +180,7 @@ local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: numbe
 
 		return Result
 	else
-		local Result = buffer.create(CV_SIZE)
+		local Result = Storage or buffer.create(CV_SIZE)
 		buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
 		buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
 		buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
@@ -226,7 +226,7 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 
 	for BlockOffset = 0, MessageLength - BlockSize - 1, BlockSize do
 		local StateFlags = Flags + StateStartFlag + StateEndFlag
-		StateCv = Compress(StateCv, Message, BlockOffset, StateCounter, BlockSize, StateFlags)
+		StateCv = Compress(StateCv, Message, BlockOffset, StateCounter, BlockSize, StateFlags, false, StateCv)
 		StateStartFlag = 0
 		StateChunkNumber += 1
 

@@ -136,11 +136,11 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	PolyVec.VecAddTo(E1, U, K)
 
 	local V = TEMP_V
-	buffer.fill(V, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
 	local PolyMulAdd = Ntt.PolyMulAddAt
-	for I = 0, K - 1 do
+	Ntt.PolyMulAt(TPrime, 0, R, 0, V, 0)
+	for I = 1, K - 1 do
 		PolyMulAdd(TPrime, I * PolySize, R, I * PolySize, V, 0)
 	end
 
@@ -201,11 +201,11 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	PolyVec.VecNtt(U, K)
 
 	local T = TEMP_T
-	buffer.fill(T, 0, 0, N * 2)
 
 	local PolySize = POLY_SIZE
 	local PolyMulAdd = Ntt.PolyMulAddAt
-	for I = 0, K - 1 do
+	Ntt.PolyMulAt(SPrime, 0, U, 0, T, 0)
+	for I = 1, K - 1 do
 		PolyMulAdd(SPrime, I * PolySize, U, I * PolySize, T, 0)
 	end
 

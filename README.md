@@ -152,8 +152,8 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 |-------------------------|-------------|--------------|-----------------------------------------|------------------|
 | EdDSA (Roundtrip)       | Sign+Verify | **346 μs**   | -                                       | -                |
 | X25519 (Exchange)       | ECDH        | **466 μs**   | 628 μs (ccryptolib)                     | **1.35x faster** |
-| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.89 ms**  | 863 ms (WASM-Luau)                      | **457x faster**  |
-| ML-KEM-1024 (Roundtrip) | Encap+Decap | **361 μs**   | 122 ms (WASM-Luau)                      | **338x faster**  |
+| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.70 ms**  | 863 ms (WASM-Luau)                      | **508x faster**  |
+| ML-KEM-1024 (Roundtrip) | Encap+Decap | **350 μs**   | 122 ms (WASM-Luau)                      | **349x faster**  |
 
 ### Utilities
 

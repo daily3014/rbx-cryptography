@@ -49,6 +49,7 @@ local ROUND_CONSTANTS = buffer.create(192) do
 end
 
 local LANES = buffer.create(200)
+local SQUEEZE_ZERO = buffer.create(168)
 
 local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
@@ -222,7 +223,6 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 	local Output = buffer.create(OutputBytes)
 	local OutputOffset = 0
 
-	local ZeroBuffer = buffer.create(RateBytes)
 	while OutputOffset < OutputBytes do
 		local BytesThisRound = math.min(RateBytes, OutputBytes - OutputOffset)
 
@@ -230,7 +230,7 @@ local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes:
 		OutputOffset += BytesThisRound
 
 		if OutputOffset < OutputBytes then
-			Keccak(Lanes, ZeroBuffer, 0, RateBytes, RateBytes)
+			Keccak(Lanes, SQUEEZE_ZERO, 0, RateBytes, RateBytes)
 		end
 	end
 	

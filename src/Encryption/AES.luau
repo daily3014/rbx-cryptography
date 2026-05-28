@@ -331,32 +331,104 @@ local function BuildShoupTables(H: buffer): buffer
 
 	for NibbleIdx = 0, 31 do
 		local TableOffset = NibbleIdx * 256
+		local DoubleBase = NibbleIdx * 64
+
+		local A0 = buffer.readu32(Doubles, DoubleBase)
+		local A1 = buffer.readu32(Doubles, DoubleBase + 4)
+		local A2 = buffer.readu32(Doubles, DoubleBase + 8)
+		local A3 = buffer.readu32(Doubles, DoubleBase + 12)
+		local B0 = buffer.readu32(Doubles, DoubleBase + 16)
+		local B1 = buffer.readu32(Doubles, DoubleBase + 20)
+		local B2 = buffer.readu32(Doubles, DoubleBase + 24)
+		local B3 = buffer.readu32(Doubles, DoubleBase + 28)
+		local C0 = buffer.readu32(Doubles, DoubleBase + 32)
+		local C1 = buffer.readu32(Doubles, DoubleBase + 36)
+		local C2 = buffer.readu32(Doubles, DoubleBase + 40)
+		local C3 = buffer.readu32(Doubles, DoubleBase + 44)
+		local D0 = buffer.readu32(Doubles, DoubleBase + 48)
+		local D1 = buffer.readu32(Doubles, DoubleBase + 52)
+		local D2 = buffer.readu32(Doubles, DoubleBase + 56)
+		local D3 = buffer.readu32(Doubles, DoubleBase + 60)
 
 		buffer.writeu32(AllTables, TableOffset, 0)
 		buffer.writeu32(AllTables, TableOffset + 4, 0)
 		buffer.writeu32(AllTables, TableOffset + 8, 0)
 		buffer.writeu32(AllTables, TableOffset + 12, 0)
 
-		for Entry = 1, 15 do
-			local EntryOffset = TableOffset + Entry * 16
-			local Z0, Z1, Z2, Z3 = 0, 0, 0, 0
+		buffer.writeu32(AllTables, TableOffset + 16, D0)
+		buffer.writeu32(AllTables, TableOffset + 20, D1)
+		buffer.writeu32(AllTables, TableOffset + 24, D2)
+		buffer.writeu32(AllTables, TableOffset + 28, D3)
 
-			for Bit = 0, 3 do
-				if bit32.band(Entry, bit32.lshift(1, 3 - Bit)) ~= 0 then
-					local DoubleOffset = (NibbleIdx * 4 + Bit) * 16
+		buffer.writeu32(AllTables, TableOffset + 32, C0)
+		buffer.writeu32(AllTables, TableOffset + 36, C1)
+		buffer.writeu32(AllTables, TableOffset + 40, C2)
+		buffer.writeu32(AllTables, TableOffset + 44, C3)
 
-					Z0 = bit32.bxor(Z0, buffer.readu32(Doubles, DoubleOffset))
-					Z1 = bit32.bxor(Z1, buffer.readu32(Doubles, DoubleOffset + 4))
-					Z2 = bit32.bxor(Z2, buffer.readu32(Doubles, DoubleOffset + 8))
-					Z3 = bit32.bxor(Z3, buffer.readu32(Doubles, DoubleOffset + 12))
-				end
-			end
+		buffer.writeu32(AllTables, TableOffset + 48, bit32.bxor(C0, D0))
+		buffer.writeu32(AllTables, TableOffset + 52, bit32.bxor(C1, D1))
+		buffer.writeu32(AllTables, TableOffset + 56, bit32.bxor(C2, D2))
+		buffer.writeu32(AllTables, TableOffset + 60, bit32.bxor(C3, D3))
 
-			buffer.writeu32(AllTables, EntryOffset, Z0)
-			buffer.writeu32(AllTables, EntryOffset + 4, Z1)
-			buffer.writeu32(AllTables, EntryOffset + 8, Z2)
-			buffer.writeu32(AllTables, EntryOffset + 12, Z3)
-		end
+		buffer.writeu32(AllTables, TableOffset + 64, B0)
+		buffer.writeu32(AllTables, TableOffset + 68, B1)
+		buffer.writeu32(AllTables, TableOffset + 72, B2)
+		buffer.writeu32(AllTables, TableOffset + 76, B3)
+
+		buffer.writeu32(AllTables, TableOffset + 80, bit32.bxor(B0, D0))
+		buffer.writeu32(AllTables, TableOffset + 84, bit32.bxor(B1, D1))
+		buffer.writeu32(AllTables, TableOffset + 88, bit32.bxor(B2, D2))
+		buffer.writeu32(AllTables, TableOffset + 92, bit32.bxor(B3, D3))
+
+		buffer.writeu32(AllTables, TableOffset + 96, bit32.bxor(B0, C0))
+		buffer.writeu32(AllTables, TableOffset + 100, bit32.bxor(B1, C1))
+		buffer.writeu32(AllTables, TableOffset + 104, bit32.bxor(B2, C2))
+		buffer.writeu32(AllTables, TableOffset + 108, bit32.bxor(B3, C3))
+
+		buffer.writeu32(AllTables, TableOffset + 112, bit32.bxor(B0, C0, D0))
+		buffer.writeu32(AllTables, TableOffset + 116, bit32.bxor(B1, C1, D1))
+		buffer.writeu32(AllTables, TableOffset + 120, bit32.bxor(B2, C2, D2))
+		buffer.writeu32(AllTables, TableOffset + 124, bit32.bxor(B3, C3, D3))
+
+		buffer.writeu32(AllTables, TableOffset + 128, A0)
+		buffer.writeu32(AllTables, TableOffset + 132, A1)
+		buffer.writeu32(AllTables, TableOffset + 136, A2)
+		buffer.writeu32(AllTables, TableOffset + 140, A3)
+
+		buffer.writeu32(AllTables, TableOffset + 144, bit32.bxor(A0, D0))
+		buffer.writeu32(AllTables, TableOffset + 148, bit32.bxor(A1, D1))
+		buffer.writeu32(AllTables, TableOffset + 152, bit32.bxor(A2, D2))
+		buffer.writeu32(AllTables, TableOffset + 156, bit32.bxor(A3, D3))
+
+		buffer.writeu32(AllTables, TableOffset + 160, bit32.bxor(A0, C0))
+		buffer.writeu32(AllTables, TableOffset + 164, bit32.bxor(A1, C1))
+		buffer.writeu32(AllTables, TableOffset + 168, bit32.bxor(A2, C2))
+		buffer.writeu32(AllTables, TableOffset + 172, bit32.bxor(A3, C3))
+
+		buffer.writeu32(AllTables, TableOffset + 176, bit32.bxor(A0, C0, D0))
+		buffer.writeu32(AllTables, TableOffset + 180, bit32.bxor(A1, C1, D1))
+		buffer.writeu32(AllTables, TableOffset + 184, bit32.bxor(A2, C2, D2))
+		buffer.writeu32(AllTables, TableOffset + 188, bit32.bxor(A3, C3, D3))
+
+		buffer.writeu32(AllTables, TableOffset + 192, bit32.bxor(A0, B0))
+		buffer.writeu32(AllTables, TableOffset + 196, bit32.bxor(A1, B1))
+		buffer.writeu32(AllTables, TableOffset + 200, bit32.bxor(A2, B2))
+		buffer.writeu32(AllTables, TableOffset + 204, bit32.bxor(A3, B3))
+
+		buffer.writeu32(AllTables, TableOffset + 208, bit32.bxor(A0, B0, D0))
+		buffer.writeu32(AllTables, TableOffset + 212, bit32.bxor(A1, B1, D1))
+		buffer.writeu32(AllTables, TableOffset + 216, bit32.bxor(A2, B2, D2))
+		buffer.writeu32(AllTables, TableOffset + 220, bit32.bxor(A3, B3, D3))
+
+		buffer.writeu32(AllTables, TableOffset + 224, bit32.bxor(A0, B0, C0))
+		buffer.writeu32(AllTables, TableOffset + 228, bit32.bxor(A1, B1, C1))
+		buffer.writeu32(AllTables, TableOffset + 232, bit32.bxor(A2, B2, C2))
+		buffer.writeu32(AllTables, TableOffset + 236, bit32.bxor(A3, B3, C3))
+
+		buffer.writeu32(AllTables, TableOffset + 240, bit32.bxor(bit32.bxor(A0, B0), bit32.bxor(C0, D0)))
+		buffer.writeu32(AllTables, TableOffset + 244, bit32.bxor(bit32.bxor(A1, B1), bit32.bxor(C1, D1)))
+		buffer.writeu32(AllTables, TableOffset + 248, bit32.bxor(bit32.bxor(A2, B2), bit32.bxor(C2, D2)))
+		buffer.writeu32(AllTables, TableOffset + 252, bit32.bxor(bit32.bxor(A3, B3), bit32.bxor(C3, D3)))
 	end
 
 	return AllTables

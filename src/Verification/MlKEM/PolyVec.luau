@@ -37,12 +37,13 @@ function PolyVec.MatVecMultiply(A: buffer, B: buffer, C: buffer, ARows: number, 
 	local PolySize = POLY_SIZE
 	local Modulus = Q
 	local PolyMulAdd = Ntt.PolyMulAddAt
+	local PolyMul = Ntt.PolyMulAt
 
 	for I = 0, ARows - 1 do
 		local COffset = I * PolySize
-		buffer.fill(C, COffset, 0, PolySize)
 
-		for K = 0, ACols - 1 do
+		PolyMul(A, I * ACols * PolySize, B, 0, C, COffset)
+		for K = 1, ACols - 1 do
 			PolyMulAdd(A, (I * ACols + K) * PolySize, B, K * PolySize, C, COffset)
 		end
 

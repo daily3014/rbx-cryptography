@@ -33,7 +33,6 @@ local POLY_SIZE = N * 2
 local Q = 13 * 256 + 1
 
 local SAMPLE_NTT_CHUNK = buffer.create(168)
-local SAMPLE_NTT_POLY = buffer.create(N * 2)
 local GEN_VECTOR_PRF_OUTPUT = buffer.create(192)
 local GEN_VECTOR_PRF_INPUT = buffer.create(33)
 
@@ -102,7 +101,7 @@ local function SamplePolyCbd3(Prf: buffer, Poly: buffer, Offset: number?)
 	end
 end
 
-local function SampleNtt(XofInput: buffer, Poly: buffer)
+local function SampleNtt(XofInput: buffer, Poly: buffer, PolyBase: number)
 	local LN = N
 	local LQ = Q
 	local CoeffIndex = 0
@@ -121,12 +120,12 @@ local function SampleNtt(XofInput: buffer, Poly: buffer)
 			local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
 
 			if D1 < LQ then
-				buffer.writeu16(Poly, CoeffIndex * 2, D1)
+				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D1)
 				CoeffIndex += 1
 			end
 
 			if D2 < LQ and CoeffIndex < LN then
-				buffer.writeu16(Poly, CoeffIndex * 2, D2)
+				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D2)
 				CoeffIndex += 1
 			end
 
@@ -142,12 +141,12 @@ local function SampleNtt(XofInput: buffer, Poly: buffer)
 			local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
 
 			if D1 < LQ then
-				buffer.writeu16(Poly, CoeffIndex * 2, D1)
+				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D1)
 				CoeffIndex += 1
 			end
 
 			if D2 < LQ and CoeffIndex < LN then
-				buffer.writeu16(Poly, CoeffIndex * 2, D2)
+				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D2)
 				CoeffIndex += 1
 			end
 
@@ -164,7 +163,6 @@ function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): bu
 	buffer.copy(XofInput, 0, Rho, 0, 32)
 
 	local PolySize = POLY_SIZE
-	local Poly = SAMPLE_NTT_POLY
 	local Sample = SampleNtt
 
 	for I = 0, K - 1 do
@@ -177,9 +175,7 @@ function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): bu
 				buffer.writeu8(XofInput, 33, I)
 			end
 
-			Sample(XofInput, Poly)
-			local Index = (I * K + J) * PolySize
-			buffer.copy(Matrix, Index, Poly, 0, PolySize)
+			Sample(XofInput, Matrix, (I * K + J) * PolySize)
 		end
 	end
 

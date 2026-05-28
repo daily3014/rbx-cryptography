@@ -24,6 +24,12 @@ local Sampling = {}
 local WORKSPACE_MSG_34 = buffer.create(34)
 local WORKSPACE_MSG_66 = buffer.create(66)
 
+local EXPAND_A_SQUEEZE = buffer.create(504)
+local EXPAND_S_SQUEEZE = buffer.create(272)
+local EXPAND_MASK_SQUEEZE = buffer.create(640)
+local SAMPLE_BALL_TAU = buffer.create(8)
+local SAMPLE_BALL_SQUEEZE = buffer.create(136)
+
 function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 	buffer.copy(WORKSPACE_MSG_34, 0, Rho, 0, 32)
 
@@ -31,6 +37,7 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 	local Num = N
 	local Modulus = Q
 	local XOF = XOF
+	local Squeeze = EXPAND_A_SQUEEZE
 
 	for I = 0, K - 1 do
 		for J = 0, L - 1 do
@@ -46,9 +53,10 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 			local ChunkSize = 504
 
 			while CoeffCount < Num do
-				local TotalOutput = XOF.Squeeze128(ChunkSize)
+				XOF.Squeeze128Into(Squeeze, ChunkSize, 0)
+				local TotalOutput = Squeeze
 				local ByteOffset = 0
-				local OutputLen = buffer.len(TotalOutput)
+				local OutputLen = ChunkSize
 
 				while CoeffCount < Num and ByteOffset + 5 < OutputLen do
 					local Chunk1 = buffer.readu32(TotalOutput, ByteOffset)
@@ -102,6 +110,7 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 	local Message = WORKSPACE_MSG_66
 	local Num = N
 	local Modulus = Q
+	local Squeeze = EXPAND_S_SQUEEZE
 
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
@@ -116,9 +125,10 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 		local ChunkSize = if Eta == 2 then 136 else 272
 
 		while CoeffCount < Num do
-			local TotalOutput = XOF.Squeeze256(ChunkSize)
+			XOF.Squeeze256Into(Squeeze, ChunkSize, 0)
+			local TotalOutput = Squeeze
 			local ByteOffset = 0
-			local OutputLen = buffer.len(TotalOutput)
+			local OutputLen = ChunkSize
 
 			if Eta == 2 then
 				while CoeffCount < Num and ByteOffset + 3 < OutputLen do
@@ -263,6 +273,7 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 	local Num = N
 	local Modulus = Q
 	local G1 = Gamma1
+	local Squeeze = EXPAND_MASK_SQUEEZE
 
 	for I = 0, L - 1 do
 		local Offset = I * Num * 4
@@ -273,7 +284,8 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 		XOF.Reset256()
 		XOF.Absorb256(Message)
 
-		local Src = XOF.Squeeze256(BufSize)
+		XOF.Squeeze256Into(Squeeze, BufSize, 0)
+		local Src = Squeeze
 
 		if Gamma1BitWidth == 18 then
 			for J = 0, 63 do
@@ -337,19 +349,21 @@ function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number, Lambda: 
 	XOF.Reset256()
 	XOF.Absorb256(Seed)
 
-	local TauBits = XOF.Squeeze256(8)
-	local TauBitsLow = buffer.readu32(TauBits, 0)
-	local TauBitsHigh = buffer.readu32(TauBits, 4)
+	XOF.Squeeze256Into(SAMPLE_BALL_TAU, 8, 0)
+	local TauBitsLow = buffer.readu32(SAMPLE_BALL_TAU, 0)
+	local TauBitsHigh = buffer.readu32(SAMPLE_BALL_TAU, 4)
 
 	local From = N - Tau
 	local I = From
 	local ChunkSize = 136
 	local Modulus = Q
+	local Squeeze = SAMPLE_BALL_SQUEEZE
 
 	while I < N do
-		local RandomBytes = XOF.Squeeze256(ChunkSize)
+		XOF.Squeeze256Into(Squeeze, ChunkSize, 0)
+		local RandomBytes = Squeeze
 		local ByteOffset = 0
-		local OutputLen = buffer.len(RandomBytes)
+		local OutputLen = ChunkSize
 
 		while I < N and ByteOffset + 3 < OutputLen do
 			local Chunk = buffer.readu32(RandomBytes, ByteOffset)

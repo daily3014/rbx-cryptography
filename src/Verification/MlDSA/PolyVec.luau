@@ -65,7 +65,7 @@ function PolyVec.InverseNTT(Vec: buffer, K: number)
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
 
-		for L = 0, 6 do
+		for L = 0, 5 do
 			local Len = bit32.lshift(1, L)
 			local LenX2 = bit32.lshift(Len, 1)
 			local KBeg = bit32.rshift(Num, L) - 1
@@ -83,9 +83,27 @@ function PolyVec.InverseNTT(Vec: buffer, K: number)
 
 					local Product = ((PolyJ - PolyJLen) * NegZetaExpValue) % Modulus
 
-					buffer.writeu32(Vec, JOffset, (PolyJ + PolyJLen) % Modulus)
+					buffer.writeu32(Vec, JOffset, PolyJ + PolyJLen)
 					buffer.writeu32(Vec, JLenOffset, Product)
 				end
+			end
+		end
+
+		for Start = 0, Num - 1, 128 do
+			local KNow = 3 - bit32.rshift(Start, 7)
+			local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
+
+			for J = Start, Start + 63 do
+				local JOffset = Offset + J * 4
+				local JLenOffset = Offset + (J + 64) * 4
+
+				local PolyJ = buffer.readu32(Vec, JOffset)
+				local PolyJLen = buffer.readu32(Vec, JLenOffset)
+
+				local Product = ((PolyJ - PolyJLen) * NegZetaExpValue) % Modulus
+
+				buffer.writeu32(Vec, JOffset, (PolyJ + PolyJLen) % Modulus)
+				buffer.writeu32(Vec, JLenOffset, Product)
 			end
 		end
 
@@ -128,26 +146,76 @@ function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K:
 end
 
 function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number, BCols: number)
-	local Num = N
 	local Modulus = Q
-	local PolyByteSize = Num * 4
 
-	for I = 0, ARows - 1 do
-		local ARowBase = I * ACols * PolyByteSize
-		for J = 0, BCols - 1 do
-			local COffset = (I * BCols + J) * PolyByteSize
+	if BCols == 1 and ACols == 4 then
+		for I = 0, ARows - 1 do
+			local R = I * 4096
+			local CO = I * 1024
+			for E = 0, 1020, 4 do
+				local Acc = buffer.readu32(A, R + E) * buffer.readu32(B, E)
+					+ buffer.readu32(A, R + 1024 + E) * buffer.readu32(B, 1024 + E)
+					+ buffer.readu32(A, R + 2048 + E) * buffer.readu32(B, 2048 + E)
+					+ buffer.readu32(A, R + 3072 + E) * buffer.readu32(B, 3072 + E)
 
-			for L = 0, Num - 1 do
-				local ElementOffset = L * 4
-				local Acc = 0
+				buffer.writeu32(C, CO + E, Acc % Modulus)
+			end
+		end
+	elseif BCols == 1 and ACols == 5 then
+		for I = 0, ARows - 1 do
+			local R = I * 5120
+			local CO = I * 1024
+			for E = 0, 1020, 4 do
+				local Acc = buffer.readu32(A, R + E) * buffer.readu32(B, E)
+					+ buffer.readu32(A, R + 1024 + E) * buffer.readu32(B, 1024 + E)
+					+ buffer.readu32(A, R + 2048 + E) * buffer.readu32(B, 2048 + E)
+					+ buffer.readu32(A, R + 3072 + E) * buffer.readu32(B, 3072 + E)
+					+ buffer.readu32(A, R + 4096 + E) * buffer.readu32(B, 4096 + E)
 
-				for K = 0, ACols - 1 do
-					local AValue = buffer.readu32(A, ARowBase + K * PolyByteSize + ElementOffset)
-					local BValue = buffer.readu32(B, (K * BCols + J) * PolyByteSize + ElementOffset)
-					Acc += AValue * BValue
+				buffer.writeu32(C, CO + E, Acc % Modulus)
+			end
+		end
+	elseif BCols == 1 and ACols == 7 then
+		for I = 0, ARows - 1 do
+			local R = I * 7168
+			local CO = I * 1024
+			for E = 0, 1020, 4 do
+				local Acc = buffer.readu32(A, R + E) * buffer.readu32(B, E)
+					+ buffer.readu32(A, R + 1024 + E) * buffer.readu32(B, 1024 + E)
+					+ buffer.readu32(A, R + 2048 + E) * buffer.readu32(B, 2048 + E)
+					+ buffer.readu32(A, R + 3072 + E) * buffer.readu32(B, 3072 + E)
+					+ buffer.readu32(A, R + 4096 + E) * buffer.readu32(B, 4096 + E)
+					+ buffer.readu32(A, R + 5120 + E) * buffer.readu32(B, 5120 + E)
+					+ buffer.readu32(A, R + 6144 + E) * buffer.readu32(B, 6144 + E)
+
+				buffer.writeu32(C, CO + E, Acc % Modulus)
+			end
+		end
+	else
+		local Num = N
+		local PolyByteSize = Num * 4
+		local BStride = BCols * PolyByteSize
+
+		for I = 0, ARows - 1 do
+			local ARowBase = I * ACols * PolyByteSize
+			for J = 0, BCols - 1 do
+				local COffset = (I * BCols + J) * PolyByteSize
+				local BColBase = J * PolyByteSize
+
+				for L = 0, Num - 1 do
+					local ElementOffset = L * 4
+					local Acc = 0
+					local AOff = ARowBase + ElementOffset
+					local BOff = BColBase + ElementOffset
+
+					for K = 0, ACols - 1 do
+						Acc += buffer.readu32(A, AOff) * buffer.readu32(B, BOff)
+						AOff += PolyByteSize
+						BOff += BStride
+					end
+
+					buffer.writeu32(C, COffset + ElementOffset, Acc % Modulus)
 				end
-
-				buffer.writeu32(C, COffset + ElementOffset, Acc % Modulus)
 			end
 		end
 	end
