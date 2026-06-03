@@ -209,10 +209,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		local Cc = bit32.band(bit32.rshift(C2, 16), 0xFF)
 		local D = bit32.rshift(C3, 24)
 		local NewC0 = bit32.bxor(
-			buffer.readu32(LT0, A * 4),
-			buffer.readu32(LT1, B * 4),
-			buffer.readu32(LT2, Cc * 4),
-			buffer.readu32(LT3, D * 4),
+			buffer.readu32(LT0, bit32.lshift(A, 2)),
+			buffer.readu32(LT1, bit32.lshift(B, 2)),
+			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
+			buffer.readu32(LT3, bit32.lshift(D, 2)),
 			buffer.readu32(RoundKeys, KOff))
 
 		A = bit32.band(C1, 0xFF)
@@ -220,10 +220,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		Cc = bit32.band(bit32.rshift(C3, 16), 0xFF)
 		D = bit32.rshift(C0, 24)
 		local NewC1 = bit32.bxor(
-			buffer.readu32(LT0, A * 4),
-			buffer.readu32(LT1, B * 4),
-			buffer.readu32(LT2, Cc * 4),
-			buffer.readu32(LT3, D * 4),
+			buffer.readu32(LT0, bit32.lshift(A, 2)),
+			buffer.readu32(LT1, bit32.lshift(B, 2)),
+			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
+			buffer.readu32(LT3, bit32.lshift(D, 2)),
 			buffer.readu32(RoundKeys, KOff + 4))
 
 		A = bit32.band(C2, 0xFF)
@@ -231,10 +231,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		Cc = bit32.band(bit32.rshift(C0, 16), 0xFF)
 		D = bit32.rshift(C1, 24)
 		local NewC2 = bit32.bxor(
-			buffer.readu32(LT0, A * 4),
-			buffer.readu32(LT1, B * 4),
-			buffer.readu32(LT2, Cc * 4),
-			buffer.readu32(LT3, D * 4),
+			buffer.readu32(LT0, bit32.lshift(A, 2)),
+			buffer.readu32(LT1, bit32.lshift(B, 2)),
+			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
+			buffer.readu32(LT3, bit32.lshift(D, 2)),
 			buffer.readu32(RoundKeys, KOff + 8))
 
 		A = bit32.band(C3, 0xFF)
@@ -242,10 +242,10 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 		Cc = bit32.band(bit32.rshift(C1, 16), 0xFF)
 		D = bit32.rshift(C2, 24)
 		local NewC3 = bit32.bxor(
-			buffer.readu32(LT0, A * 4),
-			buffer.readu32(LT1, B * 4),
-			buffer.readu32(LT2, Cc * 4),
-			buffer.readu32(LT3, D * 4),
+			buffer.readu32(LT0, bit32.lshift(A, 2)),
+			buffer.readu32(LT1, bit32.lshift(B, 2)),
+			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
+			buffer.readu32(LT3, bit32.lshift(D, 2)),
 			buffer.readu32(RoundKeys, KOff + 12))
 
 		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
@@ -439,13 +439,13 @@ local function GfMult(Y: buffer, Tables: buffer, Z: buffer)
 
 	for ByteIdx = 0, 15 do
 		local ByteVal = buffer.readu8(Y, ByteIdx)
-		local BaseOffset = ByteIdx * 512
+		local BaseOffset = bit32.lshift(ByteIdx, 9)
 
-		local HighOffset = BaseOffset + bit32.rshift(ByteVal, 4) * 16
+		local HighOffset = bit32.bor(BaseOffset, bit32.band(ByteVal, 0xF0))
 		ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
 		ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, HighOffset + 8))
 
-		local LowOffset = BaseOffset + 256 + bit32.band(ByteVal, 0x0F) * 16
+		local LowOffset = bit32.bor(BaseOffset, 256, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
 		ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
 		ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, LowOffset + 8))
 	end

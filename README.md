@@ -117,13 +117,13 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 | Algorithm   | Data Size | This Library | HashLib  | Alternative              | Other Libraries   | Improvement                   |
 |-------------|-----------|--------------|----------|--------------------------|-------------------|-------------------------------|
-| SHA-256     | 20k       | **218 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **9.4x faster** than HashLib  |
-| SHA-512     | 20k       | **121 μs**   | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **35.9x faster** than HashLib |
-| SHA3-512    | 20k       | **186 μs**   | 10.60 ms | -                        | -                 | **57.0x faster** than HashLib |
-| BLAKE3      | 20k       | **105 μs**   | -        | -                        | -                 | -                             |
-| HMAC-BLAKE3 | 20k       | **113 μs**   | -        | -                        | -                 | -                             |
-| KMAC-128    | 20k       | **95 μs**    | -        | -                        | -                 | -                             |
-| KMAC-256    | 20k       | **110 μs**   | -        | -                        | -                 | -                             |
+| SHA-256     | 20k       | **115 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **17.9x faster** than HashLib |
+| SHA-512     | 20k       | **49 μs**    | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **88.7x faster** than HashLib |
+| SHA3-512    | 20k       | **142 μs**   | 10.60 ms | -                        | -                 | **74.6x faster** than HashLib |
+| BLAKE3      | 20k       | **64 μs**    | -        | -                        | -                 | -                             |
+| HMAC-BLAKE3 | 20k       | **74 μs**    | -        | -                        | -                 | -                             |
+| KMAC-128    | 20k       | **75 μs**    | -        | -                        | -                 | -                             |
+| KMAC-256    | 20k       | **88 μs**    | -        | -                        | -                 | -                             |
 
 ### Password Hashing (Argon2id)
 
@@ -137,12 +137,12 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 | Algorithm                     | Data Size | This Library | Alternative                                | Other Libraries    | Improvement         |
 |-------------------------------|-----------|--------------|--------------------------------------------|--------------------|---------------------|
-| ChaCha20 (Encrypt)            | 20k       | **89 μs**    | 7.87 ms (EncryptedNet)                     | -                  | **88.4x faster**    |
-| ChaCha20 (Roundtrip)          | 20k       | **178 μs**   | ~15 ms (EncryptedNet)                      | -                  | **84.3x faster**    |
-| ChaCha20-Poly1305 (Encrypt)   | 20k       | **110 μs**   | -                                          | -                  | -                   |
-| ChaCha20-Poly1305 (Roundtrip) | 20k       | **220 μs**   | -                                          | -                  | -                   |
-| AES-GCM (Encrypt)             | 20k       | **520 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **3.6x faster**     |
-| AES-GCM (Roundtrip)           | 20k       | **1.05 ms**  | -                                          | -                  | -                   |
+| ChaCha20 (Encrypt)            | 20k       | **47 μs**    | 7.87 ms (EncryptedNet)                     | -                  | **167x faster**     |
+| ChaCha20 (Roundtrip)          | 20k       | **91 μs**    | ~15 ms (EncryptedNet)                      | -                  | **165x faster**     |
+| ChaCha20-Poly1305 (Encrypt)   | 20k       | **63 μs**    | -                                          | -                  | -                   |
+| ChaCha20-Poly1305 (Roundtrip) | 20k       | **128 μs**   | -                                          | -                  | -                   |
+| AES-GCM (Encrypt)             | 20k       | **329 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **5.7x faster**     |
+| AES-GCM (Roundtrip)           | 20k       | **650 μs**   | -                                          | -                  | -                   |
 | XOR (Encrypt)                 | 1 million | **537 μs**   | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **318,000x faster** |
 | XOR (Roundtrip)               | 1 million | **1.08 ms**  | 98.9 ms (Devfourm)                         | ~342000 ms (daily) | **316,000x faster** |
 
@@ -150,10 +150,10 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 | Algorithm               | Operation   | Time         | Alternative                             | Improvement      |
 |-------------------------|-------------|--------------|-----------------------------------------|------------------|
-| EdDSA (Roundtrip)       | Sign+Verify | **346 μs**   | -                                       | -                |
+| EdDSA (Roundtrip)       | Sign+Verify | **298 μs**   | -                                       | -                |
 | X25519 (Exchange)       | ECDH        | **466 μs**   | 628 μs (ccryptolib)                     | **1.35x faster** |
-| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.70 ms**  | 863 ms (WASM-Luau)                      | **508x faster**  |
-| ML-KEM-1024 (Roundtrip) | Encap+Decap | **350 μs**   | 122 ms (WASM-Luau)                      | **349x faster**  |
+| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.18 ms**  | 863 ms (WASM-Luau)                      | **730x faster**  |
+| ML-KEM-1024 (Roundtrip) | Encap+Decap | **299 μs**   | 122 ms (WASM-Luau)                      | **408x faster**  |
 
 ### Utilities
 

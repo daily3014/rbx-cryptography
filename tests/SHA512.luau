@@ -13,7 +13,7 @@ local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local SHA512: any = if IsCLI then require("../src/Hashing/SHA2/SHA512") else require("../Hashing/SHA2/SHA512")
+local SHA512: any = if IsCLI then require("../src/Hashing/SHA2/SHA512").SHA512 else require("../Hashing/SHA2/SHA512").SHA512
 local FromHex = Testing.FromHex
 
 type HashTest = {

@@ -31,6 +31,8 @@ local ToHex = Conversions.ToHex
 
 local Blake3 = {}
 
+local MASK = 0xFFFFFFFFi
+
 local BLOCK_SIZE = 64
 local CV_SIZE = 32
 local EXTENDED_CV_SIZE = 64
@@ -59,140 +61,307 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	end
 end
 
-local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, V14: number, V15: number, IsFull: boolean?, Storage: buffer?): buffer
-	local Hash00 = buffer.readu32(Hash, 0)
-	local Hash01 = buffer.readu32(Hash, 4)
-	local Hash02 = buffer.readu32(Hash, 8)
-	local Hash03 = buffer.readu32(Hash, 12)
-	local Hash04 = buffer.readu32(Hash, 16)
-	local Hash05 = buffer.readu32(Hash, 20)
-	local Hash06 = buffer.readu32(Hash, 24)
-	local Hash07 = buffer.readu32(Hash, 28)
+local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, BlockLength: number, Flags: number, IsFull: boolean?, Storage: buffer?): buffer
+	local Hash00 = integer.create(buffer.readu32(Hash, 0)) :: integer
+	local Hash01 = integer.create(buffer.readu32(Hash, 4)) :: integer
+	local Hash02 = integer.create(buffer.readu32(Hash, 8)) :: integer
+	local Hash03 = integer.create(buffer.readu32(Hash, 12)) :: integer
+	local Hash04 = integer.create(buffer.readu32(Hash, 16)) :: integer
+	local Hash05 = integer.create(buffer.readu32(Hash, 20)) :: integer
+	local Hash06 = integer.create(buffer.readu32(Hash, 24)) :: integer
+	local Hash07 = integer.create(buffer.readu32(Hash, 28)) :: integer
 
 	local V00, V01, V02, V03 = Hash00, Hash01, Hash02, Hash03
 	local V04, V05, V06, V07 = Hash04, Hash05, Hash06, Hash07
-	local V08, V09, V10, V11 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+	local V08, V09, V10, V11 = 0x6a09e667i, 0xbb67ae85i, 0x3c6ef372i, 0xa54ff53ai
 
-	local V12 = Counter % (2 ^ 32)
-	local V13 = (Counter - V12) * (2 ^ -32)
+	local CounterLow = Counter % 0x100000000
+	local V12 = integer.create(CounterLow) :: integer
+	local V13 = integer.create((Counter - CounterLow) / 0x100000000) :: integer
+	local V14 = integer.create(BlockLength) :: integer
+	local V15 = integer.create(Flags) :: integer
 
-	local M00 = buffer.readu32(MessageBlock, MessageOffset + 0)
-	local M01 = buffer.readu32(MessageBlock, MessageOffset + 4)
-	local M02 = buffer.readu32(MessageBlock, MessageOffset + 8)
-	local M03 = buffer.readu32(MessageBlock, MessageOffset + 12)
-	local M04 = buffer.readu32(MessageBlock, MessageOffset + 16)
-	local M05 = buffer.readu32(MessageBlock, MessageOffset + 20)
-	local M06 = buffer.readu32(MessageBlock, MessageOffset + 24)
-	local M07 = buffer.readu32(MessageBlock, MessageOffset + 28)
-	local M08 = buffer.readu32(MessageBlock, MessageOffset + 32)
-	local M09 = buffer.readu32(MessageBlock, MessageOffset + 36)
-	local M10 = buffer.readu32(MessageBlock, MessageOffset + 40)
-	local M11 = buffer.readu32(MessageBlock, MessageOffset + 44)
-	local M12 = buffer.readu32(MessageBlock, MessageOffset + 48)
-	local M13 = buffer.readu32(MessageBlock, MessageOffset + 52)
-	local M14 = buffer.readu32(MessageBlock, MessageOffset + 56)
-	local M15 = buffer.readu32(MessageBlock, MessageOffset + 60)
+	local M00 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 0)) :: integer
+	local M01 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 4)) :: integer
+	local M02 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 8)) :: integer
+	local M03 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 12)) :: integer
+	local M04 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 16)) :: integer
+	local M05 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 20)) :: integer
+	local M06 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 24)) :: integer
+	local M07 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 28)) :: integer
+	local M08 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 32)) :: integer
+	local M09 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 36)) :: integer
+	local M10 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 40)) :: integer
+	local M11 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 44)) :: integer
+	local M12 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 48)) :: integer
+	local M13 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 52)) :: integer
+	local M14 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 56)) :: integer
+	local M15 = integer.create(buffer.readu32(MessageBlock, MessageOffset + 60)) :: integer
 
-	local Temp
-	for Index = 1, 7 do
-		V00 += V04 + M00; V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
-		V08 += V12; V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
-		V00 += V04 + M01; V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
-		V08 += V12; V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M00), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M01), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M02), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M03), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M04), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M05), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M06), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M07), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M08), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M09), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M10), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M11), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M12), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M13), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M14), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M15), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
-		V01 += V05 + M02; V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
-		V09 += V13; V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
-		V01 += V05 + M03; V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
-		V09 += V13; V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M02), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M06), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M03), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M10), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M07), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M00), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M04), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M13), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M01), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M11), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M12), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M05), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M09), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M14), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M15), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M08), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
-		V02 += V06 + M04; V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
-		V10 += V14; V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
-		V02 += V06 + M05; V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
-		V10 += V14; V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M03), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M04), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M10), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M12), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M13), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M02), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M07), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M14), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M06), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M05), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M09), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M00), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M11), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M15), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M08), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M01), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
-		V03 += V07 + M06; V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
-		V11 += V15; V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
-		V03 += V07 + M07; V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
-		V11 += V15; V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M10), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M07), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M12), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M09), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M14), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M03), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M13), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M15), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M04), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M00), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M11), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M02), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M05), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M08), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M01), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M06), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
-		V00 += V05 + M08; V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
-		V10 += V15; V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
-		V00 += V05 + M09; V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
-		V10 += V15; V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M12), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M13), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M09), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M11), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M15), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M10), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M14), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M08), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M07), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M02), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M05), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M03), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M00), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M01), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M06), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M04), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
-		V01 += V06 + M10; V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
-		V11 += V12; V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
-		V01 += V06 + M11; V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
-		V11 += V12; V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M09), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M14), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M11), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M05), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M08), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M12), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M15), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M01), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M13), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M03), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M00), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M10), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M02), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M06), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M04), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M07), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
-		V02 += V07 + M12; V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
-		V08 += V13; V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
-		V02 += V07 + M13; V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
-		V08 += V13; V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
-
-		V03 += V04 + M14; V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
-		V09 += V14; V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
-		V03 += V04 + M15; V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
-		V09 += V14; V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
-
-		if Index ~= 7 then
-			Temp = M02
-			M02 = M03
-			M03 = M10
-			M10 = M12
-			M12 = M09
-			M09 = M11
-			M11 = M05
-			M05 = M00
-			M00 = Temp
-
-			Temp = M06
-			M06 = M04
-			M04 = M07
-			M07 = M13
-			M13 = M14
-			M14 = M15
-			M15 = M08
-			M08 = M01
-			M01 = Temp
-		end
-	end
+		V00 = integer.band(integer.add(integer.add(V00, V04), M11), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V04), M15), MASK); V12 = integer.bxor(V12, V00); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V12), MASK); V04 = integer.bxor(V04, V08); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M05), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V05), M00), MASK); V13 = integer.bxor(V13, V01); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V13), MASK); V05 = integer.bxor(V05, V09); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M01), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V06), M09), MASK); V14 = integer.bxor(V14, V02); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V14), MASK); V06 = integer.bxor(V06, V10); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M08), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V07), M06), MASK); V15 = integer.bxor(V15, V03); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V15), MASK); V07 = integer.bxor(V07, V11); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M14), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 16i), integer.rshift(V15, 16i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 20i), integer.rshift(V05, 12i)), MASK)
+		V00 = integer.band(integer.add(integer.add(V00, V05), M10), MASK); V15 = integer.bxor(V15, V00); V15 = integer.band(integer.bor(integer.lshift(V15, 24i), integer.rshift(V15, 8i)), MASK)
+		V10 = integer.band(integer.add(V10, V15), MASK); V05 = integer.bxor(V05, V10); V05 = integer.band(integer.bor(integer.lshift(V05, 25i), integer.rshift(V05, 7i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M02), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 16i), integer.rshift(V12, 16i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 20i), integer.rshift(V06, 12i)), MASK)
+		V01 = integer.band(integer.add(integer.add(V01, V06), M12), MASK); V12 = integer.bxor(V12, V01); V12 = integer.band(integer.bor(integer.lshift(V12, 24i), integer.rshift(V12, 8i)), MASK)
+		V11 = integer.band(integer.add(V11, V12), MASK); V06 = integer.bxor(V06, V11); V06 = integer.band(integer.bor(integer.lshift(V06, 25i), integer.rshift(V06, 7i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M03), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 16i), integer.rshift(V13, 16i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 20i), integer.rshift(V07, 12i)), MASK)
+		V02 = integer.band(integer.add(integer.add(V02, V07), M04), MASK); V13 = integer.bxor(V13, V02); V13 = integer.band(integer.bor(integer.lshift(V13, 24i), integer.rshift(V13, 8i)), MASK)
+		V08 = integer.band(integer.add(V08, V13), MASK); V07 = integer.bxor(V07, V08); V07 = integer.band(integer.bor(integer.lshift(V07, 25i), integer.rshift(V07, 7i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M07), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 16i), integer.rshift(V14, 16i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 20i), integer.rshift(V04, 12i)), MASK)
+		V03 = integer.band(integer.add(integer.add(V03, V04), M13), MASK); V14 = integer.bxor(V14, V03); V14 = integer.band(integer.bor(integer.lshift(V14, 24i), integer.rshift(V14, 8i)), MASK)
+		V09 = integer.band(integer.add(V09, V14), MASK); V04 = integer.bxor(V04, V09); V04 = integer.band(integer.bor(integer.lshift(V04, 25i), integer.rshift(V04, 7i)), MASK)
 
 	if IsFull then
 		local Result = buffer.create(EXTENDED_CV_SIZE)
-		buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
-		buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
-		buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
-		buffer.writeu32(Result, 12, bit32.bxor(V03, V11))
-		buffer.writeu32(Result, 16, bit32.bxor(V04, V12))
-		buffer.writeu32(Result, 20, bit32.bxor(V05, V13))
-		buffer.writeu32(Result, 24, bit32.bxor(V06, V14))
-		buffer.writeu32(Result, 28, bit32.bxor(V07, V15))
-
-		buffer.writeu32(Result, 32, bit32.bxor(V08, Hash00))
-		buffer.writeu32(Result, 36, bit32.bxor(V09, Hash01))
-		buffer.writeu32(Result, 40, bit32.bxor(V10, Hash02))
-		buffer.writeu32(Result, 44, bit32.bxor(V11, Hash03))
-		buffer.writeu32(Result, 48, bit32.bxor(V12, Hash04))
-		buffer.writeu32(Result, 52, bit32.bxor(V13, Hash05))
-		buffer.writeu32(Result, 56, bit32.bxor(V14, Hash06))
-		buffer.writeu32(Result, 60, bit32.bxor(V15, Hash07))
-
+		buffer.writeu32(Result, 0, integer.tonumber(integer.bxor(V00, V08)))
+		buffer.writeu32(Result, 4, integer.tonumber(integer.bxor(V01, V09)))
+		buffer.writeu32(Result, 8, integer.tonumber(integer.bxor(V02, V10)))
+		buffer.writeu32(Result, 12, integer.tonumber(integer.bxor(V03, V11)))
+		buffer.writeu32(Result, 16, integer.tonumber(integer.bxor(V04, V12)))
+		buffer.writeu32(Result, 20, integer.tonumber(integer.bxor(V05, V13)))
+		buffer.writeu32(Result, 24, integer.tonumber(integer.bxor(V06, V14)))
+		buffer.writeu32(Result, 28, integer.tonumber(integer.bxor(V07, V15)))
+		buffer.writeu32(Result, 32, integer.tonumber(integer.bxor(V08, Hash00)))
+		buffer.writeu32(Result, 36, integer.tonumber(integer.bxor(V09, Hash01)))
+		buffer.writeu32(Result, 40, integer.tonumber(integer.bxor(V10, Hash02)))
+		buffer.writeu32(Result, 44, integer.tonumber(integer.bxor(V11, Hash03)))
+		buffer.writeu32(Result, 48, integer.tonumber(integer.bxor(V12, Hash04)))
+		buffer.writeu32(Result, 52, integer.tonumber(integer.bxor(V13, Hash05)))
+		buffer.writeu32(Result, 56, integer.tonumber(integer.bxor(V14, Hash06)))
+		buffer.writeu32(Result, 60, integer.tonumber(integer.bxor(V15, Hash07)))
 		return Result
 	else
 		local Result = Storage or buffer.create(CV_SIZE)
-		buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
-		buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
-		buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
-		buffer.writeu32(Result, 12, bit32.bxor(V03, V11))
-		buffer.writeu32(Result, 16, bit32.bxor(V04, V12))
-		buffer.writeu32(Result, 20, bit32.bxor(V05, V13))
-		buffer.writeu32(Result, 24, bit32.bxor(V06, V14))
-		buffer.writeu32(Result, 28, bit32.bxor(V07, V15))
-
+		buffer.writeu32(Result, 0, integer.tonumber(integer.bxor(V00, V08)))
+		buffer.writeu32(Result, 4, integer.tonumber(integer.bxor(V01, V09)))
+		buffer.writeu32(Result, 8, integer.tonumber(integer.bxor(V02, V10)))
+		buffer.writeu32(Result, 12, integer.tonumber(integer.bxor(V03, V11)))
+		buffer.writeu32(Result, 16, integer.tonumber(integer.bxor(V04, V12)))
+		buffer.writeu32(Result, 20, integer.tonumber(integer.bxor(V05, V13)))
+		buffer.writeu32(Result, 24, integer.tonumber(integer.bxor(V06, V14)))
+		buffer.writeu32(Result, 28, integer.tonumber(integer.bxor(V07, V15)))
 		return Result
 	end
 end
+
 
 local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message: buffer, Length: number): buffer
 	local MessageLength = buffer.len(Message)

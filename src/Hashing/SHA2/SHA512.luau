@@ -65,46 +65,1192 @@ local function PreProcess(Contents: buffer): (buffer, number)
 	return Result, NewLength
 end
 
+local function ProcessSchedule(LW: buffer)
+	do
+		local P15 = buffer.readinteger(LW, 8)
+		local P2 = buffer.readinteger(LW, 112)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 128, integer.add(integer.add(buffer.readinteger(LW, 0), S0), integer.add(buffer.readinteger(LW, 72), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 16)
+		local P2 = buffer.readinteger(LW, 120)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 136, integer.add(integer.add(buffer.readinteger(LW, 8), S0), integer.add(buffer.readinteger(LW, 80), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 24)
+		local P2 = buffer.readinteger(LW, 128)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 144, integer.add(integer.add(buffer.readinteger(LW, 16), S0), integer.add(buffer.readinteger(LW, 88), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 32)
+		local P2 = buffer.readinteger(LW, 136)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 152, integer.add(integer.add(buffer.readinteger(LW, 24), S0), integer.add(buffer.readinteger(LW, 96), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 40)
+		local P2 = buffer.readinteger(LW, 144)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 160, integer.add(integer.add(buffer.readinteger(LW, 32), S0), integer.add(buffer.readinteger(LW, 104), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 48)
+		local P2 = buffer.readinteger(LW, 152)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 168, integer.add(integer.add(buffer.readinteger(LW, 40), S0), integer.add(buffer.readinteger(LW, 112), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 56)
+		local P2 = buffer.readinteger(LW, 160)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 176, integer.add(integer.add(buffer.readinteger(LW, 48), S0), integer.add(buffer.readinteger(LW, 120), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 64)
+		local P2 = buffer.readinteger(LW, 168)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 184, integer.add(integer.add(buffer.readinteger(LW, 56), S0), integer.add(buffer.readinteger(LW, 128), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 72)
+		local P2 = buffer.readinteger(LW, 176)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 192, integer.add(integer.add(buffer.readinteger(LW, 64), S0), integer.add(buffer.readinteger(LW, 136), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 80)
+		local P2 = buffer.readinteger(LW, 184)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 200, integer.add(integer.add(buffer.readinteger(LW, 72), S0), integer.add(buffer.readinteger(LW, 144), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 88)
+		local P2 = buffer.readinteger(LW, 192)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 208, integer.add(integer.add(buffer.readinteger(LW, 80), S0), integer.add(buffer.readinteger(LW, 152), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 96)
+		local P2 = buffer.readinteger(LW, 200)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 216, integer.add(integer.add(buffer.readinteger(LW, 88), S0), integer.add(buffer.readinteger(LW, 160), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 104)
+		local P2 = buffer.readinteger(LW, 208)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 224, integer.add(integer.add(buffer.readinteger(LW, 96), S0), integer.add(buffer.readinteger(LW, 168), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 112)
+		local P2 = buffer.readinteger(LW, 216)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 232, integer.add(integer.add(buffer.readinteger(LW, 104), S0), integer.add(buffer.readinteger(LW, 176), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 120)
+		local P2 = buffer.readinteger(LW, 224)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 240, integer.add(integer.add(buffer.readinteger(LW, 112), S0), integer.add(buffer.readinteger(LW, 184), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 128)
+		local P2 = buffer.readinteger(LW, 232)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 248, integer.add(integer.add(buffer.readinteger(LW, 120), S0), integer.add(buffer.readinteger(LW, 192), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 136)
+		local P2 = buffer.readinteger(LW, 240)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 256, integer.add(integer.add(buffer.readinteger(LW, 128), S0), integer.add(buffer.readinteger(LW, 200), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 144)
+		local P2 = buffer.readinteger(LW, 248)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 264, integer.add(integer.add(buffer.readinteger(LW, 136), S0), integer.add(buffer.readinteger(LW, 208), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 152)
+		local P2 = buffer.readinteger(LW, 256)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 272, integer.add(integer.add(buffer.readinteger(LW, 144), S0), integer.add(buffer.readinteger(LW, 216), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 160)
+		local P2 = buffer.readinteger(LW, 264)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 280, integer.add(integer.add(buffer.readinteger(LW, 152), S0), integer.add(buffer.readinteger(LW, 224), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 168)
+		local P2 = buffer.readinteger(LW, 272)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 288, integer.add(integer.add(buffer.readinteger(LW, 160), S0), integer.add(buffer.readinteger(LW, 232), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 176)
+		local P2 = buffer.readinteger(LW, 280)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 296, integer.add(integer.add(buffer.readinteger(LW, 168), S0), integer.add(buffer.readinteger(LW, 240), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 184)
+		local P2 = buffer.readinteger(LW, 288)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 304, integer.add(integer.add(buffer.readinteger(LW, 176), S0), integer.add(buffer.readinteger(LW, 248), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 192)
+		local P2 = buffer.readinteger(LW, 296)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 312, integer.add(integer.add(buffer.readinteger(LW, 184), S0), integer.add(buffer.readinteger(LW, 256), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 200)
+		local P2 = buffer.readinteger(LW, 304)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 320, integer.add(integer.add(buffer.readinteger(LW, 192), S0), integer.add(buffer.readinteger(LW, 264), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 208)
+		local P2 = buffer.readinteger(LW, 312)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 328, integer.add(integer.add(buffer.readinteger(LW, 200), S0), integer.add(buffer.readinteger(LW, 272), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 216)
+		local P2 = buffer.readinteger(LW, 320)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 336, integer.add(integer.add(buffer.readinteger(LW, 208), S0), integer.add(buffer.readinteger(LW, 280), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 224)
+		local P2 = buffer.readinteger(LW, 328)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 344, integer.add(integer.add(buffer.readinteger(LW, 216), S0), integer.add(buffer.readinteger(LW, 288), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 232)
+		local P2 = buffer.readinteger(LW, 336)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 352, integer.add(integer.add(buffer.readinteger(LW, 224), S0), integer.add(buffer.readinteger(LW, 296), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 240)
+		local P2 = buffer.readinteger(LW, 344)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 360, integer.add(integer.add(buffer.readinteger(LW, 232), S0), integer.add(buffer.readinteger(LW, 304), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 248)
+		local P2 = buffer.readinteger(LW, 352)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 368, integer.add(integer.add(buffer.readinteger(LW, 240), S0), integer.add(buffer.readinteger(LW, 312), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 256)
+		local P2 = buffer.readinteger(LW, 360)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 376, integer.add(integer.add(buffer.readinteger(LW, 248), S0), integer.add(buffer.readinteger(LW, 320), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 264)
+		local P2 = buffer.readinteger(LW, 368)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 384, integer.add(integer.add(buffer.readinteger(LW, 256), S0), integer.add(buffer.readinteger(LW, 328), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 272)
+		local P2 = buffer.readinteger(LW, 376)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 392, integer.add(integer.add(buffer.readinteger(LW, 264), S0), integer.add(buffer.readinteger(LW, 336), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 280)
+		local P2 = buffer.readinteger(LW, 384)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 400, integer.add(integer.add(buffer.readinteger(LW, 272), S0), integer.add(buffer.readinteger(LW, 344), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 288)
+		local P2 = buffer.readinteger(LW, 392)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 408, integer.add(integer.add(buffer.readinteger(LW, 280), S0), integer.add(buffer.readinteger(LW, 352), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 296)
+		local P2 = buffer.readinteger(LW, 400)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 416, integer.add(integer.add(buffer.readinteger(LW, 288), S0), integer.add(buffer.readinteger(LW, 360), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 304)
+		local P2 = buffer.readinteger(LW, 408)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 424, integer.add(integer.add(buffer.readinteger(LW, 296), S0), integer.add(buffer.readinteger(LW, 368), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 312)
+		local P2 = buffer.readinteger(LW, 416)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 432, integer.add(integer.add(buffer.readinteger(LW, 304), S0), integer.add(buffer.readinteger(LW, 376), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 320)
+		local P2 = buffer.readinteger(LW, 424)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 440, integer.add(integer.add(buffer.readinteger(LW, 312), S0), integer.add(buffer.readinteger(LW, 384), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 328)
+		local P2 = buffer.readinteger(LW, 432)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 448, integer.add(integer.add(buffer.readinteger(LW, 320), S0), integer.add(buffer.readinteger(LW, 392), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 336)
+		local P2 = buffer.readinteger(LW, 440)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 456, integer.add(integer.add(buffer.readinteger(LW, 328), S0), integer.add(buffer.readinteger(LW, 400), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 344)
+		local P2 = buffer.readinteger(LW, 448)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 464, integer.add(integer.add(buffer.readinteger(LW, 336), S0), integer.add(buffer.readinteger(LW, 408), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 352)
+		local P2 = buffer.readinteger(LW, 456)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 472, integer.add(integer.add(buffer.readinteger(LW, 344), S0), integer.add(buffer.readinteger(LW, 416), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 360)
+		local P2 = buffer.readinteger(LW, 464)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 480, integer.add(integer.add(buffer.readinteger(LW, 352), S0), integer.add(buffer.readinteger(LW, 424), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 368)
+		local P2 = buffer.readinteger(LW, 472)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 488, integer.add(integer.add(buffer.readinteger(LW, 360), S0), integer.add(buffer.readinteger(LW, 432), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 376)
+		local P2 = buffer.readinteger(LW, 480)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 496, integer.add(integer.add(buffer.readinteger(LW, 368), S0), integer.add(buffer.readinteger(LW, 440), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 384)
+		local P2 = buffer.readinteger(LW, 488)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 504, integer.add(integer.add(buffer.readinteger(LW, 376), S0), integer.add(buffer.readinteger(LW, 448), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 392)
+		local P2 = buffer.readinteger(LW, 496)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 512, integer.add(integer.add(buffer.readinteger(LW, 384), S0), integer.add(buffer.readinteger(LW, 456), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 400)
+		local P2 = buffer.readinteger(LW, 504)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 520, integer.add(integer.add(buffer.readinteger(LW, 392), S0), integer.add(buffer.readinteger(LW, 464), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 408)
+		local P2 = buffer.readinteger(LW, 512)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 528, integer.add(integer.add(buffer.readinteger(LW, 400), S0), integer.add(buffer.readinteger(LW, 472), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 416)
+		local P2 = buffer.readinteger(LW, 520)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 536, integer.add(integer.add(buffer.readinteger(LW, 408), S0), integer.add(buffer.readinteger(LW, 480), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 424)
+		local P2 = buffer.readinteger(LW, 528)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 544, integer.add(integer.add(buffer.readinteger(LW, 416), S0), integer.add(buffer.readinteger(LW, 488), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 432)
+		local P2 = buffer.readinteger(LW, 536)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 552, integer.add(integer.add(buffer.readinteger(LW, 424), S0), integer.add(buffer.readinteger(LW, 496), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 440)
+		local P2 = buffer.readinteger(LW, 544)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 560, integer.add(integer.add(buffer.readinteger(LW, 432), S0), integer.add(buffer.readinteger(LW, 504), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 448)
+		local P2 = buffer.readinteger(LW, 552)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 568, integer.add(integer.add(buffer.readinteger(LW, 440), S0), integer.add(buffer.readinteger(LW, 512), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 456)
+		local P2 = buffer.readinteger(LW, 560)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 576, integer.add(integer.add(buffer.readinteger(LW, 448), S0), integer.add(buffer.readinteger(LW, 520), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 464)
+		local P2 = buffer.readinteger(LW, 568)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 584, integer.add(integer.add(buffer.readinteger(LW, 456), S0), integer.add(buffer.readinteger(LW, 528), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 472)
+		local P2 = buffer.readinteger(LW, 576)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 592, integer.add(integer.add(buffer.readinteger(LW, 464), S0), integer.add(buffer.readinteger(LW, 536), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 480)
+		local P2 = buffer.readinteger(LW, 584)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 600, integer.add(integer.add(buffer.readinteger(LW, 472), S0), integer.add(buffer.readinteger(LW, 544), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 488)
+		local P2 = buffer.readinteger(LW, 592)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 608, integer.add(integer.add(buffer.readinteger(LW, 480), S0), integer.add(buffer.readinteger(LW, 552), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 496)
+		local P2 = buffer.readinteger(LW, 600)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 616, integer.add(integer.add(buffer.readinteger(LW, 488), S0), integer.add(buffer.readinteger(LW, 560), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 504)
+		local P2 = buffer.readinteger(LW, 608)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 624, integer.add(integer.add(buffer.readinteger(LW, 496), S0), integer.add(buffer.readinteger(LW, 568), S1)))
+	end
+	do
+		local P15 = buffer.readinteger(LW, 512)
+		local P2 = buffer.readinteger(LW, 616)
+		local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
+		local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
+		buffer.writeinteger(LW, 632, integer.add(integer.add(buffer.readinteger(LW, 504), S0), integer.add(buffer.readinteger(LW, 576), S1)))
+	end
+end
+
 local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, integer, integer, integer, integer, integer, integer)
 	local H1, H2, H3, H4 = 0x6a09e667f3bcc908i, 0xbb67ae8584caa73bi, 0x3c6ef372fe94f82bi, 0xa54ff53a5f1d36f1i
 	local H5, H6, H7, H8 = 0x510e527fade682d1i, 0x9b05688c2b3e6c1fi, 0x1f83d9abfb41bd6bi, 0x5be0cd19137e2179i
 
+	local LW, LK = W, K
+
 	for Offset = 0, Length - 1, 128 do
 		for T = 0, 15 do
-			buffer.writeinteger(W, T * 8, integer.bswap(buffer.readinteger(Blocks, Offset + T * 8)))
+			buffer.writeinteger(LW, T * 8, integer.bswap(buffer.readinteger(Blocks, Offset + T * 8)))
 		end
 
-		for T = 16, 79 do
-			local P15 = buffer.readinteger(W, (T - 15) * 8)
-			local P2 = buffer.readinteger(W, (T - 2) * 8)
-
-			local S0 = integer.bxor(integer.rrotate(P15, 1i), integer.rrotate(P15, 8i), integer.rshift(P15, 7i))
-			local S1 = integer.bxor(integer.rrotate(P2, 19i), integer.rrotate(P2, 61i), integer.rshift(P2, 6i))
-
-			buffer.writeinteger(W, T * 8, integer.add(integer.add(buffer.readinteger(W, (T - 16) * 8), S0), integer.add(buffer.readinteger(W, (T - 7) * 8), S1)))
-		end
+		ProcessSchedule(LW)
 
 		local A, B, C, D = H1, H2, H3, H4
 		local E, F, G, H = H5, H6, H7, H8
 
-		for T = 0, 79 do
+		do
 			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
 			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
-
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
-
-			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(K, T * 8), buffer.readinteger(W, T * 8)))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 0), buffer.readinteger(LW, 0)))
 			local T2 = integer.add(Sigma0, Maj)
-
-			H = G
-			G = F
-			F = E
-			E = integer.add(D, T1)
-			D = C
-			C = B
-			B = A
-			A = integer.add(T1, T2)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 8), buffer.readinteger(LW, 8)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 16), buffer.readinteger(LW, 16)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 24), buffer.readinteger(LW, 24)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 32), buffer.readinteger(LW, 32)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 40), buffer.readinteger(LW, 40)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 48), buffer.readinteger(LW, 48)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 56), buffer.readinteger(LW, 56)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 64), buffer.readinteger(LW, 64)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 72), buffer.readinteger(LW, 72)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 80), buffer.readinteger(LW, 80)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 88), buffer.readinteger(LW, 88)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 96), buffer.readinteger(LW, 96)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 104), buffer.readinteger(LW, 104)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 112), buffer.readinteger(LW, 112)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 120), buffer.readinteger(LW, 120)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 128), buffer.readinteger(LW, 128)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 136), buffer.readinteger(LW, 136)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 144), buffer.readinteger(LW, 144)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 152), buffer.readinteger(LW, 152)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 160), buffer.readinteger(LW, 160)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 168), buffer.readinteger(LW, 168)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 176), buffer.readinteger(LW, 176)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 184), buffer.readinteger(LW, 184)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 192), buffer.readinteger(LW, 192)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 200), buffer.readinteger(LW, 200)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 208), buffer.readinteger(LW, 208)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 216), buffer.readinteger(LW, 216)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 224), buffer.readinteger(LW, 224)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 232), buffer.readinteger(LW, 232)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 240), buffer.readinteger(LW, 240)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 248), buffer.readinteger(LW, 248)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 256), buffer.readinteger(LW, 256)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 264), buffer.readinteger(LW, 264)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 272), buffer.readinteger(LW, 272)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 280), buffer.readinteger(LW, 280)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 288), buffer.readinteger(LW, 288)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 296), buffer.readinteger(LW, 296)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 304), buffer.readinteger(LW, 304)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 312), buffer.readinteger(LW, 312)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 320), buffer.readinteger(LW, 320)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 328), buffer.readinteger(LW, 328)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 336), buffer.readinteger(LW, 336)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 344), buffer.readinteger(LW, 344)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 352), buffer.readinteger(LW, 352)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 360), buffer.readinteger(LW, 360)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 368), buffer.readinteger(LW, 368)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 376), buffer.readinteger(LW, 376)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 384), buffer.readinteger(LW, 384)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 392), buffer.readinteger(LW, 392)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 400), buffer.readinteger(LW, 400)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 408), buffer.readinteger(LW, 408)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 416), buffer.readinteger(LW, 416)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 424), buffer.readinteger(LW, 424)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 432), buffer.readinteger(LW, 432)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 440), buffer.readinteger(LW, 440)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 448), buffer.readinteger(LW, 448)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 456), buffer.readinteger(LW, 456)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 464), buffer.readinteger(LW, 464)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 472), buffer.readinteger(LW, 472)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 480), buffer.readinteger(LW, 480)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 488), buffer.readinteger(LW, 488)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 496), buffer.readinteger(LW, 496)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 504), buffer.readinteger(LW, 504)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 512), buffer.readinteger(LW, 512)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 520), buffer.readinteger(LW, 520)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 528), buffer.readinteger(LW, 528)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 536), buffer.readinteger(LW, 536)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 544), buffer.readinteger(LW, 544)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 552), buffer.readinteger(LW, 552)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 560), buffer.readinteger(LW, 560)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 568), buffer.readinteger(LW, 568)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 576), buffer.readinteger(LW, 576)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 584), buffer.readinteger(LW, 584)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 592), buffer.readinteger(LW, 592)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 600), buffer.readinteger(LW, 600)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 608), buffer.readinteger(LW, 608)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 616), buffer.readinteger(LW, 616)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 624), buffer.readinteger(LW, 624)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
+		end
+		do
+			local Sigma0 = integer.bxor(integer.rrotate(A, 28i), integer.rrotate(A, 34i), integer.rrotate(A, 39i))
+			local Sigma1 = integer.bxor(integer.rrotate(E, 14i), integer.rrotate(E, 18i), integer.rrotate(E, 41i))
+			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
+			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
+			local T1 = integer.add(integer.add(integer.add(H, Sigma1), Ch), integer.add(buffer.readinteger(LK, 632), buffer.readinteger(LW, 632)))
+			local T2 = integer.add(Sigma0, Maj)
+			H = G; G = F; F = E; E = integer.add(D, T1); D = C; C = B; B = A; A = integer.add(T1, T2)
 		end
 
 		H1 = integer.add(H1, A)
@@ -120,7 +1266,8 @@ local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, 
 	return H1, H2, H3, H4, H5, H6, H7, H8
 end
 
-local function SHA512(Message: buffer): (string, buffer)
+
+local function SHA512_Internal(Message: buffer): buffer
 	local Processed, Length = PreProcess(Message)
 	local H1, H2, H3, H4, H5, H6, H7, H8 = DigestBlocks(Processed, Length)
 
@@ -134,11 +1281,27 @@ local function SHA512(Message: buffer): (string, buffer)
 	buffer.writeinteger(Result, 48, integer.bswap(H7))
 	buffer.writeinteger(Result, 56, integer.bswap(H8))
 
+	return Result
+end
+
+local function SHA512(Message: buffer): (string, buffer)
+	local Result = SHA512_Internal(Message)
+
 	-- TYPE ERROR: string.format definition doesn't support integers yet
 	return string.format(
 		"%016x%016x%016x%016x%016x%016x%016x%016x",
-		H1 :: any, H2 :: any, H3 :: any, H4 :: any, H5 :: any, H6 :: any, H7 :: any, H8 :: any
+		integer.bswap(buffer.readinteger(Result, 0)) :: any,
+		integer.bswap(buffer.readinteger(Result, 8)) :: any,
+		integer.bswap(buffer.readinteger(Result, 16)) :: any,
+		integer.bswap(buffer.readinteger(Result, 24)) :: any,
+		integer.bswap(buffer.readinteger(Result, 32)) :: any,
+		integer.bswap(buffer.readinteger(Result, 40)) :: any,
+		integer.bswap(buffer.readinteger(Result, 48)) :: any,
+		integer.bswap(buffer.readinteger(Result, 56)) :: any
 	), Result
 end
 
-return SHA512
+return {
+	SHA512 = SHA512,
+	SHA512_Internal = SHA512_Internal,
+}

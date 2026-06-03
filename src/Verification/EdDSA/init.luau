@@ -30,7 +30,7 @@
 
 local FieldQuadratic = require("@self/FieldQuadratic")
 local FieldPrime = require("@self/FieldPrime")
-local SHA512 = require("@self/SHA512")
+local SHA512 = require("../Hashing/SHA2/SHA512").SHA512_Internal
 local Edwards25519 = require("@self/Edwards25519")
 local X25519 = require("@self/X25519")
 local CSPRNG = require("../Utilities/CSPRNG")

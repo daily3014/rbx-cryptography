@@ -76,11 +76,11 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 		local Lane25 = buffer.readinteger(Lanes, 192)
 
 		for RoundIndex = 0, 184, 8 do
-			local Column1 = integer.bxor(Lane01, Lane06, Lane11, Lane16, Lane21)
-			local Column2 = integer.bxor(Lane02, Lane07, Lane12, Lane17, Lane22)
-			local Column3 = integer.bxor(Lane03, Lane08, Lane13, Lane18, Lane23)
-			local Column4 = integer.bxor(Lane04, Lane09, Lane14, Lane19, Lane24)
-			local Column5 = integer.bxor(Lane05, Lane10, Lane15, Lane20, Lane25)
+			local Column1 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane01, Lane06), Lane11), Lane16), Lane21)
+			local Column2 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane02, Lane07), Lane12), Lane17), Lane22)
+			local Column3 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane03, Lane08), Lane13), Lane18), Lane23)
+			local Column4 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane04, Lane09), Lane14), Lane19), Lane24)
+			local Column5 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane05, Lane10), Lane15), Lane20), Lane25)
 
 			local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
 
