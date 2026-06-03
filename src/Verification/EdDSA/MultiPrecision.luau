@@ -26,7 +26,6 @@
 local CARRY = 88
 local SIZE = 96
 local M24 = 0xFFFFFFi
-local THIRD_MULTIPLIER = 0xAAAAAAi
 
 local MultiPrecision = {}
 

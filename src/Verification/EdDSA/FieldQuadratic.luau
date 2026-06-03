@@ -23,8 +23,6 @@
 local MultiPrecision = require("./MultiPrecision")
 
 local CONSTANT_ZERO = MultiPrecision.Num(0)
-
-local RULE_BUFFER = buffer.create(1024)
 local DECODE_WIDE_LOW = buffer.create(96)
 local DECODE_WIDE_HIGH = buffer.create(96)
 local DECODE_BUFFER = buffer.create(96)

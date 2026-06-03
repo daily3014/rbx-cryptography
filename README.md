@@ -119,11 +119,11 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 |-------------|-----------|--------------|----------|--------------------------|-------------------|-------------------------------|
 | SHA-256     | 20k       | **115 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **17.9x faster** than HashLib |
 | SHA-512     | 20k       | **49 μs**    | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **88.7x faster** than HashLib |
-| SHA3-512    | 20k       | **142 μs**   | 10.60 ms | -                        | -                 | **74.6x faster** than HashLib |
+| SHA3-512    | 20k       | **131 μs**   | 10.60 ms | -                        | -                 | **80.9x faster** than HashLib |
 | BLAKE3      | 20k       | **64 μs**    | -        | -                        | -                 | -                             |
 | HMAC-BLAKE3 | 20k       | **74 μs**    | -        | -                        | -                 | -                             |
-| KMAC-128    | 20k       | **75 μs**    | -        | -                        | -                 | -                             |
-| KMAC-256    | 20k       | **88 μs**    | -        | -                        | -                 | -                             |
+| KMAC-128    | 20k       | **70 μs**    | -        | -                        | -                 | -                             |
+| KMAC-256    | 20k       | **81 μs**    | -        | -                        | -                 | -                             |
 
 ### Password Hashing (Argon2id)
 
@@ -152,7 +152,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 |-------------------------|-------------|--------------|-----------------------------------------|------------------|
 | EdDSA (Roundtrip)       | Sign+Verify | **298 μs**   | -                                       | -                |
 | X25519 (Exchange)       | ECDH        | **466 μs**   | 628 μs (ccryptolib)                     | **1.35x faster** |
-| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.18 ms**  | 863 ms (WASM-Luau)                      | **730x faster**  |
+| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.13 ms**  | 863 ms (WASM-Luau)                      | **761x faster**  |
 | ML-KEM-1024 (Roundtrip) | Encap+Decap | **299 μs**   | 122 ms (WASM-Luau)                      | **408x faster**  |
 
 ### Utilities

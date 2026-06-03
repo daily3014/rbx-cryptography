@@ -75,81 +75,160 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 		local Lane22, Lane23, Lane24 = buffer.readinteger(Lanes, 168), buffer.readinteger(Lanes, 176), buffer.readinteger(Lanes, 184)
 		local Lane25 = buffer.readinteger(Lanes, 192)
 
-		for RoundIndex = 0, 184, 8 do
-			local Column1 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane01, Lane06), Lane11), Lane16), Lane21)
-			local Column2 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane02, Lane07), Lane12), Lane17), Lane22)
-			local Column3 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane03, Lane08), Lane13), Lane18), Lane23)
-			local Column4 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane04, Lane09), Lane14), Lane19), Lane24)
-			local Column5 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane05, Lane10), Lane15), Lane20), Lane25)
+		for RoundIndex = 0, 184, 16 do
+			do
+				local Column1 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane01, Lane06), Lane11), Lane16), Lane21)
+				local Column2 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane02, Lane07), Lane12), Lane17), Lane22)
+				local Column3 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane03, Lane08), Lane13), Lane18), Lane23)
+				local Column4 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane04, Lane09), Lane14), Lane19), Lane24)
+				local Column5 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane05, Lane10), Lane15), Lane20), Lane25)
+	
+				local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
+	
+				local Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane02), integer.bxor(Delta, Lane07), integer.bxor(Delta, Lane12), integer.bxor(Delta, Lane17), integer.bxor(Delta, Lane22)
+				Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
+				Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
+	
+				
+				-- TYPE ERROR: type solver infers Temp4 to be nil after the theta step
+				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23) :: integer
+				Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
+				Delta = integer.bxor(Column3, integer.rrotate(Column5, 63i))
+	
+				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane04), integer.bxor(Delta, Lane09), integer.bxor(Delta, Lane14), integer.bxor(Delta, Lane19), integer.bxor(Delta, Lane24) :: integer
+				Lane04, Lane09, Lane14, Lane19, Lane24 = integer.rrotate(Temp3, 43i), integer.rrotate(Temp0, 36i), integer.rrotate(Temp2, 39i), integer.rrotate(Temp4, 8i), integer.rrotate(Temp1, 9i)
+				Delta = integer.bxor(Column4, integer.rrotate(Column1, 63i))
+	
+				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane05), integer.bxor(Delta, Lane10), integer.bxor(Delta, Lane15), integer.bxor(Delta, Lane20), integer.bxor(Delta, Lane25) :: integer
+				Lane05, Lane10, Lane15, Lane20, Lane25 = integer.rrotate(Temp4, 50i), integer.rrotate(Temp1, 44i), integer.rrotate(Temp3, 56i), integer.rrotate(Temp0, 37i), integer.rrotate(Temp2, 25i)
+				Delta = integer.bxor(Column5, integer.rrotate(Column2, 63i))
+	
+				Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane06), integer.bxor(Delta, Lane11), integer.bxor(Delta, Lane16), integer.bxor(Delta, Lane21) :: integer
+				Lane06, Lane11, Lane16, Lane21 = integer.rrotate(Temp2, 61i), integer.rrotate(Temp4, 46i), integer.rrotate(Temp1, 28i), integer.rrotate(Temp3, 23i)
+				Lane01 = integer.bxor(Delta, Lane01)
+	
+				Lane01, Lane02, Lane03, Lane04, Lane05 =
+					integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
+					integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
+					integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
+					integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
+					(integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02)))
+				
+				Lane06, Lane07, Lane08, Lane09, Lane10 =
+					integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
+					integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
+					integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
+					integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
+					(integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10)))
+	
+				Lane11, Lane12, Lane13, Lane14, Lane15 =
+					integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
+					integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
+					integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
+					integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
+					(integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13)))
+	
+				Lane16, Lane17, Lane18, Lane19, Lane20 =
+					integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
+					integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
+					integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
+					integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
+					(integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16)))
+	
+				-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
+				Lane21, Lane22, Lane23, Lane24, Lane25 =
+					(Lane21 :: any) :: integer,
+					(Lane22 :: any) :: integer,
+					(Lane23 :: any) :: integer,
+					(Lane24 :: any) :: integer,
+					(Lane25 :: any) :: integer
+	
+				Lane21, Lane22, Lane23, Lane24, Lane25 =
+					integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
+					integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
+					integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
+					integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
+					(integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24)))
+	
+				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex))
+			end
 
-			local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
-
-			local Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane02), integer.bxor(Delta, Lane07), integer.bxor(Delta, Lane12), integer.bxor(Delta, Lane17), integer.bxor(Delta, Lane22)
-			Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
-			Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
-
-			
-			-- TYPE ERROR: type solver infers Temp4 to be nil after the theta step
-			Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23) :: integer
-			Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
-			Delta = integer.bxor(Column3, integer.rrotate(Column5, 63i))
-
-			Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane04), integer.bxor(Delta, Lane09), integer.bxor(Delta, Lane14), integer.bxor(Delta, Lane19), integer.bxor(Delta, Lane24) :: integer
-			Lane04, Lane09, Lane14, Lane19, Lane24 = integer.rrotate(Temp3, 43i), integer.rrotate(Temp0, 36i), integer.rrotate(Temp2, 39i), integer.rrotate(Temp4, 8i), integer.rrotate(Temp1, 9i)
-			Delta = integer.bxor(Column4, integer.rrotate(Column1, 63i))
-
-			Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane05), integer.bxor(Delta, Lane10), integer.bxor(Delta, Lane15), integer.bxor(Delta, Lane20), integer.bxor(Delta, Lane25) :: integer
-			Lane05, Lane10, Lane15, Lane20, Lane25 = integer.rrotate(Temp4, 50i), integer.rrotate(Temp1, 44i), integer.rrotate(Temp3, 56i), integer.rrotate(Temp0, 37i), integer.rrotate(Temp2, 25i)
-			Delta = integer.bxor(Column5, integer.rrotate(Column2, 63i))
-
-			Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane06), integer.bxor(Delta, Lane11), integer.bxor(Delta, Lane16), integer.bxor(Delta, Lane21) :: integer
-			Lane06, Lane11, Lane16, Lane21 = integer.rrotate(Temp2, 61i), integer.rrotate(Temp4, 46i), integer.rrotate(Temp1, 28i), integer.rrotate(Temp3, 23i)
-			Lane01 = integer.bxor(Delta, Lane01)
-
-			Lane01, Lane02, Lane03, Lane04, Lane05 =
-				integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
-				integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
-				integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
-				integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
-				integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02))
-			
-			Lane06, Lane07, Lane08, Lane09, Lane10 =
-				integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
-				integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
-				integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
-				integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
-				integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10))
-
-			Lane11, Lane12, Lane13, Lane14, Lane15 =
-				integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
-				integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
-				integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
-				integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
-				integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13))
-
-			Lane16, Lane17, Lane18, Lane19, Lane20 =
-				integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
-				integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
-				integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
-				integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
-				integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16))
-
-			-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
-			Lane21, Lane22, Lane23, Lane24, Lane25 =
-				(Lane21 :: any) :: integer,
-				(Lane22 :: any) :: integer,
-				(Lane23 :: any) :: integer,
-				(Lane24 :: any) :: integer,
-				(Lane25 :: any) :: integer
-
-			Lane21, Lane22, Lane23, Lane24, Lane25 =
-				integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
-				integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
-				integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
-				integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
-				integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24))
-
-			Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex))
+			do
+				local Column1 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane01, Lane06), Lane11), Lane16), Lane21)
+				local Column2 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane02, Lane07), Lane12), Lane17), Lane22)
+				local Column3 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane03, Lane08), Lane13), Lane18), Lane23)
+				local Column4 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane04, Lane09), Lane14), Lane19), Lane24)
+				local Column5 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane05, Lane10), Lane15), Lane20), Lane25)
+	
+				local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
+	
+				local Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane02), integer.bxor(Delta, Lane07), integer.bxor(Delta, Lane12), integer.bxor(Delta, Lane17), integer.bxor(Delta, Lane22)
+				Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
+				Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
+	
+				
+				-- TYPE ERROR: type solver infers Temp4 to be nil after the theta step
+				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23) :: integer
+				Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
+				Delta = integer.bxor(Column3, integer.rrotate(Column5, 63i))
+	
+				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane04), integer.bxor(Delta, Lane09), integer.bxor(Delta, Lane14), integer.bxor(Delta, Lane19), integer.bxor(Delta, Lane24) :: integer
+				Lane04, Lane09, Lane14, Lane19, Lane24 = integer.rrotate(Temp3, 43i), integer.rrotate(Temp0, 36i), integer.rrotate(Temp2, 39i), integer.rrotate(Temp4, 8i), integer.rrotate(Temp1, 9i)
+				Delta = integer.bxor(Column4, integer.rrotate(Column1, 63i))
+	
+				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane05), integer.bxor(Delta, Lane10), integer.bxor(Delta, Lane15), integer.bxor(Delta, Lane20), integer.bxor(Delta, Lane25) :: integer
+				Lane05, Lane10, Lane15, Lane20, Lane25 = integer.rrotate(Temp4, 50i), integer.rrotate(Temp1, 44i), integer.rrotate(Temp3, 56i), integer.rrotate(Temp0, 37i), integer.rrotate(Temp2, 25i)
+				Delta = integer.bxor(Column5, integer.rrotate(Column2, 63i))
+	
+				Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane06), integer.bxor(Delta, Lane11), integer.bxor(Delta, Lane16), integer.bxor(Delta, Lane21) :: integer
+				Lane06, Lane11, Lane16, Lane21 = integer.rrotate(Temp2, 61i), integer.rrotate(Temp4, 46i), integer.rrotate(Temp1, 28i), integer.rrotate(Temp3, 23i)
+				Lane01 = integer.bxor(Delta, Lane01)
+	
+				Lane01, Lane02, Lane03, Lane04, Lane05 =
+					integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
+					integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
+					integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
+					integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
+					(integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02)))
+				
+				Lane06, Lane07, Lane08, Lane09, Lane10 =
+					integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
+					integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
+					integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
+					integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
+					(integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10)))
+	
+				Lane11, Lane12, Lane13, Lane14, Lane15 =
+					integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
+					integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
+					integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
+					integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
+					(integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13)))
+	
+				Lane16, Lane17, Lane18, Lane19, Lane20 =
+					integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
+					integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
+					integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
+					integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
+					(integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16)))
+	
+				-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
+				Lane21, Lane22, Lane23, Lane24, Lane25 =
+					(Lane21 :: any) :: integer,
+					(Lane22 :: any) :: integer,
+					(Lane23 :: any) :: integer,
+					(Lane24 :: any) :: integer,
+					(Lane25 :: any) :: integer
+	
+				Lane21, Lane22, Lane23, Lane24, Lane25 =
+					integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
+					integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
+					integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
+					integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
+					(integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24)))
+	
+				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex + 8))
+			end
 		end
 
 		-- TYPE ERROR: type solver infers Lane 5n to be integer? after this point
