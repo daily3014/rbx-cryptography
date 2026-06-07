@@ -123,6 +123,11 @@ local function GatherEntropy(UserEntropy: buffer?)
 	WriteToBuffer(JitterSamples)
 
 	if game then
+		local HttpService = game:FindService("HttpService")
+		if HttpService then
+			WriteToBuffer(buffer.fromstring(HttpService:GenerateGUID(false)))
+		end
+
 		if game.JobId and #game.JobId > 0 then
 			WriteToBuffer(buffer.fromstring(game.JobId))
 		end
