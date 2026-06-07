@@ -15,53 +15,20 @@ local Testing = require("./")
 local Algorithm = if IsCLI then require("../src/Utilities/CSPRNG") else require("../Utilities/CSPRNG")
 
 Testing.Describe("CSPRNG Algorithm Tests", function()
-	Testing.Test("Ed25519 Functions", function()
-		local Ed25519Bytes = Algorithm.Ed25519Random()
-		Testing.Expect(typeof(Ed25519Bytes)).ToBe("buffer")
-		Testing.Expect(buffer.len(Ed25519Bytes)).ToBe(32)
-
-		Testing.Expect(function()
-			Algorithm.Ed25519ClampedBytes("not a buffer" :: any)
-		end).ToThrow()
-
-		local TestBuffer = Algorithm.RandomBytes(32)
-		local ClampedBytes = Algorithm.Ed25519ClampedBytes(TestBuffer)
-		Testing.Expect(typeof(ClampedBytes)).ToBe("buffer")
-		Testing.Expect(buffer.len(ClampedBytes)).ToBe(32)
-
-		local FirstByte = buffer.readu8(ClampedBytes, 0)
-		local LastByte = buffer.readu8(ClampedBytes, 31)
-
-		Testing.Expect(bit32.band(FirstByte, 0x07)).ToBe(0)
-		Testing.Expect(bit32.band(LastByte, 0x80)).ToBe(0)
-		Testing.Expect(bit32.band(LastByte, 0x40)).ToBe(0x40)
-
-		local Ed25519Random = Algorithm.Ed25519Random()
-		Testing.Expect(typeof(Ed25519Random)).ToBe("buffer")
-		Testing.Expect(buffer.len(Ed25519Random)).ToBe(32)
-
-		local FirstByteRandom = buffer.readu8(Ed25519Random, 0)
-		local LastByteRandom = buffer.readu8(Ed25519Random, 31)
-
-		Testing.Expect(bit32.band(FirstByteRandom, 0x07)).ToBe(0)
-		Testing.Expect(bit32.band(LastByteRandom, 0x80)).ToBe(0)
-		Testing.Expect(bit32.band(LastByteRandom, 0x40)).ToBe(0x40)
-	end)
-
-	Testing.Test("Reseed Function", function()
+	Testing.Test("AddEntropy Function", function()
 		local Value1 = Algorithm.Random()
-		Algorithm.Reseed()
+		Algorithm.AddEntropy()
 		local Value2 = Algorithm.Random()
 
 		Testing.Expect(Value1).Never.ToBe(Value2)
 
 		local CustomEntropy = Algorithm.RandomBytes(64)
-		Algorithm.Reseed(CustomEntropy)
+		Algorithm.AddEntropy(CustomEntropy)
 		local Value3 = Algorithm.Random()
 		Testing.Expect(typeof(Value3)).ToBe("number")
 
 		Testing.Expect(function()
-			Algorithm.Reseed("not a buffer" :: any)
+			Algorithm.AddEntropy("not a buffer" :: any)
 		end).ToThrow()
 	end)
 

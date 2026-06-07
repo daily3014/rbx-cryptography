@@ -1,6 +1,6 @@
 --[=[
 	Cryptography library: Cryptographically Secure RNG
-	
+
 	Usage:
 		local RandomFloat = CSPRNG.Random()
 		local RandomInt = CSPRNG.RandomInt(1, 100)
@@ -9,15 +9,17 @@
 		local RandomHex = CSPRNG.RandomHex(16)
 		local FastString = CSPRNG.RandomString(16, false)
 		local FastBuffer = CSPRNG.RandomString(32, true)
-		
-		local Ed25519Clamped = CSPRNG.Ed25519ClampedBytes(SomeBuffer)
-		local Ed25519Random = CSPRNG.Ed25519Random()
-		
-		CSPRNG.AddEntropyProvider(function)
-		CSPRNG.RemoveEntropyProvider(function)
-		CSPRNG.Reseed()
-		
-		CSPRNG.BytesLeft
+
+		CSPRNG.AddEntropy(SomeBuffer)
+		CSPRNG.AddEntropy()
+
+	Key generation just uses RandomBytes(32): X25519 clamps the scalar internally
+	and Ed25519 hashes the seed, so neither wants pre-clamped bytes.
+
+	AddEntropy folds the given bytes into the internal state and regenerates the
+	keystream pool. The buffer may be any length, and passing nothing simply
+	refreshes from the built-in sources. Entropy is only ever mixed in, never
+	replaced, so injecting weak bytes can never lower the existing strength.
 --]=]
 
 --!strict
@@ -28,28 +30,8 @@ local Blake3 = require("../Hashing/Blake3")
 local Conversions = require("./Conversions")
 local ToHex = Conversions.ToHex
 
-export type EntropyProvider = (BytesLeft: number) -> buffer?
-
 type CSPRNGModule = {
-	BlockExpansion: boolean,
-
-	SizeTarget: number,
-	RekeyAfter: number,
-
-	Key: buffer,
-	Nonce: buffer,
-	Buffer: buffer,
-
-	Counter: number,
-	BufferPosition: number,
-	BufferSize: number,
-	BytesLeft: number,
-
-	EntropyProviders: { EntropyProvider },
-
-	Reseed: (CustomEntropy: buffer?) -> (),
-	AddEntropyProvider: (ProviderFunction: EntropyProvider) -> (),
-	RemoveEntropyProvider: (ProviderFunction: EntropyProvider) -> (),
+	AddEntropy: (Entropy: buffer?) -> (),
 
 	Random: () -> number,
 	RandomInt: (Min: number, Max: number?) -> number,
@@ -57,64 +39,47 @@ type CSPRNGModule = {
 	RandomBytes: (Count: number) -> buffer,
 	RandomString: (Length: number, AsBuffer: boolean?) -> string | buffer,
 	RandomHex: (Length: number) -> string,
-	Ed25519ClampedBytes: (Input: buffer) -> buffer,
-	Ed25519Random: () -> buffer,
 }
 
-local BLOCK_SIZE = 64
 local KEY_SIZE = 32
 local NONCE_SIZE = 12
+local MAX_UINT32 = 0xFFFFFFFF
 
-local CSPRNG: CSPRNGModule = {
-	BlockExpansion = true,
-	SizeTarget = 2048,
-	RekeyAfter = 1024,
+local POOL_SIZE = 2048
+local REKEY_BLOCKS = 1024
+local JITTER_SAMPLES = 512
+local SOURCE_LIMIT = 1024
 
-	Key = buffer.create(0),
-	Nonce = buffer.create(0),
-	Buffer = buffer.create(0),
-
-	Counter = 0,
-	BufferPosition = 0,
-	BufferSize = 0,
-	BytesLeft = 0,
-
-	EntropyProviders = {}
-} :: CSPRNGModule
+local CSPRNG = {} :: CSPRNGModule
 
 local INPUT_BUFFER = buffer.create(KEY_SIZE + NONCE_SIZE + 8)
 
-local function Reset()
-	CSPRNG.Key = buffer.create(0)
-	CSPRNG.Nonce = buffer.create(0)
-	CSPRNG.Buffer = buffer.create(0)
+local Key = buffer.create(0)
+local Nonce = buffer.create(0)
+local StreamBuffer = buffer.create(0)
 
-	CSPRNG.Counter = 0
-	CSPRNG.BufferPosition = 0
-	CSPRNG.BufferSize = 0
-end
+local Counter = 0
+local BufferPosition = 0
+local BufferSize = 0
 
-local function GatherEntropy(CustomEntropy: buffer?): number
-	local EntropyBuffers = buffer.create(1024)
+local function GatherEntropy(UserEntropy: buffer?)
+	local Sources = buffer.create(SOURCE_LIMIT)
 	local Offset = 0
 
 	local function WriteToBuffer(Source: buffer)
 		local Size = buffer.len(Source)
-		buffer.copy(EntropyBuffers, Offset, Source, 0, Size)
+		buffer.copy(Sources, Offset, Source, 0, Size)
 		Offset += Size
 	end
 
-	local CurrentTime = 1.234
 	if tick then
-		CurrentTime = tick()
 		local TimeBuffer = buffer.create(8)
-		buffer.writef64(TimeBuffer, 0, CurrentTime)
+		buffer.writef64(TimeBuffer, 0, tick())
 		WriteToBuffer(TimeBuffer)
 	end
 
-	local ClockTime = os.clock()
 	local ClockBuffer = buffer.create(8)
-	buffer.writef64(ClockBuffer, 0, ClockTime)
+	buffer.writef64(ClockBuffer, 0, os.clock())
 	WriteToBuffer(ClockBuffer)
 
 	local UnixTime = os.time()
@@ -123,56 +88,43 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 	buffer.writeu32(UnixBuffer, 4, math.floor(UnixTime / 0x100000000))
 	WriteToBuffer(UnixBuffer)
 
-	local DateTimeMillis = 5.678
 	if DateTime then
-		DateTimeMillis = DateTime.now().UnixTimestampMillis
+		local DateTimeMillis = DateTime.now().UnixTimestampMillis
 		local DateTimeBuffer = buffer.create(8)
 		buffer.writef64(DateTimeBuffer, 0, DateTimeMillis)
 		WriteToBuffer(DateTimeBuffer)
-
-		local DateTimePrecisionBuffer = buffer.create(16)
-		buffer.writef32(DateTimePrecisionBuffer, 0, DateTimeMillis / 1000)
-		buffer.writef32(DateTimePrecisionBuffer, 4, (DateTimeMillis % 1000) / 100)
-		buffer.writef32(DateTimePrecisionBuffer, 8, DateTimeMillis / 86400000)
-		buffer.writef32(DateTimePrecisionBuffer, 12, (DateTimeMillis * 0.001) % 1)
-		WriteToBuffer(DateTimePrecisionBuffer)
-	else
-		WriteToBuffer(buffer.create(24))
 	end
 
-	local BenchmarkTimings = buffer.create(32)
-	for Index = 0, 7 do
+	local JitterSamples = buffer.create(JITTER_SAMPLES)
+	local JitterMix = 0
+	local LongestRun = 0
+	local CurrentRun = 0
+	local PreviousSample = -1
+	for Index = 0, JITTER_SAMPLES - 1 do
 		local StartTime = os.clock()
-		local Sum = 0
+		local Scratch = buffer.create(64 + JitterMix % 4096)
+		buffer.writeu32(Scratch, 0, Index)
+		local Sample = math.floor((os.clock() - StartTime) * 1000000000) % 256
 
-		local Iterations = 50 + (Index * 25)
-		for Iteration = 1, Iterations do
-			Sum += Iteration * Iteration + math.sin(Iteration / 10) * math.cos(Iteration / 7)
+		JitterMix += Sample
+		buffer.writeu8(JitterSamples, Index, Sample)
+
+		CurrentRun = if Sample == PreviousSample then CurrentRun + 1 else 0
+		PreviousSample = Sample
+		if CurrentRun > LongestRun then
+			LongestRun = CurrentRun
 		end
-
-		local EndTime = os.clock()
-		local TimingDelta = EndTime - StartTime
-		buffer.writef32(BenchmarkTimings, Index * 4, TimingDelta * 1000000)
 	end
-	WriteToBuffer(BenchmarkTimings)
 
-	local AllocTimings = buffer.create(24)
-	for Index = 0, 5 do
-		local AllocStart = os.clock()
-
-		for AllocIndex = 1, 20 do
-			local _TempBuf = buffer.create(64 + AllocIndex)
-		end
-
-		local AllocEnd = os.clock()
-		buffer.writef32(AllocTimings, Index * 4, (AllocEnd - AllocStart) * 10000000)
+	if LongestRun > JITTER_SAMPLES // 8 then
+		warn("CSPRNG: timing jitter appears degenerate (low-resolution clock); entropy may be weak")
 	end
-	WriteToBuffer(AllocTimings)
+
+	WriteToBuffer(JitterSamples)
 
 	if game then
 		if game.JobId and #game.JobId > 0 then
-			local JobIdBuffer = buffer.fromstring(game.JobId)
-			WriteToBuffer(JobIdBuffer)
+			WriteToBuffer(buffer.fromstring(game.JobId))
 		end
 
 		if game.PlaceId then
@@ -186,110 +138,50 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 			local DistTimeBuffer = buffer.create(8)
 			buffer.writef64(DistTimeBuffer, 0, workspace.DistributedGameTime)
 			WriteToBuffer(DistTimeBuffer)
-
-			local DistMicroTime = math.floor(workspace.DistributedGameTime * 1000000)
-			local DistMicroBuffer = buffer.create(8)
-			buffer.writeu32(DistMicroBuffer, 0, DistMicroTime % 0x100000000)
-			buffer.writeu32(DistMicroBuffer, 4, math.floor(DistMicroTime / 0x100000000))
-			WriteToBuffer(DistMicroBuffer)
 		end
 	end
 
-	local AddressBuffer = buffer.create(2048)
-	local AddressOffset = 0
+	local Pointers = tostring(newproxy())
+	if coroutine then
+		Pointers ..= tostring(coroutine.running())
+	end
+	WriteToBuffer(buffer.fromstring(Pointers))
 
-	for Index = 1, 8 do
-		local TableStr = tostring({})
-		buffer.writestring(AddressBuffer, AddressOffset, TableStr)
-		AddressOffset += #TableStr
+	local PreviousLength = buffer.len(Key) + buffer.len(Nonce)
+	local UserLength = if UserEntropy then buffer.len(UserEntropy) else 0
+	local Material = buffer.create(PreviousLength + Offset + UserLength)
 
-		local FuncStr = tostring(function() end)
-		buffer.writestring(AddressBuffer, AddressOffset, FuncStr)
-		AddressOffset += #FuncStr
-
-		local BufferStr = tostring(buffer.create(0))
-		buffer.writestring(AddressBuffer, AddressOffset, BufferStr)
-		AddressOffset += #BufferStr
-
-		local UserdataStr = tostring(newproxy())
-		buffer.writestring(AddressBuffer, AddressOffset, UserdataStr)
-		AddressOffset += #UserdataStr
-
-		if coroutine then
-			local ThreadStr = tostring(coroutine.create(function() end))
-			buffer.writestring(AddressBuffer, AddressOffset, ThreadStr)
-			AddressOffset += #ThreadStr
-		end
+	buffer.copy(Material, 0, Key, 0, buffer.len(Key))
+	buffer.copy(Material, buffer.len(Key), Nonce, 0, buffer.len(Nonce))
+	buffer.copy(Material, PreviousLength, Sources, 0, Offset)
+	if UserEntropy then
+		buffer.copy(Material, PreviousLength + Offset, UserEntropy, 0, UserLength)
 	end
 
-	local AddressDigest = select(2, Blake3.Digest(AddressBuffer, 32))
-	WriteToBuffer(AddressDigest)
+	local KeyMaterial = select(2, Blake3.Digest(Material, KEY_SIZE + NONCE_SIZE))
 
-	local function AddExtraEntropy(Entropy: buffer?, Warn: boolean, Provider: string?)
-		if not Entropy then
-			return
-		end
+	Key = buffer.create(KEY_SIZE)
+	buffer.copy(Key, 0, KeyMaterial, 0, KEY_SIZE)
 
-		local BytesLeft = 1024 - Offset
+	Nonce = buffer.create(NONCE_SIZE)
+	buffer.copy(Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
 
-		if BytesLeft > 0 then
-			local Extra = buffer.len(Entropy) - BytesLeft
-			local Truncated = math.min(BytesLeft, buffer.len(Entropy))
-
-			if Extra > 0 and Warn and Provider then
-				warn(`CSPRNG: {Provider} returned {Extra} bytes more than available and was truncated to {Truncated} bytes`)
-			end
-
-			buffer.copy(EntropyBuffers, Offset, Entropy, 0, Truncated)
-		end
-	end
-
-	for Index, Provider in CSPRNG.EntropyProviders do
-		local BytesLeft = 1024 - Offset
-		if BytesLeft > 0 then
-			local Success: boolean, ExtraEntropy: buffer? = pcall(Provider, BytesLeft)
-			if not Success then
-				warn(`CSPRNG Provider errored with {ExtraEntropy}`)
-			end
-
-			AddExtraEntropy(ExtraEntropy, true, `Entropy Provider #{Index}`)
-		end
-	end
-
-	if CustomEntropy then
-		AddExtraEntropy(CustomEntropy, false)
-	end
-
-	local KeyMaterial = select(2, Blake3.Digest(EntropyBuffers, KEY_SIZE + NONCE_SIZE))
-
-	CSPRNG.Key = buffer.create(KEY_SIZE)
-	buffer.copy(CSPRNG.Key, 0, KeyMaterial, 0, KEY_SIZE)
-
-	CSPRNG.Nonce = buffer.create(NONCE_SIZE)
-	buffer.copy(CSPRNG.Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
-
-	return buffer.len(EntropyBuffers) - Offset
+	Counter = 0
 end
 
 local function GenerateBlock()
-	local RekeyThreshold = math.max(math.floor(CSPRNG.RekeyAfter), 2)
-	local OutputSize = if CSPRNG.BlockExpansion
-		then math.clamp(math.floor(CSPRNG.SizeTarget), 64, 4294967295)
-		else BLOCK_SIZE
+	buffer.copy(INPUT_BUFFER, 0, Key, 0, KEY_SIZE)
+	buffer.copy(INPUT_BUFFER, KEY_SIZE, Nonce, 0, NONCE_SIZE)
+	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE, Counter % 0x100000000)
+	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE + 4, math.floor(Counter / 0x100000000))
 
-	buffer.copy(INPUT_BUFFER, 0, CSPRNG.Key, 0, KEY_SIZE)
-	buffer.copy(INPUT_BUFFER, KEY_SIZE, CSPRNG.Nonce, 0, NONCE_SIZE)
-	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE, CSPRNG.Counter % 0x100000000)
-	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE + 4, math.floor(CSPRNG.Counter / 0x100000000))
+	StreamBuffer = select(2, Blake3.Digest(INPUT_BUFFER, POOL_SIZE))
+	BufferPosition = 0
+	BufferSize = POOL_SIZE
+	Counter += 1
 
-	CSPRNG.Buffer = select(2, Blake3.Digest(INPUT_BUFFER, OutputSize))
-	CSPRNG.BufferPosition = 0
-	CSPRNG.BufferSize = buffer.len(CSPRNG.Buffer)
-	CSPRNG.Counter += 1
-
-	if CSPRNG.Counter % RekeyThreshold == 0 then
+	if Counter % REKEY_BLOCKS == 0 then
 		GatherEntropy()
-		CSPRNG.Counter = 0
 	end
 end
 
@@ -298,30 +190,32 @@ local function GetBytes(Count: number): buffer
 	local ResultPosition = 0
 
 	while ResultPosition < Count do
-		if CSPRNG.BufferPosition >= CSPRNG.BufferSize then
+		local Position = BufferPosition
+		if Position >= BufferSize then
 			GenerateBlock()
+			Position = BufferPosition
 		end
 
-		local BytesNeeded = Count - ResultPosition
-		local BytesAvailable = CSPRNG.BufferSize - CSPRNG.BufferPosition
-		local BytesToCopy = math.min(BytesNeeded, BytesAvailable)
+		local BytesToCopy = math.min(Count - ResultPosition, BufferSize - Position)
 
-		buffer.copy(Result, ResultPosition, CSPRNG.Buffer, CSPRNG.BufferPosition, BytesToCopy)
+		buffer.copy(Result, ResultPosition, StreamBuffer, Position, BytesToCopy)
 		ResultPosition += BytesToCopy
-		CSPRNG.BufferPosition += BytesToCopy
+		BufferPosition = Position + BytesToCopy
 	end
 
 	return Result
 end
 
 local function GetFloat(): number
-	if CSPRNG.BufferPosition + 8 > CSPRNG.BufferSize then
+	if BufferPosition + 8 > BufferSize then
 		GenerateBlock()
 	end
 
-	local Value1 = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
-	local Value2 = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition + 4)
-	CSPRNG.BufferPosition += 8
+	local Position = BufferPosition
+	local Stream = StreamBuffer
+	local Value1 = buffer.readu32(Stream, Position)
+	local Value2 = buffer.readu32(Stream, Position + 4)
+	BufferPosition = Position + 8
 
 	local High = bit32.rshift(Value1, 5)
 	local Low = bit32.rshift(Value2, 6)
@@ -331,29 +225,30 @@ end
 
 local function GetIntRange(Min: number, Max: number): number
 	local Range = Max - Min + 1
-	local MaxUInt32 = 0xFFFFFFFF
-	local Limit = MaxUInt32 - (MaxUInt32 % Range)
 
-	if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
+	if BufferPosition + 4 > BufferSize then
 		GenerateBlock()
 	end
 
-	local Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
-	CSPRNG.BufferPosition += 4
+	local Position = BufferPosition
+	local Value = buffer.readu32(StreamBuffer, Position)
+	BufferPosition = Position + 4
 
 	if bit32.band(Range, Range - 1) == 0 then
 		return Min + bit32.band(Value, Range - 1)
-	else
-		while Value > Limit do
-			if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
-				GenerateBlock()
-			end
-			Value = buffer.readu32(CSPRNG.Buffer, CSPRNG.BufferPosition)
-			CSPRNG.BufferPosition += 4
-		end
-
-		return Min + (Value % Range)
 	end
+
+	local Limit = MAX_UINT32 - (MAX_UINT32 % Range)
+	while Value > Limit do
+		if BufferPosition + 4 > BufferSize then
+			GenerateBlock()
+		end
+		Position = BufferPosition
+		Value = buffer.readu32(StreamBuffer, Position)
+		BufferPosition = Position + 4
+	end
+
+	return Min + (Value % Range)
 end
 
 local function GetNumberRange(Min: number, Max: number): number
@@ -381,69 +276,7 @@ local function GetRandomString(Length: number, AsBuffer: boolean?): string | buf
 		else buffer.tostring(Characters)
 end
 
-local function GetEd25519RandomBytes(): buffer
-	local Output = buffer.create(32)
-
-	for Index = 0, 31 do
-		buffer.writeu8(Output, Index, GetIntRange(0, 255))
-	end
-
-	return Output
-end
-
-local function GetEd25519ClampedBytes(Input: buffer): buffer
-	local Output = buffer.create(32)
-	buffer.copy(Output, 0, Input, 0, 32)
-
-	local FirstByte = buffer.readu8(Output, 0)
-	FirstByte = bit32.band(FirstByte, 0xF8)
-	buffer.writeu8(Output, 0, FirstByte)
-
-	local LastByte = buffer.readu8(Output, 31)
-	LastByte = bit32.band(LastByte, 0x7F)
-	LastByte = bit32.bor(LastByte, 0x40)
-	buffer.writeu8(Output, 31, LastByte)
-
-	local HasVariation = false
-	local FirstMiddleByte = buffer.readu8(Output, 1)
-	for Index = 2, 30 do
-		if buffer.readu8(Output, Index) ~= FirstMiddleByte then
-			HasVariation = true
-			break
-		end
-	end
-
-	if not HasVariation then
-		buffer.writeu8(Output, 15, bit32.bxor(FirstMiddleByte, 0x55))
-	end
-
-	return Output
-end
-
-local function GetHexString(Length: number): string
-	local BytesNeeded = Length / 2
-	local Bytes = GetBytes(BytesNeeded)
-	local Hex = ToHex(Bytes)
-
-	return Hex
-end
-
-function CSPRNG.AddEntropyProvider(ProviderFunction: EntropyProvider)
-	table.insert(CSPRNG.EntropyProviders, ProviderFunction)
-end
-
-function CSPRNG.RemoveEntropyProvider(ProviderFunction: EntropyProvider)
-	for Index = #CSPRNG.EntropyProviders, 1, -1 do
-		if CSPRNG.EntropyProviders[Index] == ProviderFunction then
-			table.remove(CSPRNG.EntropyProviders, Index)
-			break
-		end
-	end
-end
-
-function CSPRNG.Random(): number
-	return GetFloat()
-end
+CSPRNG.Random = GetFloat
 
 function CSPRNG.RandomInt(Min: number, Max: number?): number
 	if Max and type(Max) ~= "number" then
@@ -560,31 +393,19 @@ function CSPRNG.RandomHex(Length: number): string
 		error(`Length must be even, got {Length}`, 2)
 	end
 
-	return GetHexString(Length)
+	return ToHex(GetBytes(Length / 2))
 end
 
-function CSPRNG.Ed25519ClampedBytes(Input: buffer): buffer
-	if type(Input) ~= "buffer" then
-		error(`Input must be a buffer, got {typeof(Input)}`, 2)
+function CSPRNG.AddEntropy(Entropy: buffer?)
+	if Entropy ~= nil and type(Entropy) ~= "buffer" then
+		error(`Entropy must be a buffer or nil, got {typeof(Entropy)}`, 2)
 	end
 
-	return GetEd25519ClampedBytes(Input)
+	GatherEntropy(Entropy)
+	GenerateBlock()
 end
 
-function CSPRNG.Ed25519Random(): buffer
-	return GetEd25519ClampedBytes(GetEd25519RandomBytes())
-end
-
-function CSPRNG.Reseed(CustomEntropy: buffer?)
-	if CustomEntropy ~= nil and type(CustomEntropy) ~= "buffer" then
-		error(`CustomEntropy must be a buffer or nil, got {typeof(CustomEntropy)}`, 2)
-	end
-
-	Reset()
-	GatherEntropy(CustomEntropy)
-end
-
-CSPRNG.BytesLeft = GatherEntropy()
+GatherEntropy()
 GenerateBlock()
 
 return CSPRNG

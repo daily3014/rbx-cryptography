@@ -15,13 +15,13 @@ local EdDSA = Cryptography.Verification.EdDSA
 local CSPRNG = Cryptography.Utilities.CSPRNG
 
 -- Generate multiple keypairs (different signers)
-local Signer1Private = CSPRNG.Ed25519Random()
+local Signer1Private = CSPRNG.RandomBytes(32)
 local Signer1Public = EdDSA.PublicKey(Signer1Private)
 
-local Signer2Private = CSPRNG.Ed25519Random()
+local Signer2Private = CSPRNG.RandomBytes(32)
 local Signer2Public = EdDSA.PublicKey(Signer2Private)
 
-local Signer3Private = CSPRNG.Ed25519Random()
+local Signer3Private = CSPRNG.RandomBytes(32)
 local Signer3Public = EdDSA.PublicKey(Signer3Private)
 
 -- Create messages and sign them
