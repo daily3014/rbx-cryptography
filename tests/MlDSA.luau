@@ -108,9 +108,13 @@ local function RunMlDsaTests(Data: MlDsaData, Params: any)
 						Params.KeyGen(Seed, Pk, Sk)
 
 						local Sig = buffer.create(Params.SigByteLen)
-						local Ok = Params.Sign(Msg, Rnd, Sk, Ctx, Sig)
-						Testing.Expect(Ok).ToBe(true)
-						Testing.Expect(ToHex(Sig)).ToBe(Test.sig :: string)
+						local SignOk, Ok = pcall(Params.Sign, Msg, Rnd, Sk, Ctx, Sig)
+						if Test.result == "invalid" then
+							Testing.Expect(SignOk == false or Ok == false).ToBe(true)
+						else
+							Testing.Expect(SignOk and Ok == true).ToBe(true)
+							Testing.Expect(ToHex(Sig)).ToBe(Test.sig :: string)
+						end
 					elseif Group.type == "MlDsaVerify" then
 						local Pk = FromHex(Test.pk :: string)
 						local Ctx = FromHex(Test.ctx :: string)

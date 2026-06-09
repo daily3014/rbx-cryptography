@@ -86,8 +86,13 @@ local function RunHkdfTests(Data: HkdfData, HashFn: any, BlockSize: number, Hash
 					local Salt: buffer? = if buffer.len(SaltBuf) > 0 then SaltBuf else nil
 					local Info: buffer? = if buffer.len(InfoBuf) > 0 then InfoBuf else nil
 
-					local Okm = HKDF(Ikm, Salt, Info, Test.outputLen, HashFn, BlockSize, HashLen)
-					Testing.Expect(ToHex(Okm)).ToBe(Test.okm)
+					if Test.result == "invalid" then
+						local Ok = pcall(HKDF, Ikm, Salt, Info, Test.outputLen, HashFn, BlockSize, HashLen)
+						Testing.Expect(Ok).ToBe(false)
+					else
+						local Okm = HKDF(Ikm, Salt, Info, Test.outputLen, HashFn, BlockSize, HashLen)
+						Testing.Expect(ToHex(Okm)).ToBe(Test.okm)
+					end
 				end)
 			end
 		end)

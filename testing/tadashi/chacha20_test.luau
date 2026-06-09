@@ -42,9 +42,14 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		CounterOverflow = {
+			bugType = [[SPEC_AMBIGUOUS]],
+			description = [[Block counter starts at 2^32 - 1 and the message spans the wrap to 0. RFC 8439 leaves multi-block messages past the counter limit undefined.]],
+			effect = [[Recorded output is the mod-2^32 wrap (the dominant behavior); clean rejection also conforms. Anything else (64-bit carry into the nonce word, crash) is a bug.]]
 		}
 	},
-	numberOfTests = 17,
+	numberOfTests = 18,
 	testGroups = {
 		{
 			type = [[ChaCha20Encrypt]],
@@ -389,6 +394,32 @@ return {
 					msg = [[0fedcba98765432100112233445566778899aabbccddeeff1eef00ddcc11bbaa]],
 					ct = [[d629644d034a955bcaef93652461e699db7a2160e63dd93a228b85ba766756f6]],
 					result = [[valid]]
+				},
+				{
+					tcId = 18,
+					comment = [[Counter = 0xffffffff with a 128-byte message: block 2 wraps the counter to 0. Acceptable: mod-2^32 wrap (recorded, computed independently by a reference implementation) or clean rejection. A 64-bit counter carry into the first nonce word is the classic bug here.]],
+					targets = {
+						[[CounterOverflow]],
+						[[CounterEndianness]]
+					},
+					flags = {
+						[[CounterOverflow]],
+						[[Acceptable]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[pure-python RFC 8439 reference]],
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f]],
+					iv = [[000000000000004a00000000]],
+					counter = 4294967295,
+					msg = [[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f]],
+					ct = [[6d28d858d56f412e18e1cab6b873d1c7598d2031d8039b20396d65d9ae0f78c6d17da11ad52a136a3ee5b1a53da39fad8fb4bed645ba92d05bb0d0758937aa4aef445c03ffe5730ec97bd0cb265940e08209f079399e1deeae0fc6e8b3bf80f0e31aba1fc66e3dc648e8c96dc363dd3331d34ba1798902bf6f082c76e0e16034]],
+					result = [[acceptable]]
 				}
 			}
 		}

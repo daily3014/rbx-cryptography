@@ -59,9 +59,22 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		OverMaxOutput = {
+			bugType = [[MISSING_STEP]],
+			description = [[Requested output length exceeds 255 * HashLen, the RFC 5869 maximum (the expand counter is a single byte).]],
+			effect = [[Implementations that let the counter wrap emit repeating or undefined output instead of rejecting.]]
+		},
+		OutputCollision = {
+			bugType = [[FUNCTIONALITY]],
+			description = [[Distinct salts producing identical OKM: a salt longer than the HMAC block size is hashed first, so HKDF(salt=long) equals HKDF(salt=Hash(long)). Documents an inherent hazard of salt handling, both outputs are correct.]]
+		},
+		SaltHashEquivalence = {
+			bugType = [[FUNCTIONALITY]],
+			description = [[A salt longer than the block size of the hash is equivalent to the hash of the salt.]]
 		}
 	},
-	numberOfTests = 9,
+	numberOfTests = 13,
 	testGroups = {
 		{
 			type = [[HkdfSha256]],
@@ -268,6 +281,101 @@ return {
 					info = [[0102030405060708]],
 					outputLen = 32,
 					okm = [[5353d77b74859fad5bca35836b4210d44067db63e29df3bd307350ef943f4a6a]],
+					result = [[valid]]
+				},
+				{
+					tcId = 10,
+					comment = [[Output length 255 * HashLen + 1 (8161 bytes), one past the RFC 5869 maximum. The single-byte expand counter cannot reach block 256; must reject.]],
+					targets = {
+						[[OverMaxOutput]]
+					},
+					flags = {
+						[[OverMaxOutput]]
+					},
+					source = {
+						name = [[rfc5869]],
+						version = [[2.3]],
+						crossChecked = {
+							[[pyca/cryptography]],
+							[[rbx-cryptography]]
+						}
+					},
+					ikm = [[0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b]],
+					salt = [[]],
+					info = [[]],
+					outputLen = 8161,
+					okm = [[]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 11,
+					comment = [[Imported from Wycheproof v1 hkdf_sha256_test.json tcId 76: output collision for different salts.]],
+					targets = {
+						[[OutputCollision]]
+					},
+					flags = {
+						[[OutputCollision]],
+						[[EmptySalt]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					ikm = [[3ee1fc0d8fac49d494c4a1b8cf6bf290a4a2c19a27c3ab1914d0d21c841577e0]],
+					salt = [[]],
+					info = [[4dc991623624fadef207587e42776cf3e0fdf4e5]],
+					outputLen = 32,
+					okm = [[f41f703259063d401de67cea9192038ddddc71ede5cdb383aad71894c1a39e8c]],
+					result = [[valid]]
+				},
+				{
+					tcId = 12,
+					comment = [[Imported from Wycheproof v1 hkdf_sha256_test.json tcId 77: output collision for different salts.]],
+					targets = {
+						[[OutputCollision]]
+					},
+					flags = {
+						[[OutputCollision]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					ikm = [[3ee1fc0d8fac49d494c4a1b8cf6bf290a4a2c19a27c3ab1914d0d21c841577e0]],
+					salt = [[0000000000000000000000000000000000000000000000000000000000000000]],
+					info = [[4dc991623624fadef207587e42776cf3e0fdf4e5]],
+					outputLen = 32,
+					okm = [[f41f703259063d401de67cea9192038ddddc71ede5cdb383aad71894c1a39e8c]],
+					result = [[valid]]
+				},
+				{
+					tcId = 13,
+					comment = [[Imported from Wycheproof v1 hkdf_sha256_test.json tcId 78: a salt longer than the block size of the hash is equivalent to the hash of the salt.]],
+					targets = {
+						[[SaltHashEquivalence]],
+						[[OutputCollision]]
+					},
+					flags = {
+						[[OutputCollision]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					ikm = [[3ee1fc0d8fac49d494c4a1b8cf6bf290a4a2c19a27c3ab1914d0d21c841577e0]],
+					salt = [[888815e19321fa618f0ce9800b7c2f6d289ed32c23d9816cc8bb36966bbe413e24db80612bd48c8fd8e791732aed62288c3bf97d7c881b8d80dd48fa31b6f5d0cb]],
+					info = [[4dc991623624fadef207587e42776cf3e0fdf4e5]],
+					outputLen = 32,
+					okm = [[52a1d834f372578ccc7b57e9149f4c45f98ff754dbdec0bb3a8f931bd14e4bb1]],
 					result = [[valid]]
 				}
 			}

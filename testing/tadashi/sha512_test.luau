@@ -56,9 +56,17 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		MillionA = {
+			bugType = [[BASIC]],
+			description = [[FIPS 180-4 million-repeated-byte KAT delivered via msgPattern; catches block-loop and length-accumulator bugs short messages never reach.]]
+		},
+		MsgPattern = {
+			bugType = [[BASIC]],
+			description = [[Input supplied as a generation rule (msgPattern) instead of literal msg bytes; runners without msgPattern support must skip, not fail.]]
 		}
 	},
-	numberOfTests = 15,
+	numberOfTests = 16,
 	testGroups = {
 		{
 			type = [[Sha512Digest]],
@@ -320,6 +328,30 @@ return {
 					},
 					msg = [[0123456789abcdeffedcba9876543210]],
 					digest = [[4582725b4e904c9fb7c4072b2e4665fb3e4adc03cb8061c91c0283d582251ea08226cf5a84d9ee441fb30adb0ab7e564dd66ce8a2bc2ba4b0e32ad36e3bb1253]],
+					result = [[valid]]
+				},
+				{
+					tcId = 16,
+					comment = [[FIPS 180-4 one-million-'a' KAT, delivered via msgPattern. The canonical long-message test.]],
+					targets = {
+						[[MillionA]]
+					},
+					flags = {
+						[[MillionA]],
+						[[MsgPattern]]
+					},
+					source = {
+						name = [[fips-180-4]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[hashlib (CPython)]]
+						}
+					},
+					msgPattern = {
+						pattern = [[61]],
+						length = 1000000
+					},
+					digest = [[e718483d0ce769644e2e42c7bc15b4638e1f98b13b2044285632a803afa973ebde0ff244877ea60a4cb0432ce577c31beb009c5c2c49aa2e4eadb217ad8cc09b]],
 					result = [[valid]]
 				}
 			}

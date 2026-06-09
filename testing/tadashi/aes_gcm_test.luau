@@ -55,6 +55,11 @@ return {
 			description = [[IV is not 96 bits, so J0 = GHASH(IV with bit-padding and length block) instead of IV || 0x00000001.]],
 			effect = [[Bug if implementation always uses the 96-bit fast path.]]
 		},
+		EmptyIv = {
+			bugType = [[MISSING_STEP]],
+			description = [[Zero-length IV. NIST SP 800-38D Section 5.2.1.1 requires 1 <= len(IV) <= 2^64 - 1. With an empty IV, J0 = GHASH(padding || length block) depends only on H = E_K(0^128), i.e. only on the key.]],
+			effect = [[Implementations that accept an empty IV produce a fixed J0 per key, destroying nonce uniqueness for every message encrypted under that key.]]
+		},
 		GhashReduction = {
 			bugType = [[BASIC]],
 			description = [[Pseudorandom inputs that exercise GF(2^128) polynomial reduction with the 0xe1 reduction constant.]]
@@ -80,9 +85,24 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		TagTruncationSupport = {
+			bugType = [[SPEC_AMBIGUOUS]],
+			description = [[Tag truncated to a SP 800-38D-permitted shorter length (MSBs of the full tag).]],
+			effect = [[Truncation-supporting implementations must authenticate and decrypt; 128-bit-only implementations must cleanly reject. Accepting a truncated tag as if full-length, or comparing only the truncated prefix against a full-length computation buffer, is the bug.]]
+		},
+		AbsentParameter = {
+			bugType = [[API_SURFACE]],
+			description = [[Optional AAD argument omitted at the API level (field absent, not empty). Must behave identically to zero-length AAD.]],
+			effect = [[Default-argument paths that skip the AAD length block or substitute a placeholder diverge from the spec.]]
+		},
+		GcmCounterWrap = {
+			bugType = [[AUTH_BYPASS]],
+			description = [[IV chosen so the 32-bit CTR portion of the counter block wraps modulo 2^32 during encryption (SP 800-38D inc32). The full J0 must not carry into the IV portion.]],
+			effect = [[A 64-bit counter increment carries into the fixed IV field, producing wrong keystream blocks after the wrap and, on decrypt-then-MAC designs, potential auth bypass.]]
 		}
 	},
-	numberOfTests = 35,
+	numberOfTests = 45,
 	testGroups = {
 		{
 			type = [[AesGcmEncrypt]],
@@ -663,6 +683,79 @@ return {
 					ct = [[8bdd358a861e1cdd27ee51c3a7f005d3c3dd471c250e9c0ca7376812a8fc2373]],
 					tag = [[131f0a2e2aef482177bbb1c0584ef83e]],
 					result = [[valid]]
+				},
+				{
+					tcId = 39,
+					comment = [[AAD parameter entirely absent (no 'aad' field): the consumer must invoke its API without an AAD argument. Identical inputs to tcId 3 otherwise; ct and tag must equal tcId 3 exactly.]],
+					targets = {
+						[[AbsentParameter]]
+					},
+					flags = {
+						[[AbsentParameter]]
+					},
+					source = {
+						name = [[nist-gcm-spec]],
+						version = [[TC3]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[feffe9928665731c6d6a8f9467308308]],
+					iv = [[cafebabefacedbaddecaf888]],
+					msg = [[d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255]],
+					ct = [[42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091473f5985]],
+					tag = [[4d5c2af327cd64a62cf35abd2ba6fab4]],
+					result = [[valid]]
+				},
+				{
+					tcId = 40,
+					comment = [[Imported from Wycheproof v1 aes_gcm_test.json tcId 77: J0:000102030405060708090a0b0c0d0e0f.]],
+					targets = {
+						[[GcmCounterWrap]],
+						[[CounterStart]]
+					},
+					flags = {
+						[[CounterWrap]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[00112233445566778899aabbccddeeff]],
+					iv = [[f95fde4a751913202aeeee32a0b55753]],
+					aad = [[]],
+					msg = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					ct = [[00078d109d92143fcd5df56721b884fac64ac7762cc09eea2a3c68e92a17bdb575f87bda18be564e]],
+					tag = [[152a65045fe674f97627427af5be22da]],
+					result = [[valid]]
+				},
+				{
+					tcId = 41,
+					comment = [[Imported from Wycheproof v1 aes_gcm_test.json tcId 88: J0:000102030405060708090a0bffff7ffe.]],
+					targets = {
+						[[GcmCounterWrap]],
+						[[CounterStart]]
+					},
+					flags = {
+						[[CounterWrap]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[00112233445566778899aabbccddeeff]],
+					iv = [[c4dcd9fcce24d3522b66f1469a1e8bb9]],
+					aad = [[]],
+					msg = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					ct = [[149fde9abbd3a43c2548575e0db9fb84a197a37a5d79697078536bc27fe46cd8d475526d9044aa94]],
+					tag = [[62a4b6875c288345d6a454399eac1afa]],
+					result = [[valid]]
 				}
 			}
 		},
@@ -689,6 +782,56 @@ return {
 					msg = [[]],
 					ct = [[]],
 					tag = [[cd33b28ac773f74ba00ed1f312572435]],
+					result = [[valid]]
+				},
+				{
+					tcId = 42,
+					comment = [[Imported from Wycheproof v1 aes_gcm_test.json tcId 157: J0:000102030405060708090a0b0c0d0e0f.]],
+					targets = {
+						[[GcmCounterWrap]],
+						[[CounterStart]]
+					},
+					flags = {
+						[[CounterWrap]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[00112233445566778899aabbccddeeff1021324354657687]],
+					iv = [[029e0e777db092b12535d043012f09ba]],
+					aad = [[]],
+					msg = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					ct = [[f83cee467336e1a09b75f24e9b4385c99c13e6af722256a66129ece961fe803b167bad206f5017fb]],
+					tag = [[09338a42f0acc14f97c064f52f5f1688]],
+					result = [[valid]]
+				},
+				{
+					tcId = 43,
+					comment = [[Imported from Wycheproof v1 aes_gcm_test.json tcId 168: J0:000102030405060708090a0bffff7ffe.]],
+					targets = {
+						[[GcmCounterWrap]],
+						[[CounterStart]]
+					},
+					flags = {
+						[[CounterWrap]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[00112233445566778899aabbccddeeff1021324354657687]],
+					iv = [[a13434d1cd8301d8b12212051fabaabe]],
+					aad = [[]],
+					msg = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					ct = [[d2cae1684aa407a13a2e2da5357e29f55deccf838b2cf5f869c90d2a611160b1e578ab8121b93735]],
+					tag = [[ea2d018099cd7925c507cef0ceddb0ae]],
 					result = [[valid]]
 				}
 			}
@@ -754,6 +897,56 @@ return {
 					msg = [[d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39]],
 					ct = [[522dc1f099567d07f47f37a32a84427d643a8cdcbfe5c0c97598a2bd2555d1aa8cb08e48590dbb3da7b08b1056828838c5f61e6393ba7a0abcc9f662]],
 					tag = [[76fc6ece0f4e1768cddf8853bb2d551b]],
+					result = [[valid]]
+				},
+				{
+					tcId = 44,
+					comment = [[Imported from Wycheproof v1 aes_gcm_test.json tcId 240: J0:000102030405060708090a0b0c0d0e0f.]],
+					targets = {
+						[[GcmCounterWrap]],
+						[[CounterStart]]
+					},
+					flags = {
+						[[CounterWrap]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f]],
+					iv = [[5c2ea9b695fcf6e264b96074d6bfa572]],
+					aad = [[]],
+					msg = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					ct = [[28e1c5232f4ee8161dbe4c036309e0b3254e9212bef0a93431ce5e5604c8f6a73c18a3183018b770]],
+					tag = [[d5808a1bd11a01129bf3c6919aff2339]],
+					result = [[valid]]
+				},
+				{
+					tcId = 45,
+					comment = [[Imported from Wycheproof v1 aes_gcm_test.json tcId 251: J0:000102030405060708090a0bffff7ffe.]],
+					targets = {
+						[[GcmCounterWrap]],
+						[[CounterStart]]
+					},
+					flags = {
+						[[CounterWrap]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[00112233445566778899aabbccddeeff102132435465768798a9bacbdcedfe0f]],
+					iv = [[24836f0a46ab6601a760221b074cbd6d]],
+					aad = [[]],
+					msg = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					ct = [[5e3434b45edbf0d1f6e02d1144dbf867a1a0120660ff52e6b1700b12c54d2d33b94b00cd7882d885]],
+					tag = [[ee74ccb30d649ebf6916d05a7dbe5696]],
 					result = [[valid]]
 				}
 			}
@@ -874,6 +1067,104 @@ return {
 					ct = [[4947d15f001a373760da6e9d66f264c6]],
 					tag = [[ae5ff9edf0a878a6e084cd6e6b376b1e]],
 					result = [[valid]]
+				}
+			}
+		},
+		{
+			type = [[AesGcmEncrypt]],
+			keySize = 128,
+			ivSize = 0,
+			tagSize = 128,
+			tests = {
+				{
+					tcId = 36,
+					comment = [[Empty (zero-length) IV. SP 800-38D requires 1 <= len(IV) <= 2^64 - 1; both encryption and decryption must refuse to operate. The recorded ct and tag are what a NON-REJECTING implementation computes (with an empty IV, J0 = GHASH(len block) = 0^128, fixed per key): an implementation that accepts the empty IV will successfully authenticate and decrypt, and therefore FAIL this test; refusing (error or auth-failure result) passes.]],
+					targets = {
+						[[EmptyIv]]
+					},
+					flags = {
+						[[EmptyIv]]
+					},
+					source = {
+						name = [[nist-sp-800-38d]],
+						version = [[5.2.1.1]],
+						crossChecked = {
+							[[pyca/cryptography (AES-ECB primitive, GCM composed per SP 800-38D)]]
+						}
+					},
+					key = [[000102030405060708090a0b0c0d0e0f]],
+					iv = [[]],
+					aad = [[]],
+					msg = [[00112233445566778899aabbccddeeff]],
+					ct = [[735731a6d195d269c1e21758a929c3f5]],
+					tag = [[5a8120883d0836fb361154cc6d68843b]],
+					result = [[invalid]]
+				}
+			}
+		},
+		{
+			type = [[AesGcmEncrypt]],
+			keySize = 128,
+			ivSize = 96,
+			tagSize = 96,
+			tests = {
+				{
+					tcId = 37,
+					comment = [[NIST TC4 with the tag truncated to 96 bits (the minimum recommended SP 800-38D truncation). Acceptable: truncation-supporting implementations authenticate and decrypt (cross-checked with pyca/cryptography); 128-bit-only implementations cleanly reject.]],
+					targets = {
+						[[TagTruncationSupport]]
+					},
+					flags = {
+						[[TagTruncationSupport]],
+						[[Acceptable]]
+					},
+					source = {
+						name = [[nist-gcm-spec]],
+						version = [[TC4]],
+						crossChecked = {
+							[[pyca/cryptography]]
+						}
+					},
+					key = [[feffe9928665731c6d6a8f9467308308]],
+					iv = [[cafebabefacedbaddecaf888]],
+					aad = [[feedfacedeadbeeffeedfacedeadbeefabaddad2]],
+					msg = [[d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39]],
+					ct = [[42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091]],
+					tag = [[5bc94fbc3221a5db94fae95a]],
+					result = [[acceptable]]
+				}
+			}
+		},
+		{
+			type = [[AesGcmEncrypt]],
+			keySize = 128,
+			ivSize = 96,
+			tagSize = 120,
+			tests = {
+				{
+					tcId = 38,
+					comment = [[NIST TC4 with the tag truncated to 120 bits (the longest non-full SP 800-38D truncation). Acceptable: truncation-supporting implementations authenticate and decrypt (cross-checked with pyca/cryptography); 128-bit-only implementations cleanly reject.]],
+					targets = {
+						[[TagTruncationSupport]]
+					},
+					flags = {
+						[[TagTruncationSupport]],
+						[[Acceptable]]
+					},
+					source = {
+						name = [[nist-gcm-spec]],
+						version = [[TC4]],
+						crossChecked = {
+							[[pyca/cryptography]]
+						}
+					},
+					key = [[feffe9928665731c6d6a8f9467308308]],
+					iv = [[cafebabefacedbaddecaf888]],
+					aad = [[feedfacedeadbeeffeedfacedeadbeefabaddad2]],
+					msg = [[d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b39]],
+					ct = [[42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091]],
+					tag = [[5bc94fbc3221a5db94fae95ae7121a]],
+					result = [[acceptable]]
 				}
 			}
 		}

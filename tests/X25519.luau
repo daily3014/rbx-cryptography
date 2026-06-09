@@ -24,6 +24,7 @@ type X25519Test = {
 	flags: {string}?,
 	sk: string,
 	pk: string,
+	iterations: number?,
 	shared: string,
 	result: string,
 }
@@ -55,8 +56,18 @@ Testing.Describe("X25519 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					local Shared = X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))
-					Testing.Expect(ToHex(Shared)).ToBe(Test.shared)
+					if Test.iterations then
+						local K = FromHex(Test.sk)
+						local U = FromHex(Test.pk)
+						for _ = 1, Test.iterations do
+							local Out = X25519.Exchange(K, U)
+							K, U = Out, K
+						end
+						Testing.Expect(ToHex(K)).ToBe(Test.shared)
+					else
+						local Shared = X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))
+						Testing.Expect(ToHex(Shared)).ToBe(Test.shared)
+					end
 				end)
 			end
 		end)

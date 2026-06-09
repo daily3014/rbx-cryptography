@@ -23,8 +23,9 @@ type Blake3Test = {
 	flags: {string}?,
 	key: string,
 	context: string,
-	msg: string,
-	outputLen: number,
+	msg: string?,
+	msgPattern: {pattern: string, length: number}?,
+	outputLen: number?,
 	digest: string,
 	result: string,
 }
@@ -55,7 +56,9 @@ Testing.Describe("BLAKE3 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					local Msg = FromHex(Test.msg)
+					local Msg = if Test.msgPattern
+						then Testing.ExpandPattern(Test.msgPattern.pattern, Test.msgPattern.length)
+						else FromHex(Test.msg :: string)
 					local Digest: string
 
 					if Test.context and #Test.context > 0 then

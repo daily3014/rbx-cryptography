@@ -74,9 +74,22 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		AbsentParameter = {
+			bugType = [[API_SURFACE]],
+			description = [[Options omitted entirely at the API level: the consumer must invoke its implementation with only password and salt and obtain the documented defaults (m = 19456 KiB, t = 2, p = 1, 32-byte tag).]],
+			effect = [[Default-parameter paths are what most callers actually run and are never pinned by fully-specified vectors.]]
+		},
+		MinTagLength = {
+			bugType = [[EDGE_CASE]],
+			description = [[Output length 4 bytes, the RFC 9106 minimum tag length; exercises the short-output path of the H-prime variable-length hash.]]
+		},
+		ParallelMinMemory = {
+			bugType = [[EDGE_CASE]],
+			description = [[p = 4 lanes with m = 32 KiB (the 8*p minimum) and a single pass; every lane has the minimum 2 blocks per segment and slice-0 cross-lane references hit the smallest legal reference areas.]]
 		}
 	},
-	numberOfTests = 15,
+	numberOfTests = 18,
 	testGroups = {
 		{
 			type = [[Argon2id]],
@@ -485,6 +498,86 @@ return {
 					p = 1,
 					outputLen = 32,
 					tag = [[4022455d900e347d959347148d2b72a589adbf0d84e7eb639d101fdf5cf48c7d]],
+					result = [[valid]]
+				},
+				{
+					tcId = 16,
+					comment = [[All options absent: the consumer must call with password and salt only. Pins the documented default parameters (m = 19456, t = 2, p = 1, dkLen = 32), which are what most real callers run (cross-checked with argon2-cffi).]],
+					targets = {
+						[[AbsentParameter]]
+					},
+					flags = {
+						[[AbsentParameter]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[argon2-cffi (phc-winner-argon2)]],
+							[[rbx-cryptography]]
+						}
+					},
+					password = [[70617373776f7264]],
+					salt = [[000102030405060708090a0b0c0d0e0f]],
+					tag = [[39903a34cd393876436e671cd690dfe8ab9ce7b13459a7e04ec0e4f0694ddb0d]],
+					result = [[valid]]
+				},
+				{
+					tcId = 17,
+					comment = [[Output length 4 bytes, the RFC 9106 minimum. H-prime takes the direct single-Blake2b path with a 4-byte digest.]],
+					targets = {
+						[[MinTagLength]],
+						[[OutputLength]]
+					},
+					flags = {
+						[[MinTagLength]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[argon2-cffi (phc-winner-argon2)]],
+							[[rbx-cryptography]]
+						}
+					},
+					password = [[70617373776f7264]],
+					salt = [[000102030405060708090a0b0c0d0e0f]],
+					secret = [[]],
+					ad = [[]],
+					t = 1,
+					m = 8,
+					p = 1,
+					outputLen = 4,
+					tag = [[c2238164]],
+					result = [[valid]]
+				},
+				{
+					tcId = 18,
+					comment = [[p = 4 with m = 32 KiB (exactly 8*p, the minimum) and t = 1: a single pass over four 2-block segments per lane, the smallest legal multi-lane geometry. Stresses slice-0 same-lane-only indexing and minimal reference areas.]],
+					targets = {
+						[[ParallelMinMemory]],
+						[[Parallelism]]
+					},
+					flags = {
+						[[ParallelMinMemory]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[argon2-cffi (phc-winner-argon2)]],
+							[[rbx-cryptography]]
+						}
+					},
+					password = [[70617373776f7264]],
+					salt = [[000102030405060708090a0b0c0d0e0f]],
+					secret = [[]],
+					ad = [[]],
+					t = 1,
+					m = 32,
+					p = 4,
+					outputLen = 32,
+					tag = [[747c33ed662de7a2fe76928a145df0bfaf051f5c81be8f22ceb3e681495dab02]],
 					result = [[valid]]
 				}
 			}

@@ -134,9 +134,23 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		VerifierArithmeticOverflow = {
+			bugType = [[KNOWN_BUG]],
+			description = [[Valid signature whose R/S values triggered an arithmetic overflow in a production verifier (Tink). Regression vectors for verifier limb arithmetic.]],
+			effect = [[A verifier with the same overflow rejects a valid signature.]]
+		},
+		RSEdgeValues = {
+			bugType = [[EDGE_CASE]],
+			description = [[r or s set to an algebraic edge value (0, 1, L-1, L, p, ...); the verification equation degenerates and must be rejected by the range/decode checks.]]
+		},
+		SignatureLength = {
+			bugType = [[MISSING_STEP]],
+			description = [[Signature with a malformed length (empty, truncated, extended, garbage appended); must be rejected before any algebra.]],
+			effect = [[Length-tolerant parsers admit malleable or forged encodings.]]
 		}
 	},
-	numberOfTests = 50,
+	numberOfTests = 62,
 	testGroups = {
 		{
 			type = [[Ed25519]],
@@ -1162,6 +1176,261 @@ return {
 					msg = [[0fedcba98765432100112233445566778899aabbccddeeff1eef00ddcc11bbaa]],
 					sig = [[4217315e85df602c99b801b322c764e75f28bd91b402ecf91464dd6aa9605b756cbfecb1b6a715cbd26e2fcebab6a8bfe196419a448cefda766ce3afda5ac90c]],
 					result = [[valid]]
+				},
+				{
+					tcId = 51,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 37: appending 0 byte to signature.]],
+					targets = {
+						[[SignatureLength]]
+					},
+					flags = {
+						[[SignatureWithGarbage]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[54657374]],
+					sig = [[7c38e026f29e14aabd059a0f2db8b0cd783040609a8be684db12f82a27774ab07a9155711ecfaf7f99f277bad0c6ae7e39d4eef676573336a5c51eb6f946b30d00]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 52,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 63: checking malleability .]],
+					targets = {
+						[[ScalarSRange]]
+					},
+					flags = {
+						[[SignatureMalleability]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[54657374]],
+					sig = [[7c38e026f29e14aabd059a0f2db8b0cd783040609a8be684db12f82a27774ab067654bce3832c2d76f8f6f5dafc08d9339d4eef676573336a5c51eb6f946b31d]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 53,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 67: checking malleability .]],
+					targets = {
+						[[ScalarSRange]]
+					},
+					flags = {
+						[[SignatureMalleability]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[54657374]],
+					sig = [[7c38e026f29e14aabd059a0f2db8b0cd783040609a8be684db12f82a27774ab07a9155711ecfaf7f99f277bad0c6ae7e39d4eef676573336a5c51eb6f946b32d]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 54,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 30: empty signature.]],
+					targets = {
+						[[SignatureLength]]
+					},
+					flags = {
+						[[TruncatedSignature]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[54657374]],
+					sig = [[]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 55,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 119: regression test for arithmetic error.]],
+					targets = {
+						[[VerifierArithmeticOverflow]]
+					},
+					flags = {
+						[[TinkOverflow]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[4abfb535313705a6570018440cdec1a3ae33e51f352112fa6acbd0c6bc3ea859]],
+					msg = [[321b5f663c19e30ee7bbb85e48ecf44db9d3f512]],
+					sig = [[f296715e855d8aecccba782b670163dedc4458fe4eb509a856bcac450920fd2e95a3a3eb212d2d9ccaf948c39ae46a2548af125f8e2ad9b77bd18f92d59f9200]],
+					result = [[valid]]
+				},
+				{
+					tcId = 56,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 135: regression test for arithmetic error.]],
+					targets = {
+						[[VerifierArithmeticOverflow]]
+					},
+					flags = {
+						[[TinkOverflow]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[e1e7316d231f7f275bdf403360304da1509fdf1af1fd25ca214eaac0a289398f]],
+					msg = [[3c87b3453277b353941591fc7eaa7dd37604b42a]],
+					sig = [[1c8fbda3d39e2b441f06da6071c13115cb4115c7c3341704cf6513324d4cf1ef4a1dd7678a048b0dde84e48994d080befcd70854079d44b6a0b0f9fa002d130c]],
+					result = [[valid]]
+				},
+				{
+					tcId = 57,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 150: regression test for arithmetic error.]],
+					targets = {
+						[[VerifierArithmeticOverflow]]
+					},
+					flags = {
+						[[TinkOverflow]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[ccbe7cb2e4bc215cee2f885e1d22f7e0d582b2bbbd782c104e548b152d26fc69]],
+					msg = [[44530b0b34f598767a7b875b0caee3c7b9c502d1]],
+					sig = [[cfbd450a2c83cb8436c348822fe3ee347d4ee937b7f2ea11ed755cc52852407c9eec2c1fa30d2f9aef90e89b2cc3bcef2b1b9ca59f712110d19894a9cf6a2802]],
+					result = [[valid]]
+				},
+				{
+					tcId = 58,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 33: signature too long.]],
+					targets = {
+						[[SignatureLength]]
+					},
+					flags = {
+						[[SignatureWithGarbage]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[54657374]],
+					sig = [[7c38e026f29e14aabd059a0f2db8b0cd783040609a8be684db12f82a27774ab07a9155711ecfaf7f99f277bad0c6ae7e39d4eef676573336a5c51eb6f946b30d2020]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 59,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 32: signature too short.]],
+					targets = {
+						[[SignatureLength]]
+					},
+					flags = {
+						[[TruncatedSignature]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[54657374]],
+					sig = [[7c38e026f29e14aabd059a0f2db8b0cd783040609a8be684db12f82a27774ab07a9155711ecfaf7f99f277bad0c6ae7e39d4eef676573336a5c51eb6f946]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 60,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 10: special values for r and s.]],
+					targets = {
+						[[RSEdgeValues]],
+						[[ScalarSRange]]
+					},
+					flags = {
+						[[InvalidSignature]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[3f]],
+					sig = [[00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 61,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 20: special values for r and s.]],
+					targets = {
+						[[RSEdgeValues]],
+						[[ScalarSRange]]
+					},
+					flags = {
+						[[InvalidSignature]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[3f]],
+					sig = [[edd3f55c1a631258d69cf7a2def9de14000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000]],
+					result = [[invalid]]
+				},
+				{
+					tcId = 62,
+					comment = [[Imported from Wycheproof v1 eddsa: ed25519_test.json tcId 29: special values for r and s.]],
+					targets = {
+						[[RSEdgeValues]],
+						[[ScalarSRange]]
+					},
+					flags = {
+						[[InvalidSignature]]
+					},
+					source = {
+						name = [[wycheproof]],
+						version = [[v1 (C2SP)]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					pk = [[7d4d0e7f6153a69b6242b522abbee685fda4420f8834b108c3bdae369ef549fa]],
+					msg = [[3f]],
+					sig = [[edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7fedffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f]],
+					result = [[invalid]]
 				}
 			}
 		}

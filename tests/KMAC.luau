@@ -24,7 +24,7 @@ type KmacTest = {
 	flags: {string}?,
 	key: string,
 	msg: string,
-	custom: string,
+	custom: string?,
 	outputLen: number,
 	tag: string,
 	result: string,
@@ -75,7 +75,7 @@ local function RunKmacTests(Data: KmacData, KmacFn: any)
 				Testing.Test(TestName, function()
 					local Key = FromHex(Test.key)
 					local Msg = FromHex(Test.msg)
-					local Custom = FromHex(Test.custom)
+					local Custom = if Test.custom ~= nil then FromHex(Test.custom) else nil
 					local Output = buffer.create(Test.outputLen)
 					local Tag = KmacFn(Msg, Key, Output, Custom)
 					Testing.Expect(Tag).ToBe(Test.tag)

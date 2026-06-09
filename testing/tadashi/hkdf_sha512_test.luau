@@ -59,9 +59,14 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		OverMaxOutput = {
+			bugType = [[MISSING_STEP]],
+			description = [[Requested output length exceeds 255 * HashLen, the RFC 5869 maximum (the expand counter is a single byte).]],
+			effect = [[Implementations that let the counter wrap emit repeating or undefined output instead of rejecting.]]
 		}
 	},
-	numberOfTests = 9,
+	numberOfTests = 10,
 	testGroups = {
 		{
 			type = [[HkdfSha512]],
@@ -269,6 +274,30 @@ return {
 					outputLen = 32,
 					okm = [[3b024c723bd3c48e2dfe6b803a58da5be18d134e6e1a75d37be83a9ce8726412]],
 					result = [[valid]]
+				},
+				{
+					tcId = 10,
+					comment = [[Output length 255 * HashLen + 1 (16321 bytes), one past the RFC 5869 maximum. The single-byte expand counter cannot reach block 256; must reject.]],
+					targets = {
+						[[OverMaxOutput]]
+					},
+					flags = {
+						[[OverMaxOutput]]
+					},
+					source = {
+						name = [[rfc5869]],
+						version = [[2.3]],
+						crossChecked = {
+							[[pyca/cryptography]],
+							[[rbx-cryptography]]
+						}
+					},
+					ikm = [[0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b]],
+					salt = [[]],
+					info = [[]],
+					outputLen = 16321,
+					okm = [[]],
+					result = [[invalid]]
 				}
 			}
 		}

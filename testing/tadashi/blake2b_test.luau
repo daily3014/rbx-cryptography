@@ -67,9 +67,19 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		KeyedEmptyMessage = {
+			bugType = [[EDGE_CASE]],
+			description = [[Keyed BLAKE2b with a zero-length message: the padded key block is the ONLY block, so it must carry the final-block flag and the byte counter must read 128 (key block only).]],
+			effect = [[Implementations that set the finalization flag on a message block that never arrives produce a wrong digest or read out of bounds.]]
+		},
+		OddOutputLength = {
+			bugType = [[EDGE_CASE]],
+			description = [[Output length not a multiple of 8 bytes; the last output word is partially emitted.]],
+			effect = [[Word-at-a-time output loops that only handle whole 64-bit lanes truncate or overrun.]]
 		}
 	},
-	numberOfTests = 16,
+	numberOfTests = 18,
 	testGroups = {
 		{
 			type = [[Blake2bDigest]],
@@ -422,6 +432,54 @@ return {
 					msg = [[0123456789abcdeffedcba9876543210]],
 					outputLen = 64,
 					digest = [[f6bbc0b2e706ad75ad18d292622f6f1eb2280547812091cf960896b4a05d702add2d01a2fff68ed97f724b1f12aaedba7a13defb050df4caba5055f3021b2a6e]],
+					result = [[valid]]
+				},
+				{
+					tcId = 17,
+					comment = [[Keyed BLAKE2b (32-byte key) of the EMPTY message, 64-byte output. The zero-padded key block is the only compression input and must be flagged final with t = 128. A classic dual-role-block bug site.]],
+					targets = {
+						[[KeyedEmptyMessage]],
+						[[FinalBlockFlag]]
+					},
+					flags = {
+						[[KeyedEmptyMessage]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[hashlib (CPython)]],
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f]],
+					msg = [[]],
+					outputLen = 64,
+					digest = [[84bfa69f0d90df7db2a3ee026042988b5bd9caa2320af1f371823dd28351202f8e6277c40c050711c8dd4e2c1ac30c34c9aed0bddd468b031287fe872675e0cc]],
+					result = [[valid]]
+				},
+				{
+					tcId = 18,
+					comment = [[33-byte output of 'abc' (not a multiple of the 8-byte output word). The 5th output word is emitted only partially; parameter block byte 0 = 0x21.]],
+					targets = {
+						[[OddOutputLength]],
+						[[ParameterBlockOutputLen]]
+					},
+					flags = {
+						[[OddOutputLength]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[hashlib (CPython)]],
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[]],
+					msg = [[616263]],
+					outputLen = 33,
+					digest = [[f7bb660ec10c1b537a53ff432791f8a34c09e9ecfca84288bba1ee39afec290d63]],
 					result = [[valid]]
 				}
 			}

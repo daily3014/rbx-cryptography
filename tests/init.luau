@@ -66,6 +66,7 @@ type TestingLib = {
 	ExpectEqual: (Expected: any, Value: any) -> (),
 	ToHex: (Buf: buffer) -> string,
 	FromHex: (Hex: string | buffer) -> buffer,
+	ExpandPattern: (PatternHex: string, Length: number) -> buffer,
 	BuffersEqual: (A: buffer, B: buffer) -> boolean,
 }
 
@@ -762,6 +763,22 @@ Testing.FromHex = function(Hex: string | buffer): buffer
 	for Index = 0, Length - 1, 2 do
 		buffer.writeu8(Buf, bit32.rshift(Index, 1), buffer.readu16(Lookup, buffer.readu16(Source, Index) * 2))
 	end
+	return Buf
+end
+
+Testing.ExpandPattern = function(PatternHex: string, Length: number): buffer
+	local Pattern = Testing.FromHex(PatternHex)
+	local PatternLength = buffer.len(Pattern)
+	local Buf = buffer.create(Length)
+
+	local Filled = math.min(PatternLength, Length)
+	buffer.copy(Buf, 0, Pattern, 0, Filled)
+	while Filled < Length do
+		local Chunk = math.min(Filled, Length - Filled)
+		buffer.copy(Buf, Filled, Buf, 0, Chunk)
+		Filled += Chunk
+	end
+
 	return Buf
 end
 

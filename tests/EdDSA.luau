@@ -69,8 +69,8 @@ Testing.Describe("Ed25519 Tadashi Tests", function()
 						Testing.Expect(BuffersEqual(DerivedSig, Sig)).ToBe(true)
 					end
 
-					local Verified = EDDSA.Verify(Msg, Pk, Sig)
-					Testing.Expect(Verified).ToBe(Test.result == "valid")
+					local Ok, Verified = pcall(EDDSA.Verify, Msg, Pk, Sig)
+					Testing.Expect(Ok and Verified == true).ToBe(Test.result == "valid")
 				end)
 			end
 		end)

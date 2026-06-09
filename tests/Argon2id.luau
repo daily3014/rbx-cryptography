@@ -23,12 +23,12 @@ type ArgonTest = {
 	flags: {string}?,
 	password: string,
 	salt: string,
-	secret: string,
-	ad: string,
-	t: number,
-	m: number,
-	p: number,
-	outputLen: number,
+	secret: string?,
+	ad: string?,
+	t: number?,
+	m: number?,
+	p: number?,
+	outputLen: number?,
 	tag: string,
 	result: string,
 }
@@ -60,23 +60,28 @@ Testing.Describe("Argon2id Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					local SecretBuf = FromHex(Test.secret)
-					local AdBuf = FromHex(Test.ad)
+					local Tag: string
+					if Test.t == nil and Test.m == nil and Test.p == nil and Test.outputLen == nil then
+						Tag = Argon2id(FromHex(Test.password), FromHex(Test.salt))
+					else
+						local SecretBuf = FromHex(Test.secret or "")
+						local AdBuf = FromHex(Test.ad or "")
 
-					local Options: any = {
-						TimeCost = Test.t,
-						MemoryCost = Test.m,
-						Parallelism = Test.p,
-						OutputLength = Test.outputLen,
-					}
-					if buffer.len(SecretBuf) > 0 then
-						Options.Secret = SecretBuf
-					end
-					if buffer.len(AdBuf) > 0 then
-						Options.AssociatedData = AdBuf
-					end
+						local Options: any = {
+							TimeCost = Test.t,
+							MemoryCost = Test.m,
+							Parallelism = Test.p,
+							OutputLength = Test.outputLen,
+						}
+						if buffer.len(SecretBuf) > 0 then
+							Options.Secret = SecretBuf
+						end
+						if buffer.len(AdBuf) > 0 then
+							Options.AssociatedData = AdBuf
+						end
 
-					local Tag = Argon2id(FromHex(Test.password), FromHex(Test.salt), Options)
+						Tag = Argon2id(FromHex(Test.password), FromHex(Test.salt), Options)
+					end
 					Testing.Expect(Tag).ToBe(Test.tag)
 				end)
 			end

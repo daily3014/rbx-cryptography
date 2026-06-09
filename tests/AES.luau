@@ -86,8 +86,13 @@ Testing.Describe("AES-GCM Tadashi Tests", function()
 							Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
 						end
 					elseif Test.result == "invalid" then
-						local Plaintext = AES.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
-						Testing.Expect(Plaintext).ToBe(nil)
+						local Ok, Plaintext = pcall(AES.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad)
+						Testing.Expect(Ok == false or Plaintext == nil).ToBe(true)
+					elseif Test.result == "acceptable" then
+						local Ok, Plaintext = pcall(AES.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad)
+						local Rejected = Ok == false or Plaintext == nil
+						local Matched = Ok and Plaintext ~= nil and BuffersEqual(Plaintext :: buffer, Msg)
+						Testing.Expect(Rejected or Matched).ToBe(true)
 					end
 				end)
 			end

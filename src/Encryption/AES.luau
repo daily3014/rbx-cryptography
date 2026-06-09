@@ -2,7 +2,7 @@
 	Cryptography library: AES
 	
 	Sizes:
-		Init Vector: any length (12 bytes recommended)
+		Init Vector: any non-zero length (12 bytes recommended)
 		Key Size: 16 / 24 / 32 bytes
 		Tag: 16 bytes
 	
@@ -716,11 +716,15 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
+	local IVLen = buffer.len(IV)
+	if IVLen == 0 then
+		error("IV cannot be empty", 2)
+	end
+
 	local KeyConfig = KEY_CONFIGS[KeyLength]
 	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
 	local KeyMaterialLength = KeyConfig.MaterialLength
 
-	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
 	local PlainLen = buffer.len(Plaintext)
 	local AuthData = AAD or buffer.create(0)
@@ -763,11 +767,15 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
+	local IVLen = buffer.len(IV)
+	if IVLen == 0 then
+		error("IV cannot be empty", 2)
+	end
+
 	local KeyConfig = KEY_CONFIGS[KeyLength]
 	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
 	local KeyMaterialLength = KeyConfig.MaterialLength
 
-	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
 	local CryptLen = buffer.len(Ciphertext)
 	local AuthData = AAD or buffer.create(0)

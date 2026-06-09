@@ -56,9 +56,22 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		MillionA = {
+			bugType = [[BASIC]],
+			description = [[FIPS 180-4 million-repeated-byte KAT delivered via msgPattern; catches block-loop and length-accumulator bugs short messages never reach.]]
+		},
+		BitLengthOverflow = {
+			bugType = [[EDGE_CASE]],
+			description = [[Message of 2^29 bytes makes the encoded bit length exactly 2^32.]],
+			effect = [[Implementations tracking the bit count in a 32-bit integer wrap to zero and pad with the wrong length.]]
+		},
+		MsgPattern = {
+			bugType = [[BASIC]],
+			description = [[Input supplied as a generation rule (msgPattern) instead of literal msg bytes; runners without msgPattern support must skip, not fail.]]
 		}
 	},
-	numberOfTests = 16,
+	numberOfTests = 18,
 	testGroups = {
 		{
 			type = [[Sha256Digest]],
@@ -341,6 +354,54 @@ return {
 					},
 					msg = [[0123456789abcdeffedcba9876543210]],
 					digest = [[411d3f1d2390ff3f482ac8df4e730780bb081a192f283d2f373138fd101dc8fe]],
+					result = [[valid]]
+				},
+				{
+					tcId = 17,
+					comment = [[FIPS 180-4 one-million-'a' KAT, delivered via msgPattern. The canonical long-message test.]],
+					targets = {
+						[[MillionA]]
+					},
+					flags = {
+						[[MillionA]],
+						[[MsgPattern]]
+					},
+					source = {
+						name = [[fips-180-4]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[hashlib (CPython)]]
+						}
+					},
+					msgPattern = {
+						pattern = [[61]],
+						length = 1000000
+					},
+					digest = [[cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0]],
+					result = [[valid]]
+				},
+				{
+					tcId = 18,
+					comment = [[2^29 zero bytes: the padded bit length is exactly 2^32, crossing the 32-bit boundary. Catches implementations that keep the bit count in a 32-bit integer (historical CVE class); they pad with length 0 and produce a different digest.]],
+					targets = {
+						[[BitLengthOverflow]]
+					},
+					flags = {
+						[[BitLengthOverflow]],
+						[[MsgPattern]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[hashlib (CPython)]]
+						}
+					},
+					msgPattern = {
+						pattern = [[00]],
+						length = 536870912
+					},
+					digest = [[9acca8e8c22201155389f65abbf6bc9723edc7384ead80503839f49dcc56d767]],
 					result = [[valid]]
 				}
 			}

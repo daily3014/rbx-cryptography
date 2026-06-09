@@ -105,14 +105,14 @@ local function RunAeadTests(Data: AeadData, IsXChaCha: boolean)
 							Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
 						end
 					elseif ExpectedResult == "invalid" then
-						local Plaintext
+						local Ok, Plaintext
 						if IsXChaCha then
-							Plaintext = AEAD.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad, 20, true)
+							Ok, Plaintext = pcall(AEAD.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad, 20, true)
 						else
-							Plaintext = AEAD.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
+							Ok, Plaintext = pcall(AEAD.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad)
 						end
 
-						Testing.Expect(Plaintext).ToBeNil()
+						Testing.Expect(Ok == false or Plaintext == nil).ToBe(true)
 					end
 				end)
 			end

@@ -21,7 +21,8 @@ type HashTest = {
 	comment: string?,
 	targets: {string}?,
 	flags: {string}?,
-	msg: string,
+	msg: string?,
+	msgPattern: {pattern: string, length: number}?,
 	digest: string,
 	result: string,
 }
@@ -54,7 +55,10 @@ Testing.Describe("SHA-512 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					Testing.Expect(SHA512(FromHex(Test.msg))).ToBe(Test.digest)
+					local Msg = if Test.msgPattern
+						then Testing.ExpandPattern(Test.msgPattern.pattern, Test.msgPattern.length)
+						else FromHex(Test.msg :: string)
+					Testing.Expect(SHA512(Msg)).ToBe(Test.digest)
 				end)
 			end
 		end)

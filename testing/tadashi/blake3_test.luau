@@ -83,9 +83,22 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		OfficialLongInput = {
+			bugType = [[BASIC]],
+			description = [[BLAKE3 official test-vector input (byte i = i mod 251) at 102400 bytes: 100 chunks, a 3-level tree with unbalanced merges. Delivered via msgPattern.]]
+		},
+		AbsentParameter = {
+			bugType = [[API_SURFACE]],
+			description = [[Optional output-length argument omitted at the API level; must default to 32 bytes.]],
+			effect = [[Default-argument paths that pick a different length (or fail) diverge from every caller that spells the default explicitly.]]
+		},
+		MsgPattern = {
+			bugType = [[BASIC]],
+			description = [[Input supplied as a generation rule (msgPattern) instead of literal msg bytes; runners without msgPattern support must skip, not fail.]]
 		}
 	},
-	numberOfTests = 22,
+	numberOfTests = 24,
 	testGroups = {
 		{
 			type = [[Blake3Digest]],
@@ -604,6 +617,57 @@ return {
 					msg = [[0123456789abcdeffedcba9876543210]],
 					outputLen = 32,
 					digest = [[eef39f18949e5d7bb0579a4b69104a1b943f85df84580b2d02e2ee96a24a50a4]],
+					result = [[valid]]
+				},
+				{
+					tcId = 23,
+					comment = [[BLAKE3 official test vector, input_len 102400 (byte i = i mod 251 via msgPattern): 100 full chunks exercising multi-level parent merges and the chunk-stack pop loop across an unbalanced 100-leaf tree.]],
+					targets = {
+						[[OfficialLongInput]],
+						[[TreeUnbalanced]],
+						[[ChunkCounter]]
+					},
+					flags = {
+						[[OfficialLongInput]],
+						[[MsgPattern]]
+					},
+					source = {
+						name = [[BLAKE3-team]],
+						version = [[test_vectors.json]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[]],
+					context = [[]],
+					msgPattern = {
+						pattern = [[000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fa]],
+						length = 102400
+					},
+					outputLen = 32,
+					digest = [[bc3e3d41a1146b069abffad3c0d44860cf664390afce4d9661f7902e7943e085]],
+					result = [[valid]]
+				},
+				{
+					tcId = 24,
+					comment = [[Output-length parameter entirely absent (no 'outputLen' field): the consumer must invoke its API without a length argument and obtain the 32-byte default. Output equals tcId 2.]],
+					targets = {
+						[[AbsentParameter]]
+					},
+					flags = {
+						[[AbsentParameter]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[]],
+					context = [[]],
+					msg = [[616263]],
+					digest = [[6437b3ac38465133ffb63b75273a8db548c558465d79db03fd359c6cd5bd9d85]],
 					result = [[valid]]
 				}
 			}

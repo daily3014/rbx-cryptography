@@ -27,6 +27,11 @@ return {
 			bugType = [[EDGE_CASE]],
 			description = [[Empty customization string; the N="KMAC" prefix is still present so domain stays cSHAKE.]]
 		},
+		AbsentParameter = {
+			bugType = [[API_SURFACE]],
+			description = [[Optional customization argument omitted entirely at the API level (field absent, not empty). Must behave identically to an empty customization string per SP 800-185: encode_string(S) with S = "" still enters the bytepadded prefix.]],
+			effect = [[Default-argument paths that skip encode_string(S) when S is absent produce a non-standard MAC.]]
+		},
 		CustomString = {
 			bugType = [[MISSING_STEP]],
 			description = [[Non-empty customization string is bytepadded into the cSHAKE prefix as encode_string("KMAC") || encode_string(S).]]
@@ -75,9 +80,14 @@ return {
 		Pseudorandom = {
 			bugType = [[BASIC]],
 			description = [[Standard correctness check on output value.]]
+		},
+		ZeroOutputLength = {
+			bugType = [[SPEC_AMBIGUOUS]],
+			description = [[Requested output length 0. SP 800-185 reserves right_encode(0) as the KMACXOF domain marker, so KMAC128 proper with L = 0 collides with XOF mode.]],
+			effect = [[Returning empty output (the recorded value) and clean rejection both defensible; producing KMACXOF squeezed output under the KMAC name is the bug.]]
 		}
 	},
-	numberOfTests = 12,
+	numberOfTests = 14,
 	testGroups = {
 		{
 			type = [[Kmac128]],
@@ -357,6 +367,56 @@ return {
 					outputLen = 32,
 					tag = [[0d1a393d4f9a27cf9b2379a8e6af1501adcf6d155cdb79577b41c34e1c3ec335]],
 					result = [[valid]]
+				},
+				{
+					tcId = 13,
+					comment = [[Customization parameter entirely absent (no 'custom' field): the consumer must invoke its API without a customization argument. SP 800-185 defines KMAC128 as cSHAKE(X, L, "KMAC", S) with S the empty string when no customization is given, so encode_string("") = 0x01 0x00 must still enter the bytepadded prefix and the output equals tcId 10. Catches default-argument paths that skip encode_string(S) when S is absent.]],
+					targets = {
+						[[AbsentParameter]],
+						[[DomainSeparator]],
+						[[CustomString]]
+					},
+					flags = {
+						[[AbsentParameter]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[@noble/hashes]],
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f]],
+					msg = [[aa]],
+					outputLen = 32,
+					tag = [[0de0beaf2e15a31e6c87a85d036bf1354029342a63fc6dbc4285c4951759f05d]],
+					result = [[valid]]
+				},
+				{
+					tcId = 14,
+					comment = [[Output length 0. right_encode(0) is the KMACXOF mode marker per SP 800-185, so this input sits on the KMAC/KMACXOF domain boundary. Acceptable: empty output (recorded) or clean rejection.]],
+					targets = {
+						[[ZeroOutputLength]],
+						[[OutputLengthBinding]]
+					},
+					flags = {
+						[[ZeroOutputLength]],
+						[[Acceptable]]
+					},
+					source = {
+						name = [[tadashi]],
+						version = [[0.1.0]],
+						crossChecked = {
+							[[rbx-cryptography]]
+						}
+					},
+					key = [[404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f]],
+					msg = [[aa]],
+					custom = [[]],
+					outputLen = 0,
+					tag = [[]],
+					result = [[acceptable]]
 				}
 			}
 		}
