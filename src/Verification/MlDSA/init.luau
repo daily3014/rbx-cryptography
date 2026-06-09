@@ -5,14 +5,14 @@
 	Has three security levels: ML-DSA-44, ML-DSA-65, ML-DSA-87.
 
 	Example usage:
-		local MLDSA = require("@self/MlDSA")
-		
+		local MLDSA = require(script.MlDSA)
+
 		local PubKey, SecKey = MLDSA.ML_DSA_44.GenerateKeys()
 		local Message = buffer.fromstring("Hello World")
 		local Context = buffer.create(0)
 		local Signature = buffer.create(MLDSA.ML_DSA_44.SigByteLen)
-		local Random = buffer.create(32)
-		
+		local Random = CSPRNG.RandomBytes(32)
+
 		local Success = MLDSA.ML_DSA_44.Sign(Message, Random, SecKey, Context, Signature)
 		local Valid = MLDSA.ML_DSA_44.Verify(Message, PubKey, Context, Signature)
 --]=]
@@ -77,6 +77,18 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 		error("Invalid keygen parameters")
 	end
 
+	if buffer.len(Seed) ~= KEYGEN_SEED_BYTE_LEN then
+		error("Seed must be 32 bytes")
+	end
+
+	if buffer.len(PubKey) ~= Utils.PubKeyLen(K, D) then
+		error("Invalid public key buffer length")
+	end
+
+	if buffer.len(SecKey) ~= Utils.SecKeyLen(K, L, Eta, D) then
+		error("Invalid secret key buffer length")
+	end
+
 	local T1Bw = Utils.BitWidth(Q) - D
 	local EtaBw = Utils.BitWidth(2 * Eta)
 	local S1Len = L * EtaBw * 32
@@ -123,7 +135,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	PolyVec.ForwardNTT(S1Prime, L)
 
 	local T = buffer.create(K * N * 4)
-	PolyVec.MatrixMultiply(A, S1Prime, T, K, L, L, 1)
+	PolyVec.MatrixMultiply(A, S1Prime, T, K, L)
 	PolyVec.InverseNTT(T, K)
 	PolyVec.AddTo(S2, T, K)
 
@@ -161,6 +173,18 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 end
 
 local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
+	if buffer.len(Rnd) ~= RND_BYTE_LEN then
+		error("Rnd must be 32 bytes")
+	end
+
+	if buffer.len(SecKey) ~= Utils.SecKeyLen(K, L, Eta, D) then
+		error("Invalid secret key length")
+	end
+
+	if buffer.len(Sig) ~= Utils.SigLen(K, L, Gamma1, Omega, Lambda) then
+		error("Invalid signature buffer length")
+	end
+
 	local T0Rng = bit32.lshift(1, D - 1)
 	local EtaBw = Utils.BitWidth(2 * Eta)
 	local S1Len = L * EtaBw * 32
@@ -244,7 +268,7 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 
 		PolyVec.Copy(Y, YPrime, L)
 		PolyVec.ForwardNTT(YPrime, L)
-		PolyVec.MatrixMultiply(A, YPrime, W, K, L, L, 1)
+		PolyVec.MatrixMultiply(A, YPrime, W, K, L)
 		PolyVec.InverseNTT(W, K)
 
 		PolyVec.HighBits(W, W1, K, Alpha)
@@ -255,8 +279,8 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 		local CTildaFull = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 		buffer.copy(CTilda, 0, CTildaFull, 0, CTildaSize)
 
-		Sampling.SampleInBall(CTilda, C, Tau, Lambda)
-		NTT.ForwardNTT(C)
+		Sampling.SampleInBall(CTilda, C, Tau)
+		NTT.ForwardNTTWithOffset(C, 0)
 
 		PolyVec.MultiplyByPoly(C, S1, Z, L)
 		PolyVec.InverseNTT(Z, L)
@@ -469,15 +493,15 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
 
 	local C = buffer.create(N * 4)
-	Sampling.SampleInBall(CTilda, C, Tau, Lambda)
-	NTT.ForwardNTT(C)
+	Sampling.SampleInBall(CTilda, C, Tau)
+	NTT.ForwardNTTWithOffset(C, 0)
 
 	local W0 = buffer.create(K * N * 4)
 	local W1 = buffer.create(K * N * 4)
 	local W2 = buffer.create(K * N * 4)
 
 	PolyVec.ForwardNTT(Z, L)
-	PolyVec.MatrixMultiply(A, Z, W0, K, L, L, 1)
+	PolyVec.MatrixMultiply(A, Z, W0, K, L)
 
 	PolyVec.LeftShift(T1, K, D)
 	PolyVec.ForwardNTT(T1, K)

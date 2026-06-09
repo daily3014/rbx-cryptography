@@ -55,6 +55,10 @@ function XOF.Absorb128(Message: buffer)
 	local MessageLength = buffer.len(Message)
 	local RateBytes = RATE_128
 
+	if MessageLength >= RateBytes then
+		error(`Absorb128 supports messages up to {RateBytes - 1} bytes, got {MessageLength}`, 2)
+	end
+
 	local PaddedMessage = PaddedBuffer128
 	buffer.fill(PaddedMessage, 0, 0, RateBytes)
 
@@ -75,6 +79,10 @@ end
 function XOF.Absorb256(Message: buffer)
 	local MessageLength = buffer.len(Message)
 	local RateBytes = RATE_256
+
+	if MessageLength >= RateBytes then
+		error(`Absorb256 supports messages up to {RateBytes - 1} bytes, got {MessageLength}`, 2)
+	end
 
 	local PaddedMessage = PaddedBuffer256
 	buffer.fill(PaddedMessage, 0, 0, RateBytes)

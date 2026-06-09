@@ -14,12 +14,9 @@
 		local PublicKey, SecretKey = MlKem.MLKEM_1024.KeyGen(D, Z)
 		
 		local Message = CSPRNG.RandomBytes(32)
-		local Success, Ciphertext, SharedSecret = MlKem.MLKEM_1024.Encapsulate(Message, PublicKey)
-		
-		if Success then
-			local RecoveredSecret = MlKem.MLKEM_1024.Decapsulate(Ciphertext, SecretKey)
-			-- RecoveredSecret should equal SharedSecret
-		end
+		local Ciphertext, SharedSecret = MlKem.MLKEM_1024.Encapsulate(Message, PublicKey)
+
+		local RecoveredSecret = MlKem.MLKEM_1024.Decapsulate(Ciphertext, SecretKey)
 --]=]
 
 --!strict
@@ -27,7 +24,6 @@
 --!native
 
 local Pke = require("@self/PKE")
-local Polyvec = require("@self/PolyVec")
 local CSPRNG = require("../Utilities/CSPRNG")
 local Params = require("@self/Params")
 local Utils = require("@self/Utils")
@@ -82,29 +78,17 @@ function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, b
 	return KpkePublicKey, SecretKey
 end
 
-function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer): (buffer?, buffer?)
+function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer): (buffer, buffer)
 	if not Params.CheckEncapParams(K, Eta1, Eta2, Du, Dv) then
 		error("Invalid encapsulation parameters")
 	end
-	
+
 	if buffer.len(PublicKey) ~= Utils.GetKemPublicKeyLen(K) then
 		error("Invalid public key length")
 	end
-	
+
 	if buffer.len(Message) ~= 32 then
 		error("Message must be 32 bytes")
-	end
-
-	local RhoOffset = K * 12 * 32
-	local EncodedTPrime = buffer.create(RhoOffset)
-	buffer.copy(EncodedTPrime, 0, PublicKey, 0, RhoOffset)
-
-	local TPrime = Polyvec.VecDecode(EncodedTPrime, K, 12)
-	local ReEncodedTPrime = Polyvec.VecEncode(TPrime, K, 12)
-
-	local IsValid = Utils.CtMemcmp(EncodedTPrime, ReEncodedTPrime)
-	if IsValid ~= 0xFFFFFFFF then
-		error("malformed public key encoding")
 	end
 
 	local PublicKeyHash = SHA3.SHA3_256_Internal(PublicKey)
@@ -121,6 +105,9 @@ function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: numbe
 	buffer.copy(R, 0, GOutput, 32, 32)
 
 	local Ciphertext = Pke.Encrypt(K, Eta1, Eta2, Du, Dv, PublicKey, Message, R)
+	if not Ciphertext then
+		error("Invalid public key encoding")
+	end
 
 	return Ciphertext, K_bytes
 end
@@ -157,19 +144,6 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 
 	buffer.copy(Z, 0, SecretKey, Offset, 32)
 
-	local MPrime = Pke.Decrypt(K, Du, Dv, KpkeSecretKey, Ciphertext)
-
-	local GInput = DECAP_G_INPUT
-	buffer.copy(GInput, 0, MPrime, 0, 32)
-	buffer.copy(GInput, 32, H, 0, 32)
-
-	local GOutput = SHA3.SHA3_512_Internal(GInput)
-
-	local KPrime = DECAP_K_PRIME
-	local RPrime = DECAP_R_PRIME
-	buffer.copy(KPrime, 0, GOutput, 0, 32)
-	buffer.copy(RPrime, 0, GOutput, 32, 32)
-
 	local JInput = buffer.create(32 + buffer.len(Ciphertext))
 	buffer.copy(JInput, 0, Z, 0, 32)
 	buffer.copy(JInput, 32, Ciphertext, 0, buffer.len(Ciphertext))
@@ -178,8 +152,26 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	local JOutput = DECAP_J_OUTPUT
 	buffer.copy(JOutput, 0, JOutputBuffer, 0, 32)
 
-	local CiphertextPrime = Pke.Encrypt(K, Eta1, Eta2, Du, Dv, KpkePublicKey, MPrime, RPrime)
-	local IsValid = Utils.CtMemcmp(Ciphertext, CiphertextPrime)
+	local KPrime = DECAP_K_PRIME
+	local IsValid = 0x00000000
+
+	local MPrime = Pke.Decrypt(K, Du, Dv, KpkeSecretKey, Ciphertext)
+	if MPrime then
+		local GInput = DECAP_G_INPUT
+		buffer.copy(GInput, 0, MPrime, 0, 32)
+		buffer.copy(GInput, 32, H, 0, 32)
+
+		local GOutput = SHA3.SHA3_512_Internal(GInput)
+
+		local RPrime = DECAP_R_PRIME
+		buffer.copy(KPrime, 0, GOutput, 0, 32)
+		buffer.copy(RPrime, 0, GOutput, 32, 32)
+
+		local CiphertextPrime = Pke.Encrypt(K, Eta1, Eta2, Du, Dv, KpkePublicKey, MPrime, RPrime)
+		if CiphertextPrime then
+			IsValid = Utils.CtMemcmp(Ciphertext, CiphertextPrime)
+		end
+	end
 
 	local SharedSecret = buffer.create(32)
 	Utils.CtCondMemcpy(IsValid, SharedSecret, KPrime, JOutput)
@@ -216,7 +208,7 @@ MlKem.MLKEM_512 = {
 		return MlKem.KeyGen(2, 3, D, Z)
 	end,
 
-	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer, buffer)
 		return MlKem.Encapsulate(Message, 2, 3, 2, 10, 4, PublicKey)
 	end,
 
@@ -241,7 +233,7 @@ MlKem.MLKEM_768 = {
 		return MlKem.KeyGen(3, 2, D, Z)
 	end,
 
-	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer, buffer)
 		return MlKem.Encapsulate(Message, 3, 2, 2, 10, 4, PublicKey)
 	end,
 
@@ -266,7 +258,7 @@ MlKem.MLKEM_1024 = {
 		return MlKem.KeyGen(4, 2, D, Z)
 	end,
 
-	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer, buffer)
 		return MlKem.Encapsulate(Message, 4, 2, 2, 11, 5, PublicKey)
 	end,
 

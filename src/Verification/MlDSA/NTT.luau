@@ -6,11 +6,9 @@
 
 	Example usage:
 		local NTT = require(script)
-		
+
 		local Poly = buffer.create(256 * 4) -- 256 coefficients, 4 bytes each
-		NTT.ForwardNTT(Poly)
-		-- Perform operations in NTT domain
-		NTT.InverseNTT(Poly)
+		NTT.ForwardNTTWithOffset(Poly, 0)
 --]=]
 
 --!strict
@@ -45,51 +43,6 @@ local ZETA_EXP, ZETA_NEG_EXP = buffer.create(N * 4), buffer.create(N * 4) do
 end
 
 local Ntt = {}
-
-function Ntt.ForwardNTT(Poly: buffer)
-	local Zeta = ZETA_EXP
-	local Modulus = Q
-
-	for L = LOG2N - 1, 1, -1 do
-		local Len = bit32.lshift(1, L)
-		local LenX2 = bit32.lshift(Len, 1)
-		local KBeg = bit32.rshift(N, L + 1)
-
-		for Start = 0, N - 1, LenX2 do
-			local KNow = KBeg + bit32.rshift(Start, L + 1)
-			local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
-
-			for I = Start, Start + Len - 1 do
-				local IOffset = I * 4
-				local ILenOffset = (I + Len) * 4
-
-				local PolyI = buffer.readu32(Poly, IOffset)
-				local PolyILen = buffer.readu32(Poly, ILenOffset)
-
-				local Tmp = (ZetaExpValue * PolyILen) % Modulus
-
-				buffer.writeu32(Poly, ILenOffset, PolyI - Tmp + Modulus)
-				buffer.writeu32(Poly, IOffset, PolyI + Tmp)
-			end
-		end
-	end
-
-	for Start = 0, N - 1, 2 do
-		local KNow = 128 + bit32.rshift(Start, 1)
-		local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
-
-		local IOffset = Start * 4
-		local ILenOffset = IOffset + 4
-
-		local PolyI = buffer.readu32(Poly, IOffset)
-		local PolyILen = buffer.readu32(Poly, ILenOffset)
-
-		local Tmp = (ZetaExpValue * PolyILen) % Modulus
-
-		buffer.writeu32(Poly, ILenOffset, (PolyI - Tmp + Modulus) % Modulus)
-		buffer.writeu32(Poly, IOffset, (PolyI + Tmp) % Modulus)
-	end
-end
 
 function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 	local Zeta = ZETA_EXP
@@ -133,48 +86,6 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 
 		buffer.writeu32(Poly, ILenOffset, (PolyI - Tmp + Modulus) % Modulus)
 		buffer.writeu32(Poly, IOffset, (PolyI + Tmp) % Modulus)
-	end
-end
-
-function Ntt.InverseNTT(Poly: buffer)
-	local Zeta = ZETA_NEG_EXP
-	local Inv_n = INV_N
-	local Modulus = Q
-
-	for L = 0, LOG2N - 2 do
-		local Len = bit32.lshift(1, L)
-		local LenX2 = bit32.lshift(Len, 1)
-		local KBeg = bit32.rshift(N, L) - 1
-
-		for Start = 0, N - 1, LenX2 do
-			local KNow = KBeg - bit32.rshift(Start, L + 1)
-			local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
-
-			for I = Start, Start + Len - 1 do
-				local IOffset = I * 4
-				local ILenOffset = (I + Len) * 4
-
-				local PolyI = buffer.readu32(Poly, IOffset)
-				local PolyILen = buffer.readu32(Poly, ILenOffset)
-
-				local Product = ((PolyI - PolyILen) * NegZetaExpValue) % Modulus
-
-				buffer.writeu32(Poly, IOffset, (PolyI + PolyILen) % Modulus)
-				buffer.writeu32(Poly, ILenOffset, Product)
-			end
-		end
-	end
-
-	local NegZeta7 = (buffer.readu32(Zeta, 4) * Inv_n) % Modulus
-	for I = 0, 127 do
-		local IOffset = I * 4
-		local ILenOffset = (I + 128) * 4
-
-		local PolyI = buffer.readu32(Poly, IOffset)
-		local PolyILen = buffer.readu32(Poly, ILenOffset)
-
-		buffer.writeu32(Poly, IOffset, ((PolyI + PolyILen) * Inv_n) % Modulus)
-		buffer.writeu32(Poly, ILenOffset, ((PolyI - PolyILen) * NegZeta7) % Modulus)
 	end
 end
 

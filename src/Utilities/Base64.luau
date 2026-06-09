@@ -172,6 +172,10 @@ local function Decode(Input: buffer): buffer
         return buffer.create(0)
     end
 
+    if InputLength % 4 ~= 0 then
+        error(`Base64 input length must be a multiple of 4, got {InputLength}`, 2)
+    end
+
     local Padding = 0
     if buffer.readu8(Input, InputLength - 1) == PADDING_CHARACTER then
         Padding = 1

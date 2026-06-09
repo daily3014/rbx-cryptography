@@ -19,7 +19,7 @@
 local Params = {}
 
 function Params.CheckD(D: number): boolean
-	return D < 12
+	return (D == 1) or (D == 4) or (D == 5) or (D == 10) or (D == 11)
 end
 
 function Params.CheckEta(Eta: number): boolean

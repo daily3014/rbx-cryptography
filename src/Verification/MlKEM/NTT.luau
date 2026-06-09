@@ -6,10 +6,10 @@
 		
 	Example usage:
 		local NTT = require(script.NTT)
-		
+
 		local Poly = buffer.create(512) -- 256 coefficients * 2 bytes
-		NTT.Ntt(Poly) -- Forward transform
-		NTT.Intt(Poly) -- Inverse transform
+		NTT.NttAt(Poly, 0) -- Forward transform
+		NTT.InttAt(Poly, 0) -- Inverse transform
 --]=]
 
 --!strict
@@ -56,97 +56,6 @@ end
 local POWERS_OF_TWO = table.create(LOG2N) :: {{number}}
 for I = 0, LOG2N - 1 do
 	POWERS_OF_TWO[I] = {2^I, (2^I) * 2}
-end
-
-function Ntt.Ntt(Poly: buffer)
-	local Zeta = NTT_ZETA_EXP
-	local Powers = POWERS_OF_TWO
-	local Modulus = Q
-
-	for L = LOG2N - 1, 2, -1 do
-		local Len = Powers[L][1]
-		local LenX2 = Powers[L][2]
-		local KBeg = bit32.rshift(N, L + 1)
-
-		for Start = 0, N - 1, LenX2 do
-			local KNow = KBeg + bit32.rshift(Start, L + 1)
-			local ZetaExp = buffer.readu16(Zeta, KNow * 2)
-
-			for I = Start, Start + Len - 1 do
-				local OffsetI = I * 2
-				local OffsetILen = (I + Len) * 2
-
-				local PolyI = buffer.readu16(Poly, OffsetI)
-				local PolyILen = buffer.readu16(Poly, OffsetILen)
-
-				local Tmp = (ZetaExp * PolyILen) % Modulus
-
-				buffer.writeu16(Poly, OffsetILen, PolyI - Tmp + Modulus)
-				buffer.writeu16(Poly, OffsetI, PolyI + Tmp)
-			end
-		end
-	end
-
-	for Start = 0, N - 1, 4 do
-		local KNow = 64 + bit32.rshift(Start, 2)
-		local ZetaExp = buffer.readu16(Zeta, KNow * 2)
-
-		for I = Start, Start + 1 do
-			local OffsetI = I * 2
-			local OffsetILen = OffsetI + 4
-
-			local PolyI = buffer.readu16(Poly, OffsetI)
-			local PolyILen = buffer.readu16(Poly, OffsetILen)
-
-			local Tmp = (ZetaExp * PolyILen) % Modulus
-
-			buffer.writeu16(Poly, OffsetILen, (PolyI - Tmp + Modulus) % Modulus)
-			buffer.writeu16(Poly, OffsetI, (PolyI + Tmp) % Modulus)
-		end
-	end
-end
-
-function Ntt.Intt(Poly: buffer)
-	local Zeta = INTT_ZETA_EXP
-	local InvN = INV_N
-	local Powers = POWERS_OF_TWO
-	local Modulus = Q
-
-	for L = 1, LOG2N - 2 do
-		local Len = Powers[L][1]
-		local LenX2 = Powers[L][2]
-		local KBeg = bit32.rshift(N, L) - 1
-
-		for Start = 0, N - 1, LenX2 do
-			local KNow = KBeg - bit32.rshift(Start, L + 1)
-			local NegZetaExp = buffer.readu16(Zeta, KNow * 2)
-
-			for I = Start, Start + Len - 1 do
-				local OffsetI = I * 2
-				local OffsetILen = (I + Len) * 2
-
-				local PolyI = buffer.readu16(Poly, OffsetI)
-				local PolyILen = buffer.readu16(Poly, OffsetILen)
-
-				local MulResult = ((PolyI - PolyILen) * NegZetaExp) % Modulus
-
-				buffer.writeu16(Poly, OffsetI, (PolyI + PolyILen) % Modulus)
-				buffer.writeu16(Poly, OffsetILen, MulResult)
-			end
-		end
-	end
-
-	local NegZeta7 = (buffer.readu16(Zeta, 2) * InvN) % Modulus
-	for I = 0, 127 do
-		local OffsetI = I * 2
-		local OffsetILen = OffsetI + 256
-
-		local PolyI = buffer.readu16(Poly, OffsetI)
-		local PolyILen = buffer.readu16(Poly, OffsetILen)
-
-		buffer.writeu16(Poly, OffsetI, ((PolyI + PolyILen) * InvN) % Modulus)
-		buffer.writeu16(Poly, OffsetILen, ((PolyI - PolyILen) * NegZeta7) % Modulus)
-	end
 end
 
 function Ntt.NttAt(Poly: buffer, BaseOffset: number)

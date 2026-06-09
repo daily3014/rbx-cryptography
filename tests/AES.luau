@@ -80,14 +80,14 @@ Testing.Describe("AES-GCM Tadashi Tests", function()
 						Testing.Expect(BuffersEqual(Ct, ExpectedCt)).ToBe(true)
 						Testing.Expect(BuffersEqual(Tag, ExpectedTag)).ToBe(true)
 
-						local Ok, Plaintext = AES.Decrypt(Ct, Key, Iv, Tag, Aad)
-						Testing.Expect(Ok).ToBe(true)
+						local Plaintext = AES.Decrypt(Ct, Key, Iv, Tag, Aad)
+						Testing.Expect(Plaintext).ToBeDefined()
 						if Plaintext then
 							Testing.Expect(BuffersEqual(Plaintext, Msg)).ToBe(true)
 						end
 					elseif Test.result == "invalid" then
-						local Ok = AES.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
-						Testing.Expect(Ok).ToBe(false)
+						local Plaintext = AES.Decrypt(ExpectedCt, Key, Iv, ExpectedTag, Aad)
+						Testing.Expect(Plaintext).ToBe(nil)
 					end
 				end)
 			end

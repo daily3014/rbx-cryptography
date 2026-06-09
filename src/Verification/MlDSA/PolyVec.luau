@@ -16,34 +16,13 @@
 --!optimize 2
 --!native
 
-local Field = require("./Field")
 local NTT = require("./NTT")
-local BitPacking = require("./Pack")
 
-local LOG2N = 8
-local ZETA = 1753
 local Q = 8380417
-
 local N = 256
-local INV_N = Field.Inverse(N)
 
-local ZETA_EXP, ZETA_NEG_EXP = buffer.create(N * 4), buffer.create(N * 4) do
-	for I = 0, N - 1 do
-		local Reversed = 0
-		local Value = I
-
-		for J = 0, LOG2N - 1 do
-			local Bit = bit32.band(bit32.rshift(Value, J), 1)
-			Reversed = bit32.bxor(Reversed, bit32.lshift(Bit, LOG2N - 1 - J))
-		end
-
-		local ZetaExp = Field.Power(ZETA, Reversed)
-		local ZetaNegExp = Field.Negate(ZetaExp)
-
-		buffer.writeu32(ZETA_EXP, I * 4, ZetaExp)
-		buffer.writeu32(ZETA_NEG_EXP, I * 4, ZetaNegExp)
-	end
-end
+local INV_N = NTT.INV_N
+local ZETA_NEG_EXP = NTT.ZETA_NEG_EXP
 
 local PolyVec = {}
 
@@ -145,10 +124,10 @@ function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K:
 	end
 end
 
-function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number, BCols: number)
+function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number)
 	local Modulus = Q
 
-	if BCols == 1 and ACols == 4 then
+	if ACols == 4 then
 		for I = 0, ARows - 1 do
 			local R = I * 4096
 			local CO = I * 1024
@@ -161,7 +140,7 @@ function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, 
 				buffer.writeu32(C, CO + E, Acc % Modulus)
 			end
 		end
-	elseif BCols == 1 and ACols == 5 then
+	elseif ACols == 5 then
 		for I = 0, ARows - 1 do
 			local R = I * 5120
 			local CO = I * 1024
@@ -175,7 +154,7 @@ function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, 
 				buffer.writeu32(C, CO + E, Acc % Modulus)
 			end
 		end
-	elseif BCols == 1 and ACols == 7 then
+	else
 		for I = 0, ARows - 1 do
 			local R = I * 7168
 			local CO = I * 1024
@@ -189,33 +168,6 @@ function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, 
 					+ buffer.readu32(A, R + 6144 + E) * buffer.readu32(B, 6144 + E)
 
 				buffer.writeu32(C, CO + E, Acc % Modulus)
-			end
-		end
-	else
-		local Num = N
-		local PolyByteSize = Num * 4
-		local BStride = BCols * PolyByteSize
-
-		for I = 0, ARows - 1 do
-			local ARowBase = I * ACols * PolyByteSize
-			for J = 0, BCols - 1 do
-				local COffset = (I * BCols + J) * PolyByteSize
-				local BColBase = J * PolyByteSize
-
-				for L = 0, Num - 1 do
-					local ElementOffset = L * 4
-					local Acc = 0
-					local AOff = ARowBase + ElementOffset
-					local BOff = BColBase + ElementOffset
-
-					for K = 0, ACols - 1 do
-						Acc += buffer.readu32(A, AOff) * buffer.readu32(B, BOff)
-						AOff += PolyByteSize
-						BOff += BStride
-					end
-
-					buffer.writeu32(C, COffset + ElementOffset, Acc % Modulus)
-				end
 			end
 		end
 	end
@@ -376,7 +328,7 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu32(Dst, BOffset + 4, W1)
 				buffer.writeu8(Dst, BOffset + 8, W2)
 			end
-		elseif Sbw == 20 then
+		else
 			for J = 0, 63 do
 				local POffset = SrcOffset + J * 16
 				local BOffset = DstOffset + J * 10
@@ -394,12 +346,6 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu32(Dst, BOffset + 4, W1)
 				buffer.writeu16(Dst, BOffset + 8, W2)
 			end
-		else
-			local PolyBuffer = buffer.create(N * 4)
-			local ByteBuffer = buffer.create(PolyByteLength)
-			buffer.copy(PolyBuffer, 0, Src, SrcOffset, N * 4)
-			BitPacking.Encode(PolyBuffer, ByteBuffer, Sbw)
-			buffer.copy(Dst, DstOffset, ByteBuffer, 0, PolyByteLength)
 		end
 	end
 end
@@ -506,7 +452,7 @@ function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu32(Dst, POffset + 8, bit32.band(bit32.rshift(W1, 4), 0x3FFFF))
 				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(W1, 22), bit32.lshift(W2, 10)))
 			end
-		elseif Sbw == 20 then
+		else
 			for J = 0, 63 do
 				local BOffset = SrcOffset + J * 10
 				local POffset = DstOffset + J * 16
@@ -520,12 +466,6 @@ function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu32(Dst, POffset + 8, bit32.band(bit32.rshift(W1, 8), 0xFFFFF))
 				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(W1, 28), bit32.lshift(W2, 4)))
 			end
-		else
-			local ByteBuffer = buffer.create(PolyByteLength)
-			local PolyBuffer = buffer.create(N * 4)
-			buffer.copy(ByteBuffer, 0, Src, SrcOffset, PolyByteLength)
-			BitPacking.Decode(ByteBuffer, PolyBuffer, Sbw)
-			buffer.copy(Dst, DstOffset, PolyBuffer, 0, N * 4)
 		end
 	end
 end

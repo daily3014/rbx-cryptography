@@ -4,10 +4,10 @@
 	Sizes:
 		Digest: 32 bytes
 
-	Return type: string
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		local Result = SHA256(Message)
+		local Hash, HashBuffer = SHA256(Message)
 --]=]
 
 --!strict

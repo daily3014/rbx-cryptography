@@ -22,6 +22,10 @@ local function XOR(StringBuffer: buffer, KeyBuffer: buffer): buffer
 	local StringLength = buffer.len(StringBuffer)
 	local KeyLength = buffer.len(KeyBuffer)
 
+	if KeyLength == 0 then
+		error("Key cannot be empty", 2)
+	end
+
 	local OutputBuffer = buffer.create(StringLength)
 	buffer.copy(OutputBuffer, 0, StringBuffer, 0, StringLength)
 

@@ -34,10 +34,6 @@ function Params.CheckTau(Tau: number): boolean
 	return Tau == 39 or Tau == 49 or Tau == 60
 end
 
-function Params.CheckD(D: number): boolean
-	return D == 13
-end
-
 function Params.CheckKeygenParams(K: number, L: number, D: number, Eta: number): boolean
 	return (K == 4 and L == 4 and D == 13 and Eta == 2) or
 		(K == 6 and L == 5 and D == 13 and Eta == 4) or

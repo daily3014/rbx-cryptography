@@ -339,7 +339,7 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 	end
 end
 
-function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number, Lambda: number)
+function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number)
 	if not Params.CheckTau(Tau) then
 		error("Invalid Tau parameter")
 	end

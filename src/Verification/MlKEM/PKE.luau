@@ -91,7 +91,7 @@ function Pke.KeyGen(K: number, Eta1: number, Seed: buffer): (buffer, buffer)
 	return PublicKey, PolyVec.VecEncode(S, K, 12)
 end
 
-function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer, Message: buffer, Randomness: buffer): buffer
+function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer, Message: buffer, Randomness: buffer): buffer?
 	if not Params.CheckEncryptParams(K, Eta1, Eta2, Du, Dv) then
 		error("Invalid encryption parameters")
 	end
@@ -111,13 +111,11 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	buffer.copy(EncodedTPrime, 0, PublicKey, 0, RhoOffset)
 	buffer.copy(Rho, 0, PublicKey, RhoOffset, 32)
 
-	local TPrime = PolyVec.VecDecode(EncodedTPrime, K, 12)
-	local ReEncodedTPrime = PolyVec.VecEncode(TPrime, K, 12)
-	local IsValid = Utils.CtMemcmp(EncodedTPrime, ReEncodedTPrime)
-	if IsValid ~= 0xFFFFFFFF then
-		error("Key encapsulation verification failed")
+	local TPrime, TValid = PolyVec.VecDecode(EncodedTPrime, K, 12)
+	if not TValid then
+		return nil
 	end
-	
+
 	local APrime = Sampling.GenerateMatrix(K, Rho, true)
 
 	local Nonce = 0
@@ -149,7 +147,7 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 		buffer.writeu16(V, Off, buffer.readu16(V, Off) % Q)
 	end
 
-	Ntt.Intt(V)
+	Ntt.InttAt(V, 0)
 	Ntt.PolyAdd(V, E2, V)
 
 	local M = Serialize.Decode(Message, 1)
@@ -171,7 +169,7 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	return Ciphertext
 end
 
-function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphertext: buffer): buffer
+function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphertext: buffer): buffer?
 	if not Params.CheckDecryptParams(K, Du, Dv) then
 		error("Invalid decryption parameters")
 	end
@@ -196,7 +194,10 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	local V = Serialize.Decode(EncodedV, Dv)
 	Compression.PolyDecompress(V, Dv)
 
-	local SPrime = PolyVec.VecDecode(SecretKey, K, 12)
+	local SPrime, SValid = PolyVec.VecDecode(SecretKey, K, 12)
+	if not SValid then
+		return nil
+	end
 
 	PolyVec.VecNtt(U, K)
 
@@ -214,7 +215,7 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 		buffer.writeu16(T, Off, buffer.readu16(T, Off) % Q)
 	end
 
-	Ntt.Intt(T)
+	Ntt.InttAt(T, 0)
 	Ntt.PolySub(V, T, V)
 
 	Compression.PolyCompress(V, 1)
@@ -228,11 +229,11 @@ Pke.MLKEM_512 = {
 		return Pke.KeyGen(2, 3, Seed)
 	end,
 
-	Encrypt = function(PublicKey: buffer, Message: buffer, Randomness: buffer): buffer
+	Encrypt = function(PublicKey: buffer, Message: buffer, Randomness: buffer): buffer?
 		return Pke.Encrypt(2, 3, 2, 10, 4, PublicKey, Message, Randomness)
 	end,
 
-	Decrypt = function(SecretKey: buffer, Ciphertext: buffer): buffer
+	Decrypt = function(SecretKey: buffer, Ciphertext: buffer): buffer?
 		return Pke.Decrypt(2, 10, 4, SecretKey, Ciphertext)
 	end
 }
@@ -242,11 +243,11 @@ Pke.MLKEM_768 = {
 		return Pke.KeyGen(3, 2, Seed)
 	end,
 
-	Encrypt = function(PublicKey: buffer, Message: buffer, Randomness: buffer): buffer
+	Encrypt = function(PublicKey: buffer, Message: buffer, Randomness: buffer): buffer?
 		return Pke.Encrypt(3, 2, 2, 10, 4, PublicKey, Message, Randomness)
 	end,
 
-	Decrypt = function(SecretKey: buffer, Ciphertext: buffer): buffer
+	Decrypt = function(SecretKey: buffer, Ciphertext: buffer): buffer?
 		return Pke.Decrypt(3, 10, 4, SecretKey, Ciphertext)
 	end
 }
@@ -256,11 +257,11 @@ Pke.MLKEM_1024 = {
 		return Pke.KeyGen(4, 2, Seed)
 	end,
 
-	Encrypt = function(PublicKey: buffer, Message: buffer, Randomness: buffer): buffer
+	Encrypt = function(PublicKey: buffer, Message: buffer, Randomness: buffer): buffer?
 		return Pke.Encrypt(4, 2, 2, 11, 5, PublicKey, Message, Randomness)
 	end,
 
-	Decrypt = function(SecretKey: buffer, Ciphertext: buffer): buffer
+	Decrypt = function(SecretKey: buffer, Ciphertext: buffer): buffer?
 		return Pke.Decrypt(4, 11, 5, SecretKey, Ciphertext)
 	end
 }

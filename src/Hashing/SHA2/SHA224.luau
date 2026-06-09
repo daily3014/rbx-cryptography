@@ -1,13 +1,13 @@
 --[=[
-	Cryptography library: SHA256
+	Cryptography library: SHA224
 
 	Sizes:
-		Digest: 32 bytes
+		Digest: 28 bytes
 
-	Return type: string
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		local Result = SHA256(Message)
+		local Hash, HashBuffer = SHA224(Message)
 --]=]
 
 --!strict

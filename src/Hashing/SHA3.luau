@@ -9,12 +9,12 @@
 		SHAKE128 Digest: variable
 		SHAKE256 Digest: variable
 
-	Return type: string
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		
-		local Result1 = SHA3_256(Message)
-		local Result2 = SHAKE128(Message, 32)
+
+		local Hash1, HashBuffer1 = SHA3.SHA3_256(Message)
+		local Hash2, HashBuffer2 = SHA3.SHAKE128(Message, 32)
 --]=]
 
 --!strict

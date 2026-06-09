@@ -231,6 +231,10 @@ end
 local function GetIntRange(Min: number, Max: number): number
 	local Range = Max - Min + 1
 
+	if Range > 0x100000000 then
+		error(`Range must be at most 2^32, got {Range}`, 3)
+	end
+
 	if BufferPosition + 4 > BufferSize then
 		GenerateBlock()
 	end
@@ -239,12 +243,16 @@ local function GetIntRange(Min: number, Max: number): number
 	local Value = buffer.readu32(StreamBuffer, Position)
 	BufferPosition = Position + 4
 
+	if Range == 0x100000000 then
+		return Min + Value
+	end
+
 	if bit32.band(Range, Range - 1) == 0 then
 		return Min + bit32.band(Value, Range - 1)
 	end
 
 	local Limit = MAX_UINT32 - (MAX_UINT32 % Range)
-	while Value > Limit do
+	while Value >= Limit do
 		if BufferPosition + 4 > BufferSize then
 			GenerateBlock()
 		end
@@ -298,6 +306,14 @@ function CSPRNG.RandomInt(Min: number, Max: number?): number
 
 	if Max and Max == Min then
 		error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+	end
+
+	if Min % 1 ~= 0 then
+		error(`Min must be an integer, got {Min}`, 2)
+	end
+
+	if Max and Max % 1 ~= 0 then
+		error(`Max must be an integer, got {Max}`, 2)
 	end
 
 	local ActualMax: number

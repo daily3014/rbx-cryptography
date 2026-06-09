@@ -156,10 +156,6 @@ function FieldQuadratic.Neg(ScalarA: buffer): buffer
 	return Reduce(MultiPrecision.Sub(FIELD_ORDER, ScalarA))
 end
 
-function FieldQuadratic.Sub(ScalarA: buffer, ScalarB: buffer): buffer
-	return FieldQuadratic.Add(ScalarA, FieldQuadratic.Neg(ScalarB))
-end
-
 function FieldQuadratic.Mul(ScalarA: buffer, ScalarB: buffer): buffer
 	local ProductLow, ProductHigh = MultiPrecision.Mul(ScalarA, ScalarB)
 	local ReductionLow, ReductionHigh = MultiPrecision.Mul(MultiPrecision.LMul(ProductLow, MONTGOMERY_T0), FIELD_ORDER)

@@ -76,41 +76,6 @@ function MultiPrecision.Carry(LargeNumber: buffer, Storage: buffer?): buffer
 	return Buf
 end
 
-function MultiPrecision.CarryWeak(LargeNumber: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(LargeNumber)
-
-	local Half = 0x800000i
-
-	local Hi00 = integer.arshift(integer.add(A00, Half), 24i); A01 = integer.add(A01, Hi00)
-	local Hi01 = integer.arshift(integer.add(A01, Half), 24i); A02 = integer.add(A02, Hi01)
-	local Hi02 = integer.arshift(integer.add(A02, Half), 24i); A03 = integer.add(A03, Hi02)
-	local Hi03 = integer.arshift(integer.add(A03, Half), 24i); A04 = integer.add(A04, Hi03)
-	local Hi04 = integer.arshift(integer.add(A04, Half), 24i); A05 = integer.add(A05, Hi04)
-	local Hi05 = integer.arshift(integer.add(A05, Half), 24i); A06 = integer.add(A06, Hi05)
-	local Hi06 = integer.arshift(integer.add(A06, Half), 24i); A07 = integer.add(A07, Hi06)
-	local Hi07 = integer.arshift(integer.add(A07, Half), 24i); A08 = integer.add(A08, Hi07)
-	local Hi08 = integer.arshift(integer.add(A08, Half), 24i); A09 = integer.add(A09, Hi08)
-	local Hi09 = integer.arshift(integer.add(A09, Half), 24i); A10 = integer.add(A10, Hi09)
-	local Hi10 = integer.arshift(integer.add(A10, Half), 24i)
-
-	local Buf = Storage or buffer.create(SIZE)
-	WriteLimbs(Buf,
-		integer.sub(A00, integer.lshift(Hi00, 24i)),
-		integer.sub(A01, integer.lshift(Hi01, 24i)),
-		integer.sub(A02, integer.lshift(Hi02, 24i)),
-		integer.sub(A03, integer.lshift(Hi03, 24i)),
-		integer.sub(A04, integer.lshift(Hi04, 24i)),
-		integer.sub(A05, integer.lshift(Hi05, 24i)),
-		integer.sub(A06, integer.lshift(Hi06, 24i)),
-		integer.sub(A07, integer.lshift(Hi07, 24i)),
-		integer.sub(A08, integer.lshift(Hi08, 24i)),
-		integer.sub(A09, integer.lshift(Hi09, 24i)),
-		integer.sub(A10, integer.lshift(Hi10, 24i)))
-	buffer.writeinteger(Buf, CARRY, Hi10)
-
-	return Buf
-end
-
 function MultiPrecision.Add(NumberA: buffer, NumberB: buffer, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
 	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10 = ReadLimbs(NumberB)
@@ -209,26 +174,6 @@ function MultiPrecision.DWAdd(NumberA0: buffer, NumberA1: buffer, NumberB0: buff
 	local Carried = MultiPrecision.Carry(HighSum, HighSum)
 
 	return LowSum, Carried, buffer.readinteger(Carried, CARRY)
-end
-
-function MultiPrecision.Half(NumberA: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10 = ReadLimbs(NumberA)
-
-	local Buf = Storage or buffer.create(SIZE)
-	WriteLimbs(Buf,
-		integer.add(integer.arshift(A00, 1i), integer.lshift(A01, 23i)),
-		integer.lshift(A02, 23i),
-		integer.lshift(A03, 23i),
-		integer.lshift(A04, 23i),
-		integer.lshift(A05, 23i),
-		integer.lshift(A06, 23i),
-		integer.lshift(A07, 23i),
-		integer.lshift(A08, 23i),
-		integer.lshift(A09, 23i),
-		integer.lshift(A10, 23i),
-		0i)
-
-	return MultiPrecision.CarryWeak(Buf, Buf)
 end
 
 function MultiPrecision.Approx(NumberA: buffer): number

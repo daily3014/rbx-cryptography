@@ -480,7 +480,7 @@ function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): bu
 	return Buf
 end
 
-function FieldPrime.NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
+function FieldPrime.NSquare(ElementA: buffer, SquareCount: number): buffer
 	local A0, A1, A2, A3, A4, A5, A6, A7, A8, A9 = ReadLimbs(ElementA)
 
 	for _ = 1, SquareCount do
@@ -595,7 +595,7 @@ function FieldPrime.NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer
 		A0, A1, A2, A3, A4, A5, A6, A7, A8, A9 = T0, T1, T2, T3, T4, T5, T6, T7, T8, T9
 	end
 
-	local Buf = StoreInBuffer and ElementA or buffer.create(SIZE)
+	local Buf = buffer.create(SIZE)
 	WriteLimbs(Buf, A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)
 
 	return Buf

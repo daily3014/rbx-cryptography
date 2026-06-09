@@ -5,7 +5,7 @@
 		Key: 32 bytes
 		Output: variable
 	
-	Return type: string (hex)
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring(string.rep("k", 32))

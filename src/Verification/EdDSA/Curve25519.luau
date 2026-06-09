@@ -4,17 +4,13 @@
 	Return type: varies by function
 	Example usage:
 		local Curve25519 = require("Curve25519")
-		local FieldQuadratic = require("FieldQuadratic")
 
 		--------Usage Case 1: Point multiplication--------
 		local BasePoint = Curve25519.G
-		local SomeScalar = FieldQuadratic.Decode(ScalarBytes)
-		local ScalarBits, BitCount = FieldQuadratic.Bits(SomeScalar)
-		local Result = Curve25519.Ladder8(BasePoint, ScalarBits, BitCount)
+		local Result = Curve25519.Ladder(BasePoint, ScalarBits, BitCount)
 
-		--------Usage Case 2: Encode/decode points--------
-		local EncodedPoint = Curve25519.Encode(Curve25519.Scale(Result))
-		local DecodedPoint = Curve25519.Decode(EncodedPoint)
+		--------Usage Case 2: Decode a public key--------
+		local DecodedPoint = Curve25519.Decode(EncodedBytes)
 --]=]
 
 --!strict

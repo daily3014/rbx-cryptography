@@ -2,9 +2,14 @@
 	Cryptography library: AES
 	
 	Sizes:
-		Init Vector: 16 bytes
+		Init Vector: any length (12 bytes recommended)
 		Key Size: 16 / 24 / 32 bytes
+		Tag: 16 bytes
 	
+	Return type: Encrypt (buffer, buffer), Decrypt buffer?
+	Decrypt returns nil when authentication fails, including tags
+	that are not 16 bytes long.
+
 	Example usage:
 	local Key = CSPRNG.RandomBytes(32)
 	local IV = CSPRNG.RandomBytes(12)
@@ -14,6 +19,7 @@
 
 	local AAD = buffer.fromstring("user:john,timestamp:456745683")
 	local Ciphertext, Tag = AES.Encrypt(Plaintext, Key, IV, AAD)
+	local Decrypted = AES.Decrypt(Ciphertext, Key, IV, Tag, AAD)
 --]=]
 
 --!strict
@@ -735,7 +741,7 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 	return OutputBuffer, OutputTag
 end
 
-function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?): (boolean, buffer?)
+function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?): buffer?
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
@@ -780,10 +786,10 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 	Gctr(RoundKeys, KeyMaterialLength, J0, S, 16, ComputedTag)
 
 	if not ConstantTimeCompare(Tag, ComputedTag) then
-		return false, nil
+		return nil
 	end
 
-	return true, OutputBuffer
+	return OutputBuffer
 end
 
 return AES

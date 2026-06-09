@@ -6,7 +6,7 @@
 		local EdDSA = require("EdDSA")
 
 		--------Usage Case 1--------
-		local SecretKey = RandomBytes.Generate(32)
+		local SecretKey = CSPRNG.RandomBytes(32)
 		local PublicKey = EdDSA.PublicKey(SecretKey)
 
 		--------Usage Case 2--------
@@ -66,7 +66,6 @@ export type SignatureEntry = {
 }
 
 local EDDSA = {
-	CSPRNG = CSPRNG,
 	X25519 = X25519
 }
 

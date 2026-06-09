@@ -11,7 +11,6 @@
 --!native
 
 local Ntt = require("./NTT")
-local MlKemParams = require("./Params")
 local MlKemSerialize = require("./Serialize")
 local Compression = require("./Compression")
 
@@ -107,17 +106,19 @@ function PolyVec.VecEncode(Vec: buffer, K: number, L: number): buffer
 	return Output
 end
 
-function PolyVec.VecDecode(Data: buffer, K: number, L: number): buffer
+function PolyVec.VecDecode(Data: buffer, K: number, L: number): (buffer, boolean)
 	local Vec = buffer.create(K * POLY_SIZE)
 	local PolySize = POLY_SIZE
 	local ChunkSize = 32 * L
-	
+
 	local DecodeAt = MlKemSerialize.DecodeAt
 	local Decode = MlKemSerialize.Decode
-	
+
 	if L == 12 then
 		for I = 0, K - 1 do
-			DecodeAt(Data, I * ChunkSize, Vec, I * PolySize, 12)
+			if not DecodeAt(Data, I * ChunkSize, Vec, I * PolySize, 12) then
+				return Vec, false
+			end
 		end
 	else
 		local PolyData = buffer.create(ChunkSize)
@@ -128,7 +129,7 @@ function PolyVec.VecDecode(Data: buffer, K: number, L: number): buffer
 		end
 	end
 
-	return Vec
+	return Vec, true
 end
 
 function PolyVec.VecCompress(Vec: buffer, K: number, D: number)

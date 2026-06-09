@@ -2,8 +2,8 @@
 	Cryptography library: ChaCha20-Poly1305 AEAD
 	
 	Sizes:
-		Key: 16/32 bytes
-		Nonce: 12/24 bytes
+		Key: 32 bytes
+		Nonce: 12 bytes (24 with XChaCha20)
 		Tag: 16 bytes
 		Rounds: even positive integer (default: 20)
 	

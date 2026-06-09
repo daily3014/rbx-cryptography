@@ -168,7 +168,7 @@ function Serialize.EncodeAt(Poly: buffer, PolyOffset: number, Output: buffer, Ou
 	end
 end
 
-function Serialize.Decode(Data: buffer, L: number): buffer
+function Serialize.Decode(Data: buffer, L: number): (buffer, boolean)
 	if not Params.CheckL(L) then
 		error("Invalid encoding parameter l")
 	end
@@ -306,7 +306,7 @@ function Serialize.Decode(Data: buffer, L: number): buffer
 			local T1 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
 
 			if T0 >= 3329 or T1 >= 3329 then
-				error("Invalid polynomial coefficient encoding")
+				return Poly, false
 			end
 
 			buffer.writeu16(Poly, (PolyOffset + 0) * 2, T0)
@@ -314,10 +314,10 @@ function Serialize.Decode(Data: buffer, L: number): buffer
 		end
 	end
 
-	return Poly
+	return Poly, true
 end
 
-function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, PolyOffset: number, L: number)
+function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, PolyOffset: number, L: number): boolean
 	if L == 12 then
 		for I = 0, 63 do
 			local ByteIdx = DataOffset + I * 6
@@ -332,7 +332,7 @@ function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, Poly
 			local T3 = bit32.rshift(Hi, 4)
 
 			if T0 >= 3329 or T1 >= 3329 or T2 >= 3329 or T3 >= 3329 then
-				error("Invalid polynomial coefficient encoding")
+				return false
 			end
 
 			buffer.writeu16(Poly, PolyIdx, T0)
@@ -341,6 +341,8 @@ function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, Poly
 			buffer.writeu16(Poly, PolyIdx + 6, T3)
 		end
 	end
+
+	return true
 end
 
 return Serialize

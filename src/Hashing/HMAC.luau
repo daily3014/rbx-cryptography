@@ -1,7 +1,7 @@
 --[=[
 	Cryptography library: HMAC
-	
-	Return type: string or function
+
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring("Key")

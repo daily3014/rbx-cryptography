@@ -35,6 +35,7 @@ local Keccak = require("./SHA3").Keccak_Internal
 local KMAC = {}
 
 local FUNCTION_NAME = buffer.fromstring("KMAC")
+local EMPTY_CUSTOMIZATION = buffer.create(0)
 
 local LEFT_ENCODE_RESULT = buffer.create(5)
 local RIGHT_ENCODE_RESULT = buffer.create(5)
@@ -120,16 +121,11 @@ local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateB
 	local EncodedFunctionName = EncodeString(FUNCTION_NAME)
 	local EncodedFunctionNameSize = buffer.len(EncodedFunctionName)
 
-	local PrefixData: buffer
-	if CustomBuffer then
-		local EncodedCustomization = EncodeString(CustomBuffer)
-		local EncodedCustomizationSize = buffer.len(EncodedCustomization)
-		PrefixData = buffer.create(EncodedFunctionNameSize + EncodedCustomizationSize)
-		buffer.copy(PrefixData, 0, EncodedFunctionName, 0, EncodedFunctionNameSize)
-		buffer.copy(PrefixData, EncodedFunctionNameSize, EncodedCustomization, 0, EncodedCustomizationSize)
-	else
-		PrefixData = EncodedFunctionName
-	end
+	local EncodedCustomization = EncodeString(CustomBuffer or EMPTY_CUSTOMIZATION)
+	local EncodedCustomizationSize = buffer.len(EncodedCustomization)
+	local PrefixData = buffer.create(EncodedFunctionNameSize + EncodedCustomizationSize)
+	buffer.copy(PrefixData, 0, EncodedFunctionName, 0, EncodedFunctionNameSize)
+	buffer.copy(PrefixData, EncodedFunctionNameSize, EncodedCustomization, 0, EncodedCustomizationSize)
 
 	local BytepaddedPrefix = Bytepad(PrefixData, RateBytes)
 	local BytepaddedPrefixSize = buffer.len(BytepaddedPrefix)

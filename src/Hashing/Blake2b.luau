@@ -1,7 +1,7 @@
 --[=[
 	Cryptography library: BLAKE2b
 
-	Return type: string
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 

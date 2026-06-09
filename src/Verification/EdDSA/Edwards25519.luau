@@ -358,7 +358,7 @@ local BASEPOINT_BYTES = buffer.create(32) do
 end
 
 function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): buffer
-	if RadixWidth <= 0 or RadixWidth > 8 then
+	if RadixWidth < 2 or RadixWidth > 8 then
 		error("Invalid Radix width", 2)
 	end
 
@@ -478,10 +478,6 @@ function Edwards25519.SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, R
 	local Multiplier = 1
 
 	for BitIndex = 1, ScalarBitCount do
-		if BitIndex > ScalarBitCount then
-			break
-		end
-
 		local BitValue = buffer.readu8(ScalarBits, BitIndex - 1)
 		Accumulator += BitValue * Multiplier
 		Multiplier *= 2
