@@ -157,8 +157,8 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ### Utilities
 
-| Algorithm | Data Size | Time | Alternative | Improvement |
-|-----------|-----------|------|-------------|-------------|
+| Algorithm          | Data Size | Time       | Alternative                      | Improvement                                               |
+|--------------------|-----------|------------|----------------------------------|-----------------------------------------------------------|
 | Base64 (Roundtrip) | 1 million | **3.01ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **3.0x faster** than Lute<br>**4.0x faster** than Reselim |
 
 *Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
