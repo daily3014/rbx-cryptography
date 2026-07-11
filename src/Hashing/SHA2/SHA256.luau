@@ -32,7 +32,7 @@ local CONSTANTS = buffer.create(512) do
 	end
 end
 
-local function PreProcess(Contents: buffer): (buffer, number)
+local function PreProcess(Contents: buffer): (buffer, number)	
 	local ContentLength = buffer.len(Contents)
 	local Padding = -(ContentLength + 9) % 64
 	local NewContentLength = ContentLength + 1 + Padding + 8

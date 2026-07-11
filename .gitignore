@@ -1,6 +1,7 @@
 testing/*.exe
 testing/*.py
 testing/__pycache__
+testing/temp
 
 /*.exe
 /*.rbxlx.lock

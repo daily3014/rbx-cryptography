@@ -89,7 +89,6 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 				Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
 				Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
 	
-				
 				-- TYPE ERROR: type solver infers Temp4 to be nil after the theta step
 				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23) :: integer
 				Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
@@ -230,14 +229,6 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex + 8))
 			end
 		end
-
-		-- TYPE ERROR: type solver infers Lane 5n to be integer? after this point
-		Lane05, Lane10, Lane15, Lane20, Lane25 =
-			(Lane05 :: any) :: integer,
-			(Lane10 :: any) :: integer,
-			(Lane15 :: any) :: integer,
-			(Lane20 :: any) :: integer,
-			(Lane25 :: any) :: integer
 
 		buffer.writeinteger(Lanes, 0, Lane01)
 		buffer.writeinteger(Lanes, 8, Lane02)
