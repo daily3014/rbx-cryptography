@@ -113,7 +113,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Benchmarks done on an Intel i9-13900K and luau version v728
+Benchmarks done on an Intel i9-13900K and luau v728
 
 ### Data
 
@@ -166,7 +166,7 @@ Nonce/IV Size: 12 Bytes
 | Base64 (Roundtrip) | **600 MB/s** | Lute: 193 MB/s<br>Reselim: 146 MB/s | **3.0x faster** than Lute<br>**4.0x faster** than Reselim |
 
 \*Hashing: Keccak algorithms (SHA3, KMAC) failed to lower on v728, uses old benchmarks\
-\*Roundtrip: Complete encrypt/decrypt or sign/verify cycle\
+\*Roundtrip: Complete encrypt/decrypt or sign/verify cycle
 
 ## Testing and Benchmarking
 
