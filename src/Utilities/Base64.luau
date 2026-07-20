@@ -74,25 +74,6 @@ local DECODE_PAIR = buffer.create(131072) do
     end
 end
 
-local PAIR_A_BYTE1_HIGH = buffer.create(4096)
-local PAIR_B_BYTE1_LOW = buffer.create(4096)
-
-local PAIR_A_BYTE0, PAIR_B_BYTE2 = buffer.create(4096), buffer.create(4096) do
-    for PairA = 0, 4095 do
-        local Sextet0 = PairA // 64
-        local Sextet1 = PairA % 64
-        buffer.writeu8(PAIR_A_BYTE0, PairA, Sextet0 * 4 + (Sextet1 // 16))
-        buffer.writeu8(PAIR_A_BYTE1_HIGH, PairA, (Sextet1 % 16) * 16)
-    end
-
-    for PairB = 0, 4095 do
-        local Sextet2 = PairB // 64
-        local Sextet3 = PairB % 64
-        buffer.writeu8(PAIR_B_BYTE1_LOW, PairB, Sextet2 // 4)
-        buffer.writeu8(PAIR_B_BYTE2, PairB, (Sextet2 % 4) * 64 + Sextet3)
-    end
-end
-
 local function Encode(Input: buffer): buffer
     local InputLength = buffer.len(Input)
     if InputLength == 0 then
@@ -191,10 +172,6 @@ local function Decode(Input: buffer): buffer
     local UnrollStop = BodyEnd - 8
 
     local DecodePair = DECODE_PAIR
-    local Pair0 = PAIR_A_BYTE0
-    local PairAHigh = PAIR_A_BYTE1_HIGH
-    local PairBLow = PAIR_B_BYTE1_LOW
-    local Pair2 = PAIR_B_BYTE2
     local Dtet = DECODE_TET
 
     while InputIndex <= UnrollStop do
@@ -203,15 +180,11 @@ local function Decode(Input: buffer): buffer
 
         local PairA0 = buffer.readu16(DecodePair, (Word0 % 65536) * 2)
         local PairB0 = buffer.readu16(DecodePair, (Word0 // 65536) * 2)
-        buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA0))
-        buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA0) + buffer.readu8(PairBLow, PairB0))
-        buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB0))
-
         local PairA1 = buffer.readu16(DecodePair, (Word1 % 65536) * 2)
         local PairB1 = buffer.readu16(DecodePair, (Word1 // 65536) * 2)
-        buffer.writeu8(Output, OutputIndex + 3, buffer.readu8(Pair0, PairA1))
-        buffer.writeu8(Output, OutputIndex + 4, buffer.readu8(PairAHigh, PairA1) + buffer.readu8(PairBLow, PairB1))
-        buffer.writeu8(Output, OutputIndex + 5, buffer.readu8(Pair2, PairB1))
+
+        buffer.writeu32(Output, OutputIndex, bit32.rshift(bit32.byteswap(PairA0 * 4096 + PairB0), 8))
+        buffer.writeu32(Output, OutputIndex + 3, bit32.rshift(bit32.byteswap(PairA1 * 4096 + PairB1), 8))
 
         InputIndex += 8
         OutputIndex += 6
@@ -221,9 +194,9 @@ local function Decode(Input: buffer): buffer
         local Word = buffer.readu32(Input, InputIndex)
         local PairA = buffer.readu16(DecodePair, (Word % 65536) * 2)
         local PairB = buffer.readu16(DecodePair, (Word // 65536) * 2)
-        buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-        buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + buffer.readu8(PairBLow, PairB))
-        buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB))
+        local Triple = bit32.rshift(bit32.byteswap(PairA * 4096 + PairB), 8)
+        buffer.writeu16(Output, OutputIndex, Triple)
+        buffer.writeu8(Output, OutputIndex + 2, bit32.rshift(Triple, 16))
         InputIndex += 4
         OutputIndex += 3
     end
@@ -236,22 +209,17 @@ local function Decode(Input: buffer): buffer
     local Decoded1 = buffer.readu8(Dtet, Char1)
 
     if Char2 == PADDING_CHARACTER then
-        local PairA = Decoded0 * 64 + Decoded1
-        buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+        buffer.writeu8(Output, OutputIndex, Decoded0 * 4 + Decoded1 // 16)
     elseif Char3 == PADDING_CHARACTER then
         local Decoded2 = buffer.readu8(Dtet, Char2)
-        local PairA = Decoded0 * 64 + Decoded1
-        local PairB = Decoded2 * 64
-        buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-        buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + (PairB // 256))
+        buffer.writeu8(Output, OutputIndex, Decoded0 * 4 + Decoded1 // 16)
+        buffer.writeu8(Output, OutputIndex + 1, (Decoded1 % 16) * 16 + Decoded2 // 4)
     else
         local Decoded2 = buffer.readu8(Dtet, Char2)
         local Decoded3 = buffer.readu8(Dtet, Char3)
-        local PairA = Decoded0 * 64 + Decoded1
-        local PairB = Decoded2 * 64 + Decoded3
-        buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-        buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + buffer.readu8(PairBLow, PairB))
-        buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB))
+        local Triple = bit32.rshift(bit32.byteswap((Decoded0 * 64 + Decoded1) * 4096 + Decoded2 * 64 + Decoded3), 8)
+        buffer.writeu16(Output, OutputIndex, Triple)
+        buffer.writeu8(Output, OutputIndex + 2, bit32.rshift(Triple, 16))
     end
 
     return Output

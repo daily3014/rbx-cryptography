@@ -595,18 +595,30 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 		end
 
 		local BytesToProcess = math.min(BLOCK_SIZE, DataLength - DataOffset)
-		local Leftover = BytesToProcess % 4
 
-		for Index = 0, BytesToProcess - Leftover - 1, 4 do
-			local DataWord = buffer.readu32(Data, DataOffset + Index)
-			local KeystreamWord = buffer.readu32(State, Index)
-			buffer.writeu32(Output, DataOffset + Index, bit32.bxor(DataWord, KeystreamWord))
-		end
+		if BytesToProcess == BLOCK_SIZE then
+			buffer.writeinteger(Output, DataOffset, integer.bxor(buffer.readinteger(Data, DataOffset), buffer.readinteger(State, 0)))
+			buffer.writeinteger(Output, DataOffset + 8, integer.bxor(buffer.readinteger(Data, DataOffset + 8), buffer.readinteger(State, 8)))
+			buffer.writeinteger(Output, DataOffset + 16, integer.bxor(buffer.readinteger(Data, DataOffset + 16), buffer.readinteger(State, 16)))
+			buffer.writeinteger(Output, DataOffset + 24, integer.bxor(buffer.readinteger(Data, DataOffset + 24), buffer.readinteger(State, 24)))
+			buffer.writeinteger(Output, DataOffset + 32, integer.bxor(buffer.readinteger(Data, DataOffset + 32), buffer.readinteger(State, 32)))
+			buffer.writeinteger(Output, DataOffset + 40, integer.bxor(buffer.readinteger(Data, DataOffset + 40), buffer.readinteger(State, 40)))
+			buffer.writeinteger(Output, DataOffset + 48, integer.bxor(buffer.readinteger(Data, DataOffset + 48), buffer.readinteger(State, 48)))
+			buffer.writeinteger(Output, DataOffset + 56, integer.bxor(buffer.readinteger(Data, DataOffset + 56), buffer.readinteger(State, 56)))
+		else
+			local Leftover = BytesToProcess % 4
 
-		for Index = BytesToProcess - Leftover, BytesToProcess - 1 do
-			local DataByte = buffer.readu8(Data, DataOffset + Index)
-			local KeystreamByte = buffer.readu8(State, Index)
-			buffer.writeu8(Output, DataOffset + Index, bit32.bxor(DataByte, KeystreamByte))
+			for Index = 0, BytesToProcess - Leftover - 1, 4 do
+				local DataWord = buffer.readu32(Data, DataOffset + Index)
+				local KeystreamWord = buffer.readu32(State, Index)
+				buffer.writeu32(Output, DataOffset + Index, bit32.bxor(DataWord, KeystreamWord))
+			end
+
+			for Index = BytesToProcess - Leftover, BytesToProcess - 1 do
+				local DataByte = buffer.readu8(Data, DataOffset + Index)
+				local KeystreamByte = buffer.readu8(State, Index)
+				buffer.writeu8(Output, DataOffset + Index, bit32.bxor(DataByte, KeystreamByte))
+			end
 		end
 
 		DataOffset += BytesToProcess
