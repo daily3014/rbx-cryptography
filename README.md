@@ -54,21 +54,21 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 **Digital Signature Schemes**
 
-- [Ed25519](https://github.com/daily3014/rbx-cryptography/blob/main/src/Verification/EdDSA) signatures with masked operations for side-channel protection
+- [Ed25519](./src/Verification/EdDSA) signatures with masked operations for side-channel protection
 
 **Key Exchange**
 
-- [X25519](https://github.com/daily3014/rbx-cryptography/blob/main/src/Verification/EdDSA/X25519.luau): Elliptic curve Diffie-Hellman over Curve25519
+- [X25519](./src/Verification/EdDSA/X25519.luau): Elliptic curve Diffie-Hellman over Curve25519
 
 ### Post-Quantum Cryptography
 
 **KEM: Key Encapsulation Methods**
 
-- [ML-KEM](https://github.com/daily3014/rbx-cryptography/tree/main/src/Verification/MlKEM): modes 512, 768, 1024 (Kyber-based, NIST standardized)
+- [ML-KEM](./src/Verification/MlKEM): modes 512, 768, 1024 (Kyber-based, NIST standardized)
 
 **Digital Signature Schemes**
 
-- [ML-DSA](https://github.com/daily3014/rbx-cryptography/tree/main/src/Verification/MlDSA): modes 44, 65, 87 (Dilithium-based, [FIPS 204](https://doi.org/10.6028/NIST.FIPS.204))
+- [ML-DSA](./src/Verification/MlDSA): modes 44, 65, 87 (Dilithium-based, [FIPS 204](https://doi.org/10.6028/NIST.FIPS.204))
 
 ### Symmetric Cryptography
 
@@ -76,92 +76,97 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - **SHA-2 Family**: SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256 with optional salt support
 - **SHA-3 Family**: SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE-128, SHAKE-256 ([FIPS 202](https://doi.org/10.6028/NIST.FIPS.202))
-- **BLAKE Family**: [BLAKE3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake2b.luau)
+- **BLAKE Family**: [BLAKE3](./src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](./src/Hashing/Blake2b.luau)
 
 **Password Hashing**
 
-- [Argon2id](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Argon2id.luau): Memory-hard password hashing function ([RFC 9106](https://doi.org/10.17487/RFC9106)).
+- [Argon2id](./src/Hashing/Argon2id.luau): Memory-hard password hashing function ([RFC 9106](https://doi.org/10.17487/RFC9106)).
 
 **Message Authentication**
 
-- [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
+- [HMAC](./src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
 
-- [KMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/KMAC.luau): Hash-based Message Authentication Code (uses Keccak)
+- [KMAC](./src/Hashing/KMAC.luau): Hash-based Message Authentication Code (uses Keccak)
 
 **Authenticated Encryption**
 
-- [ChaCha20-Poly1305](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AEAD): AEAD construction ([RFC 8439](https://doi.org/10.17487/RFC8439))
-- [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES.luau): Galois/Counter Mode
+- [ChaCha20-Poly1305](./src/Encryption/AEAD): AEAD construction ([RFC 8439](https://doi.org/10.17487/RFC8439))
+- [AES-GCM](./src/Encryption/AES.luau): Galois/Counter Mode
 
 **Stream & Block Ciphers**
 
-- [ChaCha20](https://github.com/daily3014/rbx-cryptography/tree/main/src/Encryption/AEAD): Stream cipher ([RFC 8439](https://doi.org/10.17487/RFC8439))
-- [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES.luau): Advanced Encryption Standard
-- [XOR](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/XOR.luau): Simple additive cipher
+- [ChaCha20](./src/Encryption/AEAD/ChaCha.luau): Stream cipher ([RFC 8439](https://doi.org/10.17487/RFC8439))
+- [AES-GCM](./src/Encryption/AES.luau): Advanced Encryption Standard
+- [XOR](./src/Encryption/XOR.luau): Simple additive cipher
 
 ### Utilities
 
 **Encoding & Conversion**
 
-- [Base64](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/Base64.luau): Encode and decode
-- [Hexadecimal](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/Conversions.luau): Buffer to/from hex string conversion
+- [Base64](./src/Utilities/Base64.luau): Encode and decode
+- [Hexadecimal](./src/Utilities/Conversions.luau): Buffer to/from hex string conversion
 
 **Random Generation**
 
-- [CSPRNG](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/CSPRNG): Cryptographically Secure Pseudo-Random Number Generator with entropy management
+- [CSPRNG](./src/Utilities/CSPRNG.luau): Cryptographically Secure Pseudo-Random Number Generator with entropy management
 - Random strings and bytes generation
 
 ## Performance
 
+Benchmarks done on an Intel i9-13900K and luau v728
+
+### Data
+
+Data Size: 1 MB\
+Key Size (HMAC, KMAC, Encryption): 32 Bytes\
+Nonce/IV Size: 12 Bytes
+
 ### Hashing
 
-| Algorithm   | Data Size | This Library | HashLib  | Alternative              | Other Libraries   | Improvement                   |
-|-------------|-----------|--------------|----------|--------------------------|-------------------|-------------------------------|
-| SHA-256     | 20k       | **115 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **17.9x faster** than HashLib |
-| SHA-512     | 20k       | **49 μs**    | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **88.7x faster** than HashLib |
-| SHA3-512    | 20k       | **131 μs**   | 10.60 ms | -                        | -                 | **80.9x faster** than HashLib |
-| BLAKE3      | 20k       | **64 μs**    | -        | -                        | -                 | -                             |
-| HMAC-BLAKE3 | 20k       | **74 μs**    | -        | -                        | -                 | -                             |
-| KMAC-128    | 20k       | **70 μs**    | -        | -                        | -                 | -                             |
-| KMAC-256    | 20k       | **81 μs**    | -        | -                        | -                 | -                             |
+| Algorithm   | rbx-cryptography | Other Libraries                               | Improvement                                                       |
+| ----------- | ---------------- | --------------------------------------------- | ----------------------------------------------------------------- |
+| SHA-256     | **200.7 MB/s**   | 67.1 MB/s (HashLib)<br>72 MB/s (luau-hashing) | **3x faster** than HashLib<br>**2.8x faster** than luau-hashing   |
+| SHA-512     | **438 MB/s**     | 33 MB/s (HashLib)<br>24.2 MB/s (luau-hashing) | **13.3x faster** than HashLib<br>**18x faster** than luau-hashing |
+| SHA3-512\*  | **152.6 MB/s**   | 14.82 MB/s (HashLib)                          | **10.3x faster** than HashLib                                     |
+| BLAKE3      | **336.2 MB/s**   | -                                             | -                                                                 |
+| HMAC-BLAKE3 | **314.2 MB/s**   | -                                             | -                                                                 |
+| KMAC-128\*  | **285.71 MB/s**  | -                                             | -                                                                 |
+| KMAC-256\*  | **247 MB/s**     | -                                             | -                                                                 |
 
 ### Password Hashing (Argon2id)
 
-| Tier        | Parameters                | This Library |
-|-------------|---------------------------|--------------|
-| Interactive | m=8 MiB, t=2, p=1         | **21 ms**    |
-| Default     | m=19 MiB, t=2, p=1        | **49 ms**    |
-| Sensitive   | m=64 MiB, t=3, p=1        | **265 ms**   |
+| Tier        | Parameters         | rbx-cryptography |
+| ----------- | ------------------ | ---------------- |
+| Interactive | m=8 MiB, t=2, p=1  | **17.3 MB/s**    |
+| Default     | m=19 MiB, t=2, p=1 | **12.5 MB/s**    |
+| Sensitive   | m=64 MiB, t=3, p=1 | **4.25 MB/s**    |
 
 ### Encryption
 
-| Algorithm                     | Data Size | This Library | Alternative                                | Other Libraries    | Improvement         |
-|-------------------------------|-----------|--------------|--------------------------------------------|--------------------|---------------------|
-| ChaCha20 (Encrypt)            | 20k       | **47 μs**    | 7.87 ms (EncryptedNet)                     | -                  | **167x faster**     |
-| ChaCha20 (Roundtrip)          | 20k       | **91 μs**    | ~15 ms (EncryptedNet)                      | -                  | **165x faster**     |
-| ChaCha20-Poly1305 (Encrypt)   | 20k       | **63 μs**    | -                                          | -                  | -                   |
-| ChaCha20-Poly1305 (Roundtrip) | 20k       | **128 μs**   | -                                          | -                  | -                   |
-| AES-GCM (Encrypt)             | 20k       | **329 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **5.7x faster**     |
-| AES-GCM (Roundtrip)           | 20k       | **650 μs**   | -                                          | -                  | -                   |
-| XOR (Encrypt)                 | 1 million | **537 μs**   | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **318,000x faster** |
-| XOR (Roundtrip)               | 1 million | **1.08 ms**  | 98.9 ms (Devfourm)                         | ~342000 ms (daily) | **316,000x faster** |
+| Algorithm                   | rbx-cryptography | Other Libraries                             | Improvement       |
+| --------------------------- | ---------------- | ------------------------------------------- | ----------------- |
+| ChaCha20 (Encrypt)          | **510 MB/s**     | 12 MB/s (EncryptedNet)                      | **45x faster**    |
+| ChaCha20-Poly1305 (Encrypt) | **338 MB/s**     | -                                           | -                 |
+| AES-GCM (Encrypt)           | **74 MB/s**      | 61.8 MB/s (RobloxGamerPro200007 AES256-CTR) | **1.2x faster**   |
+| XOR (Encrypt)               | **1.4 GB/s**     | 19.7 MB/s ms (Devforum)                     | **71.07x faster** |
 
 ### Digital Signatures & Key Exchange
 
-| Algorithm               | Operation   | Time         | Alternative                             | Improvement      |
-|-------------------------|-------------|--------------|-----------------------------------------|------------------|
-| EdDSA (Roundtrip)       | Sign+Verify | **298 μs**   | -                                       | -                |
-| X25519 (Exchange)       | ECDH        | **466 μs**   | 628 μs (ccryptolib)                     | **1.35x faster** |
-| ML-DSA-87 (Roundtrip)   | Sign+Verify | **1.13 ms**  | 863 ms (WASM-Luau)                      | **761x faster**  |
-| ML-KEM-1024 (Roundtrip) | Encap+Decap | **299 μs**   | 122 ms (WASM-Luau)                      | **408x faster**  |
+| Algorithm               | Time        | Alternative         | Improvement      |
+| ----------------------- | ----------- | ------------------- | ---------------- |
+| EdDSA (Roundtrip)       | **298 μs**  | -                   | -                |
+| ML-DSA-87 (Roundtrip)   | **1.13 ms** | 863 ms (WASM-Luau)  | **761x faster**  |
+| X25519 (Exchange)       | **466 μs**  | 628 μs (ccryptolib) | **1.35x faster** |
+| ML-KEM-1024 (Roundtrip) | **299 μs**  | 122 ms (WASM-Luau)  | **408x faster**  |
 
 ### Utilities
 
-| Algorithm | Data Size | Time | Alternative | Improvement |
-|-----------|-----------|------|-------------|-------------|
-| Base64 (Roundtrip) | 1 million | **3.01ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **3.0x faster** than Lute<br>**4.0x faster** than Reselim |
+| Algorithm          | Time         | Alternative                         | Improvement                                               |
+| ------------------ | ------------ | ----------------------------------- | --------------------------------------------------------- |
+| Base64 (Roundtrip) | **600 MB/s** | Lute: 193 MB/s<br>Reselim: 146 MB/s | **3.0x faster** than Lute<br>**4.0x faster** than Reselim |
 
-*Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
+\*Hashing: Keccak algorithms (SHA3, KMAC) failed to lower on v728, uses old benchmarks\
+\*Roundtrip: Complete encrypt/decrypt or sign/verify cycle
 
 ## Testing and Benchmarking
 
@@ -201,7 +206,4 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 
 [DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271) • [Discord](https://discord.gg/Fg3sM8qKPp) • [Docs](https://xoifaii.github.io/) • [Wally](https://wally.run/package/daily3014/cryptography) • [Pesde](https://pesde.dev/packages/daily3014/cryptography)
 
-
 </div>
-
-
