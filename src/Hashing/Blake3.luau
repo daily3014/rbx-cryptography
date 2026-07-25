@@ -62,6 +62,8 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	end
 end
 
+local OUTPUT_SCRATCH = buffer.create(64)
+
 local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, BlockLength: number, Flags: number, IsFull: boolean?, Storage: buffer?): buffer
 	local Hash00 = integer.mul(integer.create(buffer.readu32(Hash, 0)) :: integer, DUP)
 	local Hash01 = integer.mul(integer.create(buffer.readu32(Hash, 4)) :: integer, DUP)
@@ -331,7 +333,7 @@ local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: numbe
 		V09 = integer.bor(integer.band(integer.add(V09, V14), MASK), integer.lshift(integer.add(V09, V14), 32i)); V04 = integer.bxor(V04, V09); V04 = integer.rrotate(V04, 7i)
 
 	if IsFull then
-		local Result = buffer.create(EXTENDED_CV_SIZE)
+		local Result = Storage or buffer.create(EXTENDED_CV_SIZE)
 		buffer.writeu32(Result, 0, integer.tonumber(integer.band(integer.bxor(V00, V08), MASK)))
 		buffer.writeu32(Result, 4, integer.tonumber(integer.band(integer.bxor(V01, V09), MASK)))
 		buffer.writeu32(Result, 8, integer.tonumber(integer.band(integer.bxor(V02, V10), MASK)))
@@ -466,8 +468,9 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 
 	local Output = buffer.create(Length)
 	local OutputOffset = 0
+	local OutputScratch = OUTPUT_SCRATCH
 	for Index = 0, Length // BlockSize do
-		local MessageDigest = Compress(OutputCv, OutputBlock, 0, Index, OutputLength, OutputFlags, true)
+		local MessageDigest = Compress(OutputCv, OutputBlock, 0, Index, OutputLength, OutputFlags, true, OutputScratch)
 		local BytesToCopy = math.min(BlockSize, Length - OutputOffset)
 		buffer.copy(Output, OutputOffset, MessageDigest, 0, BytesToCopy)
 		OutputOffset += BytesToCopy

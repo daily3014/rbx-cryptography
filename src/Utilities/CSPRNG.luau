@@ -27,6 +27,7 @@
 --!native
 
 local Blake3 = require("../Hashing/Blake3")
+local ChaCha = require("../Encryption/AEAD/ChaCha")
 local Conversions = require("./Conversions")
 local ToHex = Conversions.ToHex
 
@@ -52,7 +53,7 @@ local SOURCE_LIMIT = 1024
 
 local CSPRNG = {} :: CSPRNGModule
 
-local INPUT_BUFFER = buffer.create(KEY_SIZE + NONCE_SIZE + 8)
+local ZERO_SOURCE = buffer.create(KEY_SIZE + POOL_SIZE)
 
 local Key = buffer.create(0)
 local Nonce = buffer.create(0)
@@ -175,14 +176,14 @@ local function GatherEntropy(UserEntropy: buffer?)
 end
 
 local function GenerateBlock()
-	buffer.copy(INPUT_BUFFER, 0, Key, 0, KEY_SIZE)
-	buffer.copy(INPUT_BUFFER, KEY_SIZE, Nonce, 0, NONCE_SIZE)
-	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE, Counter % 0x100000000)
-	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE + 4, math.floor(Counter / 0x100000000))
+	local Stream = ChaCha.ChaCha20(ZERO_SOURCE, Key, Nonce, 0)
 
-	StreamBuffer = Blake3.DigestBuffer(INPUT_BUFFER, POOL_SIZE)
-	BufferPosition = 0
-	BufferSize = POOL_SIZE
+	buffer.copy(Key, 0, Stream, 0, KEY_SIZE)
+	buffer.fill(Stream, 0, 0, KEY_SIZE)
+
+	StreamBuffer = Stream
+	BufferPosition = KEY_SIZE
+	BufferSize = KEY_SIZE + POOL_SIZE
 	Counter += 1
 
 	if Counter % REKEY_BLOCKS == 0 then
