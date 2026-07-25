@@ -113,7 +113,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Benchmarks done on an Intel i9-13900K and luau v728
+Benchmarks done on an Intel i9-13900K and luau v731
 
 ### Data
 
@@ -127,11 +127,12 @@ Nonce/IV Size: 12 Bytes
 | ----------- | ---------------- | --------------------------------------------- | ----------------------------------------------------------------- |
 | SHA-256     | **200.7 MB/s**   | 67.1 MB/s (HashLib)<br>72 MB/s (luau-hashing) | **3x faster** than HashLib<br>**2.8x faster** than luau-hashing   |
 | SHA-512     | **438 MB/s**     | 33 MB/s (HashLib)<br>24.2 MB/s (luau-hashing) | **13.3x faster** than HashLib<br>**18x faster** than luau-hashing |
-| SHA3-512\*  | **152.6 MB/s**   | 14.82 MB/s (HashLib)                          | **10.3x faster** than HashLib                                     |
+| SHA3-512    | **180 MB/s**     | 14.82 MB/s (HashLib)                          | **12.1x faster** than HashLib                                     |
+| BLAKE2B     | **703 MB/s**     | 52 MB/s (luau-hashing)                        | **13.5x faster** than luau-hashing                                |
 | BLAKE3      | **336.2 MB/s**   | -                                             | -                                                                 |
 | HMAC-BLAKE3 | **314.2 MB/s**   | -                                             | -                                                                 |
-| KMAC-128\*  | **285.71 MB/s**  | -                                             | -                                                                 |
-| KMAC-256\*  | **247 MB/s**     | -                                             | -                                                                 |
+| KMAC-128    | **343.1 MB/s**   | -                                             | -                                                                 |
+| KMAC-256    | **293.4 MB/s**   | -                                             | -                                                                 |
 
 ### Password Hashing (Argon2id)
 
@@ -165,7 +166,6 @@ Nonce/IV Size: 12 Bytes
 | ------------------ | ------------ | ----------------------------------- | --------------------------------------------------------- |
 | Base64 (Roundtrip) | **600 MB/s** | Lute: 193 MB/s<br>Reselim: 146 MB/s | **3.0x faster** than Lute<br>**4.0x faster** than Reselim |
 
-\*Hashing: Keccak algorithms (SHA3, KMAC) failed to lower on v728, uses old benchmarks\
 \*Roundtrip: Complete encrypt/decrypt or sign/verify cycle
 
 ## Testing and Benchmarking
