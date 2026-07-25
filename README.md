@@ -113,7 +113,8 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Benchmarks done on an Intel i9-13900K and luau v731
+Benchmarks done on an Intel i9-13900K and luau v731\
+Algorithms are ran 50 times and measured via the best of N throughput / rate
 
 ### Data
 
@@ -123,48 +124,51 @@ Nonce/IV Size: 12 Bytes
 
 ### Hashing
 
-| Algorithm   | rbx-cryptography | Other Libraries                               | Improvement                                                       |
-| ----------- | ---------------- | --------------------------------------------- | ----------------------------------------------------------------- |
-| SHA-256     | **200.7 MB/s**   | 67.1 MB/s (HashLib)<br>72 MB/s (luau-hashing) | **3x faster** than HashLib<br>**2.8x faster** than luau-hashing   |
-| SHA-512     | **438 MB/s**     | 33 MB/s (HashLib)<br>24.2 MB/s (luau-hashing) | **13.3x faster** than HashLib<br>**18x faster** than luau-hashing |
-| SHA3-512    | **180 MB/s**     | 14.82 MB/s (HashLib)                          | **12.1x faster** than HashLib                                     |
-| BLAKE2B     | **703 MB/s**     | 52 MB/s (luau-hashing)                        | **13.5x faster** than luau-hashing                                |
-| BLAKE3      | **336.2 MB/s**   | -                                             | -                                                                 |
-| HMAC-BLAKE3 | **314.2 MB/s**   | -                                             | -                                                                 |
-| KMAC-128    | **343.1 MB/s**   | -                                             | -                                                                 |
-| KMAC-256    | **293.4 MB/s**   | -                                             | -                                                                 |
+| Algorithm   | rbx-cryptography | Other Libraries                             | Improvement                                                         |
+| ----------- | ---------------- | ------------------------------------------- | ------------------------------------------------------------------- |
+| SHA-256     | **234 MB/s**     | 68 MB/s (HashLib)<br>73 MB/s (luau-hashing) | **3.4x faster** than HashLib<br>**3.2x faster** than luau-hashing   |
+| SHA-512     | **481 MB/s**     | 35 MB/s (HashLib)<br>25 MB/s (luau-hashing) | **13.7x faster** than HashLib<br>**19.2x faster** than luau-hashing |
+| SHA3-512    | **152 MB/s**     | 15 MB/s (HashLib)                           | **10.1x faster** than HashLib                                       |
+| BLAKE2B     | **950 MB/s**     | 52 MB/s (luau-hashing)                      | **18.3x faster** than luau-hashing                                  |
+| BLAKE3      | **455 MB/s**     | -                                           | -                                                                   |
+| HMAC-BLAKE3 | **441 MB/s**     | -                                           | -                                                                   |
+| KMAC-128    | **307 MB/s**     | -                                           | -                                                                   |
+| KMAC-256    | **253 MB/s**     | -                                           | -                                                                   |
 
 ### Password Hashing (Argon2id)
 
-| Tier        | Parameters         | rbx-cryptography |
-| ----------- | ------------------ | ---------------- |
-| Interactive | m=8 MiB, t=2, p=1  | **17.3 MB/s**    |
-| Default     | m=19 MiB, t=2, p=1 | **12.5 MB/s**    |
-| Sensitive   | m=64 MiB, t=3, p=1 | **4.25 MB/s**    |
+| Tier        | Parameters         | rbx-cryptography   |
+| ----------- | ------------------ | ------------------ |
+| Interactive | m=8 MiB, t=2, p=1  | **61 op/s - 16ms** |
+| Default     | m=19 MiB, t=2, p=1 | **25 op/s - 39ms** |
+| Sensitive   | m=64 MiB, t=3, p=1 | **5 op/s - 202ms** |
 
 ### Encryption
 
-| Algorithm                   | rbx-cryptography | Other Libraries                             | Improvement       |
-| --------------------------- | ---------------- | ------------------------------------------- | ----------------- |
-| ChaCha20 (Encrypt)          | **510 MB/s**     | 12 MB/s (EncryptedNet)                      | **45x faster**    |
-| ChaCha20-Poly1305 (Encrypt) | **338 MB/s**     | -                                           | -                 |
-| AES-GCM (Encrypt)           | **74 MB/s**      | 61.8 MB/s (RobloxGamerPro200007 AES256-CTR) | **1.2x faster**   |
-| XOR (Encrypt)               | **1.4 GB/s**     | 19.7 MB/s ms (Devforum)                     | **71.07x faster** |
+| Algorithm                   | rbx-cryptography | Other Libraries                           | Improvement       |
+| --------------------------- | ---------------- | ----------------------------------------- | ----------------- |
+| ChaCha20 (Encrypt)          | **645 MB/s**     | 14 MB/s (EncryptedNet)                    | **46x faster**    |
+| ChaCha20-Poly1305 (Encrypt) | **433 MB/s**     | -                                         | -                 |
+| AES-GCM (Encrypt)           | **124 MB/s**     | 68 MB/s (RobloxGamerPro200007 AES256-CTR) | **1.8x faster**   |
+| XOR (Encrypt)               | **1.4 GB/s**     | 19.7 MB/s (Devforum)                      | **71.07x faster** |
 
 ### Digital Signatures & Key Exchange
 
-| Algorithm               | Time        | Alternative         | Improvement      |
-| ----------------------- | ----------- | ------------------- | ---------------- |
-| EdDSA (Roundtrip)       | **298 μs**  | -                   | -                |
-| ML-DSA-87 (Roundtrip)   | **1.13 ms** | 863 ms (WASM-Luau)  | **761x faster**  |
-| X25519 (Exchange)       | **466 μs**  | 628 μs (ccryptolib) | **1.35x faster** |
-| ML-KEM-1024 (Roundtrip) | **299 μs**  | 122 ms (WASM-Luau)  | **408x faster**  |
+| Algorithm   | Time                                                                                         | Alternative         | Improvement      |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------------- | ---------------- |
+| EdDSA       | Roundtrip: **192 μs**<br>Sign: **32 us**<br>Verify: **160us**                                | -                   | -                |
+| ML-DSA-87   | Roundtrip: **1.63 ms**<br>KeyGen: **367.5 us**<br>Sign: **831.5 us**<br>Verify: **427.9 us** | 863 ms (WASM-Luau)  | **507 faster**   |
+| X25519      | Roundtrip: **465 μs**<br>KeyGen: **280.8 us**<br>Exchange: **184.2 us**                      | 628 μs (ccryptolib) | **1.35x faster** |
+| ML-KEM-1024 | Roundtrip: **383 μs**<br>KeyGen: **113.2 us**<br>Encap: **118.6 us**<br>Decap: **151.1 us**  | 122 ms (WASM-Luau)  | **319x faster**  |
 
 ### Utilities
 
-| Algorithm          | Time         | Alternative                         | Improvement                                               |
-| ------------------ | ------------ | ----------------------------------- | --------------------------------------------------------- |
-| Base64 (Roundtrip) | **600 MB/s** | Lute: 193 MB/s<br>Reselim: 146 MB/s | **3.0x faster** than Lute<br>**4.0x faster** than Reselim |
+| Algorithm            | Time         | Alternative                         | Improvement                                               |
+| -------------------- | ------------ | ----------------------------------- | --------------------------------------------------------- |
+| Base64 (Encode)      | **1.5 GB/s** | Lute: 407 MB/s<br>Reselim: 855 MB/s | **3.7x faster** than Lute<br>**1.8x faster** than Reselim |
+| Base64 (Decode)      | **1.5 GB/s** | Lute: 562 MB/s<br>Reselim: 882 MB/s | **2.7x faster** than Lute<br>**1.7x faster** than Reselim |
+| Base64 (Roundtrip)   | **772 MB/s** | Lute: 235 MB/s<br>Reselim: 430 MB/s | **3.3x faster** than Lute<br>**1.8x faster** than Reselim |
+| CSPRNG (RandomBytes) | **513 MB/s** | -                                   | -                                                         |
 
 \*Roundtrip: Complete encrypt/decrypt or sign/verify cycle
 
