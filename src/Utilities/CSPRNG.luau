@@ -163,7 +163,7 @@ local function GatherEntropy(UserEntropy: buffer?)
 		buffer.copy(Material, PreviousLength + Offset, UserEntropy, 0, UserLength)
 	end
 
-	local KeyMaterial = select(2, Blake3.Digest(Material, KEY_SIZE + NONCE_SIZE))
+	local KeyMaterial = Blake3.DigestBuffer(Material, KEY_SIZE + NONCE_SIZE)
 
 	Key = buffer.create(KEY_SIZE)
 	buffer.copy(Key, 0, KeyMaterial, 0, KEY_SIZE)
@@ -180,7 +180,7 @@ local function GenerateBlock()
 	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE, Counter % 0x100000000)
 	buffer.writeu32(INPUT_BUFFER, KEY_SIZE + NONCE_SIZE + 4, math.floor(Counter / 0x100000000))
 
-	StreamBuffer = select(2, Blake3.Digest(INPUT_BUFFER, POOL_SIZE))
+	StreamBuffer = Blake3.DigestBuffer(INPUT_BUFFER, POOL_SIZE)
 	BufferPosition = 0
 	BufferSize = POOL_SIZE
 	Counter += 1

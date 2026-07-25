@@ -54,337 +54,337 @@ local function ProcessSchedule(Offsets: buffer)
 	do
 		local W15 = buffer.readinteger(Offsets, 8)
 		local W2 = buffer.readinteger(Offsets, 112)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 128, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 0), S0), buffer.readinteger(Offsets, 72)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 16)
 		local W2 = buffer.readinteger(Offsets, 120)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 136, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 8), S0), buffer.readinteger(Offsets, 80)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 24)
 		local W2 = buffer.readinteger(Offsets, 128)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 144, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 16), S0), buffer.readinteger(Offsets, 88)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 32)
 		local W2 = buffer.readinteger(Offsets, 136)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 152, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 24), S0), buffer.readinteger(Offsets, 96)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 40)
 		local W2 = buffer.readinteger(Offsets, 144)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 160, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 32), S0), buffer.readinteger(Offsets, 104)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 48)
 		local W2 = buffer.readinteger(Offsets, 152)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 168, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 40), S0), buffer.readinteger(Offsets, 112)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 56)
 		local W2 = buffer.readinteger(Offsets, 160)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 176, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 48), S0), buffer.readinteger(Offsets, 120)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 64)
 		local W2 = buffer.readinteger(Offsets, 168)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 184, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 56), S0), buffer.readinteger(Offsets, 128)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 72)
 		local W2 = buffer.readinteger(Offsets, 176)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 192, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 64), S0), buffer.readinteger(Offsets, 136)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 80)
 		local W2 = buffer.readinteger(Offsets, 184)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 200, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 72), S0), buffer.readinteger(Offsets, 144)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 88)
 		local W2 = buffer.readinteger(Offsets, 192)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 208, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 80), S0), buffer.readinteger(Offsets, 152)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 96)
 		local W2 = buffer.readinteger(Offsets, 200)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 216, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 88), S0), buffer.readinteger(Offsets, 160)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 104)
 		local W2 = buffer.readinteger(Offsets, 208)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 224, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 96), S0), buffer.readinteger(Offsets, 168)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 112)
 		local W2 = buffer.readinteger(Offsets, 216)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 232, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 104), S0), buffer.readinteger(Offsets, 176)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 120)
 		local W2 = buffer.readinteger(Offsets, 224)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 240, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 112), S0), buffer.readinteger(Offsets, 184)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 128)
 		local W2 = buffer.readinteger(Offsets, 232)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 248, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 120), S0), buffer.readinteger(Offsets, 192)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 136)
 		local W2 = buffer.readinteger(Offsets, 240)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 256, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 128), S0), buffer.readinteger(Offsets, 200)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 144)
 		local W2 = buffer.readinteger(Offsets, 248)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 264, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 136), S0), buffer.readinteger(Offsets, 208)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 152)
 		local W2 = buffer.readinteger(Offsets, 256)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 272, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 144), S0), buffer.readinteger(Offsets, 216)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 160)
 		local W2 = buffer.readinteger(Offsets, 264)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 280, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 152), S0), buffer.readinteger(Offsets, 224)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 168)
 		local W2 = buffer.readinteger(Offsets, 272)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 288, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 160), S0), buffer.readinteger(Offsets, 232)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 176)
 		local W2 = buffer.readinteger(Offsets, 280)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 296, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 168), S0), buffer.readinteger(Offsets, 240)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 184)
 		local W2 = buffer.readinteger(Offsets, 288)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 304, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 176), S0), buffer.readinteger(Offsets, 248)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 192)
 		local W2 = buffer.readinteger(Offsets, 296)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 312, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 184), S0), buffer.readinteger(Offsets, 256)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 200)
 		local W2 = buffer.readinteger(Offsets, 304)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 320, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 192), S0), buffer.readinteger(Offsets, 264)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 208)
 		local W2 = buffer.readinteger(Offsets, 312)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 328, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 200), S0), buffer.readinteger(Offsets, 272)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 216)
 		local W2 = buffer.readinteger(Offsets, 320)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 336, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 208), S0), buffer.readinteger(Offsets, 280)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 224)
 		local W2 = buffer.readinteger(Offsets, 328)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 344, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 216), S0), buffer.readinteger(Offsets, 288)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 232)
 		local W2 = buffer.readinteger(Offsets, 336)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 352, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 224), S0), buffer.readinteger(Offsets, 296)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 240)
 		local W2 = buffer.readinteger(Offsets, 344)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 360, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 232), S0), buffer.readinteger(Offsets, 304)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 248)
 		local W2 = buffer.readinteger(Offsets, 352)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 368, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 240), S0), buffer.readinteger(Offsets, 312)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 256)
 		local W2 = buffer.readinteger(Offsets, 360)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 376, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 248), S0), buffer.readinteger(Offsets, 320)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 264)
 		local W2 = buffer.readinteger(Offsets, 368)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 384, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 256), S0), buffer.readinteger(Offsets, 328)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 272)
 		local W2 = buffer.readinteger(Offsets, 376)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 392, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 264), S0), buffer.readinteger(Offsets, 336)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 280)
 		local W2 = buffer.readinteger(Offsets, 384)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 400, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 272), S0), buffer.readinteger(Offsets, 344)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 288)
 		local W2 = buffer.readinteger(Offsets, 392)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 408, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 280), S0), buffer.readinteger(Offsets, 352)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 296)
 		local W2 = buffer.readinteger(Offsets, 400)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 416, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 288), S0), buffer.readinteger(Offsets, 360)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 304)
 		local W2 = buffer.readinteger(Offsets, 408)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 424, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 296), S0), buffer.readinteger(Offsets, 368)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 312)
 		local W2 = buffer.readinteger(Offsets, 416)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 432, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 304), S0), buffer.readinteger(Offsets, 376)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 320)
 		local W2 = buffer.readinteger(Offsets, 424)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 440, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 312), S0), buffer.readinteger(Offsets, 384)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 328)
 		local W2 = buffer.readinteger(Offsets, 432)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 448, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 320), S0), buffer.readinteger(Offsets, 392)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 336)
 		local W2 = buffer.readinteger(Offsets, 440)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 456, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 328), S0), buffer.readinteger(Offsets, 400)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 344)
 		local W2 = buffer.readinteger(Offsets, 448)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 464, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 336), S0), buffer.readinteger(Offsets, 408)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 352)
 		local W2 = buffer.readinteger(Offsets, 456)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 472, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 344), S0), buffer.readinteger(Offsets, 416)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 360)
 		local W2 = buffer.readinteger(Offsets, 464)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 480, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 352), S0), buffer.readinteger(Offsets, 424)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 368)
 		local W2 = buffer.readinteger(Offsets, 472)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 488, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 360), S0), buffer.readinteger(Offsets, 432)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 376)
 		local W2 = buffer.readinteger(Offsets, 480)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 496, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 368), S0), buffer.readinteger(Offsets, 440)), S1), MASK))
 	end
 	do
 		local W15 = buffer.readinteger(Offsets, 384)
 		local W2 = buffer.readinteger(Offsets, 488)
-		local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), MASK), integer.band(integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), MASK), integer.rshift(W15, 3i))
-		local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), MASK), integer.band(integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), MASK), integer.rshift(W2, 10i))
+		local S0 = integer.bxor(integer.bor(integer.rshift(W15, 7i), integer.lshift(W15, 25i)), integer.bor(integer.rshift(W15, 18i), integer.lshift(W15, 14i)), integer.rshift(W15, 3i))
+		local S1 = integer.bxor(integer.bor(integer.rshift(W2, 17i), integer.lshift(W2, 15i)), integer.bor(integer.rshift(W2, 19i), integer.lshift(W2, 13i)), integer.rshift(W2, 10i))
 		buffer.writeinteger(Offsets, 504, integer.band(integer.add(integer.add(integer.add(buffer.readinteger(Offsets, 376), S0), buffer.readinteger(Offsets, 448)), S1), MASK))
 	end
 end
@@ -406,514 +406,514 @@ local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, 
 		local OldA, OldB, OldC, OldD, OldE, OldF, OldG, OldH = A, B, C, D, E, F, G, H
 
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 0)), buffer.readinteger(Offsets, 0))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 8)), buffer.readinteger(Offsets, 8))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 16)), buffer.readinteger(Offsets, 16))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 24)), buffer.readinteger(Offsets, 24))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 32)), buffer.readinteger(Offsets, 32))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 40)), buffer.readinteger(Offsets, 40))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 48)), buffer.readinteger(Offsets, 48))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 56)), buffer.readinteger(Offsets, 56))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 64)), buffer.readinteger(Offsets, 64))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 72)), buffer.readinteger(Offsets, 72))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 80)), buffer.readinteger(Offsets, 80))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 88)), buffer.readinteger(Offsets, 88))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 96)), buffer.readinteger(Offsets, 96))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 104)), buffer.readinteger(Offsets, 104))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 112)), buffer.readinteger(Offsets, 112))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 120)), buffer.readinteger(Offsets, 120))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 128)), buffer.readinteger(Offsets, 128))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 136)), buffer.readinteger(Offsets, 136))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 144)), buffer.readinteger(Offsets, 144))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 152)), buffer.readinteger(Offsets, 152))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 160)), buffer.readinteger(Offsets, 160))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 168)), buffer.readinteger(Offsets, 168))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 176)), buffer.readinteger(Offsets, 176))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 184)), buffer.readinteger(Offsets, 184))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 192)), buffer.readinteger(Offsets, 192))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 200)), buffer.readinteger(Offsets, 200))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 208)), buffer.readinteger(Offsets, 208))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 216)), buffer.readinteger(Offsets, 216))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 224)), buffer.readinteger(Offsets, 224))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 232)), buffer.readinteger(Offsets, 232))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 240)), buffer.readinteger(Offsets, 240))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 248)), buffer.readinteger(Offsets, 248))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 256)), buffer.readinteger(Offsets, 256))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 264)), buffer.readinteger(Offsets, 264))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 272)), buffer.readinteger(Offsets, 272))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 280)), buffer.readinteger(Offsets, 280))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 288)), buffer.readinteger(Offsets, 288))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 296)), buffer.readinteger(Offsets, 296))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 304)), buffer.readinteger(Offsets, 304))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 312)), buffer.readinteger(Offsets, 312))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 320)), buffer.readinteger(Offsets, 320))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 328)), buffer.readinteger(Offsets, 328))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 336)), buffer.readinteger(Offsets, 336))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 344)), buffer.readinteger(Offsets, 344))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 352)), buffer.readinteger(Offsets, 352))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 360)), buffer.readinteger(Offsets, 360))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 368)), buffer.readinteger(Offsets, 368))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 376)), buffer.readinteger(Offsets, 376))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 384)), buffer.readinteger(Offsets, 384))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 392)), buffer.readinteger(Offsets, 392))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 400)), buffer.readinteger(Offsets, 400))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 408)), buffer.readinteger(Offsets, 408))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 416)), buffer.readinteger(Offsets, 416))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 424)), buffer.readinteger(Offsets, 424))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 432)), buffer.readinteger(Offsets, 432))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 440)), buffer.readinteger(Offsets, 440))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 448)), buffer.readinteger(Offsets, 448))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 456)), buffer.readinteger(Offsets, 456))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 464)), buffer.readinteger(Offsets, 464))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 472)), buffer.readinteger(Offsets, 472))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 480)), buffer.readinteger(Offsets, 480))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 488)), buffer.readinteger(Offsets, 488))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 496)), buffer.readinteger(Offsets, 496))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end
 		do
-			local S1 = integer.bxor(integer.band(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), MASK), integer.band(integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), MASK), integer.band(integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)), MASK))
+			local S1 = integer.bxor(integer.bor(integer.rshift(E, 6i), integer.lshift(E, 26i)), integer.bor(integer.rshift(E, 11i), integer.lshift(E, 21i)), integer.bor(integer.rshift(E, 25i), integer.lshift(E, 7i)))
 			local Ch = integer.bxor(integer.band(E, F), integer.band(integer.bnot(E), G))
 			local Temp1 = integer.add(integer.add(integer.add(integer.add(H, S1), Ch), buffer.readinteger(Constants, 504)), buffer.readinteger(Offsets, 504))
-			local S0 = integer.bxor(integer.band(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), MASK), integer.band(integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), MASK), integer.band(integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)), MASK))
+			local S0 = integer.bxor(integer.bor(integer.rshift(A, 2i), integer.lshift(A, 30i)), integer.bor(integer.rshift(A, 13i), integer.lshift(A, 19i)), integer.bor(integer.rshift(A, 22i), integer.lshift(A, 10i)))
 			local Maj = integer.bxor(integer.band(A, B), integer.band(A, C), integer.band(B, C))
 			H, G, F, E, D, C, B, A = G, F, E, integer.band(integer.add(D, Temp1), MASK), C, B, A, (integer.band(integer.add(integer.add(Temp1, S0), Maj), MASK))
 		end

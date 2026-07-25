@@ -30,7 +30,7 @@ end
 
 local ENCODE_A, ENCODE_B = buffer.create(131072), buffer.create(131072) do
     for Byte0 = 0, 255 do
-        local Sextet0 = Byte0 // 4
+        local Sextet0 = bit32.rshift(Byte0, 2)
         local Sextet0Char = buffer.readu8(ALPHABET_BYTES, Sextet0)
         local Byte0Low = Byte0 % 4
         for Byte1 = 0, 255 do
@@ -96,21 +96,21 @@ local function Encode(Input: buffer): buffer
         local Word2 = buffer.readu32(Input, InputIndex + 6)
         local Word3 = buffer.readu32(Input, InputIndex + 9)
 
-        local KeyA0 = Word0 % 65536
-        local KeyB0 = (Word0 // 256) % 65536
-        buffer.writeu32(Output, OutputIndex, buffer.readu16(EncodeA, KeyA0 * 2) + buffer.readu16(EncodeB, KeyB0 * 2) * 0x10000)
+        local KeyA0 = bit32.band(Word0, 0xFFFF)
+        local KeyB0 = bit32.band(bit32.rshift(Word0, 8), 0xFFFF)
+        buffer.writeu32(Output, OutputIndex, bit32.bor(buffer.readu16(EncodeA, bit32.lshift(KeyA0, 1)), bit32.lshift(buffer.readu16(EncodeB, bit32.lshift(KeyB0, 1)), 16)))
 
-        local KeyA1 = Word1 % 65536
-        local KeyB1 = (Word1 // 256) % 65536
-        buffer.writeu32(Output, OutputIndex + 4, buffer.readu16(EncodeA, KeyA1 * 2) + buffer.readu16(EncodeB, KeyB1 * 2) * 0x10000)
+        local KeyA1 = bit32.band(Word1, 0xFFFF)
+        local KeyB1 = bit32.band(bit32.rshift(Word1, 8), 0xFFFF)
+        buffer.writeu32(Output, OutputIndex + 4, bit32.bor(buffer.readu16(EncodeA, bit32.lshift(KeyA1, 1)), bit32.lshift(buffer.readu16(EncodeB, bit32.lshift(KeyB1, 1)), 16)))
 
-        local KeyA2 = Word2 % 65536
-        local KeyB2 = (Word2 // 256) % 65536
-        buffer.writeu32(Output, OutputIndex + 8, buffer.readu16(EncodeA, KeyA2 * 2) + buffer.readu16(EncodeB, KeyB2 * 2) * 0x10000)
+        local KeyA2 = bit32.band(Word2, 0xFFFF)
+        local KeyB2 = bit32.band(bit32.rshift(Word2, 8), 0xFFFF)
+        buffer.writeu32(Output, OutputIndex + 8, bit32.bor(buffer.readu16(EncodeA, bit32.lshift(KeyA2, 1)), bit32.lshift(buffer.readu16(EncodeB, bit32.lshift(KeyB2, 1)), 16)))
 
-        local KeyA3 = Word3 % 65536
-        local KeyB3 = (Word3 // 256) % 65536
-        buffer.writeu32(Output, OutputIndex + 12, buffer.readu16(EncodeA, KeyA3 * 2) + buffer.readu16(EncodeB, KeyB3 * 2) * 0x10000)
+        local KeyA3 = bit32.band(Word3, 0xFFFF)
+        local KeyB3 = bit32.band(bit32.rshift(Word3, 8), 0xFFFF)
+        buffer.writeu32(Output, OutputIndex + 12, bit32.bor(buffer.readu16(EncodeA, bit32.lshift(KeyA3, 1)), bit32.lshift(buffer.readu16(EncodeB, bit32.lshift(KeyB3, 1)), 16)))
 
         InputIndex += 12
         OutputIndex += 16
@@ -119,8 +119,8 @@ local function Encode(Input: buffer): buffer
     while InputIndex < FullTripletEnd do
         local KeyA = buffer.readu16(Input, InputIndex)
         local Byte2 = buffer.readu8(Input, InputIndex + 2)
-        local KeyB = (KeyA // 256) + Byte2 * 256
-        buffer.writeu32(Output, OutputIndex, buffer.readu16(EncodeA, KeyA * 2) + buffer.readu16(EncodeB, KeyB * 2) * 0x10000)
+        local KeyB = bit32.bor(bit32.rshift(KeyA, 8), bit32.lshift(Byte2, 8))
+        buffer.writeu32(Output, OutputIndex, bit32.bor(buffer.readu16(EncodeA, bit32.lshift(KeyA, 1)), bit32.lshift(buffer.readu16(EncodeB, bit32.lshift(KeyB, 1)), 16)))
         InputIndex += 3
         OutputIndex += 4
     end
@@ -128,18 +128,18 @@ local function Encode(Input: buffer): buffer
     local Remainder = InputLength - InputIndex
     if Remainder == 1 then
         local Byte0 = buffer.readu8(Input, InputIndex)
-        local Sextet0 = Byte0 // 4
-        local Sextet1 = (Byte0 % 4) * 16
-        local Pair = buffer.readu8(AlphabetBytes, Sextet0) + buffer.readu8(AlphabetBytes, Sextet1) * 256
+        local Sextet0 = bit32.rshift(Byte0, 2)
+        local Sextet1 = bit32.lshift(bit32.band(Byte0, 3), 4)
+        local Pair = bit32.bor(buffer.readu8(AlphabetBytes, Sextet0), bit32.lshift(buffer.readu8(AlphabetBytes, Sextet1), 8))
         buffer.writeu16(Output, OutputIndex, Pair)
         buffer.writeu8(Output, OutputIndex + 2, PADDING_CHARACTER)
         buffer.writeu8(Output, OutputIndex + 3, PADDING_CHARACTER)
     elseif Remainder == 2 then
         local Byte0 = buffer.readu8(Input, InputIndex)
         local Byte1 = buffer.readu8(Input, InputIndex + 1)
-        local KeyA = Byte0 + Byte1 * 256
-        buffer.writeu16(Output, OutputIndex, buffer.readu16(EncodeA, KeyA * 2))
-        local Sextet2 = (Byte1 % 16) * 4
+        local KeyA = bit32.bor(Byte0, bit32.lshift(Byte1, 8))
+        buffer.writeu16(Output, OutputIndex, buffer.readu16(EncodeA, bit32.lshift(KeyA, 1)))
+        local Sextet2 = bit32.lshift(bit32.band(Byte1, 15), 2)
         buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(AlphabetBytes, Sextet2))
         buffer.writeu8(Output, OutputIndex + 3, PADDING_CHARACTER)
     end
@@ -178,13 +178,13 @@ local function Decode(Input: buffer): buffer
         local Word0 = buffer.readu32(Input, InputIndex)
         local Word1 = buffer.readu32(Input, InputIndex + 4)
 
-        local PairA0 = buffer.readu16(DecodePair, (Word0 % 65536) * 2)
-        local PairB0 = buffer.readu16(DecodePair, (Word0 // 65536) * 2)
-        local PairA1 = buffer.readu16(DecodePair, (Word1 % 65536) * 2)
-        local PairB1 = buffer.readu16(DecodePair, (Word1 // 65536) * 2)
+        local PairA0 = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word0, 0xFFFF), 1))
+        local PairB0 = buffer.readu16(DecodePair, bit32.lshift(bit32.rshift(Word0, 16), 1))
+        local PairA1 = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word1, 0xFFFF), 1))
+        local PairB1 = buffer.readu16(DecodePair, bit32.lshift(bit32.rshift(Word1, 16), 1))
 
-        buffer.writeu32(Output, OutputIndex, bit32.rshift(bit32.byteswap(PairA0 * 4096 + PairB0), 8))
-        buffer.writeu32(Output, OutputIndex + 3, bit32.rshift(bit32.byteswap(PairA1 * 4096 + PairB1), 8))
+        buffer.writeu32(Output, OutputIndex, bit32.rshift(bit32.byteswap(bit32.bor(bit32.lshift(PairA0, 12), PairB0)), 8))
+        buffer.writeu32(Output, OutputIndex + 3, bit32.rshift(bit32.byteswap(bit32.bor(bit32.lshift(PairA1, 12), PairB1)), 8))
 
         InputIndex += 8
         OutputIndex += 6
@@ -192,9 +192,9 @@ local function Decode(Input: buffer): buffer
 
     while InputIndex <= BodyEnd - 4 do
         local Word = buffer.readu32(Input, InputIndex)
-        local PairA = buffer.readu16(DecodePair, (Word % 65536) * 2)
-        local PairB = buffer.readu16(DecodePair, (Word // 65536) * 2)
-        local Triple = bit32.rshift(bit32.byteswap(PairA * 4096 + PairB), 8)
+        local PairA = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word, 0xFFFF), 1))
+        local PairB = buffer.readu16(DecodePair, bit32.lshift(bit32.rshift(Word, 16), 1))
+        local Triple = bit32.rshift(bit32.byteswap(bit32.bor(bit32.lshift(PairA, 12), PairB)), 8)
         buffer.writeu16(Output, OutputIndex, Triple)
         buffer.writeu8(Output, OutputIndex + 2, bit32.rshift(Triple, 16))
         InputIndex += 4
@@ -209,15 +209,15 @@ local function Decode(Input: buffer): buffer
     local Decoded1 = buffer.readu8(Dtet, Char1)
 
     if Char2 == PADDING_CHARACTER then
-        buffer.writeu8(Output, OutputIndex, Decoded0 * 4 + Decoded1 // 16)
+        buffer.writeu8(Output, OutputIndex, bit32.bor(bit32.lshift(Decoded0, 2), bit32.rshift(Decoded1, 4)))
     elseif Char3 == PADDING_CHARACTER then
         local Decoded2 = buffer.readu8(Dtet, Char2)
-        buffer.writeu8(Output, OutputIndex, Decoded0 * 4 + Decoded1 // 16)
-        buffer.writeu8(Output, OutputIndex + 1, (Decoded1 % 16) * 16 + Decoded2 // 4)
+        buffer.writeu8(Output, OutputIndex, bit32.bor(bit32.lshift(Decoded0, 2), bit32.rshift(Decoded1, 4)))
+        buffer.writeu8(Output, OutputIndex + 1, bit32.bor(bit32.lshift(bit32.band(Decoded1, 15), 4), bit32.rshift(Decoded2, 2)))
     else
         local Decoded2 = buffer.readu8(Dtet, Char2)
         local Decoded3 = buffer.readu8(Dtet, Char3)
-        local Triple = bit32.rshift(bit32.byteswap((Decoded0 * 64 + Decoded1) * 4096 + Decoded2 * 64 + Decoded3), 8)
+        local Triple = bit32.rshift(bit32.byteswap(bit32.bor(bit32.lshift(Decoded0, 18), bit32.lshift(Decoded1, 12), bit32.lshift(Decoded2, 6), Decoded3)), 8)
         buffer.writeu16(Output, OutputIndex, Triple)
         buffer.writeu8(Output, OutputIndex + 2, bit32.rshift(Triple, 16))
     end

@@ -27,6 +27,7 @@
 --!native
 
 type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number) -> ()
+type BlockCipher = (RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number) -> ()
 
 local AES = {}
 
@@ -40,10 +41,7 @@ local KEY_CONFIGS = {
 }
 
 local SUBSTITUTION_BOX = buffer.create(256)
-local TTABLE0 = buffer.create(1024)
-local TTABLE1 = buffer.create(1024)
-local TTABLE2 = buffer.create(1024)
-local TTABLE3 = buffer.create(1024)
+local TTABLES = buffer.create(4096)
 
 do
 	local function GaloisFieldMultiply(FirstValue: number, SecondValue: number): number
@@ -84,10 +82,11 @@ do
 		local S = buffer.readu8(SUBSTITUTION_BOX, B)
 		local S2 = GaloisFieldMultiply(2, S)
 		local S3 = bit32.bxor(S2, S)
-		buffer.writeu32(TTABLE0, B * 4, bit32.bor(S2, bit32.lshift(S, 8), bit32.lshift(S, 16), bit32.lshift(S3, 24)))
-		buffer.writeu32(TTABLE1, B * 4, bit32.bor(S3, bit32.lshift(S2, 8), bit32.lshift(S, 16), bit32.lshift(S, 24)))
-		buffer.writeu32(TTABLE2, B * 4, bit32.bor(S, bit32.lshift(S3, 8), bit32.lshift(S2, 16), bit32.lshift(S, 24)))
-		buffer.writeu32(TTABLE3, B * 4, bit32.bor(S, bit32.lshift(S, 8), bit32.lshift(S3, 16), bit32.lshift(S2, 24)))
+		local Base = B * 16
+		buffer.writeu32(TTABLES, Base, bit32.bor(S2, bit32.lshift(S, 8), bit32.lshift(S, 16), bit32.lshift(S3, 24)))
+		buffer.writeu32(TTABLES, Base + 4, bit32.bor(S3, bit32.lshift(S2, 8), bit32.lshift(S, 16), bit32.lshift(S, 24)))
+		buffer.writeu32(TTABLES, Base + 8, bit32.bor(S, bit32.lshift(S3, 8), bit32.lshift(S2, 16), bit32.lshift(S, 24)))
+		buffer.writeu32(TTABLES, Base + 12, bit32.bor(S, bit32.lshift(S, 8), bit32.lshift(S3, 16), bit32.lshift(S2, 24)))
 	end
 end
 
@@ -194,78 +193,310 @@ local function ExpandKeySchedule(Key: buffer, KeyLength: number, OutputBuffer: b
 	return OutputBuffer
 end
 
-local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
-	local Nr = MaterialLength / 16 + 2
-	local LT0 = TTABLE0
-	local LT1 = TTABLE1
-	local LT2 = TTABLE2
-	local LT3 = TTABLE3
-	local LSBox = SUBSTITUTION_BOX
+local function EncryptBlock128(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
+	local LT = TTABLES
 
 	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
 	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
 	local C2 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 8), buffer.readu32(RoundKeys, 8))
 	local C3 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 12), buffer.readu32(RoundKeys, 12))
 
-	for R = 1, Nr - 1 do
-		local KOff = R * 16
-
-		local A = bit32.band(C0, 0xFF)
-		local B = bit32.band(bit32.rshift(C1, 8), 0xFF)
-		local Cc = bit32.band(bit32.rshift(C2, 16), 0xFF)
-		local D = bit32.rshift(C3, 24)
+	do
 		local NewC0 = bit32.bxor(
-			buffer.readu32(LT0, bit32.lshift(A, 2)),
-			buffer.readu32(LT1, bit32.lshift(B, 2)),
-			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
-			buffer.readu32(LT3, bit32.lshift(D, 2)),
-			buffer.readu32(RoundKeys, KOff))
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 16))
 
-		A = bit32.band(C1, 0xFF)
-		B = bit32.band(bit32.rshift(C2, 8), 0xFF)
-		Cc = bit32.band(bit32.rshift(C3, 16), 0xFF)
-		D = bit32.rshift(C0, 24)
 		local NewC1 = bit32.bxor(
-			buffer.readu32(LT0, bit32.lshift(A, 2)),
-			buffer.readu32(LT1, bit32.lshift(B, 2)),
-			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
-			buffer.readu32(LT3, bit32.lshift(D, 2)),
-			buffer.readu32(RoundKeys, KOff + 4))
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 20))
 
-		A = bit32.band(C2, 0xFF)
-		B = bit32.band(bit32.rshift(C3, 8), 0xFF)
-		Cc = bit32.band(bit32.rshift(C0, 16), 0xFF)
-		D = bit32.rshift(C1, 24)
 		local NewC2 = bit32.bxor(
-			buffer.readu32(LT0, bit32.lshift(A, 2)),
-			buffer.readu32(LT1, bit32.lshift(B, 2)),
-			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
-			buffer.readu32(LT3, bit32.lshift(D, 2)),
-			buffer.readu32(RoundKeys, KOff + 8))
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 24))
 
-		A = bit32.band(C3, 0xFF)
-		B = bit32.band(bit32.rshift(C0, 8), 0xFF)
-		Cc = bit32.band(bit32.rshift(C1, 16), 0xFF)
-		D = bit32.rshift(C2, 24)
 		local NewC3 = bit32.bxor(
-			buffer.readu32(LT0, bit32.lshift(A, 2)),
-			buffer.readu32(LT1, bit32.lshift(B, 2)),
-			buffer.readu32(LT2, bit32.lshift(Cc, 2)),
-			buffer.readu32(LT3, bit32.lshift(D, 2)),
-			buffer.readu32(RoundKeys, KOff + 12))
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 28))
 
 		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
 	end
 
-	local KOff = Nr * 16
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 32))
 
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 36))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 40))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 44))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 48))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 52))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 56))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 60))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 64))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 68))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 72))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 76))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 80))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 84))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 88))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 92))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 96))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 100))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 104))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 108))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 112))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 116))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 120))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 124))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 128))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 132))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 136))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 140))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 144))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 148))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 152))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 156))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	local LSBox = SUBSTITUTION_BOX
 	local A = buffer.readu8(LSBox, bit32.band(C0, 0xFF))
 	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
 	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
 	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
-	buffer.writeu32(Output, OutputOffset + 0, bit32.bxor(
+	buffer.writeu32(Output, OutputOffset, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, KOff)))
+		buffer.readu32(RoundKeys, 160)))
 
 	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
@@ -273,7 +504,7 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
 	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, KOff + 4)))
+		buffer.readu32(RoundKeys, 164)))
 
 	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
@@ -281,7 +512,7 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
 	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, KOff + 8)))
+		buffer.readu32(RoundKeys, 168)))
 
 	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
@@ -289,7 +520,871 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
 	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
 		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, KOff + 12)))
+		buffer.readu32(RoundKeys, 172)))
+end
+
+local function EncryptBlock192(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
+	local LT = TTABLES
+
+	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
+	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
+	local C2 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 8), buffer.readu32(RoundKeys, 8))
+	local C3 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 12), buffer.readu32(RoundKeys, 12))
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 16))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 20))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 24))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 28))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 32))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 36))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 40))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 44))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 48))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 52))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 56))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 60))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 64))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 68))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 72))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 76))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 80))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 84))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 88))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 92))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 96))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 100))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 104))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 108))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 112))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 116))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 120))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 124))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 128))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 132))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 136))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 140))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 144))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 148))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 152))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 156))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 160))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 164))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 168))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 172))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 176))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 180))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 184))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 188))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	local LSBox = SUBSTITUTION_BOX
+	local A = buffer.readu8(LSBox, bit32.band(C0, 0xFF))
+	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
+	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
+	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
+	buffer.writeu32(Output, OutputOffset, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 192)))
+
+	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
+	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 196)))
+
+	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
+	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 200)))
+
+	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
+	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 204)))
+end
+
+local function EncryptBlock256(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
+	local LT = TTABLES
+
+	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
+	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
+	local C2 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 8), buffer.readu32(RoundKeys, 8))
+	local C3 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 12), buffer.readu32(RoundKeys, 12))
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 16))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 20))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 24))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 28))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 32))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 36))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 40))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 44))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 48))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 52))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 56))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 60))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 64))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 68))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 72))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 76))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 80))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 84))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 88))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 92))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 96))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 100))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 104))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 108))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 112))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 116))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 120))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 124))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 128))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 132))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 136))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 140))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 144))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 148))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 152))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 156))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 160))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 164))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 168))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 172))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 176))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 180))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 184))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 188))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 192))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 196))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 200))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 204))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	do
+		local NewC0 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C0, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 208))
+
+		local NewC1 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C1, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 212))
+
+		local NewC2 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C2, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C3, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 216))
+
+		local NewC3 = bit32.bxor(
+			buffer.readu32(LT, bit32.band(bit32.lshift(C3, 4), 0xFF0)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C0, 4), 0xFF0), 4)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C1, 12), 0xFF0), 8)),
+			buffer.readu32(LT, bit32.bor(bit32.band(bit32.rshift(C2, 20), 0xFF0), 12)),
+			buffer.readu32(RoundKeys, 220))
+
+		C0, C1, C2, C3 = NewC0, NewC1, NewC2, NewC3
+	end
+
+	local LSBox = SUBSTITUTION_BOX
+	local A = buffer.readu8(LSBox, bit32.band(C0, 0xFF))
+	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
+	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
+	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
+	buffer.writeu32(Output, OutputOffset, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 224)))
+
+	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
+	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 228)))
+
+	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
+	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 232)))
+
+	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
+	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
+	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 16), 0xFF))
+	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
+	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
+		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
+		buffer.readu32(RoundKeys, 236)))
+end
+
+local function SelectBlockCipher(MaterialLength: number): BlockCipher
+	if MaterialLength == 192 then
+		return EncryptBlock256
+	end
+
+	if MaterialLength == 160 then
+		return EncryptBlock192
+	end
+
+	return EncryptBlock128
 end
 
 local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
@@ -440,24 +1535,139 @@ local function BuildShoupTables(H: buffer): buffer
 	return AllTables
 end
 
-local function GfMult(Y: buffer, Tables: buffer, Z: buffer)
+local function GfMult(Y: buffer, Tables: buffer)
 	local ZLo, ZHi = 0i, 0i
 
-	for ByteIdx = 0, 15 do
-		local ByteVal = buffer.readu8(Y, ByteIdx)
-		local BaseOffset = bit32.lshift(ByteIdx, 9)
+	local ByteVal = buffer.readu8(Y, 0)
+	local HighOffset = bit32.band(ByteVal, 0xF0)
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	local LowOffset = bit32.bor(256, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
 
-		local HighOffset = bit32.bor(BaseOffset, bit32.band(ByteVal, 0xF0))
-		ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-		ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, HighOffset + 8))
+	ByteVal = buffer.readu8(Y, 1)
+	HighOffset = bit32.bor(512, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(768, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
 
-		local LowOffset = bit32.bor(BaseOffset, 256, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-		ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-		ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, LowOffset + 8))
-	end
+	ByteVal = buffer.readu8(Y, 2)
+	HighOffset = bit32.bor(1024, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(1280, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
 
-	buffer.writeinteger(Z, 0, ZLo)
-	buffer.writeinteger(Z, 8, ZHi)
+	ByteVal = buffer.readu8(Y, 3)
+	HighOffset = bit32.bor(1536, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(1792, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 4)
+	HighOffset = bit32.bor(2048, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(2304, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 5)
+	HighOffset = bit32.bor(2560, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(2816, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 6)
+	HighOffset = bit32.bor(3072, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(3328, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 7)
+	HighOffset = bit32.bor(3584, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(3840, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 8)
+	HighOffset = bit32.bor(4096, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(4352, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 9)
+	HighOffset = bit32.bor(4608, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(4864, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 10)
+	HighOffset = bit32.bor(5120, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(5376, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 11)
+	HighOffset = bit32.bor(5632, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(5888, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 12)
+	HighOffset = bit32.bor(6144, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(6400, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 13)
+	HighOffset = bit32.bor(6656, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(6912, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 14)
+	HighOffset = bit32.bor(7168, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(7424, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	ByteVal = buffer.readu8(Y, 15)
+	HighOffset = bit32.bor(7680, bit32.band(ByteVal, 0xF0))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
+	LowOffset = bit32.bor(7936, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+
+	buffer.writeinteger(Y, 0, ZLo)
+	buffer.writeinteger(Y, 8, ZHi)
 end
 
 local function Ghash(Tables: buffer, X: buffer, XLen: number, Y: buffer)
@@ -473,12 +1683,7 @@ local function Ghash(Tables: buffer, X: buffer, XLen: number, Y: buffer)
 		buffer.writeu32(Y, 12, bit32.bxor(buffer.readu32(Y, 12), buffer.readu32(X, XPos + 12)))
 		XPos += 16
 
-		GfMult(Y, Tables, Tmp)
-
-		buffer.writeu32(Y, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(Y, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(Y, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(Y, 12, buffer.readu32(Tmp, 12))
+		GfMult(Y, Tables)
 	end
 
 	if XPos < XLen then
@@ -494,12 +1699,7 @@ local function Ghash(Tables: buffer, X: buffer, XLen: number, Y: buffer)
 		buffer.writeu32(Y, 8, bit32.bxor(buffer.readu32(Y, 8), buffer.readu32(Tmp, 8)))
 		buffer.writeu32(Y, 12, bit32.bxor(buffer.readu32(Y, 12), buffer.readu32(Tmp, 12)))
 
-		GfMult(Y, Tables, Tmp)
-
-		buffer.writeu32(Y, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(Y, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(Y, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(Y, 12, buffer.readu32(Tmp, 12))
+		GfMult(Y, Tables)
 	end
 end
 
@@ -519,10 +1719,10 @@ local function Gctr(RoundKeys: buffer, KeyMaterialLength: number, ICB: buffer, X
 	buffer.writeu32(CB, 8, buffer.readu32(ICB, 8))
 	buffer.writeu32(CB, 12, buffer.readu32(ICB, 12))
 
-	local Encrypt = EncryptBlock
+	local Encrypt = SelectBlockCipher(KeyMaterialLength)
 
 	for I = 0, N - 1 do
-		Encrypt(RoundKeys, KeyMaterialLength, CB, 0, Tmp, 0)
+		Encrypt(RoundKeys, CB, 0, Tmp, 0)
 
 		buffer.writeu32(Y, YPos + 0, bit32.bxor(buffer.readu32(X, XPos + 0), buffer.readu32(Tmp, 0)))
 		buffer.writeu32(Y, YPos + 4, bit32.bxor(buffer.readu32(X, XPos + 4), buffer.readu32(Tmp, 4)))
@@ -539,7 +1739,7 @@ local function Gctr(RoundKeys: buffer, KeyMaterialLength: number, ICB: buffer, X
 
 	local Last = XLen - XPos
 	if Last > 0 then
-		EncryptBlock(RoundKeys, KeyMaterialLength, CB, 0, Tmp, 0)
+		SelectBlockCipher(KeyMaterialLength)(RoundKeys, CB, 0, Tmp, 0)
 		for I = 0, Last - 1 do
 			local XByte = buffer.readu8(X, XPos + I)
 			local TmpByte = buffer.readu8(Tmp, I)
@@ -616,12 +1816,7 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(AAD, XPos + 12)))
 		XPos += 16
 
-		GfMult(S, Tables, Tmp)
-
-		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
+		GfMult(S, Tables)
 	end
 
 	if XPos < AADLen then
@@ -637,12 +1832,7 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(Tmp, 8)))
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(Tmp, 12)))
 
-		GfMult(S, Tables, Tmp)
-
-		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
+		GfMult(S, Tables)
 	end
 
 	M = math.floor(CryptLen / 16)
@@ -655,12 +1845,7 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(Crypt, XPos + 12)))
 		XPos += 16
 
-		GfMult(S, Tables, Tmp)
-
-		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
+		GfMult(S, Tables)
 	end
 
 	if XPos < CryptLen then
@@ -676,12 +1861,7 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 		buffer.writeu32(S, 8, bit32.bxor(buffer.readu32(S, 8), buffer.readu32(Tmp, 8)))
 		buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), buffer.readu32(Tmp, 12)))
 
-		GfMult(S, Tables, Tmp)
-
-		buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
-		buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
-		buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
-		buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
+		GfMult(S, Tables)
 	end
 
 	local AADLenBits = AADLen * 8
@@ -690,12 +1870,7 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 	buffer.writeu32(S, 4, bit32.bxor(buffer.readu32(S, 4), bit32.byteswap(AADLenBits)))
 	buffer.writeu32(S, 12, bit32.bxor(buffer.readu32(S, 12), bit32.byteswap(CryptLenBits)))
 
-	GfMult(S, Tables, Tmp)
-
-	buffer.writeu32(S, 0, buffer.readu32(Tmp, 0))
-	buffer.writeu32(S, 4, buffer.readu32(Tmp, 4))
-	buffer.writeu32(S, 8, buffer.readu32(Tmp, 8))
-	buffer.writeu32(S, 12, buffer.readu32(Tmp, 12))
+	GfMult(S, Tables)
 end
 
 function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): (buffer, buffer)
@@ -736,7 +1911,7 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 	local J0 = buffer.create(16)
 	local S = buffer.create(16)
 
-	EncryptBlock(RoundKeys, KeyMaterialLength, H, 0, H, 0)
+	SelectBlockCipher(KeyMaterialLength)(RoundKeys, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
 	GcmGctr(RoundKeys, KeyMaterialLength, J0, Plaintext, PlainLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, OutputBuffer, PlainLen, S)
@@ -787,7 +1962,7 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 	local S = buffer.create(16)
 	local ComputedTag = buffer.create(16)
 
-	EncryptBlock(RoundKeys, KeyMaterialLength, H, 0, H, 0)
+	SelectBlockCipher(KeyMaterialLength)(RoundKeys, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
 	GcmGctr(RoundKeys, KeyMaterialLength, J0, Ciphertext, CryptLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, Ciphertext, CryptLen, S)

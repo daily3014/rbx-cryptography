@@ -847,32 +847,35 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 	local LaneLength = TotalBlocks // Parallelism
 	local SegmentLength = LaneLength // SYNC_POINTS
 
-	local Pointer = 0
-	local GetPointer = function(Advance: number)
-		local Ret = Pointer
-		Pointer += Advance
-		return Ret
-	end
-
 	local H0Input = buffer.create(4 * 10 + PassLen + SaltLen + SecretLen + AssocLen)
-	buffer.writeu32(H0Input, GetPointer(4), Parallelism)
-	buffer.writeu32(H0Input, GetPointer(4), OutputLength)
-	buffer.writeu32(H0Input, GetPointer(4), MemoryCost)
-	buffer.writeu32(H0Input, GetPointer(4), TimeCost)
-	buffer.writeu32(H0Input, GetPointer(4), ARGON2_VERSION)
-	buffer.writeu32(H0Input, GetPointer(4), ARGON2ID_TYPE)
-	
-	buffer.writeu32(H0Input, GetPointer(4), PassLen)
-	buffer.copy(H0Input, GetPointer(PassLen), Password, 0, PassLen)
 
-	buffer.writeu32(H0Input, GetPointer(4), SaltLen)
-	buffer.copy(H0Input, GetPointer(SaltLen), Salt, 0, SaltLen)
+	buffer.writeu32(H0Input, 0, Parallelism)
+	buffer.writeu32(H0Input, 4, OutputLength)
+	buffer.writeu32(H0Input, 8, MemoryCost)
+	buffer.writeu32(H0Input, 12, TimeCost)
+	buffer.writeu32(H0Input, 16, ARGON2_VERSION)
+	buffer.writeu32(H0Input, 20, ARGON2ID_TYPE)
 
-	buffer.writeu32(H0Input, GetPointer(4), SecretLen)
-	buffer.copy(H0Input, GetPointer(SecretLen), Secret, 0, SecretLen)
+	local Pointer = 24
 
-	buffer.writeu32(H0Input, GetPointer(4), AssocLen)
-	buffer.copy(H0Input, GetPointer(AssocLen), AssociatedData, 0, AssocLen)
+	buffer.writeu32(H0Input, Pointer, PassLen)
+	Pointer += 4
+	buffer.copy(H0Input, Pointer, Password, 0, PassLen)
+	Pointer += PassLen
+
+	buffer.writeu32(H0Input, Pointer, SaltLen)
+	Pointer += 4
+	buffer.copy(H0Input, Pointer, Salt, 0, SaltLen)
+	Pointer += SaltLen
+
+	buffer.writeu32(H0Input, Pointer, SecretLen)
+	Pointer += 4
+	buffer.copy(H0Input, Pointer, Secret, 0, SecretLen)
+	Pointer += SecretLen
+
+	buffer.writeu32(H0Input, Pointer, AssocLen)
+	Pointer += 4
+	buffer.copy(H0Input, Pointer, AssociatedData, 0, AssocLen)
 
 	local H0 = select(2, Blake2b(H0Input, 64))
 

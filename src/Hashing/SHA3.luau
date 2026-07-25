@@ -51,212 +51,87 @@ end
 local LANES = buffer.create(200)
 local SQUEEZE_ZERO = buffer.create(168)
 
+local Scratch = buffer.create(200)
+
 local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RC = ROUND_CONSTANTS
+	local B = Scratch
 
 	for Position = Offset, Offset + Size - 1, BlockSizeInBytes do
 		for Index = 0, (QuadWordsQuantity - 1) * 8, 8 do
-			local BufferPos = Position + Index
-
 			buffer.writeinteger(Lanes, Index, integer.bxor(
 				buffer.readinteger(Lanes, Index),
-				buffer.readinteger(InputBuffer, BufferPos)
+				buffer.readinteger(InputBuffer, Position + Index)
 			))
 		end
 
-		local Lane01, Lane02, Lane03 = buffer.readinteger(Lanes, 0), buffer.readinteger(Lanes, 8), buffer.readinteger(Lanes, 16)
-		local Lane04, Lane05, Lane06 = buffer.readinteger(Lanes, 24), buffer.readinteger(Lanes, 32), buffer.readinteger(Lanes, 40)
-		local Lane07, Lane08, Lane09 = buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 56), buffer.readinteger(Lanes, 64)
-		local Lane10, Lane11, Lane12 = buffer.readinteger(Lanes, 72), buffer.readinteger(Lanes, 80), buffer.readinteger(Lanes, 88)
-		local Lane13, Lane14, Lane15 = buffer.readinteger(Lanes, 96), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 112)
-		local Lane16, Lane17, Lane18 = buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 128), buffer.readinteger(Lanes, 136)
-		local Lane19, Lane20, Lane21 = buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 152), buffer.readinteger(Lanes, 160)
-		local Lane22, Lane23, Lane24 = buffer.readinteger(Lanes, 168), buffer.readinteger(Lanes, 176), buffer.readinteger(Lanes, 184)
-		local Lane25 = buffer.readinteger(Lanes, 192)
-
-		for RoundIndex = 0, 184, 16 do
-			do
-				local Column1 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane01, Lane06), Lane11), Lane16), Lane21)
-				local Column2 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane02, Lane07), Lane12), Lane17), Lane22)
-				local Column3 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane03, Lane08), Lane13), Lane18), Lane23)
-				local Column4 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane04, Lane09), Lane14), Lane19), Lane24)
-				local Column5 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane05, Lane10), Lane15), Lane20), Lane25)
-	
-				local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
-	
-				local Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane02), integer.bxor(Delta, Lane07), integer.bxor(Delta, Lane12), integer.bxor(Delta, Lane17), integer.bxor(Delta, Lane22)
-				Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
-				Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
-	
-				-- TYPE ERROR: type solver infers Temp4 to be nil after the theta step
-				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23) :: integer
-				Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
-				Delta = integer.bxor(Column3, integer.rrotate(Column5, 63i))
-	
-				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane04), integer.bxor(Delta, Lane09), integer.bxor(Delta, Lane14), integer.bxor(Delta, Lane19), integer.bxor(Delta, Lane24) :: integer
-				Lane04, Lane09, Lane14, Lane19, Lane24 = integer.rrotate(Temp3, 43i), integer.rrotate(Temp0, 36i), integer.rrotate(Temp2, 39i), integer.rrotate(Temp4, 8i), integer.rrotate(Temp1, 9i)
-				Delta = integer.bxor(Column4, integer.rrotate(Column1, 63i))
-	
-				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane05), integer.bxor(Delta, Lane10), integer.bxor(Delta, Lane15), integer.bxor(Delta, Lane20), integer.bxor(Delta, Lane25) :: integer
-				Lane05, Lane10, Lane15, Lane20, Lane25 = integer.rrotate(Temp4, 50i), integer.rrotate(Temp1, 44i), integer.rrotate(Temp3, 56i), integer.rrotate(Temp0, 37i), integer.rrotate(Temp2, 25i)
-				Delta = integer.bxor(Column5, integer.rrotate(Column2, 63i))
-	
-				Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane06), integer.bxor(Delta, Lane11), integer.bxor(Delta, Lane16), integer.bxor(Delta, Lane21) :: integer
-				Lane06, Lane11, Lane16, Lane21 = integer.rrotate(Temp2, 61i), integer.rrotate(Temp4, 46i), integer.rrotate(Temp1, 28i), integer.rrotate(Temp3, 23i)
-				Lane01 = integer.bxor(Delta, Lane01)
-	
-				Lane01, Lane02, Lane03, Lane04, Lane05 =
-					integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
-					integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
-					integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
-					integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
-					(integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02)))
-				
-				Lane06, Lane07, Lane08, Lane09, Lane10 =
-					integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
-					integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
-					integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
-					integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
-					(integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10)))
-	
-				Lane11, Lane12, Lane13, Lane14, Lane15 =
-					integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
-					integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
-					integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
-					integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
-					(integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13)))
-	
-				Lane16, Lane17, Lane18, Lane19, Lane20 =
-					integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
-					integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
-					integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
-					integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
-					(integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16)))
-	
-				-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
-				Lane21, Lane22, Lane23, Lane24, Lane25 =
-					(Lane21 :: any) :: integer,
-					(Lane22 :: any) :: integer,
-					(Lane23 :: any) :: integer,
-					(Lane24 :: any) :: integer,
-					(Lane25 :: any) :: integer
-	
-				Lane21, Lane22, Lane23, Lane24, Lane25 =
-					integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
-					integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
-					integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
-					integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
-					(integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24)))
-	
-				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex))
-			end
-
-			do
-				local Column1 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane01, Lane06), Lane11), Lane16), Lane21)
-				local Column2 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane02, Lane07), Lane12), Lane17), Lane22)
-				local Column3 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane03, Lane08), Lane13), Lane18), Lane23)
-				local Column4 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane04, Lane09), Lane14), Lane19), Lane24)
-				local Column5 = integer.bxor(integer.bxor(integer.bxor(integer.bxor(Lane05, Lane10), Lane15), Lane20), Lane25)
-	
-				local Delta = integer.bxor(Column1, integer.lrotate(Column3, 1i))
-	
-				local Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane02), integer.bxor(Delta, Lane07), integer.bxor(Delta, Lane12), integer.bxor(Delta, Lane17), integer.bxor(Delta, Lane22)
-				Lane02, Lane07, Lane12, Lane17, Lane22 = integer.rrotate(Temp1, 20i), integer.rrotate(Temp3, 19i), integer.rrotate(Temp0, 63i), integer.rrotate(Temp2, 54i), integer.rrotate(Temp4, 62i)
-				Delta = integer.bxor(Column2, integer.rrotate(Column4, 63i))
-	
-				
-				-- TYPE ERROR: type solver infers Temp4 to be nil after the theta step
-				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane03), integer.bxor(Delta, Lane08), integer.bxor(Delta, Lane13), integer.bxor(Delta, Lane18), integer.bxor(Delta, Lane23) :: integer
-				Lane03, Lane08, Lane13, Lane18, Lane23 = integer.rrotate(Temp2, 21i), integer.rrotate(Temp4, 3i), integer.rrotate(Temp1, 58i), integer.rrotate(Temp3, 49i), integer.rrotate(Temp0, 2i)
-				Delta = integer.bxor(Column3, integer.rrotate(Column5, 63i))
-	
-				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane04), integer.bxor(Delta, Lane09), integer.bxor(Delta, Lane14), integer.bxor(Delta, Lane19), integer.bxor(Delta, Lane24) :: integer
-				Lane04, Lane09, Lane14, Lane19, Lane24 = integer.rrotate(Temp3, 43i), integer.rrotate(Temp0, 36i), integer.rrotate(Temp2, 39i), integer.rrotate(Temp4, 8i), integer.rrotate(Temp1, 9i)
-				Delta = integer.bxor(Column4, integer.rrotate(Column1, 63i))
-	
-				Temp0, Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane05), integer.bxor(Delta, Lane10), integer.bxor(Delta, Lane15), integer.bxor(Delta, Lane20), integer.bxor(Delta, Lane25) :: integer
-				Lane05, Lane10, Lane15, Lane20, Lane25 = integer.rrotate(Temp4, 50i), integer.rrotate(Temp1, 44i), integer.rrotate(Temp3, 56i), integer.rrotate(Temp0, 37i), integer.rrotate(Temp2, 25i)
-				Delta = integer.bxor(Column5, integer.rrotate(Column2, 63i))
-	
-				Temp1, Temp2, Temp3, Temp4 = integer.bxor(Delta, Lane06), integer.bxor(Delta, Lane11), integer.bxor(Delta, Lane16), integer.bxor(Delta, Lane21) :: integer
-				Lane06, Lane11, Lane16, Lane21 = integer.rrotate(Temp2, 61i), integer.rrotate(Temp4, 46i), integer.rrotate(Temp1, 28i), integer.rrotate(Temp3, 23i)
-				Lane01 = integer.bxor(Delta, Lane01)
-	
-				Lane01, Lane02, Lane03, Lane04, Lane05 =
-					integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
-					integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
-					integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
-					integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
-					(integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02)))
-				
-				Lane06, Lane07, Lane08, Lane09, Lane10 =
-					integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
-					integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
-					integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
-					integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
-					(integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10)))
-	
-				Lane11, Lane12, Lane13, Lane14, Lane15 =
-					integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
-					integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
-					integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
-					integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
-					(integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13)))
-	
-				Lane16, Lane17, Lane18, Lane19, Lane20 =
-					integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
-					integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
-					integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
-					integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
-					(integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16)))
-	
-				-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
-				Lane21, Lane22, Lane23, Lane24, Lane25 =
-					(Lane21 :: any) :: integer,
-					(Lane22 :: any) :: integer,
-					(Lane23 :: any) :: integer,
-					(Lane24 :: any) :: integer,
-					(Lane25 :: any) :: integer
-	
-				Lane21, Lane22, Lane23, Lane24, Lane25 =
-					integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
-					integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
-					integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
-					integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
-					(integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24)))
-	
-				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex + 8))
-			end
+		for Round = 0, 184, 8 do
+			local C0 = integer.bxor(buffer.readinteger(Lanes, 0), buffer.readinteger(Lanes, 40), buffer.readinteger(Lanes, 80), buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 160))
+			local C1 = integer.bxor(buffer.readinteger(Lanes, 8), buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 88), buffer.readinteger(Lanes, 128), buffer.readinteger(Lanes, 168))
+			local C2 = integer.bxor(buffer.readinteger(Lanes, 16), buffer.readinteger(Lanes, 56), buffer.readinteger(Lanes, 96), buffer.readinteger(Lanes, 136), buffer.readinteger(Lanes, 176))
+			local C3 = integer.bxor(buffer.readinteger(Lanes, 24), buffer.readinteger(Lanes, 64), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 184))
+			local C4 = integer.bxor(buffer.readinteger(Lanes, 32), buffer.readinteger(Lanes, 72), buffer.readinteger(Lanes, 112), buffer.readinteger(Lanes, 152), buffer.readinteger(Lanes, 192))
+			local D0 = integer.bxor(C4, integer.lrotate(C1, 1i))
+			local D1 = integer.bxor(C0, integer.lrotate(C2, 1i))
+			local D2 = integer.bxor(C1, integer.lrotate(C3, 1i))
+			local D3 = integer.bxor(C2, integer.lrotate(C4, 1i))
+			local D4 = integer.bxor(C3, integer.lrotate(C0, 1i))
+			buffer.writeinteger(B, 0, integer.bxor(buffer.readinteger(Lanes, 0), D0))
+			buffer.writeinteger(B, 80, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 8), D1), 1i))
+			buffer.writeinteger(B, 160, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 16), D2), 62i))
+			buffer.writeinteger(B, 40, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 24), D3), 28i))
+			buffer.writeinteger(B, 120, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 32), D4), 27i))
+			buffer.writeinteger(B, 128, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 40), D0), 36i))
+			buffer.writeinteger(B, 8, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 48), D1), 44i))
+			buffer.writeinteger(B, 88, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 56), D2), 6i))
+			buffer.writeinteger(B, 168, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 64), D3), 55i))
+			buffer.writeinteger(B, 48, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 72), D4), 20i))
+			buffer.writeinteger(B, 56, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 80), D0), 3i))
+			buffer.writeinteger(B, 136, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 88), D1), 10i))
+			buffer.writeinteger(B, 16, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 96), D2), 43i))
+			buffer.writeinteger(B, 96, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 104), D3), 25i))
+			buffer.writeinteger(B, 176, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 112), D4), 39i))
+			buffer.writeinteger(B, 184, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 120), D0), 41i))
+			buffer.writeinteger(B, 64, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 128), D1), 45i))
+			buffer.writeinteger(B, 144, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 136), D2), 15i))
+			buffer.writeinteger(B, 24, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 144), D3), 21i))
+			buffer.writeinteger(B, 104, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 152), D4), 8i))
+			buffer.writeinteger(B, 112, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 160), D0), 18i))
+			buffer.writeinteger(B, 192, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 168), D1), 2i))
+			buffer.writeinteger(B, 72, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 176), D2), 61i))
+			buffer.writeinteger(B, 152, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 184), D3), 56i))
+			buffer.writeinteger(B, 32, integer.lrotate(integer.bxor(buffer.readinteger(Lanes, 192), D4), 14i))
+			buffer.writeinteger(Lanes, 0, integer.bxor(buffer.readinteger(B, 0), integer.band(integer.bnot(buffer.readinteger(B, 8)), buffer.readinteger(B, 16))))
+			buffer.writeinteger(Lanes, 8, integer.bxor(buffer.readinteger(B, 8), integer.band(integer.bnot(buffer.readinteger(B, 16)), buffer.readinteger(B, 24))))
+			buffer.writeinteger(Lanes, 16, integer.bxor(buffer.readinteger(B, 16), integer.band(integer.bnot(buffer.readinteger(B, 24)), buffer.readinteger(B, 32))))
+			buffer.writeinteger(Lanes, 24, integer.bxor(buffer.readinteger(B, 24), integer.band(integer.bnot(buffer.readinteger(B, 32)), buffer.readinteger(B, 0))))
+			buffer.writeinteger(Lanes, 32, integer.bxor(buffer.readinteger(B, 32), integer.band(integer.bnot(buffer.readinteger(B, 0)), buffer.readinteger(B, 8))))
+			buffer.writeinteger(Lanes, 40, integer.bxor(buffer.readinteger(B, 40), integer.band(integer.bnot(buffer.readinteger(B, 48)), buffer.readinteger(B, 56))))
+			buffer.writeinteger(Lanes, 48, integer.bxor(buffer.readinteger(B, 48), integer.band(integer.bnot(buffer.readinteger(B, 56)), buffer.readinteger(B, 64))))
+			buffer.writeinteger(Lanes, 56, integer.bxor(buffer.readinteger(B, 56), integer.band(integer.bnot(buffer.readinteger(B, 64)), buffer.readinteger(B, 72))))
+			buffer.writeinteger(Lanes, 64, integer.bxor(buffer.readinteger(B, 64), integer.band(integer.bnot(buffer.readinteger(B, 72)), buffer.readinteger(B, 40))))
+			buffer.writeinteger(Lanes, 72, integer.bxor(buffer.readinteger(B, 72), integer.band(integer.bnot(buffer.readinteger(B, 40)), buffer.readinteger(B, 48))))
+			buffer.writeinteger(Lanes, 80, integer.bxor(buffer.readinteger(B, 80), integer.band(integer.bnot(buffer.readinteger(B, 88)), buffer.readinteger(B, 96))))
+			buffer.writeinteger(Lanes, 88, integer.bxor(buffer.readinteger(B, 88), integer.band(integer.bnot(buffer.readinteger(B, 96)), buffer.readinteger(B, 104))))
+			buffer.writeinteger(Lanes, 96, integer.bxor(buffer.readinteger(B, 96), integer.band(integer.bnot(buffer.readinteger(B, 104)), buffer.readinteger(B, 112))))
+			buffer.writeinteger(Lanes, 104, integer.bxor(buffer.readinteger(B, 104), integer.band(integer.bnot(buffer.readinteger(B, 112)), buffer.readinteger(B, 80))))
+			buffer.writeinteger(Lanes, 112, integer.bxor(buffer.readinteger(B, 112), integer.band(integer.bnot(buffer.readinteger(B, 80)), buffer.readinteger(B, 88))))
+			buffer.writeinteger(Lanes, 120, integer.bxor(buffer.readinteger(B, 120), integer.band(integer.bnot(buffer.readinteger(B, 128)), buffer.readinteger(B, 136))))
+			buffer.writeinteger(Lanes, 128, integer.bxor(buffer.readinteger(B, 128), integer.band(integer.bnot(buffer.readinteger(B, 136)), buffer.readinteger(B, 144))))
+			buffer.writeinteger(Lanes, 136, integer.bxor(buffer.readinteger(B, 136), integer.band(integer.bnot(buffer.readinteger(B, 144)), buffer.readinteger(B, 152))))
+			buffer.writeinteger(Lanes, 144, integer.bxor(buffer.readinteger(B, 144), integer.band(integer.bnot(buffer.readinteger(B, 152)), buffer.readinteger(B, 120))))
+			buffer.writeinteger(Lanes, 152, integer.bxor(buffer.readinteger(B, 152), integer.band(integer.bnot(buffer.readinteger(B, 120)), buffer.readinteger(B, 128))))
+			buffer.writeinteger(Lanes, 160, integer.bxor(buffer.readinteger(B, 160), integer.band(integer.bnot(buffer.readinteger(B, 168)), buffer.readinteger(B, 176))))
+			buffer.writeinteger(Lanes, 168, integer.bxor(buffer.readinteger(B, 168), integer.band(integer.bnot(buffer.readinteger(B, 176)), buffer.readinteger(B, 184))))
+			buffer.writeinteger(Lanes, 176, integer.bxor(buffer.readinteger(B, 176), integer.band(integer.bnot(buffer.readinteger(B, 184)), buffer.readinteger(B, 192))))
+			buffer.writeinteger(Lanes, 184, integer.bxor(buffer.readinteger(B, 184), integer.band(integer.bnot(buffer.readinteger(B, 192)), buffer.readinteger(B, 160))))
+			buffer.writeinteger(Lanes, 192, integer.bxor(buffer.readinteger(B, 192), integer.band(integer.bnot(buffer.readinteger(B, 160)), buffer.readinteger(B, 168))))
+			buffer.writeinteger(Lanes, 0, integer.bxor(buffer.readinteger(Lanes, 0), buffer.readinteger(RC, Round)))
 		end
-
-		buffer.writeinteger(Lanes, 0, Lane01)
-		buffer.writeinteger(Lanes, 8, Lane02)
-		buffer.writeinteger(Lanes, 16, Lane03)
-		buffer.writeinteger(Lanes, 24, Lane04)
-		buffer.writeinteger(Lanes, 32, Lane05)
-		buffer.writeinteger(Lanes, 40, Lane06)
-		buffer.writeinteger(Lanes, 48, Lane07)
-		buffer.writeinteger(Lanes, 56, Lane08)
-		buffer.writeinteger(Lanes, 64, Lane09)
-		buffer.writeinteger(Lanes, 72, Lane10)
-		buffer.writeinteger(Lanes, 80, Lane11)
-		buffer.writeinteger(Lanes, 88, Lane12)
-		buffer.writeinteger(Lanes, 96, Lane13)
-		buffer.writeinteger(Lanes, 104, Lane14)
-		buffer.writeinteger(Lanes, 112, Lane15)
-		buffer.writeinteger(Lanes, 120, Lane16)
-		buffer.writeinteger(Lanes, 128, Lane17)
-		buffer.writeinteger(Lanes, 136, Lane18)
-		buffer.writeinteger(Lanes, 144, Lane19)
-		buffer.writeinteger(Lanes, 152, Lane20)
-		buffer.writeinteger(Lanes, 160, Lane21)
-		buffer.writeinteger(Lanes, 168, Lane22)
-		buffer.writeinteger(Lanes, 176, Lane23)
-		buffer.writeinteger(Lanes, 184, Lane24)
-		buffer.writeinteger(Lanes, 192, Lane25)
 	end
 end
+
 
 local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer
 	local RateBytes = (1600 - CapacityBits) // 8
