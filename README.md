@@ -157,18 +157,18 @@ Nonce/IV Size: 12 Bytes
 | Algorithm   | Time                                                                                         | Alternative         | Improvement      |
 | ----------- | -------------------------------------------------------------------------------------------- | ------------------- | ---------------- |
 | EdDSA       | Roundtrip: **192 μs**<br>Sign: **32 us**<br>Verify: **160us**                                | -                   | -                |
-| ML-DSA-87   | Roundtrip: **1.63 ms**<br>KeyGen: **367.5 us**<br>Sign: **831.5 us**<br>Verify: **427.9 us** | 863 ms (WASM-Luau)  | **507 faster**   |
+| ML-DSA-87   | Roundtrip: **1.63 ms**<br>KeyGen: **367.5 us**<br>Sign: **831.5 us**<br>Verify: **427.9 us** | 863 ms (WASM-Luau)  | **507x faster**  |
 | X25519      | Roundtrip: **465 μs**<br>KeyGen: **280.8 us**<br>Exchange: **184.2 us**                      | 628 μs (ccryptolib) | **1.35x faster** |
 | ML-KEM-1024 | Roundtrip: **383 μs**<br>KeyGen: **113.2 us**<br>Encap: **118.6 us**<br>Decap: **151.1 us**  | 122 ms (WASM-Luau)  | **319x faster**  |
 
 ### Utilities
 
-| Algorithm            | Time         | Alternative                         | Improvement                                               |
-| -------------------- | ------------ | ----------------------------------- | --------------------------------------------------------- |
-| Base64 (Encode)      | **1.5 GB/s** | Lute: 407 MB/s<br>Reselim: 855 MB/s | **3.7x faster** than Lute<br>**1.8x faster** than Reselim |
-| Base64 (Decode)      | **1.5 GB/s** | Lute: 562 MB/s<br>Reselim: 882 MB/s | **2.7x faster** than Lute<br>**1.7x faster** than Reselim |
-| Base64 (Roundtrip)   | **772 MB/s** | Lute: 235 MB/s<br>Reselim: 430 MB/s | **3.3x faster** than Lute<br>**1.8x faster** than Reselim |
-| CSPRNG (RandomBytes) | **513 MB/s** | -                                   | -                                                         |
+| Algorithm            | Time         | Alternative                                             | Improvement                                                                              |
+| -------------------- | ------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Base64 (Encode)      | **1.5 GB/s** | Lute: 407 MB/s<br>Reselim: 855 MB/s<br>Roblox: 1.3 GB/s | **3.7x faster** than Lute<br>**1.8x faster** than Reselim<br>**1.2x faster** than Roblox |
+| Base64 (Decode)      | **1.5 GB/s** | Lute: 562 MB/s<br>Reselim: 882 MB/s<br>Roblox: 2.1 GB/s | **2.7x faster** than Lute<br>**1.7x faster** than Reselim<br>1.4x slower than Roblox     |
+| Base64 (Roundtrip)   | **772 MB/s** | Lute: 235 MB/s<br>Reselim: 430 MB/s<br>Roblox: 866 MB/s | **3.3x faster** than Lute<br>**1.8x faster** than Reselim<br>1.1x slower than Roblox     |
+| CSPRNG (RandomBytes) | **513 MB/s** | -                                                       | -                                                                                        |
 
 \*Roundtrip: Complete encrypt/decrypt or sign/verify cycle
 
