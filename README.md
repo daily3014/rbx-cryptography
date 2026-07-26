@@ -145,12 +145,12 @@ Nonce/IV Size: 12 Bytes
 
 ### Encryption
 
-| Algorithm                   | rbx-cryptography | Other Libraries                           | Improvement       |
-| --------------------------- | ---------------- | ----------------------------------------- | ----------------- |
-| ChaCha20 (Encrypt)          | **645 MB/s**     | 14 MB/s (EncryptedNet)                    | **46x faster**    |
-| ChaCha20-Poly1305 (Encrypt) | **433 MB/s**     | -                                         | -                 |
-| AES-GCM (Encrypt)           | **124 MB/s**     | 68 MB/s (RobloxGamerPro200007 AES256-CTR) | **1.8x faster**   |
-| XOR (Encrypt)               | **1.4 GB/s**     | 19.7 MB/s (Devforum)                      | **71.07x faster** |
+| Algorithm                   | rbx-cryptography | Other Libraries                           | Improvement     |
+| --------------------------- | ---------------- | ----------------------------------------- | --------------- |
+| ChaCha20 (Encrypt)          | **645 MB/s**     | 14 MB/s (EncryptedNet)                    | **46x faster**  |
+| ChaCha20-Poly1305 (Encrypt) | **433 MB/s**     | -                                         | -               |
+| AES-GCM (Encrypt)           | **124 MB/s**     | 68 MB/s (RobloxGamerPro200007 AES256-CTR) | **1.8x faster** |
+| XOR (Encrypt)               | **2.7 GB/s**     | 20 MB/s (Devforum)                        | **135x faster** |
 
 ### Digital Signatures & Key Exchange
 
