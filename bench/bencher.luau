@@ -277,7 +277,7 @@ local function Note(Text: string)
 	end
 end
 
-Note("This benchmark was automatically done via the benchmarker script found in bench/run.luau")
+Note("This benchmark was automatically done via the benchmarker script found in bench/bencher.luau")
 Note("Roundtrip: Complete encrypt/decrypt or sign/verify cycle")
 
 local StartBenchmarking = os.clock()
