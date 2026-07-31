@@ -124,7 +124,7 @@ local function GatherEntropy(UserEntropy: buffer?)
 	WriteToBuffer(JitterSamples)
 
 	if game then
-		local HttpService = game:FindService("HttpService")
+		local HttpService = game:FindService("HttpService") :: HttpService?
 		if HttpService then
 			WriteToBuffer(buffer.fromstring(HttpService:GenerateGUID(false)))
 		end

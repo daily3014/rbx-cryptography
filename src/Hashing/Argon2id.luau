@@ -26,7 +26,7 @@
 --!optimize 2
 --!native
 
-type Argon2idOptions = {
+export type Argon2idOptions = {
 	TimeCost: number?,
 	MemoryCost: number?,
 	Parallelism: number?,

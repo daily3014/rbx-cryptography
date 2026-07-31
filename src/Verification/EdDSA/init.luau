@@ -33,7 +33,6 @@ local FieldPrime = require("@self/FieldPrime")
 local SHA512 = require("../Hashing/SHA2/SHA512").SHA512_Internal
 local Edwards25519 = require("@self/Edwards25519")
 local X25519 = require("@self/X25519")
-local CSPRNG = require("../Utilities/CSPRNG")
 
 local ED25519_SECRET_KEY_SIZE = 32
 local ED25519_PUBLIC_KEY_SIZE = 32
@@ -253,7 +252,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 		return EDDSA.Verify(Entry.Message, Entry.PublicKey, Entry.Signature)
 	end
 
-	local TranscriptData = {}
+	local TranscriptData: {buffer} = {}
 	local ParsedData = {}
 
 	for Index, Entry in Entries do
@@ -355,7 +354,11 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 		end
 	end
 
-	if SumS == nil or Accumulator == nil then
+	if SumS == nil then
+		return false
+	end
+
+	if Accumulator == nil then
 		return false
 	end
 
@@ -363,7 +366,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 	local LeftSide = Edwards25519.MulG(SumSBits, SumSBitCount)
 
 	local LeftNiels = Edwards25519.Niels(LeftSide)
-	local Difference = Edwards25519.Sub(Accumulator :: buffer, LeftNiels)
+	local Difference = Edwards25519.Sub(Accumulator, LeftNiels)
 
 	Difference = Edwards25519.Double(Difference)
 	Difference = Edwards25519.Double(Difference)

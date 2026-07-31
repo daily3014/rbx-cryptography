@@ -12,7 +12,11 @@ local Bridge = require("./Bridge")
 local IsCLI = Bridge.IsCLI
 local Testing = require("./")
 
-local Algorithm = if IsCLI then require("../src/Utilities/CSPRNG") else require("../Utilities/CSPRNG")
+local Algorithm = --[[if IsCLI then]] require("../src/Utilities/CSPRNG")-- else require("../Utilities/CSPRNG")
+
+local function ForceCast<To>(Value: any): To
+	return Value :: To
+end
 
 Testing.Describe("CSPRNG Algorithm Tests", function()
 	Testing.Test("AddEntropy Function", function()
@@ -28,7 +32,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		Testing.Expect(typeof(Value3)).ToBe("number")
 
 		Testing.Expect(function()
-			Algorithm.AddEntropy("not a buffer" :: any)
+			Algorithm.AddEntropy(ForceCast<<buffer>>("not a buffer"))
 		end).ToThrow()
 	end)
 
@@ -46,7 +50,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomInt("test" :: any)
+			Algorithm.RandomInt(ForceCast<<number>>("test"))
 		end).ToThrow()
 
 		for i = 1, 100 do
@@ -82,7 +86,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomNumber("test" :: any)
+			Algorithm.RandomNumber(ForceCast<<number>>("test"))
 		end).ToThrow()
 
 		for i = 1, 100 do
@@ -114,7 +118,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomBytes("test" :: any)
+			Algorithm.RandomBytes(ForceCast<<number>>("test"))
 		end).ToThrow()
 
 		local Buffer1 = Algorithm.RandomBytes(32)
@@ -149,11 +153,11 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomString(10, 123 :: any)
+			Algorithm.RandomString(10, ForceCast<<boolean>>(123))
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomString(10, "hello" :: any)
+			Algorithm.RandomString(10, ForceCast<<boolean>>("hello"))
 		end).ToThrow()
 
 		Testing.Expect(function()
@@ -161,7 +165,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomString("test" :: any)
+			Algorithm.RandomString(ForceCast<<number>>("hello"))
 		end).ToThrow()
 
 		Testing.Expect(string.len(Algorithm.RandomString(30) :: string)).ToBe(30)
@@ -203,7 +207,7 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomHex("test" :: any)
+			Algorithm.RandomHex(ForceCast<<number>>("hello"))
 		end).ToThrow()
 
 		Testing.Expect(string.len(Algorithm.RandomHex(30))).ToBe(30)

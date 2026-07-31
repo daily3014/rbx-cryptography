@@ -42,7 +42,7 @@ end
 
 local function WriteIntLimbs(Buf: buffer, Values: {number})
 	for Index = 1, 11 do
-		buffer.writeinteger(Buf, (Index - 1) * 8, integer.create(Values[Index]) :: integer)
+		buffer.writeinteger(Buf, (Index - 1) * 8, integer.create(Values[Index]))
 	end
 end
 
@@ -183,11 +183,11 @@ function FieldQuadratic.Decode(EncodedBuffer: buffer): buffer
 
 	for LimbIndex = 0, 9 do
 		local Value = bit32.band(buffer.readu32(EncodedBuffer, LimbIndex * 3), 0xFFFFFF)
-		buffer.writeinteger(DecodedBuffer, LimbIndex * 8, integer.create(Value) :: integer)
+		buffer.writeinteger(DecodedBuffer, LimbIndex * 8, integer.create(Value))
 	end
 
 	local LastValue = buffer.readu16(EncodedBuffer, 30)
-	buffer.writeinteger(DecodedBuffer, 80, integer.create(LastValue) :: integer)
+	buffer.writeinteger(DecodedBuffer, 80, integer.create(LastValue))
 
 	return FieldQuadratic.Montgomery(DecodedBuffer)
 end
@@ -198,14 +198,14 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 
 	for LimbIndex = 0, 10 do
 		local Value = bit32.band(buffer.readu32(WideBuffer, LimbIndex * 3), 0xFFFFFF)
-		buffer.writeinteger(LowPart, LimbIndex * 8, integer.create(Value) :: integer)
+		buffer.writeinteger(LowPart, LimbIndex * 8, integer.create(Value))
 	end
 
 	for LimbIndex = 0, 9 do
 		local Value = bit32.band(buffer.readu32(WideBuffer, 33 + LimbIndex * 3), 0xFFFFFF)
-		buffer.writeinteger(HighPart, LimbIndex * 8, integer.create(Value) :: integer)
+		buffer.writeinteger(HighPart, LimbIndex * 8, integer.create(Value))
 	end
-	buffer.writeinteger(HighPart, 80, integer.create(buffer.readu8(WideBuffer, 63)) :: integer)
+	buffer.writeinteger(HighPart, 80, integer.create(buffer.readu8(WideBuffer, 63)))
 
 	local MontLow = FieldQuadratic.Montgomery(LowPart)
 	local MontHigh = FieldQuadratic.Montgomery(HighPart)

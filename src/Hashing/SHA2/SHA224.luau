@@ -28,7 +28,7 @@ local CONSTANTS = buffer.create(512) do
 		0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 	}
 	for Index, Constant in ipairs(RoundConstants) do
-		buffer.writeinteger(CONSTANTS, (Index - 1) * 8, integer.create(Constant) :: integer)
+		buffer.writeinteger(CONSTANTS, (Index - 1) * 8, integer.create(Constant))
 	end
 end
 
@@ -398,7 +398,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, 
 
 	for Offset = 0, Length - 1, 64 do
 		for WordIndex = 0, 120, 8 do
-			buffer.writeinteger(Offsets, WordIndex, integer.create(bit32.byteswap(buffer.readu32(Blocks, Offset + WordIndex // 2))) :: integer)
+			buffer.writeinteger(Offsets, WordIndex, integer.create(bit32.byteswap(buffer.readu32(Blocks, Offset + WordIndex // 2))))
 		end
 
 		ProcessSchedule(Offsets)

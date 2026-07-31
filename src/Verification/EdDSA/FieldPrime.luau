@@ -456,7 +456,7 @@ end
 
 function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): buffer
 	local L0, L1, L2, L3, L4, L5, L6, L7, L8, L9 = ReadLimbs(ElementA)
-	local K = integer.create(SmallK) :: integer
+	local K = integer.create(SmallK)
 
 	L0 = integer.mul(L0, K); L1 = integer.mul(L1, K); L2 = integer.mul(L2, K); L3 = integer.mul(L3, K); L4 = integer.mul(L4, K)
 	L5 = integer.mul(L5, K); L6 = integer.mul(L6, K); L7 = integer.mul(L7, K); L8 = integer.mul(L8, K); L9 = integer.mul(L9, K)

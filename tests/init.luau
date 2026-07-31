@@ -230,7 +230,7 @@ end
 
 function Testing.Describe(Name: string, Function: (...any) -> ...any): ()
 	table.insert(ScopeStack, Name)
-	local Ok, Error = pcall(Function :: any)
+	local Ok, Error = pcall(Function)
 	table.remove(ScopeStack)
 	if not Ok then
 		Testing.Failed += 1
@@ -289,7 +289,7 @@ local function AssertExpect(Flipped: boolean, Value: boolean, Format: string, ..
 	end
 
 	if not Value then
-		error(string.format(Format :: any, ...), 4)
+		error(string.format(Format, ...), 4)
 	end
 end
 
@@ -630,8 +630,8 @@ local function DeepScan(Any: any, Second: any, State: { [any]: any }, Key: strin
 	return { `{Key or ""}(value: {Readable(Any)}) ~= (value: {Readable(Second)})` }
 end
 
-local NormalState: ConditionState = { Received = nil, Flipped = false, Shared = ({} :: any) }
-local NeverState: ConditionState = { Received = nil, Flipped = true, Shared = ({} :: any) }
+local NormalState: ConditionState = { Received = nil, Flipped = false, Shared = ({}) }
+local NeverState: ConditionState = { Received = nil, Flipped = true, Shared = ({}) }
 
 local NormalMethods: { [string]: (...any) -> () } = {}
 local NeverMethods: { [string]: (...any) -> () } = {}
