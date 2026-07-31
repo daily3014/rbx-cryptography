@@ -1067,6 +1067,58 @@ local BenchStructure: { BenchSection } = {
 	},
 
 	{
+
+        Title = "Digital Signatures & Key Exchange",
+        Type = "Composite",
+        Rows = {
+            {
+                Name = "EdDSA",
+                Target = {
+                    Sign = "Verification/EdDSA/Sign",
+                    Verify = "Verification/EdDSA/Verify",
+                },
+
+                Unit = "Duration",
+                Alternatives = {},
+            },
+
+            {
+
+                Name = "ML-DSA-87",
+                Target = {
+                    KeyGen = "Verification/MlDSA-87/KeyGen",
+                    Sign = "Verification/MlDSA-87/Sign",
+                    Verify = "Verification/MlDSA-87/Verify",
+                },
+                Unit = "Duration",
+                Alternatives = {},
+            },
+
+            {
+                Name = "X25519",
+                Target = {
+                    KeyGen = "Verification/X25519/KeyGen",
+                    Exchange = "Verification/X25519/Exchange",
+                },
+                Unit = "Duration",
+                Alternatives = {},
+            },
+
+            {
+
+                Name = "ML-KEM-1024",
+                Target = {
+                    KeyGen = "Verification/MlKEM-1024/KeyGen",
+                    Encap = "Verification/MlKEM-1024/Encapsulate",
+                    Decap = "Verification/MlKEM-1024/Decapsulate",
+                },
+                Unit = "Duration",
+                Alternatives = {},
+            },
+        },
+    },
+
+	{
 		Title = "Utilities",
 		Type = "Comparison",
 		Rows = {
