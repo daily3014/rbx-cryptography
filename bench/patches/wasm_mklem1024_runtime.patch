@@ -1,0 +1,20 @@
+--- a/bench/libraries/wasm_mklem1024/library/runtime.luau
++++ b/bench/libraries/wasm_mklem1024/library/runtime.luau
+@@ -1,6 +1,9 @@
+ --!native
+ --!optimize 2
+-local WASM_CTOR = require(script.Parent.wasm)
++
++-- Modified to use string paths
++
++local WASM_CTOR = require("./wasm")
+ local WASM_FUNCS = {}
+ local WASM_EXPORTS = {}
+ local HEAP, HEAP_ID = {}, 0
+@@ -96,4 +99,4 @@
+ WASM = WASM_CTOR({ luau = { func_list = WASM_FUNCS } })
+ MEMORY = WASM.memory_list.memory
+ WASM_STACK = WASM.global_list.__stack_pointer
+-return WASM_EXPORTS
++return WASM_EXPORTS
+\ No newline at end of file

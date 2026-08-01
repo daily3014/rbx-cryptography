@@ -1,0 +1,11 @@
+--- a/bench/libraries/wasm_mldsa87/library/wasm.luau
++++ b/bench/libraries/wasm_mldsa87/library/wasm.luau
+@@ -19,7 +19,7 @@
+ -- Y: a[22__31]
+ --  | b[0 __11]
+ -- Z: b[12__31]
+-local constructor = Vector3.new
++local constructor = vector.create
+ 
+ local rt_i64_ZERO = constructor(0, 0, 0)
+ 

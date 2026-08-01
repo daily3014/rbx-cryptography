@@ -1,0 +1,13 @@
+--- a/bench/libraries/wasm_mldsa87/library/runtime.luau
++++ b/bench/libraries/wasm_mldsa87/library/runtime.luau
+@@ -1,6 +1,9 @@
+ --!native
+ --!optimize 2
+-local WASM_CTOR = require(script.Parent.wasm)
++
++-- Modified to use string paths
++
++local WASM_CTOR = require("./wasm")
+ local WASM_FUNCS = {}
+ local WASM_EXPORTS = {}
+ local HEAP, HEAP_ID = {}, 0

@@ -40,7 +40,7 @@ type TargetPath = string | { [string]: string }
 
 type AlternativeSpec = {
 	Package: string,
-	Path: string,
+	Path: TargetPath,
 	Label: string?,
 }
 
@@ -107,7 +107,7 @@ local UNITS: { [string]: Unit } = {
 	Gigabyte = { Ratio = 1e9, Name = "GB" },
 	Terabyte = { Ratio = 1e12, Name = "TB" },
 }
-local function DataThroughput(Time: number, Size: number, ForceUnit: keyof<typeof(UNITS)>?): (number, string)
+local function CalculateThroughput(Time: number, Size: number, ForceUnit: keyof<typeof(UNITS)>?): (number, string)
 	if ForceUnit then
 		local Unit: Unit = UNITS[ForceUnit]
 		return Size / Time / Unit.Ratio, `{Unit.Name}/s`
@@ -135,7 +135,7 @@ assert(loadstring, "Your runtime doesn't support loadstring")
 -- prevent deprecated warning
 local gc = (loadstring("return collectgarbage") :: () -> (("collect") -> ()) & (("count") -> number))()
 assert(gc, "Your runtime doesn't have collectgarbage")
-assert((pcall(gc, "collect")), "Your runtime doesn't support collectgarbage with 'collect'")
+assert((pcall(gc, "collect")), "Your runtime doesn't support collectgarbage with the 'collect' option")
 
 local Sink: any = nil
 local function Measure<Args...>(Name: string, Iterations: number, Body: (Args...) -> ...any, ...: Args...): Sample
@@ -230,7 +230,12 @@ local function Package(Name: string, Body: () -> ())
 	Benchmarks[Name] = CreateNode(nil, Name)
 	ActiveNode = Benchmarks[Name]
 
-	Body()
+	local Success, Error = pcall(Body)
+	if not Success then
+		print(`Library '{Name}' failed with {Error}`)
+		Benchmarks[Name] = nil
+	end
+
 	Indentations -= 1
 
 	ActiveNode = nil
@@ -255,7 +260,7 @@ end
 local function Throughput<Args...>(Name: string, Body: (Args...) -> ...any, ...: Args...)
 	assert(ActiveNode, "Called Throughput(...) without Group/Package")
 	local Result = Measure(Name, Iterations, Body, ...)
-	local Amount, Unit = DataThroughput(Result.Selected, MessageSize)
+	local Amount, Unit = CalculateThroughput(Result.Selected, MessageSize)
 
 	ActiveNode[Name] = Result
 	Emit(string.format("%-14s %10.2f %s", Result.Name, Amount, Unit) .. Noisy(Result))
@@ -277,7 +282,7 @@ local function Note(Text: string)
 	end
 end
 
-Note("This benchmark was automatically done via the benchmarker script found in bench/bencher.luau")
+Note("Generated automatically via the benchmark script at bench/bencher.luau.")
 Note("Roundtrip: Complete encrypt/decrypt or sign/verify cycle")
 
 local StartBenchmarking = os.clock()
@@ -308,8 +313,8 @@ Package("rbx-cryptography", function()
 		end)
 
 		Group("Blake", function()
-			Throughput("Blake2b", Crypto.Hashing.Blake2b, Message, nil, nil)
-			Throughput("Blake3", Crypto.Hashing.Blake3.Digest, Message, nil)
+			Throughput("Blake2b", Crypto.Hashing.Blake2b, Message, OutputBytes, nil)
+			Throughput("Blake3", Crypto.Hashing.Blake3.Digest, Message, OutputBytes)
 		end)
 
 		Group("Argon2id", function()
@@ -415,6 +420,7 @@ Package("rbx-cryptography", function()
 		Group("CSPRNG", function()
 			local CSPRNG = Crypto.Utilities.CSPRNG
 			Throughput("RandomBytes", CSPRNG.RandomBytes, MessageSize)
+			Throughput("RandomFloat", CSPRNG.Random)
 			Rate("RandomFloat", 200, CSPRNG.Random)
 		end)
 	end)
@@ -448,7 +454,6 @@ Package("rbx-cryptography", function()
 
 		Group("X25519", function()
 			local X25519 = Crypto.Verification.EdDSA.X25519
-			local CSPRNG = Crypto.Utilities.CSPRNG
 
 			local function GetEd25519ClampedBytes(Input: buffer): buffer
 				local Output = buffer.create(32)
@@ -565,7 +570,7 @@ Package("HashLib", function()
 		Group("Base64", function()
 			Throughput("Encode", HashLib.base64_encode, MessageString)
 
-			Throughput("Roundtrip", function(Message: string): ...unknown
+			Throughput("Roundtrip", function(Message: string)
 				local Encoded = HashLib.base64_encode(Message)
 				HashLib.base64_decode(Encoded)
 			end, MessageString)
@@ -651,12 +656,107 @@ Package("Luau", function()
 	end)
 end)
 
+Package("WASM", function()
+	Group("Verification", function()
+		local Small = buffer.fromstring("benchmark message")
+
+		Group("MlDSA-87", function()
+			local MlDSA = require("./libraries/wasm_mldsa87/library")
+			local State = MlDSA.generate()
+			local Context = ""
+			
+			local Signature = MlDSA.sign(State, Small, Context)
+			assert(Signature, "WASM MlDSA-87 returned nil for MlDSA.sign")
+
+			Rate("KeyGen", 100, MlDSA.generate)
+			Rate("Sign", 50, MlDSA.sign, State, Small, Context)
+			Rate("Verify", 100, MlDSA.verify, State, Small, Context, Signature)
+		end)
+
+		Group("MlKEM-1024", function()
+			local MlKEM = require("./libraries/wasm_mklem1024/library")
+			local State = MlKEM.generate()
+			local Ciphertext = MlKEM.encapsulate(State)
+
+			Rate("KeyGen", 200, MlKEM.generate)
+			Rate("Encapsulate", 200, MlKEM.encapsulate, State)
+			Rate("Decapsulate", 200, MlKEM.decapsulate, State, Ciphertext)
+		end)
+	end)
+end)
+
+Package("ccryptolib", function()
+	local MessageString = buffer.tostring(Message)
+	local Key32String, Nonce12String = buffer.tostring(Key32), buffer.tostring(Nonce12)
+
+	Group("Hashing", function()
+		Group("SHA2", function()
+			local SHA256 = require("./libraries/ccryptolib/sha256")
+			local SHA512 = require("./libraries/ccryptolib/internal/sha512")
+
+			Throughput("SHA256", SHA256.digest, MessageString)
+			Throughput("SHA512", SHA512.digest, MessageString)
+		end)
+
+		Group("Blake", function()
+			local Blake3 = require("./libraries/ccryptolib/blake3")
+			Throughput("Blake3", Blake3.digest, MessageString :: any, OutputBytes :: any)
+		end)
+	end)
+
+	Group("Encryption", function()
+		Group("ChaCha20", function()
+			local ChaCha20 = require("./libraries/ccryptolib/chacha20")
+
+			Throughput("Encrypt", ChaCha20.crypt, Key32String, Nonce12String, MessageString, nil :: any, nil :: any)
+			Throughput("Roundtrip", function(Plaintext: string, Key: string, Nonce: string)
+				ChaCha20.crypt(Key, Nonce, ChaCha20.crypt(Key, Nonce, Plaintext, nil :: any, nil :: any), nil :: any, nil :: any)
+			end, MessageString, Key32String, Nonce12String)
+		end)
+
+		Group("AEAD", function()
+			local AEAD = require("./libraries/ccryptolib/aead")
+			local AAD = "additional data"
+
+			Throughput("Encrypt", AEAD.encrypt, Key32String, Nonce12String, MessageString, AAD, nil :: any)
+			Throughput("Roundtrip", function(Plaintext: string, Key: string, Nonce: string)
+				local Ciphertext, Tag = AEAD.encrypt(Key32String, Nonce12String, MessageString, AAD, nil :: any)
+				AEAD.decrypt(Key, Nonce, Tag, Ciphertext, AAD, nil :: any)
+			end, MessageString, Key32String, Nonce12String)
+		end)
+	end)
+
+	Group("Verification", function()
+		local CSPRNG = require("../src/Utilities/CSPRNG")
+		local Small = "benchmark message"
+
+		Group("EdDSA", function()
+			local EdDSA = require("./libraries/ccryptolib/ed25519")
+			local SecretKey = buffer.tostring(CSPRNG.RandomBytes(32))
+			local PublicKey = EdDSA.publicKey(SecretKey)
+			local Signature = EdDSA.sign(SecretKey, PublicKey, Small)
+
+			Rate("Sign", 200, EdDSA.sign, SecretKey, PublicKey, Small)
+			Rate("Verify", 200, EdDSA.verify, PublicKey, Small, Signature :: any)
+		end)
+
+		Group("X25519", function()
+			local X25519 = require("./libraries/ccryptolib/x25519c")
+
+			local SecretKeyA, SecretKeyB =
+				buffer.tostring(CSPRNG.RandomBytes(64)),
+				buffer.tostring(CSPRNG.RandomBytes(64))
+			local PublicKeyB = X25519.publicKey(SecretKeyB :: any)
+
+			Rate("KeyGen", 200, X25519.publicKey, SecretKeyA :: any)
+			Rate("Exchange", 200, X25519.exchange, SecretKeyA :: any, PublicKeyB)
+		end)
+
+	end)
+end)
+
 local EndBenchmarking = os.clock() - StartBenchmarking
 print(`Finished benchmarking - took {Duration(EndBenchmarking)}`)
-
--- Yes this is messy. but it works.
--- something to note is that this cant benchmark roblox right now, will be done through cloud api
--- TODO: add wasm-luau and ccryptolib for DSA
 
 local SUPERSCRIPTS = {
 	["0"] = utf8.char(0x2070),
@@ -776,8 +876,8 @@ local function FormatThroughput(Sample: Sample?, CustomBytes: number?): (string,
 
 	local Size = CustomBytes or MessageSize
 
-	local Amount, UnitStr = DataThroughput(Sample.Selected, Size)
-	local RawMBs = DataThroughput(Sample.Selected, Size, "Megabyte")
+	local Amount, UnitStr = CalculateThroughput(Sample.Selected, Size)
+	local RawMBs = CalculateThroughput(Sample.Selected, Size, "Megabyte")
 
 	local Formatted = if Amount >= 10 or Amount == math.floor(Amount)
 		then string.format("%.0f %s", Amount, UnitStr)
@@ -905,7 +1005,7 @@ local function Build(Section: BenchSection, Root: BenchNode, AllBenchmarks: { [s
 
 			for _, Alt in Alternatives do
 				local AltRoot = AllBenchmarks[Alt.Package]
-				local AltSample = if AltRoot then ResolvePath(AltRoot, Alt.Path) :: Sample else nil
+				local AltSample = if AltRoot then ResolvePath(AltRoot, Alt.Path :: string) :: Sample else nil
 
 				if AltSample then
 					local Display, AltMBs = FormatThroughput(AltSample)
@@ -971,19 +1071,40 @@ local function Build(Section: BenchSection, Root: BenchNode, AllBenchmarks: { [s
 
 			local TargetDisplay = if #TargetLines > 0 then table.concat(TargetLines, "<br>") else "-"
 			local AltString, ImpString = "-", "-"
-			local Alternatives = Alternatives(Row, Root.Name, AllBenchmarks)
+			local AlternativesList = Alternatives(Row, Root.Name, AllBenchmarks)
 
-			if #Alternatives > 0 then
+			if #AlternativesList > 0 then
 				local AltDisplays, Improvements = {}, {}
 
-				for _, Alt in Alternatives do
+				for _, Alt in AlternativesList do
 					local AltRoot = AllBenchmarks[Alt.Package]
-					local AltSample = if AltRoot then ResolvePath(AltRoot, Alt.Path) :: Sample else nil
+					if not AltRoot then
+						continue
+					end
 
-					if AltSample then
+					local TotalAltTime = 0
+					local ValidAlt = false
+
+					if type(Alt.Path) == "table" then
+						for _, Path in Alt.Path do
+							local Sample = ResolvePath(AltRoot, Path) :: Sample
+							if Sample then
+								TotalAltTime += Sample.Selected
+								ValidAlt = true
+							end
+						end
+					elseif type(Alt.Path) == "string" then
+						local Sample = ResolvePath(AltRoot, Alt.Path) :: Sample
+						if Sample then
+							TotalAltTime = Sample.Selected
+							ValidAlt = true
+						end
+					end
+
+					if ValidAlt then
 						local Label = Alt.Label or Alt.Package
-						table.insert(AltDisplays, `{Duration(AltSample.Selected)} ({GetDisplay(AltRoot, Alt.Path, Label)})`)
-						table.insert(Improvements, FormatSpeedup(TotalTargetTime, AltSample.Selected, true))
+						table.insert(AltDisplays, `{Duration(TotalAltTime)} ({GetDisplay(AltRoot, Alt.Path, Label)})`)
+						table.insert(Improvements, FormatSpeedup(TotalTargetTime, TotalAltTime, true))
 					end
 				end
 
@@ -1000,6 +1121,7 @@ local function Build(Section: BenchSection, Root: BenchNode, AllBenchmarks: { [s
 	return `### {Section.Title}\n\n` .. FitGrid(Grid)
 end
 
+--[[
 local BenchStructure: { BenchSection } = {
 	{
 		Title = "Hashing",
@@ -1105,18 +1227,203 @@ local BenchStructure: { BenchSection } = {
             },
 
             {
-
-                Name = "ML-KEM-1024",
-                Target = {
-                    KeyGen = "Verification/MlKEM-1024/KeyGen",
-                    Encap = "Verification/MlKEM-1024/Encapsulate",
-                    Decap = "Verification/MlKEM-1024/Decapsulate",
-                },
-                Unit = "Duration",
-                Alternatives = {},
-            },
+				Name = "ML-KEM-1024",
+				Target = {
+					KeyGen = "Verification/MlKEM-1024/KeyGen",
+					Encap = "Verification/MlKEM-1024/Encapsulate",
+					Decap = "Verification/MlKEM-1024/Decapsulate",
+				},
+				Unit = "Duration",
+				Alternatives = {
+					{
+						Package = "WASM",
+						Target = {
+							KeyGen = "Verification/MlKEM-1024/KeyGen",
+							Encap = "Verification/MlKEM-1024/Encapsulate",
+							Decap = "Verification/MlKEM-1024/Decapsulate",
+						},
+						Label = "WASM Luau",
+					} :: any,
+				},
+			}
         },
     },
+
+	{
+		Title = "Utilities",
+		Type = "Comparison",
+		Rows = {
+			{ Name = "Base64 (Encode)", Target = "Utilities/Base64/Encode", Unit = "Throughput" },
+			{ Name = "Base64 (Decode)", Target = "Utilities/Base64/Decode", Unit = "Throughput" },
+
+			{
+				Name = "CSPRNG (RandomBytes)",
+				Target = "Utilities/CSPRNG/RandomBytes",
+				Unit = "Throughput",
+				Alternatives = {
+					{
+						Package = "Luau",
+						Path = "Utilities/math.random/RandomBytes",
+						Label = "math.random",
+					},
+				},
+			},
+		},
+	},
+}
+--]]
+
+local BenchStructure: { BenchSection } = {
+	{
+		Title = "Hashing",
+		Type = "Comparison",
+		Rows = {
+			{ Name = "SHA-256", Target = "Hashing/SHA2/SHA256", Unit = "Throughput" },
+			{ Name = "SHA-512", Target = "Hashing/SHA2/SHA512", Unit = "Throughput" },
+			{ Name = "SHA3-512", Target = "Hashing/SHA3/SHA3-512", Unit = "Throughput" },
+			{ Name = "BLAKE2B", Target = "Hashing/Blake/Blake2b", Unit = "Throughput" },
+			{ Name = "BLAKE3", Target = "Hashing/Blake/Blake3", Unit = "Throughput" },
+			{ Name = "HMAC-BLAKE3", Target = "Hashing/HMAC/Blake3", Unit = "Throughput" },
+			{ Name = "KMAC-128", Target = "Hashing/KMAC/KMAC128", Unit = "Throughput" },
+			{ Name = "KMAC-256", Target = "Hashing/KMAC/KMAC256", Unit = "Throughput" },
+		},
+	},
+
+	{
+		Title = "Password Hashing (Argon2id)",
+		Type = "Parametric",
+		ListLabel = "Tier",
+		Rows = {
+			{
+				Name = "Interactive",
+				Params = "m=8 MiB, t=2, p=1",
+				Target = "Hashing/Argon2id/Interactive",
+				Unit = "Rate",
+			},
+			{
+				Name = "Default",
+				Params = "m=19 MiB, t=2, p=1",
+				Target = "Hashing/Argon2id/Default",
+				Unit = "Rate",
+			},
+			{
+				Name = "Sensitive",
+				Params = "m=64 MiB, t=3, p=1",
+				Target = "Hashing/Argon2id/Sensitive",
+				Unit = "Rate",
+			},
+		},
+	},
+
+	{
+		Title = "Encryption",
+		Type = "Comparison",
+		Rows = {
+			{ Name = "ChaCha20 (Encrypt)", Target = "Encryption/ChaCha20/Encrypt", Unit = "Throughput" },
+			{ Name = "ChaCha20-Poly1305 (Encrypt)", Target = "Encryption/AEAD/Encrypt", Unit = "Throughput" },
+
+			{
+				Name = "AES-GCM (Encrypt)",
+				Target = "Encryption/AES-GCM/Encrypt",
+				Unit = "Throughput",
+				Alternatives = {
+					{
+						Package = "RobloxGamerPro200007",
+						Path = "Encryption/AES-CTR/Encrypt",
+						Label = "RobloxGamerPro200007 AES256-CTR",
+					},
+				},
+			},
+
+			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt32", Unit = "Throughput" },
+		},
+	},
+
+	{
+		Title = "Digital Signatures & Key Exchange",
+		Type = "Composite",
+		Rows = {
+			{
+				Name = "EdDSA",
+				Target = {
+					Sign = "Verification/EdDSA/Sign",
+					Verify = "Verification/EdDSA/Verify",
+				},
+				Unit = "Duration",
+				Alternatives = {
+					{
+						Package = "ccryptolib",
+						Path = {
+							Sign = "Verification/EdDSA/Sign",
+							Verify = "Verification/EdDSA/Verify",
+						},
+						Label = "ccryptolib",
+					},
+				},
+			},
+
+			{
+				Name = "ML-DSA-87",
+				Target = {
+					KeyGen = "Verification/MlDSA-87/KeyGen",
+					Sign = "Verification/MlDSA-87/Sign",
+					Verify = "Verification/MlDSA-87/Verify",
+				},
+				Unit = "Duration",
+				Alternatives = {
+					{
+						Package = "WASM",
+						Path = {
+							KeyGen = "Verification/MlDSA-87/KeyGen",
+							Sign = "Verification/MlDSA-87/Sign",
+							Verify = "Verification/MlDSA-87/Verify",
+						},
+						Label = "WASM",
+					},
+				},
+			},
+
+			{
+				Name = "X25519",
+				Target = {
+					KeyGen = "Verification/X25519/KeyGen",
+					Exchange = "Verification/X25519/Exchange",
+				},
+				Unit = "Duration",
+				Alternatives = {
+					{
+						Package = "ccryptolib",
+						Path = {
+							KeyGen = "Verification/X25519/KeyGen",
+							Exchange = "Verification/X25519/Exchange",
+						},
+						Label = "ccryptolib",
+					},
+				},
+			},
+
+			{
+				Name = "ML-KEM-1024",
+				Target = {
+					KeyGen = "Verification/MlKEM-1024/KeyGen",
+					Encap = "Verification/MlKEM-1024/Encapsulate",
+					Decap = "Verification/MlKEM-1024/Decapsulate",
+				},
+				Unit = "Duration",
+				Alternatives = {
+					{
+						Package = "WASM",
+						Path = {
+							KeyGen = "Verification/MlKEM-1024/KeyGen",
+							Encap = "Verification/MlKEM-1024/Encapsulate",
+							Decap = "Verification/MlKEM-1024/Decapsulate",
+						},
+						Label = "WASM",
+					},
+				},
+			},
+		},
+	},
 
 	{
 		Title = "Utilities",
@@ -1161,7 +1468,7 @@ if #Footnotes > 0 then
 end
 
 for _, Annotation in Notes do
-	print(`\\* {Annotation}`)
+	print(`\\* {Annotation}\\`)
 end
 
 assert(Sink or not Sink)

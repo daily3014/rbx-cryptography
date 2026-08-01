@@ -1,0 +1,291 @@
+--!optimize 2
+--!native
+--- Point arithmetic on the Curve25519 Montgomery curve.
+
+local fp = require "./fp"
+local ed = require "./edwards25519"
+local random = require "../random"
+
+--- @class MtPoint A point class on Curve25519, in XZ coordinates.
+--- @field [1] number[] The X coordinate.
+--- @field [2] number[] The Z coordinate.
+
+--- Doubles a point.
+--- @param P1 MtPoint The point to double.
+--- @return MtPoint P2 P1 + P1.
+local function double(P1)
+    local x1, z1 = P1[1], P1[2]
+    local a = fp.add(x1, z1)
+    local aa = fp.square(a)
+    local b = fp.sub(x1, z1)
+    local bb = fp.square(b)
+    local c = fp.sub(aa, bb)
+    local x3 = fp.mul(aa, bb)
+    local z3 = fp.mul(c, fp.add(bb, fp.kmul(c, 121666)))
+    return {x3, z3}
+end
+
+--- Computes differential addition on two points.
+--- @param DP MtPoint P1 - P2.
+--- @param P1 MtPoint The first point to add.
+--- @param P2 MtPoint The second point to add.
+--- @return MtPoint P3 P1 + P2.
+local function dadd(DP, P1, P2)
+    local dx, dz = DP[1], DP[2]
+    local x1, z1 = P1[1], P1[2]
+    local x2, z2 = P2[1], P2[2]
+    local a = fp.add(x1, z1)
+    local b = fp.sub(x1, z1)
+    local c = fp.add(x2, z2)
+    local d = fp.sub(x2, z2)
+    local da = fp.mul(d, a)
+    local cb = fp.mul(c, b)
+    local x3 = fp.mul(dz, fp.square(fp.add(da, cb)))
+    local z3 = fp.mul(dx, fp.square(fp.sub(da, cb)))
+    return {x3, z3}
+end
+
+--- Performs a step on the Montgomery ladder.
+--- @param DP MtPoint P1 - P2.
+--- @param P1 MtPoint The first point.
+--- @param P2 MtPoint The second point.
+--- @return MtPoint P3 2A
+--- @return MtPoint P4 A + B
+local function step(DP, P1, P2)
+    local dx, dz = DP[1], DP[2]
+    local x1, z1 = P1[1], P1[2]
+    local x2, z2 = P2[1], P2[2]
+    local a = fp.add(x1, z1)
+    local aa = fp.square(a)
+    local b = fp.sub(x1, z1)
+    local bb = fp.square(b)
+    local e = fp.sub(aa, bb)
+    local c = fp.add(x2, z2)
+    local d = fp.sub(x2, z2)
+    local da = fp.mul(d, a)
+    local cb = fp.mul(c, b)
+    local x4 = fp.mul(dz, fp.square(fp.add(da, cb)))
+    local z4 = fp.mul(dx, fp.square(fp.sub(da, cb)))
+    local x3 = fp.mul(aa, bb)
+    local z3 = fp.mul(e, fp.add(bb, fp.kmul(e, 121666)))
+    return {x3, z3}, {x4, z4}
+end
+
+local function ladder(DP, bits)
+    local P = {fp.num(1), fp.num(0)}
+    local Q = DP
+
+    for i = #bits, 1, -1 do
+        if bits[i] == 0 then
+            P, Q = step(DP, P, Q)
+        else
+            Q, P = step(DP, Q, P)
+        end
+    end
+
+    return P
+end
+
+--- Performs a scalar multiplication operation with multiplication by 8.
+--- @param P MtPoint The base point.
+--- @param bits number[] The scalar multiplier, in little-endian bits.
+--- @return MtPoint product The product, multiplied by 8.
+local function ladder8(P, bits)
+    -- Randomize.
+    local rf = fp.decode(random.random(32) --[[@as String32, length is given]])
+    P = {fp.mul(P[1], rf), fp.mul(P[2], rf)}
+
+    -- Multiply.
+    return double(double(double(ladder(P, bits))))
+end
+
+--- Scales a point's coordinates.
+--- @param P MtPoint The input point.
+--- @return MtPoint Q The same point P, but with Z = 1.
+local function scale(P)
+    return {fp.mul(P[1], fp.invert(P[2])), fp.num(1)}
+end
+
+--- Encodes a scaled point.
+--- @param P MtPoint The scaled point to encode.
+--- @return string encoded P, encoded into a 32-byte string.
+local function encode(P)
+    return fp.encode(P[1])
+end
+
+--- Decodes a point.
+--- @param str String32 A 32-byte encoded point.
+--- @return MtPoint pt The decoded point.
+local function decode(str)
+    return {fp.decode(str), fp.num(1)}
+end
+
+--- Decodes an Edwards25519 encoded point into Curve25519, ignoring the sign.
+---
+--- There is a single exception: The identity point (0, 1), which gets mapped
+--- into the 2-torsion point (0, 0), which isn't the identity of Curve25519.
+---
+--- @param str String32 A 32-byte encoded Edwards25519 point.
+--- @return MtPoint pt The decoded point, mapped into Curve25519.
+local function decodeEd(str)
+    local y = fp.decode(str)
+    local n = fp.carry(fp.add(fp.num(1), y))
+    local d = fp.carry(fp.sub(fp.num(1), y))
+    if fp.eqz(d) then
+        return {fp.num(0), fp.num(1)}
+    else
+        return {n, d}
+    end
+end
+
+--- Performs a scalar multiplication by the base point G.
+--- @param bits number[] The scalar multiplier, in little-endian bits.
+--- @return MtPoint product The product point.
+local function mulG(bits)
+    -- Multiply by G on Edwards25519.
+    local P = ed.mulG(bits)
+
+    -- Use the birational map to get the point on Curve25519.
+    -- Never fails since G is in the large group, and the exponent is clamped.
+    local Py, Pz = P[2], P[3]
+    local Rx = fp.carry(fp.add(Py, Pz))
+    local Rz = fp.carry(fp.sub(Pz, Py))
+
+    return {Rx, Rz}
+end
+
+--- Computes a twofold product from a ruleset.
+---
+--- Returns nil if any of the results would be equal to the identity.
+---
+--- @param P MtPoint The base point.
+--- @param ruleset __TYPE_TODO The ruleset generated by scalars m, n.
+--- @return MtPoint? A [8m]P.
+--- @return MtPoint? B [8n]P.
+--- @return MtPoint? C [8m]P - [8n]P.
+local function prac(P, ruleset)
+    -- Randomize.
+    local rf = fp.decode(random.random(32) --[[@as String32, length is given]])
+    local A = {fp.mul(P[1], rf), fp.mul(P[2], rf)}
+
+    -- Start the base at [8]P.
+    local A = double(double(double(A)))
+
+    -- Throw away small order points.
+    if fp.eqz(A[2]) then return end
+
+    -- Now e = d = gcd(m, n).
+    -- Update A from [8]P to [8 * gcd(m, n)]P.
+    A = ladder(A, ruleset[1])
+
+    -- Reject rulesets where m = n.
+    local rules = ruleset[2]
+    if #rules == 0 then return end
+
+    -- Evaluate the first rule.
+    -- Since e = d, this means A - B = C = O. Differential addition fails when
+    -- C = O, so we need to treat this case specially.
+    -- Note that rules 0 and 1 never happen last, since the algorithm would stop
+    -- one step earlier if they did:
+    -- - If after rule 0 we had e = d, then (d, e) → (e, d) would also mean that
+    --   e = d, so it stops one step earlier.
+    -- - If after rule 1 we had e = d, then (d, e) → ((2d - e)/3, (2e - d)/3)
+    --   would mean that (2d - e)/3 = (2e - d)/3, thus 2d - e = 2e - d, thus
+    --   3d = 3e, thus d = e, so it stops one step earlier.
+    local B, C
+    local rule = rules[#rules]
+    if rule == 2 then
+        -- (A, B, C) ← (2A + B, B, 2A) = (3A, A, 2A)
+        local A2 = double(A)
+        A, B, C = dadd(A, A2, A), A, A2
+    elseif rule == 3 or rule == 5 then
+        -- (A, B, C) ← (A + B, B, A) = (2A, A, A)
+        -- or (A, B, C) ← (2A, B, 2A - B) = (2A, A, A)
+        A, B, C = double(A), A, A
+    elseif rule == 6 then
+        -- (A, B, C) ← (3A + 3B, B, 3A + 2B) = (6A, A, 5A)
+        local A2 = double(A)
+        local A3 = dadd(A, A2, A)
+        A, B, C = double(A3), A, dadd(A, A3, A2)
+    elseif rule == 7 then
+        -- (A, B, C) ← (3A + 2B, B, 3A + B) = (5A, A, 4A)
+        local A2 = double(A)
+        local A3 = dadd(A, A2, A)
+        local A4 = double(A2)
+        A, B, C = dadd(A3, A4, A), A, A4
+    elseif rule == 8 then
+        -- (A, B, C) ← (3A + B, B, 3A) = (4A, A, 3A)
+        local A2 = double(A)
+        local A3 = dadd(A, A2, A)
+        A, B, C = double(A2), A, A3
+    else
+        -- (A, B, C) ← (A, 2B, A - 2B) = (A, 2A, A)
+        A, B, C = A, double(A), A
+    end
+
+    -- Evaluate the other rules.
+    -- Let's assume addition is undefined here, this happens when A - B = O.
+    -- Since A = [d]P and B = [e]P, A = B happens when:
+    -- (1) P is on the large order base group and d ≡ e (mod q).
+    -- (2) P is on the large order twist group and d ≡ e (mod q').
+    -- (3) P is on a small order group.
+    -- Case (3) never happens since we throw small order points away above.
+    -- Since 0 ≤ {d, e} < q < q', a modular equivalence here means an integer
+    -- equivalence. Therefore d = e.
+    -- However, the ruleset stops when d = e, therefore the algorithm must have
+    -- stopped earlier than when it did. Contradiction.
+    -- Therefore, addition is always defined.
+    -- Furthermore, the PRAC invariants mean that this product is the same as
+    -- if the points were multiplied separately.
+    for i = #rules - 1, 1, -1 do
+        local rule = rules[i]
+        if rule == 0 then
+            -- (A, B, C) ← (B, A, B - A)
+            A, B = B, A
+        elseif rule == 1 then
+            -- (A, B, C) ← (2A + B, A + 2B, A - B)
+            local AB = dadd(C, A, B)
+            A, B = dadd(B, AB, A), dadd(A, AB, B)
+        elseif rule == 2 then
+            -- (A, B, C) ← (2A + B, B, 2A)
+            A, C = dadd(B, dadd(C, A, B), A), double(A)
+        elseif rule == 3 then
+            -- (A, B, C) ← (A + B, B, A)
+            A, C = dadd(C, A, B), A
+        elseif rule == 5 then
+            -- (A, B, C) ← (2A, B, 2A - B)
+            A, C = double(A), dadd(B, A, C)
+        elseif rule == 6 then
+            -- (A, B, C) ← (3A + 3B, B, 3A + 2B)
+            local AB = dadd(C, A, B)
+            local AABB = double(AB)
+            A, C = dadd(AB, AABB, AB), dadd(dadd(A, AB, B), AABB, A)
+        elseif rule == 7 then
+            -- (A, B, C) ← (3A + 2B, B, 3A + B)
+            local AB = dadd(C, A, B)
+            local AAB = dadd(B, AB, A)
+            A, C = dadd(A, AAB, AB), dadd(AB, AAB, A)
+        elseif rule == 8 then
+            -- (A, B, C) ← (3A + B, B, 3A)
+            local AA = double(A)
+            A, C = dadd(C, AA, dadd(C, A, B)), dadd(A, AA, A)
+        else
+            -- (A, B, C) ← (A, 2B, A - 2B)
+            B, C = double(B), dadd(A, C, B)
+        end
+    end
+
+    return A, B, C
+end
+
+return {
+    G = {fp.num(9), fp.num(1)},
+    dadd = dadd,
+    scale = scale,
+    encode = encode,
+    decode = decode,
+    decodeEd = decodeEd,
+    ladder8 = ladder8,
+    mulG = mulG,
+    prac = prac,
+}
