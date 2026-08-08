@@ -1,5 +1,7 @@
 --!strict
+local Silent = string.lower((...) or "") == "silent"
 local Testing = require("../tests/")
+Testing.Verbose = not Silent
 
 require("../tests/AEAD")
 require("../tests/AES")
