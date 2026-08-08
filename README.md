@@ -54,7 +54,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 **Digital Signature Schemes**
 
-- [Ed25519](./src/Verification/EdDSA) signatures with masked operations for side-channel protection
+- [Ed25519](./src/Verification/EdDSA): Digital signatures over Curve25519 ([RFC 8032](https://doi.org/10.17487/RFC8032))
 
 **Key Exchange**
 
