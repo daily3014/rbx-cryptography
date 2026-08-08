@@ -28,7 +28,7 @@ local FieldPrime = require("./FieldPrime")
 local COORD_SIZE = 80
 local POINT_SIZE = 4 * COORD_SIZE
 local AFFINE_NIELS_SIZE = 3 * COORD_SIZE
-local BASE_RADIX_WIDTH = 6
+local BASE_RADIX_WIDTH = 7
 local BASE_POINT_ROW = 2 ^ BASE_RADIX_WIDTH / 2
 
 local CURVE_D = FieldPrime.Mul(FieldPrime.Num(-121665), FieldPrime.Invert(FieldPrime.Num(121666)))
