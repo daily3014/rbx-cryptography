@@ -113,14 +113,15 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Benchmarks done on an Intel i9-13900K and luau v731\
-Algorithms are ran 50 times and measured via the best of N throughput / rate
+Benchmarks done on an Intel i9-13900K and luau v733\
+Algorithms are ran 500 times and measured via the best of N throughput / rate
 
 ### Data
 
 Data Size: 1 MB\
 Key Size (HMAC, KMAC, Encryption): 32 Bytes\
 Nonce/IV Size: 12 Bytes
+Output Size: 64 Bytes
 
 ### Hashing
 

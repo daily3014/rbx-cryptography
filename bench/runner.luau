@@ -574,7 +574,9 @@ Package("HashLib", function()
 
 	Group("Utilities", function()
 		Group("Base64", function()
+			local Encoded = HashLib.base64_encode(MessageString)
 			Throughput("Encode", HashLib.base64_encode, MessageString)
+			Throughput("Decode", HashLib.base64_decode, Encoded)
 
 			Throughput("Roundtrip", function(Message: string)
 				local Encoded = HashLib.base64_encode(Message)
