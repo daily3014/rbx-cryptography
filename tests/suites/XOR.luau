@@ -1,9 +1,8 @@
 --!strict
 --!optimize 2
 --!native
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+
+local Testing = require("../")
 
 type TestVector = {
 	Description: string,
@@ -21,7 +20,7 @@ local function ToHex(Buffer: buffer) : string
 end
 
 
-local XOR: any = if IsCLI then require("../src/Encryption/XOR") else require("../Encryption/XOR")
+local XOR = require("../../src/Encryption/XOR")
 
 local TestVectors: {TestVector} = {
 	{

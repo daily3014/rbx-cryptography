@@ -2,11 +2,6 @@
 --!optimize 2
 --!native
 
---[[
-	luau.exe [cli flags] bencher.luau -a [iterations=100] [libraries to ignore, separated by commas = none] [primary library=rbx-cryptography]"
-	for cli flags, i recommend: --codegen and -O2, --jit-inliner only works on bytecode so its not necessary unless you want to benchmark non native
---]]
-
 local SkipPackages: {[string]: boolean}, RootName: string, Iterations: number = {}, "rbx-cryptography", 100 do
 	local Iters: string?, PackagesList: string?, ComparisonRoot: string? = ...
 
@@ -197,6 +192,16 @@ local function Measure<Args...>(Name: string, Iterations: number, Body: (Args...
 	}
 end
 
+local function FromData(Name: string, Time: number): Sample
+	return {
+		Name = Name,
+		Best = Time,
+		Median = Time,
+		Selected = Time,
+		Spread = 0,
+	}
+end
+
 local function Emit(Text: string, AddIndentations: number?)
 	print(string.rep("\t", Indentations) .. Text)
 	Indentations += AddIndentations or 0
@@ -234,9 +239,10 @@ local function Package(Name: string, Body: () -> ())
 	if not Success then
 		print(`Library '{Name}' failed with {Error}`)
 		Benchmarks[Name] = nil
+		Indentations = 0
+	else
+		Indentations -= 1
 	end
-
-	Indentations -= 1
 
 	ActiveNode = nil
 end
@@ -419,8 +425,8 @@ Package("rbx-cryptography", function()
 
 		Group("CSPRNG", function()
 			local CSPRNG = Crypto.Utilities.CSPRNG
+			
 			Throughput("RandomBytes", CSPRNG.RandomBytes, MessageSize)
-			Throughput("RandomFloat", CSPRNG.Random)
 			Rate("RandomFloat", 200, CSPRNG.Random)
 		end)
 	end)
@@ -568,7 +574,9 @@ Package("HashLib", function()
 
 	Group("Utilities", function()
 		Group("Base64", function()
+			local Encoded = HashLib.base64_encode(MessageString)
 			Throughput("Encode", HashLib.base64_encode, MessageString)
+			Throughput("Decode", HashLib.base64_decode, Encoded)
 
 			Throughput("Roundtrip", function(Message: string)
 				local Encoded = HashLib.base64_encode(Message)
@@ -754,6 +762,18 @@ Package("ccryptolib", function()
 
 	end)
 end)
+
+-- Benched inside Roblox Studio
+Benchmarks.Roblox = {
+	Name = "Roblox",
+	Utilities = {
+		Base64 = {
+			Encode = FromData("Encode", MessageSize / (1.12 * UNITS.Gigabyte.Ratio)), -- 1.17GB/s
+			Decode = FromData("Decode", MessageSize / (1.80 * UNITS.Gigabyte.Ratio)), -- 1.80GB/s
+			Roundtrip = FromData("Roundtrip", MessageSize / (683.90 * UNITS.Megabyte.Ratio)), -- 683.90MB/s
+		}
+	}
+}
 
 local EndBenchmarking = os.clock() - StartBenchmarking
 print(`Finished benchmarking - took {Duration(EndBenchmarking)}`)
@@ -1121,7 +1141,6 @@ local function Build(Section: BenchSection, Root: BenchNode, AllBenchmarks: { [s
 	return `### {Section.Title}\n\n` .. FitGrid(Grid)
 end
 
---[[
 local BenchStructure: { BenchSection } = {
 	{
 		Title = "Hashing",
@@ -1184,158 +1203,7 @@ local BenchStructure: { BenchSection } = {
 				},
 			},
 
-			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt32", Unit = "Throughput" },
-		},
-	},
-
-	{
-
-        Title = "Digital Signatures & Key Exchange",
-        Type = "Composite",
-        Rows = {
-            {
-                Name = "EdDSA",
-                Target = {
-                    Sign = "Verification/EdDSA/Sign",
-                    Verify = "Verification/EdDSA/Verify",
-                },
-
-                Unit = "Duration",
-                Alternatives = {},
-            },
-
-            {
-
-                Name = "ML-DSA-87",
-                Target = {
-                    KeyGen = "Verification/MlDSA-87/KeyGen",
-                    Sign = "Verification/MlDSA-87/Sign",
-                    Verify = "Verification/MlDSA-87/Verify",
-                },
-                Unit = "Duration",
-                Alternatives = {},
-            },
-
-            {
-                Name = "X25519",
-                Target = {
-                    KeyGen = "Verification/X25519/KeyGen",
-                    Exchange = "Verification/X25519/Exchange",
-                },
-                Unit = "Duration",
-                Alternatives = {},
-            },
-
-            {
-				Name = "ML-KEM-1024",
-				Target = {
-					KeyGen = "Verification/MlKEM-1024/KeyGen",
-					Encap = "Verification/MlKEM-1024/Encapsulate",
-					Decap = "Verification/MlKEM-1024/Decapsulate",
-				},
-				Unit = "Duration",
-				Alternatives = {
-					{
-						Package = "WASM",
-						Target = {
-							KeyGen = "Verification/MlKEM-1024/KeyGen",
-							Encap = "Verification/MlKEM-1024/Encapsulate",
-							Decap = "Verification/MlKEM-1024/Decapsulate",
-						},
-						Label = "WASM Luau",
-					} :: any,
-				},
-			}
-        },
-    },
-
-	{
-		Title = "Utilities",
-		Type = "Comparison",
-		Rows = {
-			{ Name = "Base64 (Encode)", Target = "Utilities/Base64/Encode", Unit = "Throughput" },
-			{ Name = "Base64 (Decode)", Target = "Utilities/Base64/Decode", Unit = "Throughput" },
-
-			{
-				Name = "CSPRNG (RandomBytes)",
-				Target = "Utilities/CSPRNG/RandomBytes",
-				Unit = "Throughput",
-				Alternatives = {
-					{
-						Package = "Luau",
-						Path = "Utilities/math.random/RandomBytes",
-						Label = "math.random",
-					},
-				},
-			},
-		},
-	},
-}
---]]
-
-local BenchStructure: { BenchSection } = {
-	{
-		Title = "Hashing",
-		Type = "Comparison",
-		Rows = {
-			{ Name = "SHA-256", Target = "Hashing/SHA2/SHA256", Unit = "Throughput" },
-			{ Name = "SHA-512", Target = "Hashing/SHA2/SHA512", Unit = "Throughput" },
-			{ Name = "SHA3-512", Target = "Hashing/SHA3/SHA3-512", Unit = "Throughput" },
-			{ Name = "BLAKE2B", Target = "Hashing/Blake/Blake2b", Unit = "Throughput" },
-			{ Name = "BLAKE3", Target = "Hashing/Blake/Blake3", Unit = "Throughput" },
-			{ Name = "HMAC-BLAKE3", Target = "Hashing/HMAC/Blake3", Unit = "Throughput" },
-			{ Name = "KMAC-128", Target = "Hashing/KMAC/KMAC128", Unit = "Throughput" },
-			{ Name = "KMAC-256", Target = "Hashing/KMAC/KMAC256", Unit = "Throughput" },
-		},
-	},
-
-	{
-		Title = "Password Hashing (Argon2id)",
-		Type = "Parametric",
-		ListLabel = "Tier",
-		Rows = {
-			{
-				Name = "Interactive",
-				Params = "m=8 MiB, t=2, p=1",
-				Target = "Hashing/Argon2id/Interactive",
-				Unit = "Rate",
-			},
-			{
-				Name = "Default",
-				Params = "m=19 MiB, t=2, p=1",
-				Target = "Hashing/Argon2id/Default",
-				Unit = "Rate",
-			},
-			{
-				Name = "Sensitive",
-				Params = "m=64 MiB, t=3, p=1",
-				Target = "Hashing/Argon2id/Sensitive",
-				Unit = "Rate",
-			},
-		},
-	},
-
-	{
-		Title = "Encryption",
-		Type = "Comparison",
-		Rows = {
-			{ Name = "ChaCha20 (Encrypt)", Target = "Encryption/ChaCha20/Encrypt", Unit = "Throughput" },
-			{ Name = "ChaCha20-Poly1305 (Encrypt)", Target = "Encryption/AEAD/Encrypt", Unit = "Throughput" },
-
-			{
-				Name = "AES-GCM (Encrypt)",
-				Target = "Encryption/AES-GCM/Encrypt",
-				Unit = "Throughput",
-				Alternatives = {
-					{
-						Package = "RobloxGamerPro200007",
-						Path = "Encryption/AES-CTR/Encrypt",
-						Label = "RobloxGamerPro200007 AES256-CTR",
-					},
-				},
-			},
-
-			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt32", Unit = "Throughput" },
+			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt 32", Unit = "Throughput" },
 		},
 	},
 
@@ -1431,6 +1299,7 @@ local BenchStructure: { BenchSection } = {
 		Rows = {
 			{ Name = "Base64 (Encode)", Target = "Utilities/Base64/Encode", Unit = "Throughput" },
 			{ Name = "Base64 (Decode)", Target = "Utilities/Base64/Decode", Unit = "Throughput" },
+			{ Name = "Base64 (Roundtrip)", Target = "Utilities/Base64/Roundtrip", Unit = "Throughput" },
 
 			{
 				Name = "CSPRNG (RandomBytes)",
@@ -1467,8 +1336,8 @@ if #Footnotes > 0 then
 	print("")
 end
 
-for _, Annotation in Notes do
-	print(`\\* {Annotation}\\`)
+for Index, Annotation in Notes do
+	print(`\\* {Annotation}{if Index ~= #Notes then "\\" else ""}`)
 end
 
 assert(Sink or not Sink)

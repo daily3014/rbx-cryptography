@@ -9,11 +9,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local SHA512: any = if IsCLI then require("../src/Hashing/SHA2/SHA512").SHA512 else require("../Hashing/SHA2/SHA512").SHA512
+local SHA512 = require("../../src/Hashing/SHA2/SHA512").SHA512
 local FromHex = Testing.FromHex
 
 type HashTest = {
@@ -58,7 +57,7 @@ Testing.Describe("SHA-512 Tadashi Tests", function()
 					local Msg = if Test.msgPattern
 						then Testing.ExpandPattern(Test.msgPattern.pattern, Test.msgPattern.length)
 						else FromHex(Test.msg :: string)
-					Testing.Expect(SHA512(Msg)).ToBe(Test.digest)
+					Testing.Expect((SHA512(Msg))).ToBe(Test.digest)
 				end)
 			end
 		end)

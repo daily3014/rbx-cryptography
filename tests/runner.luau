@@ -1,0 +1,31 @@
+--!strict
+local Silent = string.lower((...) or "") == "silent"
+local Testing = require("./")
+Testing.Verbose = not Silent
+
+require("./suites/AEAD")
+require("./suites/AES")
+require("./suites/Argon2id")
+require("./suites/Base64")
+require("./suites/Blake2b")
+require("./suites/Blake3")
+require("./suites/ChaCha")
+require("./suites/CSPRNG")
+require("./suites/EdDSA")
+require("./suites/HKDF")
+require("./suites/HMAC")
+require("./suites/KMAC")
+require("./suites/MD5")
+require("./suites/MlDSA")
+require("./suites/MlKEM")
+require("./suites/Poly1305")
+require("./suites/SHA1")
+require("./suites/SHA224")
+require("./suites/SHA256")
+require("./suites/SHA3")
+require("./suites/SHA384")
+require("./suites/SHA512")
+require("./suites/X25519")
+require("./suites/XOR")
+
+Testing.Complete()

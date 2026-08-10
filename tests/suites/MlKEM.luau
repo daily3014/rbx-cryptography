@@ -15,12 +15,11 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local MlKem: any = if IsCLI then require("../src/Verification/MlKEM") else require("../Verification/MlKEM")
-local SHA3: any = if IsCLI then require("../src/Hashing/SHA3") else require("../Hashing/SHA3")
+local MlKem = require("../../src/Verification/MlKEM")
+local SHA3 = require("../../src/Hashing/SHA3")
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 

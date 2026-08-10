@@ -1,9 +1,7 @@
 --!strict
 --!optimize 2
 --!native
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Testing = require("../")
 type TestVector = {
 	Description: string,
 	Expected: string,
@@ -12,7 +10,7 @@ type TestVector = {
 
 type TestVectors = {[string]: TestVector}
 
-local Algorithm = if IsCLI then require("../src/Utilities/Base64") else require("../Utilities/Base64")
+local Algorithm = require("../../src/Utilities/Base64")
 local TestVectors: TestVectors = {
 	["VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZy4="] = { Algorithm = "Decode", Description = "Pangramm Example [Decode]", Expected = "The quick brown fox jumps over the lazy dog." },
 	["0J/RgNC40LLQtdGCLCDQvNC40YAh"] = { Algorithm = "Decode", Description = "UTF-8 Example [Decode]", Expected = "Привет, мир!" },

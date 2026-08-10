@@ -1,19 +1,18 @@
 --[=[
-	SHA-384 Tadashi Test Suite
+	MD5 Tadashi Test Suite
 
 	Test Vector Source:
-		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/sha384_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/md5_test.json
 --]=]
 
 --!strict
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local SHA384: any = if IsCLI then require("../src/Hashing/SHA2/SHA384") else require("../Hashing/SHA2/SHA384")
+local MD5 = require("../../src/Hashing/MD5")
 local FromHex = Testing.FromHex
 
 type HashTest = {
@@ -39,10 +38,10 @@ type HashData = {
 	testGroups: {HashGroup},
 }
 
-local SHA384_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/sha384_test.json"
+local MD5_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/md5_test.json"
 
-Testing.Describe("SHA-384 Tadashi Tests", function()
-	local Data = Bridge.JSONDecode(Bridge.Get(SHA384_URL)) :: HashData
+Testing.Describe("MD5 Tadashi Tests", function()
+	local Data = Bridge.JSONDecode(Bridge.Get(MD5_URL)) :: HashData
 
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm} ({Group.digestSize}-bit digest)`, function()
@@ -54,7 +53,7 @@ Testing.Describe("SHA-384 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					Testing.Expect(SHA384(FromHex(Test.msg))).ToBe(Test.digest)
+					Testing.Expect((MD5(FromHex(Test.msg)))).ToBe(Test.digest)
 				end)
 			end
 		end)
