@@ -150,7 +150,7 @@ Nonce/IV Size: 12 Bytes
 | ChaCha20 (Encrypt)          | **735 MB/s**     | 14 MB/s (EncryptedNet)<br>91 MB/s (ccryptolib) | **51.8x faster** than EncryptedNet<br>**8.1x faster** than ccryptolib |
 | ChaCha20-Poly1305 (Encrypt) | **506 MB/s**     | 64 MB/s (ccryptolib)                           | **7.9x faster** than ccryptolib                                       |
 | AES-GCM (Encrypt)           | **128 MB/s**     | 69 MB/s (RobloxGamerPro200007 AES256-CTR)      | **1.8x faster** than RobloxGamerPro200007 AES256-CTR                  |
-| XOR (Encrypt)               | -                | -                                              | -                                                                     |
+| XOR (Encrypt)               | **2.8 GB/s**     | -                                              | -                                                                     |
 
 ### Digital Signatures & Key Exchange
 

@@ -1201,7 +1201,7 @@ local BenchStructure: { BenchSection } = {
 				},
 			},
 
-			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt32", Unit = "Throughput" },
+			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt 32", Unit = "Throughput" },
 		},
 	},
 
