@@ -33,6 +33,9 @@ local AES = {}
 
 local ALL_TABLES = buffer.create(32 * 16 * 16)
 local DOUBLES = buffer.create(128 * 16)
+local BYTE_TABLES = buffer.create(16 * 256 * 16)
+local LAST_H = buffer.create(16)
+local TABLES_KEY_VALID = false
 
 local KEY_CONFIGS = {
 	[16] = {ExpandedLength = 176, MaterialLength = 128},
@@ -1406,6 +1409,17 @@ local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
 end
 
 local function BuildShoupTables(H: buffer): buffer
+	if TABLES_KEY_VALID
+		and buffer.readu32(LAST_H, 0) == buffer.readu32(H, 0)
+		and buffer.readu32(LAST_H, 4) == buffer.readu32(H, 4)
+		and buffer.readu32(LAST_H, 8) == buffer.readu32(H, 8)
+		and buffer.readu32(LAST_H, 12) == buffer.readu32(H, 12) then
+		return BYTE_TABLES
+	end
+
+	buffer.copy(LAST_H, 0, H, 0, 16)
+	TABLES_KEY_VALID = true
+
 	local Doubles = DOUBLES
 	local AllTables = ALL_TABLES
 
@@ -1532,139 +1546,93 @@ local function BuildShoupTables(H: buffer): buffer
 		buffer.writeu32(AllTables, TableOffset + 252, bit32.bxor(bit32.bxor(A3, B3), bit32.bxor(C3, D3)))
 	end
 
-	return AllTables
+	local ByteTables = BYTE_TABLES
+	for BytePos = 0, 15 do
+		local HighBase = BytePos * 512
+		local LowBase = HighBase + 256
+		local OutBase = BytePos * 4096
+
+		for Value = 0, 255 do
+			local HighOffset = HighBase + bit32.rshift(Value, 4) * 16
+			local LowOffset = LowBase + bit32.band(Value, 15) * 16
+			local OutOffset = OutBase + Value * 16
+
+			buffer.writeinteger(ByteTables, OutOffset, integer.bxor(
+				buffer.readinteger(AllTables, HighOffset), buffer.readinteger(AllTables, LowOffset)))
+			buffer.writeinteger(ByteTables, OutOffset + 8, integer.bxor(
+				buffer.readinteger(AllTables, HighOffset + 8), buffer.readinteger(AllTables, LowOffset + 8)))
+		end
+	end
+
+	return ByteTables
 end
 
 local function GfMult(Y: buffer, Tables: buffer)
 	local ZLo, ZHi = 0i, 0i
 
-	local ByteVal = buffer.readu8(Y, 0)
-	local HighOffset = bit32.band(ByteVal, 0xF0)
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	local LowOffset = bit32.bor(256, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	local Offset = bit32.lshift(buffer.readu8(Y, 0), 4)
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 1)
-	HighOffset = bit32.bor(512, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(768, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(4096, bit32.lshift(buffer.readu8(Y, 1), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 2)
-	HighOffset = bit32.bor(1024, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(1280, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(8192, bit32.lshift(buffer.readu8(Y, 2), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 3)
-	HighOffset = bit32.bor(1536, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(1792, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(12288, bit32.lshift(buffer.readu8(Y, 3), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 4)
-	HighOffset = bit32.bor(2048, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(2304, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(16384, bit32.lshift(buffer.readu8(Y, 4), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 5)
-	HighOffset = bit32.bor(2560, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(2816, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(20480, bit32.lshift(buffer.readu8(Y, 5), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 6)
-	HighOffset = bit32.bor(3072, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(3328, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(24576, bit32.lshift(buffer.readu8(Y, 6), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 7)
-	HighOffset = bit32.bor(3584, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(3840, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(28672, bit32.lshift(buffer.readu8(Y, 7), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 8)
-	HighOffset = bit32.bor(4096, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(4352, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(32768, bit32.lshift(buffer.readu8(Y, 8), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 9)
-	HighOffset = bit32.bor(4608, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(4864, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(36864, bit32.lshift(buffer.readu8(Y, 9), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 10)
-	HighOffset = bit32.bor(5120, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(5376, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(40960, bit32.lshift(buffer.readu8(Y, 10), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 11)
-	HighOffset = bit32.bor(5632, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(5888, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(45056, bit32.lshift(buffer.readu8(Y, 11), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 12)
-	HighOffset = bit32.bor(6144, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(6400, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(49152, bit32.lshift(buffer.readu8(Y, 12), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 13)
-	HighOffset = bit32.bor(6656, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(6912, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(53248, bit32.lshift(buffer.readu8(Y, 13), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 14)
-	HighOffset = bit32.bor(7168, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(7424, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(57344, bit32.lshift(buffer.readu8(Y, 14), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
-	ByteVal = buffer.readu8(Y, 15)
-	HighOffset = bit32.bor(7680, bit32.band(ByteVal, 0xF0))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, HighOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(HighOffset, 8)))
-	LowOffset = bit32.bor(7936, bit32.lshift(bit32.band(ByteVal, 0x0F), 4))
-	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, LowOffset))
-	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(LowOffset, 8)))
+	Offset = bit32.bor(61440, bit32.lshift(buffer.readu8(Y, 15), 4))
+	ZLo = integer.bxor(ZLo, buffer.readinteger(Tables, Offset))
+	ZHi = integer.bxor(ZHi, buffer.readinteger(Tables, bit32.bor(Offset, 8)))
 
 	buffer.writeinteger(Y, 0, ZLo)
 	buffer.writeinteger(Y, 8, ZHi)
@@ -1975,4 +1943,4 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 	return OutputBuffer
 end
 
-return AES
+return AES

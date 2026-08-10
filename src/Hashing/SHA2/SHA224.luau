@@ -14,6 +14,9 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local MASK = 0xFFFFFFFFi
 
 local CONSTANTS = buffer.create(512) do
@@ -944,8 +947,7 @@ local function SHA224(Message: buffer): (string, buffer)
 	buffer.writeu32(Digest, 20, bit32.byteswap(integer.tonumber(F)))
 	buffer.writeu32(Digest, 24, bit32.byteswap(integer.tonumber(G)))
 
-	return string.format("%08x%08x%08x%08x%08x%08x%08x",
-		A :: any, B :: any, C :: any, D :: any, E :: any, F :: any, G :: any), Digest
+	return ToHex(Digest), Digest
 end
 
 return SHA224

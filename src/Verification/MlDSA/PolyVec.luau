@@ -47,23 +47,49 @@ function PolyVec.InverseNTT(Vec: buffer, K: number)
 		for L = 0, 5 do
 			local Len = bit32.lshift(1, L)
 			local LenX2 = bit32.lshift(Len, 1)
+			local LenBytes = Len * 4
 			local KBeg = bit32.rshift(Num, L) - 1
 
-			for Start = 0, Num - 1, LenX2 do
-				local KNow = KBeg - bit32.rshift(Start, L + 1)
-				local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
+			if Len == 1 then
+				for Start = 0, Num - 1, 4 do
+					local KNow = KBeg - bit32.rshift(Start, 1)
+					local ZetaA = buffer.readu32(Zeta, KNow * 4)
+					local ZetaB = buffer.readu32(Zeta, (KNow - 1) * 4)
 
-				for J = Start, Start + Len - 1 do
-					local JOffset = Offset + J * 4
-					local JLenOffset = Offset + (J + Len) * 4
+					local OffsetA = Offset + Start * 4
+					local OffsetB = OffsetA + 8
 
-					local PolyJ = buffer.readu32(Vec, JOffset)
-					local PolyJLen = buffer.readu32(Vec, JLenOffset)
+					local PolyA = buffer.readu32(Vec, OffsetA)
+					local PolyALen = buffer.readu32(Vec, OffsetA + 4)
+					local PolyB = buffer.readu32(Vec, OffsetB)
+					local PolyBLen = buffer.readu32(Vec, OffsetB + 4)
 
-					local Product = ((PolyJ - PolyJLen) * NegZetaExpValue) % Modulus
+					buffer.writeu32(Vec, OffsetA, PolyA + PolyALen)
+					buffer.writeu32(Vec, OffsetA + 4, ((PolyA - PolyALen) * ZetaA) % Modulus)
+					buffer.writeu32(Vec, OffsetB, PolyB + PolyBLen)
+					buffer.writeu32(Vec, OffsetB + 4, ((PolyB - PolyBLen) * ZetaB) % Modulus)
+				end
+			else
+				for Start = 0, Num - 1, LenX2 do
+					local KNow = KBeg - bit32.rshift(Start, L + 1)
+					local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
-					buffer.writeu32(Vec, JOffset, PolyJ + PolyJLen)
-					buffer.writeu32(Vec, JLenOffset, Product)
+					for J = Start, Start + Len - 1, 2 do
+						local OffsetA = Offset + J * 4
+						local OffsetALen = OffsetA + LenBytes
+						local OffsetB = OffsetA + 4
+						local OffsetBLen = OffsetB + LenBytes
+
+						local PolyA = buffer.readu32(Vec, OffsetA)
+						local PolyALen = buffer.readu32(Vec, OffsetALen)
+						local PolyB = buffer.readu32(Vec, OffsetB)
+						local PolyBLen = buffer.readu32(Vec, OffsetBLen)
+
+						buffer.writeu32(Vec, OffsetA, PolyA + PolyALen)
+						buffer.writeu32(Vec, OffsetALen, ((PolyA - PolyALen) * NegZetaExpValue) % Modulus)
+						buffer.writeu32(Vec, OffsetB, PolyB + PolyBLen)
+						buffer.writeu32(Vec, OffsetBLen, ((PolyB - PolyBLen) * NegZetaExpValue) % Modulus)
+					end
 				end
 			end
 		end
@@ -72,29 +98,39 @@ function PolyVec.InverseNTT(Vec: buffer, K: number)
 			local KNow = 3 - bit32.rshift(Start, 7)
 			local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
-			for J = Start, Start + 63 do
-				local JOffset = Offset + J * 4
-				local JLenOffset = Offset + (J + 64) * 4
+			for J = Start, Start + 63, 2 do
+				local OffsetA = Offset + J * 4
+				local OffsetALen = OffsetA + 256
+				local OffsetB = OffsetA + 4
+				local OffsetBLen = OffsetB + 256
 
-				local PolyJ = buffer.readu32(Vec, JOffset)
-				local PolyJLen = buffer.readu32(Vec, JLenOffset)
+				local PolyA = buffer.readu32(Vec, OffsetA)
+				local PolyALen = buffer.readu32(Vec, OffsetALen)
+				local PolyB = buffer.readu32(Vec, OffsetB)
+				local PolyBLen = buffer.readu32(Vec, OffsetBLen)
 
-				local Product = ((PolyJ - PolyJLen) * NegZetaExpValue) % Modulus
-
-				buffer.writeu32(Vec, JOffset, (PolyJ + PolyJLen) % Modulus)
-				buffer.writeu32(Vec, JLenOffset, Product)
+				buffer.writeu32(Vec, OffsetA, (PolyA + PolyALen) % Modulus)
+				buffer.writeu32(Vec, OffsetALen, ((PolyA - PolyALen) * NegZetaExpValue) % Modulus)
+				buffer.writeu32(Vec, OffsetB, (PolyB + PolyBLen) % Modulus)
+				buffer.writeu32(Vec, OffsetBLen, ((PolyB - PolyBLen) * NegZetaExpValue) % Modulus)
 			end
 		end
 
-		for J = 0, 127 do
-			local JOffset = Offset + J * 4
-			local JLenOffset = Offset + (J + 128) * 4
+		for J = 0, 127, 2 do
+			local OffsetA = Offset + J * 4
+			local OffsetALen = OffsetA + 512
+			local OffsetB = OffsetA + 4
+			local OffsetBLen = OffsetB + 512
 
-			local PolyJ = buffer.readu32(Vec, JOffset)
-			local PolyJLen = buffer.readu32(Vec, JLenOffset)
+			local PolyA = buffer.readu32(Vec, OffsetA)
+			local PolyALen = buffer.readu32(Vec, OffsetALen)
+			local PolyB = buffer.readu32(Vec, OffsetB)
+			local PolyBLen = buffer.readu32(Vec, OffsetBLen)
 
-			buffer.writeu32(Vec, JOffset, ((PolyJ + PolyJLen) * InvN) % Modulus)
-			buffer.writeu32(Vec, JLenOffset, ((PolyJ - PolyJLen) * NegZeta7) % Modulus)
+			buffer.writeu32(Vec, OffsetA, ((PolyA + PolyALen) * InvN) % Modulus)
+			buffer.writeu32(Vec, OffsetALen, ((PolyA - PolyALen) * NegZeta7) % Modulus)
+			buffer.writeu32(Vec, OffsetB, ((PolyB + PolyBLen) * InvN) % Modulus)
+			buffer.writeu32(Vec, OffsetBLen, ((PolyB - PolyBLen) * NegZeta7) % Modulus)
 		end
 	end
 end

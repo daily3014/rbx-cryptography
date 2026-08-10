@@ -36,6 +36,10 @@ local SAMPLE_NTT_CHUNK = buffer.create(168)
 local GEN_VECTOR_PRF_OUTPUT = buffer.create(192)
 local GEN_VECTOR_PRF_INPUT = buffer.create(33)
 
+local MATRIX_CACHE_RHO = { buffer.create(32), buffer.create(32) }
+local MATRIX_CACHE_K = { 0, 0 }
+local MATRIX_CACHE_VALUE = {} :: { buffer }
+
 local CBD2_LUT = buffer.create(256 * 4) do
 	for B = 0, 255 do
 		local T0 = bit32.band(B, 0x55)
@@ -157,7 +161,23 @@ end
 
 local Sampling = {}
 
+local function SeedMatches(Cached: buffer, Rho: buffer): boolean
+	for Offset = 0, 28, 4 do
+		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, Offset) then
+			return false
+		end
+	end
+
+	return true
+end
+
 function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): buffer
+	local Slot = if Transpose then 2 else 1
+	local Cached = MATRIX_CACHE_VALUE[Slot]
+	if Cached and MATRIX_CACHE_K[Slot] == K and SeedMatches(MATRIX_CACHE_RHO[Slot], Rho) then
+		return Cached
+	end
+
 	local Matrix = PolyVec.MatCreate(K, K)
 	local XofInput = buffer.create(34)
 	buffer.copy(XofInput, 0, Rho, 0, 32)
@@ -178,6 +198,10 @@ function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): bu
 			Sample(XofInput, Matrix, (I * K + J) * PolySize)
 		end
 	end
+
+	buffer.copy(MATRIX_CACHE_RHO[Slot], 0, Rho, 0, 32)
+	MATRIX_CACHE_K[Slot] = K
+	MATRIX_CACHE_VALUE[Slot] = Matrix
 
 	return Matrix
 end

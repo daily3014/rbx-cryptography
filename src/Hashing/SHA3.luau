@@ -55,25 +55,90 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RC = ROUND_CONSTANTS
 
+	local Lane01, Lane02, Lane03 = buffer.readinteger(Lanes, 0), buffer.readinteger(Lanes, 8), buffer.readinteger(Lanes, 16)
+	local Lane04, Lane05, Lane06 = buffer.readinteger(Lanes, 24), buffer.readinteger(Lanes, 32), buffer.readinteger(Lanes, 40)
+	local Lane07, Lane08, Lane09 = buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 56), buffer.readinteger(Lanes, 64)
+	local Lane10, Lane11, Lane12 = buffer.readinteger(Lanes, 72), buffer.readinteger(Lanes, 80), buffer.readinteger(Lanes, 88)
+	local Lane13, Lane14, Lane15 = buffer.readinteger(Lanes, 96), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 112)
+	local Lane16, Lane17, Lane18 = buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 128), buffer.readinteger(Lanes, 136)
+	local Lane19, Lane20, Lane21 = buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 152), buffer.readinteger(Lanes, 160)
+	local Lane22, Lane23, Lane24 = buffer.readinteger(Lanes, 168), buffer.readinteger(Lanes, 176), buffer.readinteger(Lanes, 184)
+	local Lane25 = buffer.readinteger(Lanes, 192)
+
 	for Position = Offset, Offset + Size - 1, BlockSizeInBytes do
-		for Index = 0, (QuadWordsQuantity - 1) * 8, 8 do
-			local BufferPos = Position + Index
-
-			buffer.writeinteger(Lanes, Index, integer.bxor(
-				buffer.readinteger(Lanes, Index),
-				buffer.readinteger(InputBuffer, BufferPos)
-			))
+		Lane01 = integer.bxor(Lane01, buffer.readinteger(InputBuffer, Position))
+		if QuadWordsQuantity > 1 then
+			Lane02 = integer.bxor(Lane02, buffer.readinteger(InputBuffer, Position + 8))
 		end
-
-		local Lane01, Lane02, Lane03 = buffer.readinteger(Lanes, 0), buffer.readinteger(Lanes, 8), buffer.readinteger(Lanes, 16)
-		local Lane04, Lane05, Lane06 = buffer.readinteger(Lanes, 24), buffer.readinteger(Lanes, 32), buffer.readinteger(Lanes, 40)
-		local Lane07, Lane08, Lane09 = buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 56), buffer.readinteger(Lanes, 64)
-		local Lane10, Lane11, Lane12 = buffer.readinteger(Lanes, 72), buffer.readinteger(Lanes, 80), buffer.readinteger(Lanes, 88)
-		local Lane13, Lane14, Lane15 = buffer.readinteger(Lanes, 96), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 112)
-		local Lane16, Lane17, Lane18 = buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 128), buffer.readinteger(Lanes, 136)
-		local Lane19, Lane20, Lane21 = buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 152), buffer.readinteger(Lanes, 160)
-		local Lane22, Lane23, Lane24 = buffer.readinteger(Lanes, 168), buffer.readinteger(Lanes, 176), buffer.readinteger(Lanes, 184)
-		local Lane25 = buffer.readinteger(Lanes, 192)
+		if QuadWordsQuantity > 2 then
+			Lane03 = integer.bxor(Lane03, buffer.readinteger(InputBuffer, Position + 16))
+		end
+		if QuadWordsQuantity > 3 then
+			Lane04 = integer.bxor(Lane04, buffer.readinteger(InputBuffer, Position + 24))
+		end
+		if QuadWordsQuantity > 4 then
+			Lane05 = integer.bxor(Lane05, buffer.readinteger(InputBuffer, Position + 32))
+		end
+		if QuadWordsQuantity > 5 then
+			Lane06 = integer.bxor(Lane06, buffer.readinteger(InputBuffer, Position + 40))
+		end
+		if QuadWordsQuantity > 6 then
+			Lane07 = integer.bxor(Lane07, buffer.readinteger(InputBuffer, Position + 48))
+		end
+		if QuadWordsQuantity > 7 then
+			Lane08 = integer.bxor(Lane08, buffer.readinteger(InputBuffer, Position + 56))
+		end
+		if QuadWordsQuantity > 8 then
+			Lane09 = integer.bxor(Lane09, buffer.readinteger(InputBuffer, Position + 64))
+		end
+		if QuadWordsQuantity > 9 then
+			Lane10 = integer.bxor(Lane10, buffer.readinteger(InputBuffer, Position + 72))
+		end
+		if QuadWordsQuantity > 10 then
+			Lane11 = integer.bxor(Lane11, buffer.readinteger(InputBuffer, Position + 80))
+		end
+		if QuadWordsQuantity > 11 then
+			Lane12 = integer.bxor(Lane12, buffer.readinteger(InputBuffer, Position + 88))
+		end
+		if QuadWordsQuantity > 12 then
+			Lane13 = integer.bxor(Lane13, buffer.readinteger(InputBuffer, Position + 96))
+		end
+		if QuadWordsQuantity > 13 then
+			Lane14 = integer.bxor(Lane14, buffer.readinteger(InputBuffer, Position + 104))
+		end
+		if QuadWordsQuantity > 14 then
+			Lane15 = integer.bxor(Lane15, buffer.readinteger(InputBuffer, Position + 112))
+		end
+		if QuadWordsQuantity > 15 then
+			Lane16 = integer.bxor(Lane16, buffer.readinteger(InputBuffer, Position + 120))
+		end
+		if QuadWordsQuantity > 16 then
+			Lane17 = integer.bxor(Lane17, buffer.readinteger(InputBuffer, Position + 128))
+		end
+		if QuadWordsQuantity > 17 then
+			Lane18 = integer.bxor(Lane18, buffer.readinteger(InputBuffer, Position + 136))
+		end
+		if QuadWordsQuantity > 18 then
+			Lane19 = integer.bxor(Lane19, buffer.readinteger(InputBuffer, Position + 144))
+		end
+		if QuadWordsQuantity > 19 then
+			Lane20 = integer.bxor(Lane20, buffer.readinteger(InputBuffer, Position + 152))
+		end
+		if QuadWordsQuantity > 20 then
+			Lane21 = integer.bxor(Lane21, buffer.readinteger(InputBuffer, Position + 160))
+		end
+		if QuadWordsQuantity > 21 then
+			Lane22 = integer.bxor(Lane22, buffer.readinteger(InputBuffer, Position + 168))
+		end
+		if QuadWordsQuantity > 22 then
+			Lane23 = integer.bxor(Lane23, buffer.readinteger(InputBuffer, Position + 176))
+		end
+		if QuadWordsQuantity > 23 then
+			Lane24 = integer.bxor(Lane24, buffer.readinteger(InputBuffer, Position + 184))
+		end
+		if QuadWordsQuantity > 24 then
+			Lane25 = integer.bxor(Lane25, buffer.readinteger(InputBuffer, Position + 192))
+		end
 
 		for RoundIndex = 0, 184, 16 do
 			do
@@ -229,33 +294,33 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex + 8))
 			end
 		end
-
-		buffer.writeinteger(Lanes, 0, Lane01)
-		buffer.writeinteger(Lanes, 8, Lane02)
-		buffer.writeinteger(Lanes, 16, Lane03)
-		buffer.writeinteger(Lanes, 24, Lane04)
-		buffer.writeinteger(Lanes, 32, Lane05)
-		buffer.writeinteger(Lanes, 40, Lane06)
-		buffer.writeinteger(Lanes, 48, Lane07)
-		buffer.writeinteger(Lanes, 56, Lane08)
-		buffer.writeinteger(Lanes, 64, Lane09)
-		buffer.writeinteger(Lanes, 72, Lane10)
-		buffer.writeinteger(Lanes, 80, Lane11)
-		buffer.writeinteger(Lanes, 88, Lane12)
-		buffer.writeinteger(Lanes, 96, Lane13)
-		buffer.writeinteger(Lanes, 104, Lane14)
-		buffer.writeinteger(Lanes, 112, Lane15)
-		buffer.writeinteger(Lanes, 120, Lane16)
-		buffer.writeinteger(Lanes, 128, Lane17)
-		buffer.writeinteger(Lanes, 136, Lane18)
-		buffer.writeinteger(Lanes, 144, Lane19)
-		buffer.writeinteger(Lanes, 152, Lane20)
-		buffer.writeinteger(Lanes, 160, Lane21)
-		buffer.writeinteger(Lanes, 168, Lane22)
-		buffer.writeinteger(Lanes, 176, Lane23)
-		buffer.writeinteger(Lanes, 184, Lane24)
-		buffer.writeinteger(Lanes, 192, Lane25)
 	end
+
+	buffer.writeinteger(Lanes, 0, Lane01)
+	buffer.writeinteger(Lanes, 8, Lane02)
+	buffer.writeinteger(Lanes, 16, Lane03)
+	buffer.writeinteger(Lanes, 24, Lane04)
+	buffer.writeinteger(Lanes, 32, Lane05)
+	buffer.writeinteger(Lanes, 40, Lane06)
+	buffer.writeinteger(Lanes, 48, Lane07)
+	buffer.writeinteger(Lanes, 56, Lane08)
+	buffer.writeinteger(Lanes, 64, Lane09)
+	buffer.writeinteger(Lanes, 72, Lane10)
+	buffer.writeinteger(Lanes, 80, Lane11)
+	buffer.writeinteger(Lanes, 88, Lane12)
+	buffer.writeinteger(Lanes, 96, Lane13)
+	buffer.writeinteger(Lanes, 104, Lane14)
+	buffer.writeinteger(Lanes, 112, Lane15)
+	buffer.writeinteger(Lanes, 120, Lane16)
+	buffer.writeinteger(Lanes, 128, Lane17)
+	buffer.writeinteger(Lanes, 136, Lane18)
+	buffer.writeinteger(Lanes, 144, Lane19)
+	buffer.writeinteger(Lanes, 152, Lane20)
+	buffer.writeinteger(Lanes, 160, Lane21)
+	buffer.writeinteger(Lanes, 168, Lane22)
+	buffer.writeinteger(Lanes, 176, Lane23)
+	buffer.writeinteger(Lanes, 184, Lane24)
+	buffer.writeinteger(Lanes, 192, Lane25)
 end
 
 local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer

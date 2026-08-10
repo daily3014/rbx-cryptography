@@ -30,7 +30,28 @@ local EXPAND_MASK_SQUEEZE = buffer.create(640)
 local SAMPLE_BALL_TAU = buffer.create(8)
 local SAMPLE_BALL_SQUEEZE = buffer.create(136)
 
+local MATRIX_CACHE_RHO = buffer.create(32)
+local MATRIX_CACHE_DIMENSIONS = 0
+local MATRIX_CACHE_VALUE: buffer? = nil
+
+local function SeedMatches(Cached: buffer, Rho: buffer): boolean
+	for Offset = 0, 28, 4 do
+		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, Offset) then
+			return false
+		end
+	end
+
+	return true
+end
+
 function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
+	local Dimensions = K * 16 + L
+	local Cached = MATRIX_CACHE_VALUE
+	if Cached and MATRIX_CACHE_DIMENSIONS == Dimensions and SeedMatches(MATRIX_CACHE_RHO, Rho) then
+		buffer.copy(Mat, 0, Cached, 0, K * L * N * 4)
+		return
+	end
+
 	buffer.copy(WORKSPACE_MSG_34, 0, Rho, 0, 32)
 
 	local Message = WORKSPACE_MSG_34
@@ -98,6 +119,12 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 			end
 		end
 	end
+
+	local Store = buffer.create(K * L * N * 4)
+	buffer.copy(Store, 0, Mat, 0, K * L * N * 4)
+	buffer.copy(MATRIX_CACHE_RHO, 0, Rho, 0, 32)
+	MATRIX_CACHE_DIMENSIONS = Dimensions
+	MATRIX_CACHE_VALUE = Store
 end
 
 function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number, StartNonce: number)

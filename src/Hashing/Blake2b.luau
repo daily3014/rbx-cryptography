@@ -27,6 +27,9 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local BLOCK_SIZE_BYTES = 128
 local DEFAULT_OUTPUT_BYTES = 64
 
@@ -908,20 +911,7 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 		buffer.copy(Digest, FullLanes * 8, Tail, 0, OutputLength - FullLanes * 8)
 	end
 
-	-- TYPE ERROR: string.format definition doesn't support integers yet
-	local FinalDigest = string.format(
-		"%016x%016x%016x%016x%016x%016x%016x%016x",
-		integer.bswap(buffer.readinteger(State, 0)) :: any,
-		integer.bswap(buffer.readinteger(State, 8)) :: any,
-		integer.bswap(buffer.readinteger(State, 16)) :: any,
-		integer.bswap(buffer.readinteger(State, 24)) :: any,
-		integer.bswap(buffer.readinteger(State, 32)) :: any,
-		integer.bswap(buffer.readinteger(State, 40)) :: any,
-		integer.bswap(buffer.readinteger(State, 48)) :: any,
-		integer.bswap(buffer.readinteger(State, 56)) :: any
-	)
-
-	return string.sub(FinalDigest, 1, OutputLength * 2), Digest
+	return ToHex(Digest), Digest
 end
 
 local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer?): (string, buffer)

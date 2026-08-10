@@ -14,6 +14,9 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local K_VALUES = {
 	0x428a2f98d728ae22i, 0x7137449123ef65cdi, 0xb5c0fbcfec4d3b2fi, 0xe9b5dba58189dbbci,
 	0x3956c25bf348b538i, 0x59f111f1b605d019i, 0x923f82a4af194f9bi, 0xab1c5ed5da6d8118i,
@@ -1279,11 +1282,7 @@ local function SHA384(Message: buffer): (string, buffer)
 	buffer.writeinteger(Result, 32, integer.bswap(H5))
 	buffer.writeinteger(Result, 40, integer.bswap(H6))
 
-	-- TYPE ERROR: string.format definition doesn't support integers yet
-	return string.format(
-		"%016x%016x%016x%016x%016x%016x",
-		H1 :: any, H2 :: any, H3 :: any, H4 :: any, H5 :: any, H6 :: any
-	), Result
+	return ToHex(Result), Result
 end
 
 return SHA384

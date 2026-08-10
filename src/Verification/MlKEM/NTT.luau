@@ -72,17 +72,24 @@ function Ntt.NttAt(Poly: buffer, BaseOffset: number)
 			local KNow = KBeg + bit32.rshift(Start, L + 1)
 			local ZetaExp = buffer.readu16(Zeta, KNow * 2)
 
-			for I = Start, Start + Len - 1 do
-				local OffsetI = BaseOffset + I * 2
-				local OffsetILen = BaseOffset + (I + Len) * 2
+			for I = Start, Start + Len - 1, 2 do
+				local OffsetA = BaseOffset + I * 2
+				local OffsetALen = OffsetA + LenX2
+				local OffsetB = OffsetA + 2
+				local OffsetBLen = OffsetB + LenX2
 
-				local PolyI = buffer.readu16(Poly, OffsetI)
-				local PolyILen = buffer.readu16(Poly, OffsetILen)
+				local PolyA = buffer.readu16(Poly, OffsetA)
+				local PolyALen = buffer.readu16(Poly, OffsetALen)
+				local PolyB = buffer.readu16(Poly, OffsetB)
+				local PolyBLen = buffer.readu16(Poly, OffsetBLen)
 
-				local Tmp = (ZetaExp * PolyILen) % Modulus
+				local TmpA = (ZetaExp * PolyALen) % Modulus
+				local TmpB = (ZetaExp * PolyBLen) % Modulus
 
-				buffer.writeu16(Poly, OffsetILen, PolyI - Tmp + Modulus)
-				buffer.writeu16(Poly, OffsetI, PolyI + Tmp)
+				buffer.writeu16(Poly, OffsetALen, PolyA - TmpA + Modulus)
+				buffer.writeu16(Poly, OffsetA, PolyA + TmpA)
+				buffer.writeu16(Poly, OffsetBLen, PolyB - TmpB + Modulus)
+				buffer.writeu16(Poly, OffsetB, PolyB + TmpB)
 			end
 		end
 	end
@@ -121,31 +128,41 @@ function Ntt.InttAt(Poly: buffer, BaseOffset: number)
 			local KNow = KBeg - bit32.rshift(Start, L + 1)
 			local NegZetaExp = buffer.readu16(Zeta, KNow * 2)
 
-			for I = Start, Start + Len - 1 do
-				local OffsetI = BaseOffset + I * 2
-				local OffsetILen = BaseOffset + (I + Len) * 2
+			for I = Start, Start + Len - 1, 2 do
+				local OffsetA = BaseOffset + I * 2
+				local OffsetALen = OffsetA + LenX2
+				local OffsetB = OffsetA + 2
+				local OffsetBLen = OffsetB + LenX2
 
-				local PolyI = buffer.readu16(Poly, OffsetI)
-				local PolyILen = buffer.readu16(Poly, OffsetILen)
+				local PolyA = buffer.readu16(Poly, OffsetA)
+				local PolyALen = buffer.readu16(Poly, OffsetALen)
+				local PolyB = buffer.readu16(Poly, OffsetB)
+				local PolyBLen = buffer.readu16(Poly, OffsetBLen)
 
-				local MulResult = ((PolyI - PolyILen) * NegZetaExp) % Modulus
-
-				buffer.writeu16(Poly, OffsetI, (PolyI + PolyILen) % Modulus)
-				buffer.writeu16(Poly, OffsetILen, MulResult)
+				buffer.writeu16(Poly, OffsetALen, ((PolyA - PolyALen) * NegZetaExp) % Modulus)
+				buffer.writeu16(Poly, OffsetBLen, ((PolyB - PolyBLen) * NegZetaExp) % Modulus)
+				buffer.writeu16(Poly, OffsetA, (PolyA + PolyALen) % Modulus)
+				buffer.writeu16(Poly, OffsetB, (PolyB + PolyBLen) % Modulus)
 			end
 		end
 	end
 
 	local NegZeta7 = (buffer.readu16(Zeta, 2) * InvN) % Modulus
-	for I = 0, 127 do
-		local OffsetI = BaseOffset + I * 2
-		local OffsetILen = OffsetI + 256
+	for I = 0, 127, 2 do
+		local OffsetA = BaseOffset + I * 2
+		local OffsetALen = OffsetA + 256
+		local OffsetB = OffsetA + 2
+		local OffsetBLen = OffsetB + 256
 
-		local PolyI = buffer.readu16(Poly, OffsetI)
-		local PolyILen = buffer.readu16(Poly, OffsetILen)
+		local PolyA = buffer.readu16(Poly, OffsetA)
+		local PolyALen = buffer.readu16(Poly, OffsetALen)
+		local PolyB = buffer.readu16(Poly, OffsetB)
+		local PolyBLen = buffer.readu16(Poly, OffsetBLen)
 
-		buffer.writeu16(Poly, OffsetI, ((PolyI + PolyILen) * InvN) % Modulus)
-		buffer.writeu16(Poly, OffsetILen, ((PolyI - PolyILen) * NegZeta7) % Modulus)
+		buffer.writeu16(Poly, OffsetA, ((PolyA + PolyALen) * InvN) % Modulus)
+		buffer.writeu16(Poly, OffsetB, ((PolyB + PolyBLen) * InvN) % Modulus)
+		buffer.writeu16(Poly, OffsetALen, ((PolyA - PolyALen) * NegZeta7) % Modulus)
+		buffer.writeu16(Poly, OffsetBLen, ((PolyB - PolyBLen) * NegZeta7) % Modulus)
 	end
 end
 

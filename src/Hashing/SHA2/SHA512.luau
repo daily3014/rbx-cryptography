@@ -14,6 +14,9 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local K_VALUES = {
 	0x428a2f98d728ae22i, 0x7137449123ef65cdi, 0xb5c0fbcfec4d3b2fi, 0xe9b5dba58189dbbci,
 	0x3956c25bf348b538i, 0x59f111f1b605d019i, 0x923f82a4af194f9bi, 0xab1c5ed5da6d8118i,
@@ -1287,18 +1290,7 @@ end
 local function SHA512(Message: buffer): (string, buffer)
 	local Result = SHA512_Internal(Message)
 
-	-- TYPE ERROR: string.format definition doesn't support integers yet
-	return string.format(
-		"%016x%016x%016x%016x%016x%016x%016x%016x",
-		integer.bswap(buffer.readinteger(Result, 0)) :: any,
-		integer.bswap(buffer.readinteger(Result, 8)) :: any,
-		integer.bswap(buffer.readinteger(Result, 16)) :: any,
-		integer.bswap(buffer.readinteger(Result, 24)) :: any,
-		integer.bswap(buffer.readinteger(Result, 32)) :: any,
-		integer.bswap(buffer.readinteger(Result, 40)) :: any,
-		integer.bswap(buffer.readinteger(Result, 48)) :: any,
-		integer.bswap(buffer.readinteger(Result, 56)) :: any
-	), Result
+	return ToHex(Result), Result
 end
 
 return {

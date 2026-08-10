@@ -51,41 +51,54 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 	for L = LOG2N - 1, 1, -1 do
 		local Len = bit32.lshift(1, L)
 		local LenX2 = bit32.lshift(Len, 1)
+		local LenBytes = Len * 4
 		local KBeg = bit32.rshift(N, L + 1)
 
 		for Start = 0, N - 1, LenX2 do
 			local KNow = KBeg + bit32.rshift(Start, L + 1)
 			local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
 
-			for I = Start, Start + Len - 1 do
-				local IOffset = BaseOffset + I * 4
-				local ILenOffset = BaseOffset + (I + Len) * 4
+			for I = Start, Start + Len - 1, 2 do
+				local OffsetA = BaseOffset + I * 4
+				local OffsetALen = OffsetA + LenBytes
+				local OffsetB = OffsetA + 4
+				local OffsetBLen = OffsetB + LenBytes
 
-				local PolyI = buffer.readu32(Poly, IOffset)
-				local PolyILen = buffer.readu32(Poly, ILenOffset)
+				local PolyA = buffer.readu32(Poly, OffsetA)
+				local PolyALen = buffer.readu32(Poly, OffsetALen)
+				local PolyB = buffer.readu32(Poly, OffsetB)
+				local PolyBLen = buffer.readu32(Poly, OffsetBLen)
 
-				local Tmp = (ZetaExpValue * PolyILen) % Modulus
+				local TmpA = (ZetaExpValue * PolyALen) % Modulus
+				local TmpB = (ZetaExpValue * PolyBLen) % Modulus
 
-				buffer.writeu32(Poly, ILenOffset, PolyI - Tmp + Modulus)
-				buffer.writeu32(Poly, IOffset, PolyI + Tmp)
+				buffer.writeu32(Poly, OffsetALen, PolyA - TmpA + Modulus)
+				buffer.writeu32(Poly, OffsetA, PolyA + TmpA)
+				buffer.writeu32(Poly, OffsetBLen, PolyB - TmpB + Modulus)
+				buffer.writeu32(Poly, OffsetB, PolyB + TmpB)
 			end
 		end
 	end
 
-	for Start = 0, N - 1, 2 do
-		local KNow = 128 + bit32.rshift(Start, 1)
-		local ZetaExpValue = buffer.readu32(Zeta, KNow * 4)
+	for Start = 0, N - 1, 4 do
+		local ZetaA = buffer.readu32(Zeta, (128 + bit32.rshift(Start, 1)) * 4)
+		local ZetaB = buffer.readu32(Zeta, (129 + bit32.rshift(Start, 1)) * 4)
 
-		local IOffset = BaseOffset + Start * 4
-		local ILenOffset = IOffset + 4
+		local OffsetA = BaseOffset + Start * 4
+		local OffsetB = OffsetA + 8
 
-		local PolyI = buffer.readu32(Poly, IOffset)
-		local PolyILen = buffer.readu32(Poly, ILenOffset)
+		local PolyA = buffer.readu32(Poly, OffsetA)
+		local PolyALen = buffer.readu32(Poly, OffsetA + 4)
+		local PolyB = buffer.readu32(Poly, OffsetB)
+		local PolyBLen = buffer.readu32(Poly, OffsetB + 4)
 
-		local Tmp = (ZetaExpValue * PolyILen) % Modulus
+		local TmpA = (ZetaA * PolyALen) % Modulus
+		local TmpB = (ZetaB * PolyBLen) % Modulus
 
-		buffer.writeu32(Poly, ILenOffset, (PolyI - Tmp + Modulus) % Modulus)
-		buffer.writeu32(Poly, IOffset, (PolyI + Tmp) % Modulus)
+		buffer.writeu32(Poly, OffsetA + 4, (PolyA - TmpA + Modulus) % Modulus)
+		buffer.writeu32(Poly, OffsetA, (PolyA + TmpA) % Modulus)
+		buffer.writeu32(Poly, OffsetB + 4, (PolyB - TmpB + Modulus) % Modulus)
+		buffer.writeu32(Poly, OffsetB, (PolyB + TmpB) % Modulus)
 	end
 end
 
