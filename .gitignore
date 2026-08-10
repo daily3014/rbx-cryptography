@@ -1,7 +1,4 @@
-testing/*.exe
-testing/*.py
-testing/__pycache__
-testing/temp
+testing/
 
 /*.exe
 /*.rbxlx.lock
@@ -20,4 +17,5 @@ profile.svg
 sourcemap.json
 wally.lock
 pesde.lock
+.vscode/
 .pesde/

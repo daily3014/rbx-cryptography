@@ -13,11 +13,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local AEAD: any = if IsCLI then require("../src/Encryption/AEAD") else require("../Encryption/AEAD")
+local AEAD = require("../../src/Encryption/AEAD")
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 

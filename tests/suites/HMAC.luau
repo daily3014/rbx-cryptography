@@ -10,12 +10,11 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local HMAC: any = if IsCLI then require("../src/Hashing/HMAC") else require("../Hashing/HMAC")
-local SHA2: any = if IsCLI then require("../src/Hashing/SHA2") else require("../Hashing/SHA2")
+local HMAC = require("../../src/Hashing/HMAC")
+local SHA2 = require("../../src/Hashing/SHA2")
 local FromHex = Testing.FromHex
 
 type HmacTest = {

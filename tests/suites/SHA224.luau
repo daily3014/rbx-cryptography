@@ -1,19 +1,18 @@
 --[=[
-	SHA-256 Tadashi Test Suite
+	SHA-224 Tadashi Test Suite
 
 	Test Vector Source:
-		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/sha256_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/sha224_test.json
 --]=]
 
 --!strict
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local SHA256: any = if IsCLI then require("../src/Hashing/SHA2/SHA256") else require("../Hashing/SHA2/SHA256")
+local SHA224 = require("../../src/Hashing/SHA2/SHA224")
 local FromHex = Testing.FromHex
 
 type HashTest = {
@@ -21,8 +20,7 @@ type HashTest = {
 	comment: string?,
 	targets: {string}?,
 	flags: {string}?,
-	msg: string?,
-	msgPattern: {pattern: string, length: number}?,
+	msg: string,
 	digest: string,
 	result: string,
 }
@@ -40,10 +38,10 @@ type HashData = {
 	testGroups: {HashGroup},
 }
 
-local SHA256_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/sha256_test.json"
+local SHA224_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/sha224_test.json"
 
-Testing.Describe("SHA-256 Tadashi Tests", function()
-	local Data = Bridge.JSONDecode(Bridge.Get(SHA256_URL)) :: HashData
+Testing.Describe("SHA-224 Tadashi Tests", function()
+	local Data = Bridge.JSONDecode(Bridge.Get(SHA224_URL)) :: HashData
 
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm} ({Group.digestSize}-bit digest)`, function()
@@ -55,10 +53,7 @@ Testing.Describe("SHA-256 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					local Msg = if Test.msgPattern
-						then Testing.ExpandPattern(Test.msgPattern.pattern, Test.msgPattern.length)
-						else FromHex(Test.msg :: string)
-					Testing.Expect(SHA256(Msg)).ToBe(Test.digest)
+					Testing.Expect((SHA224(FromHex(Test.msg)))).ToBe(Test.digest)
 				end)
 			end
 		end)

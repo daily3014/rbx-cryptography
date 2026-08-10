@@ -9,11 +9,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local Argon2id: any = if IsCLI then require("../src/Hashing/Argon2id") else require("../Hashing/Argon2id")
+local Argon2id = require("../../src/Hashing/Argon2id") 
 local FromHex = Testing.FromHex
 
 type ArgonTest = {

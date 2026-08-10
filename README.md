@@ -124,75 +124,88 @@ Nonce/IV Size: 12 Bytes
 
 ### Hashing
 
-| Algorithm   | rbx-cryptography | Other Libraries                             | Improvement                                                         |
-| ----------- | ---------------- | ------------------------------------------- | ------------------------------------------------------------------- |
-| SHA-256     | **234 MB/s**     | 68 MB/s (HashLib)<br>73 MB/s (luau-hashing) | **3.4x faster** than HashLib<br>**3.2x faster** than luau-hashing   |
-| SHA-512     | **481 MB/s**     | 35 MB/s (HashLib)<br>25 MB/s (luau-hashing) | **13.7x faster** than HashLib<br>**19.2x faster** than luau-hashing |
-| SHA3-512    | **152 MB/s**     | 15 MB/s (HashLib)                           | **10.1x faster** than HashLib                                       |
-| BLAKE2B     | **950 MB/s**     | 52 MB/s (luau-hashing)                      | **18.3x faster** than luau-hashing                                  |
-| BLAKE3      | **455 MB/s**     | -                                           | -                                                                   |
-| HMAC-BLAKE3 | **441 MB/s**     | -                                           | -                                                                   |
-| KMAC-128    | **307 MB/s**     | -                                           | -                                                                   |
-| KMAC-256    | **253 MB/s**     | -                                           | -                                                                   |
+| Algorithm   | rbx-cryptography | Alternative                                                         | Improvement                                                                                             |
+| ----------- | ---------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| SHA-256     | **230 MB/s**     | 69 MB/s (HashLib)<br>61 MB/s (ccryptolib)<br>73 MB/s (luau-hashing) | **3.3x faster** than HashLib<br>**3.7x faster** than ccryptolib<br>**3.1x faster** than luau-hashing    |
+| SHA-512     | **457 MB/s**     | 34 MB/s (HashLib)<br>34 MB/s (ccryptolib)<br>25 MB/s (luau-hashing) | **13.3x faster** than HashLib<br>**13.3x faster** than ccryptolib<br>**18.5x faster** than luau-hashing |
+| SHA3-512    | **207 MB/s**     | 15 MB/s (HashLib)                                                   | **13.5x faster** than HashLib                                                                           |
+| BLAKE2B     | **1.1 GB/s**     | 53 MB/s (luau-hashing)                                              | **20.6x faster** than luau-hashing                                                                      |
+| BLAKE3      | **464 MB/s**     | 120 MB/s (ccryptolib)                                               | **3.9x faster** than ccryptolib                                                                         |
+| HMAC-BLAKE3 | **456 MB/s**     | -                                                                   | -                                                                                                       |
+| KMAC-128    | **440 MB/s**     | -                                                                   | -                                                                                                       |
+| KMAC-256    | **371 MB/s**     | -                                                                   | -                                                                                                       |
 
 ### Password Hashing (Argon2id)
 
-| Tier        | Parameters         | rbx-cryptography   |
-| ----------- | ------------------ | ------------------ |
-| Interactive | m=8 MiB, t=2, p=1  | **61 op/s - 16ms** |
-| Default     | m=19 MiB, t=2, p=1 | **25 op/s - 39ms** |
-| Sensitive   | m=64 MiB, t=3, p=1 | **5 op/s - 202ms** |
+| Tier        | Parameters         | rbx-cryptography        |
+| ----------- | ------------------ | ----------------------- |
+| Interactive | m=8 MiB, t=2, p=1  | **62 op/s - 16.151 ms** |
+| Default     | m=19 MiB, t=2, p=1 | **25 op/s - 39.541 ms** |
+| Sensitive   | m=64 MiB, t=3, p=1 | **5 op/s - 201.526 ms** |
 
 ### Encryption
 
-| Algorithm                   | rbx-cryptography | Other Libraries                           | Improvement     |
-| --------------------------- | ---------------- | ----------------------------------------- | --------------- |
-| ChaCha20 (Encrypt)          | **645 MB/s**     | 14 MB/s (EncryptedNet)                    | **46x faster**  |
-| ChaCha20-Poly1305 (Encrypt) | **433 MB/s**     | -                                         | -               |
-| AES-GCM (Encrypt)           | **124 MB/s**     | 68 MB/s (RobloxGamerPro200007 AES256-CTR) | **1.8x faster** |
-| XOR (Encrypt)               | **2.7 GB/s**     | 20 MB/s (Devforum)                        | **135x faster** |
+| Algorithm                   | rbx-cryptography | Alternative                                    | Improvement                                                           |
+| --------------------------- | ---------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
+| ChaCha20 (Encrypt)          | **735 MB/s**     | 14 MB/s (EncryptedNet)<br>91 MB/s (ccryptolib) | **51.8x faster** than EncryptedNet<br>**8.1x faster** than ccryptolib |
+| ChaCha20-Poly1305 (Encrypt) | **506 MB/s**     | 64 MB/s (ccryptolib)                           | **7.9x faster** than ccryptolib                                       |
+| AES-GCM (Encrypt)           | **128 MB/s**     | 69 MB/s (RobloxGamerPro200007 AES256-CTR)      | **1.8x faster** than RobloxGamerPro200007 AES256-CTR                  |
+| XOR (Encrypt)               | -                | -                                              | -                                                                     |
 
 ### Digital Signatures & Key Exchange
 
-| Algorithm   | Time                                                                                         | Alternative         | Improvement      |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------------- | ---------------- |
-| EdDSA       | Roundtrip: **192 μs**<br>Sign: **32 us**<br>Verify: **160us**                                | -                   | -                |
-| ML-DSA-87   | Roundtrip: **1.63 ms**<br>KeyGen: **367.5 us**<br>Sign: **831.5 us**<br>Verify: **427.9 us** | 863 ms (WASM-Luau)  | **507x faster**  |
-| X25519      | Roundtrip: **465 μs**<br>KeyGen: **280.8 us**<br>Exchange: **184.2 us**                      | 628 μs (ccryptolib) | **1.35x faster** |
-| ML-KEM-1024 | Roundtrip: **383 μs**<br>KeyGen: **113.2 us**<br>Encap: **118.6 us**<br>Decap: **151.1 us**  | 122 ms (WASM-Luau)  | **319x faster**  |
+| Algorithm   | Time                                                                                          | Alternative           | Improvement       |
+| ----------- | --------------------------------------------------------------------------------------------- | --------------------- | ----------------- |
+| EdDSA       | Roundtrip: **183.3 us**<br>Sign: **28.9 us**<br>Verify: **154.4 us**                          | 645.0 us (ccryptolib) | **3.5x faster**   |
+| ML-DSA-87   | Roundtrip: **1.703 ms**<br>Sign: **1.004 ms**<br>KeyGen: **321.1 us**<br>Verify: **378.1 us** | 470.382 ms (WASM)     | **276.2x faster** |
+| X25519      | Roundtrip: **646.6 us**<br>Exchange: **322.7 us**<br>KeyGen: **323.9 us**                     | 1.233 ms (ccryptolib) | **1.9x faster**   |
+| ML-KEM-1024 | Roundtrip: **358.2 us**<br>KeyGen: **104.4 us**<br>Decap: **143.2 us**<br>Encap: **110.6 us** | 80.517 ms (WASM)      | **224.8x faster** |
 
 ### Utilities
 
-| Algorithm            | Time         | Alternative                                             | Improvement                                                                              |
-| -------------------- | ------------ | ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Base64 (Encode)      | **1.5 GB/s** | Lute: 407 MB/s<br>Reselim: 855 MB/s<br>Roblox: 1.3 GB/s | **3.7x faster** than Lute<br>**1.8x faster** than Reselim<br>**1.2x faster** than Roblox |
-| Base64 (Decode)      | **1.5 GB/s** | Lute: 562 MB/s<br>Reselim: 882 MB/s<br>Roblox: 2.1 GB/s | **2.7x faster** than Lute<br>**1.7x faster** than Reselim<br>1.4x slower than Roblox     |
-| Base64 (Roundtrip)   | **772 MB/s** | Lute: 235 MB/s<br>Reselim: 430 MB/s<br>Roblox: 866 MB/s | **3.3x faster** than Lute<br>**1.8x faster** than Reselim<br>1.1x slower than Roblox     |
-| CSPRNG (RandomBytes) | **513 MB/s** | -                                                       | -                                                                                        |
+| Algorithm            | rbx-cryptography | Alternative                                                                     | Improvement                                                                                                               |
+| -------------------- | ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Base64 (Encode)      | **1.5 GB/s**     | 36 MB/s (HashLib)<br>407 MB/s (Lute)<br>849 MB/s (Reselim)<br>1.1 GB/s (Roblox) | **39.9x faster** than HashLib<br>**3.6x faster** than Lute<br>**1.7x faster** than Reselim<br>**1.3x faster** than Roblox |
+| Base64 (Decode)      | **1.9 GB/s**     | 568 MB/s (Lute)<br>887 MB/s (Reselim)<br>1.8 GB/s (Roblox)                      | **3.3x faster** than Lute<br>**2.1x faster** than Reselim<br>**1.1x faster** than Roblox                                  |
+| Base64 (Roundtrip)   | **872 MB/s**     | 19 MB/s (HashLib)<br>237 MB/s (Lute)<br>434 MB/s (Reselim)<br>684 MB/s (Roblox) | **44.9x faster** than HashLib<br>**3.7x faster** than Lute<br>**2.0x faster** than Reselim<br>**1.3x faster** than Roblox |
+| CSPRNG (RandomBytes) | **616 MB/s**     | 287 MB/s (math.random¹)                                                         | **2.1x faster** than math.random                                                                                          |
 
-\*Roundtrip: Complete encrypt/decrypt or sign/verify cycle
+¹ Unlike CSPRNG, math.random is not suitable for cryptographic use. Finding the seed for a specific sequence of numbers is a trivial task for modern GPUs and CPUs.
+
+\* Generated automatically via the benchmark script at bench/bencher.luau.\
+\* Roundtrip: Complete encrypt/decrypt or sign/verify cycle
 
 ## Testing and Benchmarking
 
 ### Running Tests
 
-To run the complete test suite:
-
 ```bash
-bash scripts/test.sh
+luau --codegen -O2 tests/runner.luau
 ```
 
-This will launch Roblox Studio, execute all tests, and display results in your terminal.
-
-### Development Testing
-
-For continuous testing during development:
+To suppress verbose output and run silently:
 
 ```bash
-bash scripts/dev.sh
+luau --codegen -O2 tests/runner.luau -a silent
 ```
 
-This starts a Rojo server. Open Roblox Studio and sync Rojo into a Baseplate. Whenever you run the game server, the test suites will run and results will show in the Output widget.
+### Running Benchmarks
+
+```bash
+luau --codegen -O2 bench/runner.luau [-a <iterations> <skip_libraries> <baseline>]
+```
+
+Arguments
+
+1. iterations (optional, default: 100): Number of benchmark iterations to run.
+2. skip_libraries (optional): Comma separated list of libraries to ignore.
+3. baseline (optional, default: rbx-cryptography): The primary library to measure all other implementations against.
+
+Example: Run 200 iterations, skipping WASM and HashLib, while benchmarking against ccryptolib as the baseline:
+
+```bash
+luau --codegen -O2 bench/runner.luau -a 200 WASM,HashLib ccryptolib
+```
 
 ## Contributing
 

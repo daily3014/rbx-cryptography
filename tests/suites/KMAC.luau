@@ -10,11 +10,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local KMAC: any = if IsCLI then require("../src/Hashing/KMAC") else require("../Hashing/KMAC")
+local KMAC = require("../../src/Hashing/KMAC")
 local FromHex = Testing.FromHex
 
 type KmacTest = {

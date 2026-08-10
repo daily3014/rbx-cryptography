@@ -10,11 +10,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local AEAD: any = if IsCLI then require("../src/Encryption/AEAD") else require("../Encryption/AEAD")
+local AEAD = require("../../src/Encryption/AEAD")
 local FromHex = Testing.FromHex
 local BuffersEqual = Testing.BuffersEqual
 
@@ -109,7 +108,7 @@ local function RunAeadTests(Data: AeadData, IsXChaCha: boolean)
 						if IsXChaCha then
 							Ok, Plaintext = pcall(AEAD.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad, 20, true)
 						else
-							Ok, Plaintext = pcall(AEAD.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad)
+							Ok, Plaintext = pcall(AEAD.Decrypt, ExpectedCt, Key, Iv, ExpectedTag, Aad, nil, nil)
 						end
 
 						Testing.Expect(Ok == false or Plaintext == nil).ToBe(true)

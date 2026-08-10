@@ -9,11 +9,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local X25519: any = if IsCLI then require("../src/Verification/EdDSA/X25519") else require("../Verification/EdDSA/X25519")
+local X25519 = require("../../src/Verification/EdDSA/X25519")
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 

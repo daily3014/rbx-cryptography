@@ -1,19 +1,18 @@
 --[=[
-	SHA-1 Tadashi Test Suite
+	SHA-256 Tadashi Test Suite
 
 	Test Vector Source:
-		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/sha1_test.json
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/sha256_test.json
 --]=]
 
 --!strict
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local SHA1: any = if IsCLI then require("../src/Hashing/SHA1") else require("../Hashing/SHA1")
+local SHA256 = require("../../src/Hashing/SHA2/SHA256")
 local FromHex = Testing.FromHex
 
 type HashTest = {
@@ -21,7 +20,8 @@ type HashTest = {
 	comment: string?,
 	targets: {string}?,
 	flags: {string}?,
-	msg: string,
+	msg: string?,
+	msgPattern: {pattern: string, length: number}?,
 	digest: string,
 	result: string,
 }
@@ -39,10 +39,10 @@ type HashData = {
 	testGroups: {HashGroup},
 }
 
-local SHA1_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/sha1_test.json"
+local SHA256_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/sha256_test.json"
 
-Testing.Describe("SHA-1 Tadashi Tests", function()
-	local Data = Bridge.JSONDecode(Bridge.Get(SHA1_URL)) :: HashData
+Testing.Describe("SHA-256 Tadashi Tests", function()
+	local Data = Bridge.JSONDecode(Bridge.Get(SHA256_URL)) :: HashData
 
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm} ({Group.digestSize}-bit digest)`, function()
@@ -54,7 +54,11 @@ Testing.Describe("SHA-1 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					Testing.Expect(SHA1(FromHex(Test.msg))).ToBe(Test.digest)
+					local Msg = if Test.msgPattern
+						then Testing.ExpandPattern(Test.msgPattern.pattern, Test.msgPattern.length)
+						else FromHex(Test.msg :: string)
+
+					Testing.Expect((SHA256(Msg))).ToBe(Test.digest)
 				end)
 			end
 		end)

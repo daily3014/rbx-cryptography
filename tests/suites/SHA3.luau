@@ -17,11 +17,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local SHA3: any = if IsCLI then require("../src/Hashing/SHA3") else require("../Hashing/SHA3")
+local SHA3 = require("../../src/Hashing/SHA3")
 local FromHex = Testing.FromHex
 
 type DigestTest = {
@@ -65,7 +64,7 @@ local function FetchTestVectors(Url: string): DigestData
 	return Bridge.JSONDecode(Response) :: DigestData
 end
 
-local function RunSha3Tests(Data: DigestData, HashFn: (buffer) -> string)
+local function RunSha3Tests(Data: DigestData, HashFn: (buffer) -> (string, buffer))
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm}`, function()
 			for _, Test in ipairs(Group.tests) do
@@ -87,7 +86,7 @@ local function RunSha3Tests(Data: DigestData, HashFn: (buffer) -> string)
 	end
 end
 
-local function RunShakeTests(Data: DigestData, ShakeFn: (buffer, number) -> string)
+local function RunShakeTests(Data: DigestData, ShakeFn: (buffer, number) -> (string, buffer))
 	for GroupIndex, Group in ipairs(Data.testGroups) do
 		Testing.Describe(`Group_{GroupIndex}: {Data.algorithm}`, function()
 			for _, Test in ipairs(Group.tests) do

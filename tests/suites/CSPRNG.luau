@@ -8,11 +8,9 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Testing = require("../")
 
-local Algorithm = --[[if IsCLI then]] require("../src/Utilities/CSPRNG")-- else require("../Utilities/CSPRNG")
+local Algorithm =  require("../../src/Utilities/CSPRNG")
 
 local function ForceCast<To>(Value: any): To
 	return Value :: To

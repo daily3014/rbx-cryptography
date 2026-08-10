@@ -10,12 +10,11 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local HKDF: any = if IsCLI then require("../src/Hashing/HKDF") else require("../Hashing/HKDF")
-local SHA2: any = if IsCLI then require("../src/Hashing/SHA2") else require("../Hashing/SHA2")
+local HKDF = require("../../src/Hashing/HKDF")
+local SHA2 = require("../../src/Hashing/SHA2")
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 

@@ -1,6 +1,9 @@
 [submodule "bench/libraries/wasm_mklem1024"]
 	path = bench/libraries/wasm_mklem1024
 	url = https://github.com/techs-sus/mklem1024_luau.git
+	ignore = dirty
+	
 [submodule "bench/libraries/wasm_mldsa87"]
 	path = bench/libraries/wasm_mldsa87
 	url = https://github.com/techs-sus/mldsa87_luau.git
+	ignore = dirty

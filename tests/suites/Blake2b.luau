@@ -9,11 +9,10 @@
 --!optimize 2
 --!native
 
-local Bridge = require("./Bridge")
-local IsCLI = Bridge.IsCLI
-local Testing = require("./")
+local Bridge = require("../Bridge")
+local Testing = require("../")
 
-local Blake2b: any = if IsCLI then require("../src/Hashing/Blake2b") else require("../Hashing/Blake2b")
+local Blake2b = require("../../src/Hashing/Blake2b")
 local FromHex = Testing.FromHex
 
 type Blake2bTest = {
