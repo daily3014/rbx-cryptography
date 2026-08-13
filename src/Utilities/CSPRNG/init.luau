@@ -79,7 +79,7 @@ local CSPRNG: CSPRNGModule = {
 	BufferSize = 0,
 	BytesLeft = 0,
 
-	EntropyProviders = {}
+	EntropyProviders = {},
 } :: CSPRNGModule
 
 local INPUT_BUFFER = buffer.create(BLOCK_SIZE)
@@ -152,7 +152,8 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		local Noise1 = math.noise(ClockTime + Index, UnixTime + Index, ClockTime + UnixTime + Index)
 		local Noise2 = math.noise(CurrentTime + Index * 0.1, DateTimeMillis * 0.0001 + Index, ClockTime * 1.5 + Index)
 		local Noise3 = math.noise(UnixTime * 0.01 + Index, ClockTime + DateTimeMillis * 0.001, CurrentTime + Index * 2)
-		local Noise4 = math.noise(DateTimeMillis * 0.00001 + Index, UnixTime + ClockTime + Index, CurrentTime * 0.1 + Index)
+		local Noise4 =
+			math.noise(DateTimeMillis * 0.00001 + Index, UnixTime + ClockTime + Index, CurrentTime * 0.1 + Index)
 
 		buffer.writef32(NoiseBuffer, Index * 4, Noise1 + Noise2 + Noise3 + Noise4)
 	end
@@ -277,10 +278,13 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 			local Truncated = math.min(BytesLeft, buffer.len(Entropy))
 
 			if Extra > 0 and Warn and Provider then
-				warn(`CSPRNG: {Provider} returned {Extra} bytes more than available and was truncated to {Truncated} bytes`)
+				warn(
+					`CSPRNG: {Provider} returned {Extra} bytes more than available and was truncated to {Truncated} bytes`
+				)
 			end
 
 			buffer.copy(EntropyBuffers, Offset, Entropy, 0, Truncated)
+			Offset += Truncated
 		end
 	end
 
@@ -300,6 +304,7 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		AddExtraEntropy(CustomEntropy, false)
 	end
 
+	print(require("./Conversions").ToHex(EntropyBuffers))
 	local KeyMaterial = Blake3(EntropyBuffers, KEY_SIZE + NONCE_SIZE)
 
 	CSPRNG.Key = buffer.create(KEY_SIZE)
@@ -323,7 +328,7 @@ local function GenerateBlock()
 	CSPRNG.Counter += 1
 
 	if CSPRNG.Counter % RekeyThreshold == 0 then
-		GatherEntropy() 
+		GatherEntropy()
 		CSPRNG.Counter = 0
 	end
 end
@@ -411,9 +416,7 @@ local function GetRandomString(Length: number, AsBuffer: boolean?): string | buf
 		buffer.writeu8(Characters, Index, GetIntRange(36, 122))
 	end
 
-	return if AsBuffer
-		then Characters
-		else buffer.tostring(Characters)
+	return if AsBuffer then Characters else buffer.tostring(Characters)
 end
 
 local function GetEd25519RandomBytes(): buffer

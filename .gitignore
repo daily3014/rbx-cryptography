@@ -2,8 +2,11 @@
 /*.rbxl.lock
 /*.rbxl
 /*.rbxm
+/*.exe
 pesde.lock
 
+.vscode/
+testing/
 luau_packages/
 lune_packages/
 .pesde/
