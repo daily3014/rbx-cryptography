@@ -1,0 +1,13 @@
+syntax = "All"
+column_width = inf
+line_endings = "Windows"
+indent_type = "Tabs"
+indent_width = 4
+quote_style = "AutoPreferDouble"
+call_parentheses = "Always"
+collapse_simple_statement = "Never"
+space_after_function_names = "Never"
+block_newline_gaps = "Never"
+
+[sort_requires]
+enabled = false
