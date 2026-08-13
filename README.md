@@ -36,7 +36,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@3.1.0"
+cryptography = "daily3014/cryptography@3.1.2"
 ```
 
 ### Pesde
@@ -126,50 +126,50 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Ben
 
 ### Hashing / Checksum
 
-| Algorithm | Data Size | This Library | HashLib | Alternative | Other Libraries | Improvement |
-|-----------|-----------|--------------|---------|-------------|-----------------|-------------|
-| SHA-256 | 20k | **271 μs** | 2058 μs | 493 μs (Old Version) | 596 μs (Dekkonot) | **7.6x faster** than HashLib |
-| SHA-512 | 20k | **421 μs** | 4348 μs | 1066 μs (Dekkonot) | - | **10.3x faster** than HashLib |
-| SHA3-512 | 20k | **826 μs** | 10.60 ms | - | - | **12.8x faster** than HashLib |
-| BLAKE3 | 20k | **133 μs** | - | - | - | - |
-| HMAC-BLAKE3 | 20k | **145 μs** | - | - | - | - |
-| KMAC-128 | 20k | **443 μs** | - | - | - | - |
-| KMAC-256 | 20k | **501 μs** | - | - | - | - |
-| Adler-32 | 200k | **163 μs** | - | 1.65 ms (Naive Approach) | - | **10.1x faster** |
-| CRC32 | 200k | **1.43 ms** | - | 6.26 ms (DevForum) | - | **4.4x faster** |
+| Algorithm   | Data Size | This Library | HashLib  | Alternative              | Other Libraries   | Improvement                   |
+| ----------- | --------- | ------------ | -------- | ------------------------ | ----------------- | ----------------------------- |
+| SHA-256     | 20k       | **271 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **7.6x faster** than HashLib  |
+| SHA-512     | 20k       | **421 μs**   | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **10.3x faster** than HashLib |
+| SHA3-512    | 20k       | **826 μs**   | 10.60 ms | -                        | -                 | **12.8x faster** than HashLib |
+| BLAKE3      | 20k       | **133 μs**   | -        | -                        | -                 | -                             |
+| HMAC-BLAKE3 | 20k       | **145 μs**   | -        | -                        | -                 | -                             |
+| KMAC-128    | 20k       | **443 μs**   | -        | -                        | -                 | -                             |
+| KMAC-256    | 20k       | **501 μs**   | -        | -                        | -                 | -                             |
+| Adler-32    | 200k      | **163 μs**   | -        | 1.65 ms (Naive Approach) | -                 | **10.1x faster**              |
+| CRC32       | 200k      | **1.43 ms**  | -        | 6.26 ms (DevForum)       | -                 | **4.4x faster**               |
 
 ### Encryption
 
-| Algorithm | Data Size | This Library | Alternative | Other Libraries | Improvement |
-|-----------|-----------|--------------|-------------|-----------------|-------------|
-| ChaCha20 (Encrypt) | 20k | **177 μs** | 7.87 ms (EncryptedNet) | - | **44.5x faster** |
-| ChaCha20 (Roundtrip) | 20k | **338 μs** | ~15 ms (EncryptedNet) | - | **44.4x faster** |
-| ChaCha20-Poly1305 (Encrypt) | 20k | **232 μs** | - | - | - |
-| ChaCha20-Poly1305 (Roundtrip) | 20k | **448 μs** | - | - | - |
-| Simon (Encrypt) | 20k | **239 μs** | - | - | - |
-| Simon (Roundtrip) | 20k | **466 μs** | - | - | - |
-| Speck (Encrypt) | 20k | **193 μs** | - | - | - |
-| Speck (Roundtrip) | 20k | **388 μs** | - | - | - |
-| AES-GCM (Encrypt) | 20k | **833 μs** | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | - | **2.3x faster** |
-| AES-GCM (Roundtrip) | 20k | **1.5 ms** | - | - | - |
-| XOR (Encrypt) | 1 million | **1.10 ms** | ~49.5 ms (Devfourm) | ~171000 ms (daily) | **155,454x faster** |
-| XOR (Roundtrip) | 1 million | **2.20 ms** | 98.9 ms (Devfourm) | ~342000 ms (daily) | **155,454x faster** |
+| Algorithm                     | Data Size | This Library | Alternative                                | Other Libraries    | Improvement         |
+| ----------------------------- | --------- | ------------ | ------------------------------------------ | ------------------ | ------------------- |
+| ChaCha20 (Encrypt)            | 20k       | **177 μs**   | 7.87 ms (EncryptedNet)                     | -                  | **44.5x faster**    |
+| ChaCha20 (Roundtrip)          | 20k       | **338 μs**   | ~15 ms (EncryptedNet)                      | -                  | **44.4x faster**    |
+| ChaCha20-Poly1305 (Encrypt)   | 20k       | **232 μs**   | -                                          | -                  | -                   |
+| ChaCha20-Poly1305 (Roundtrip) | 20k       | **448 μs**   | -                                          | -                  | -                   |
+| Simon (Encrypt)               | 20k       | **239 μs**   | -                                          | -                  | -                   |
+| Simon (Roundtrip)             | 20k       | **466 μs**   | -                                          | -                  | -                   |
+| Speck (Encrypt)               | 20k       | **193 μs**   | -                                          | -                  | -                   |
+| Speck (Roundtrip)             | 20k       | **388 μs**   | -                                          | -                  | -                   |
+| AES-GCM (Encrypt)             | 20k       | **833 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **2.3x faster**     |
+| AES-GCM (Roundtrip)           | 20k       | **1.5 ms**   | -                                          | -                  | -                   |
+| XOR (Encrypt)                 | 1 million | **1.10 ms**  | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **155,454x faster** |
+| XOR (Roundtrip)               | 1 million | **2.20 ms**  | 98.9 ms (Devfourm)                         | ~342000 ms (daily) | **155,454x faster** |
 
 ### Digital Signatures & Key Exchange
 
-| Algorithm | Operation | Time | Alternative | Improvement |
-|-----------|-----------|------|-------------|-------------|
-| EdDSA (Roundtrip) | Sign+Verify | **691 μs** | - | - |
-| ML-DSA-44 (Roundtrip) | Sign+Verify | **3.65 ms** | - | - |
-| ML-KEM-512 (Roundtrip) | Encap+Decap | **754 μs** | - | - |
+| Algorithm              | Operation   | Time        | Alternative | Improvement |
+| ---------------------- | ----------- | ----------- | ----------- | ----------- |
+| EdDSA (Roundtrip)      | Sign+Verify | **691 μs**  | -           | -           |
+| ML-DSA-44 (Roundtrip)  | Sign+Verify | **3.65 ms** | -           | -           |
+| ML-KEM-512 (Roundtrip) | Encap+Decap | **754 μs**  | -           | -           |
 
 ### Utilities
 
-| Algorithm | Data Size | Time | Alternative | Improvement |
-|-----------|-----------|------|-------------|-------------|
+| Algorithm          | Data Size | Time       | Alternative                      | Improvement                                               |
+| ------------------ | --------- | ---------- | -------------------------------- | --------------------------------------------------------- |
 | Base64 (Roundtrip) | 1 million | **3.77ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **2.4x faster** than Lute<br>**3.2x faster** than Reselim |
 
-*Roundtrip: Complete encrypt/decrypt or sign/verify cycle*
+_Roundtrip: Complete encrypt/decrypt or sign/verify cycle_
 
 ## Testing and Benchmarking
 
@@ -209,7 +209,4 @@ This project is licensed under the MIT License. See the [LICENSE](./LICENSE) fil
 
 [DevForum](https://devforum.roblox.com/t/fastest-cryptography-library-for-roblox/3680271) • [Discord](https://discord.gg/Fg3sM8qKPp) • [Docs](https://xoifaii.github.io/) • [Wally](https://wally.run/package/daily3014/cryptography) • [Pesde](https://pesde.dev/packages/daily3014/cryptography)
 
-
 </div>
-
-
