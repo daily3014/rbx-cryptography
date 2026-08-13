@@ -304,7 +304,6 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 		AddExtraEntropy(CustomEntropy, false)
 	end
 
-	print(require("./Conversions").ToHex(EntropyBuffers))
 	local KeyMaterial = Blake3(EntropyBuffers, KEY_SIZE + NONCE_SIZE)
 
 	CSPRNG.Key = buffer.create(KEY_SIZE)
