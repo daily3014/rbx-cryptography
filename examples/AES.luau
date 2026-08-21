@@ -26,10 +26,8 @@ Cryptography library: Advanced Encryption Standard (Galois/Counter Mode)
 --]]
 --!strict
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 -- Get the libraries
-local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
+local Cryptography = require(path.to.rbx-cryptography)
 local AES = Cryptography.Encryption.AES
 local CSPRNG = Cryptography.Utilities.CSPRNG
 

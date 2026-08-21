@@ -97,7 +97,6 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [ChaCha20](./src/Encryption/AEAD/ChaCha.luau): Stream cipher ([RFC 8439](https://doi.org/10.17487/RFC8439))
 - [AES-GCM](./src/Encryption/AES.luau): Advanced Encryption Standard
-- [XOR](./src/Encryption/XOR.luau): Simple additive cipher
 
 ### Utilities
 
@@ -105,6 +104,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [Base64](./src/Utilities/Base64.luau): Encode and decode
 - [Hexadecimal](./src/Utilities/Conversions.luau): Buffer to/from hex string conversion
+- [XOR](./src/Utilities/XOR.luau): Simple additive cipher, useful as a one-time pad
 
 **Random Generation**
 

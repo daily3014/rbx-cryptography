@@ -389,22 +389,6 @@ Package("rbx-cryptography", function()
 				AES.Decrypt(Ciphertext, Key, InitVector, Tag)
 			end, Message, Key32, Nonce12)
 		end)
-
-		Group("XOR", function()
-			local XOR = Crypto.Encryption.XOR
-			local Key8 = buffer.fromstring(string.rep("A", 8))
-			local Key4 = buffer.fromstring(string.rep("A", 4))
-
-			for _, Key in { Key32, Key8, Key4 } do
-				local Size = buffer.len(Key)
-
-				Throughput(`Encrypt {Size}`, XOR, Message, Key)
-				Throughput(`Roundtrip {Size}`, function(Plaintext: buffer, Key: buffer)
-					local Ciphertext = XOR(Plaintext, Key)
-					XOR(Ciphertext, Key)
-				end, Message, Key)
-			end
-		end)
 	end)
 
 	Group("Utilities", function()
@@ -428,6 +412,22 @@ Package("rbx-cryptography", function()
 			
 			Throughput("RandomBytes", CSPRNG.RandomBytes, MessageSize)
 			Rate("RandomFloat", 200, CSPRNG.Random)
+		end)
+
+		Group("XOR", function()
+			local XOR = Crypto.Utilities.XOR
+			local Key8 = buffer.fromstring(string.rep("A", 8))
+			local Key4 = buffer.fromstring(string.rep("A", 4))
+
+			for _, Key in { Key32, Key8, Key4 } do
+				local Size = buffer.len(Key)
+
+				Throughput(`Cipher {Size}`, XOR, Message, Key)
+				Throughput(`Roundtrip {Size}`, function(Plaintext: buffer, Key: buffer)
+					local Ciphertext = XOR(Plaintext, Key)
+					XOR(Ciphertext, Key)
+				end, Message, Key)
+			end
 		end)
 	end)
 
@@ -1202,8 +1202,6 @@ local BenchStructure: { BenchSection } = {
 					},
 				},
 			},
-
-			{ Name = "XOR (Encrypt)", Target = "Encryption/XOR/Encrypt 32", Unit = "Throughput" },
 		},
 	},
 
@@ -1313,6 +1311,8 @@ local BenchStructure: { BenchSection } = {
 					},
 				},
 			},
+
+			{ Name = "XOR (Encrypt)", Target = "Utilities/XOR/Encrypt 32", Unit = "Throughput" },
 		},
 	},
 }

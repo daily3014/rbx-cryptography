@@ -20,7 +20,7 @@ local function ToHex(Buffer: buffer) : string
 end
 
 
-local XOR = require("../../src/Encryption/XOR")
+local XOR = require("../../src/Utilities/XOR")
 
 local TestVectors: {TestVector} = {
 	{

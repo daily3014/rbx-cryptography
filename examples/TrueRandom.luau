@@ -10,9 +10,8 @@
 --]=]
 --!strict
 local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
+local Cryptography = require(path.to.rbx-cryptography)
 local CSPRNG = Cryptography.Utilities.CSPRNG
 
 -- random.org returns the requested number of raw random bytes

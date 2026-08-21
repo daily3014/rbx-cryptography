@@ -27,10 +27,10 @@
 --!optimize 2
 --!native
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
+local Cryptography = require(path.to.rbx-cryptography)
 local Argon2id = Cryptography.Hashing.Argon2id
 local CSPRNG = Cryptography.Utilities.CSPRNG
+local CtCompare = Cryptography.Utilities.CtCompare
 
 type StoredPassword = {
 	Hash: buffer,
@@ -45,20 +45,6 @@ local function GenerateRandomSalt(): buffer
 	return CSPRNG.RandomBytes(SALT_SIZE)
 end
 
-local function ConstantTimeEquals(Buffer1: buffer, Buffer2: buffer): boolean
-	local Length = buffer.len(Buffer1)
-	if Length ~= buffer.len(Buffer2) then
-		return false
-	end
-
-	local Result = 0
-	for I = 0, Length - 1 do
-		Result = bit32.bor(Result, bit32.bxor(buffer.readu8(Buffer1, I), buffer.readu8(Buffer2, I)))
-	end
-
-	return Result == 0
-end
-
 local function CreatePasswordHash(Password: string): (buffer, buffer)
 	local Salt = GenerateRandomSalt()
 	local PasswordBuffer = buffer.fromstring(Password)
@@ -69,7 +55,7 @@ end
 local function VerifyPassword(Password: string, StoredHash: buffer, Salt: buffer): boolean
 	local PasswordBuffer = buffer.fromstring(Password)
 	local _, ComputedHash = Argon2id(PasswordBuffer, Salt)
-	return ConstantTimeEquals(ComputedHash, StoredHash)
+	return CtCompare(ComputedHash, StoredHash)
 end
 
 local function CreateStoredPassword(Password: string): StoredPassword

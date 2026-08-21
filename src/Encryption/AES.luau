@@ -30,6 +30,7 @@ type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer:
 type BlockCipher = (RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number) -> ()
 
 local AES = {}
+local CtCompare = require("../Utilities/Functions").CtCompare
 
 local ALL_TABLES = buffer.create(32 * 16 * 16)
 local DOUBLES = buffer.create(128 * 16)
@@ -1390,24 +1391,6 @@ local function SelectBlockCipher(MaterialLength: number): BlockCipher
 	return EncryptBlock128
 end
 
-local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
-	local Length1 = buffer.len(Buffer1)
-	local Length2 = buffer.len(Buffer2)
-	if Length1 ~= Length2 then
-		return false
-	end
-
-	local Difference = 0
-	for Index = 0, Length1 - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(
-			buffer.readu8(Buffer1, Index),
-			buffer.readu8(Buffer2, Index)
-			))
-	end
-
-	return Difference == 0
-end
-
 local function BuildShoupTables(H: buffer): buffer
 	if TABLES_KEY_VALID
 		and buffer.readu32(LAST_H, 0) == buffer.readu32(H, 0)
@@ -1936,11 +1919,11 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 	GcmHash(Tables, AuthData, AADLen, Ciphertext, CryptLen, S)
 	Gctr(RoundKeys, KeyMaterialLength, J0, S, 16, ComputedTag)
 
-	if not ConstantTimeCompare(Tag, ComputedTag) then
+	if not CtCompare(Tag, ComputedTag) then
 		return nil
 	end
 
 	return OutputBuffer
 end
 
-return AES
+return AES

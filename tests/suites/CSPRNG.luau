@@ -36,6 +36,26 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 
 	Testing.Test("RandomInt", function()
 		Testing.Expect(function()
+			Algorithm.RandomInt(-1) -- Min is used as the max, range would be 1 .. -1, which is invalid
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomInt(math.huge)
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomInt(0, math.huge)
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomInt(math.nan)
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomInt(0, math.nan)
+		end).ToThrow()
+
+		Testing.Expect(function()
 			Algorithm.RandomInt(0, -1)
 		end).ToThrow()
 
@@ -71,6 +91,26 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 	end)
 
 	Testing.Test("Random Number", function()
+		Testing.Expect(function()
+			Algorithm.RandomNumber(-1) -- Min is used as the max, range would be 0 .. -1, which is invalid
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomNumber(math.huge)
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomNumber(0, math.huge)
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomNumber(math.nan)
+		end).ToThrow()
+
+		Testing.Expect(function()
+			Algorithm.RandomNumber(0, math.nan)
+		end).ToThrow()
+
 		Testing.Expect(function()
 			Algorithm.RandomNumber(0, -1)
 		end).ToThrow()
@@ -151,11 +191,11 @@ Testing.Describe("CSPRNG Algorithm Tests", function()
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomString(10, ForceCast<<boolean>>(123))
+			Algorithm.RandomString(10, ForceCast<<false>>(123))
 		end).ToThrow()
 
 		Testing.Expect(function()
-			Algorithm.RandomString(10, ForceCast<<boolean>>("hello"))
+			Algorithm.RandomString(10, ForceCast<<false>>("hello"))
 		end).ToThrow()
 
 		Testing.Expect(function()

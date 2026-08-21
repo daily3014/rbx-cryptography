@@ -27,6 +27,7 @@
 
 local ChaCha = require("@self/ChaCha")
 local Poly1305 = require("@self/Poly1305")
+local CtCompare = require("../Utilities/Functions").CtCompare
 
 local QWORD = 8
 
@@ -52,23 +53,7 @@ local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) | typeof(C
 	end
 end
 
-local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
-	local Length1 = buffer.len(Buffer1)
-	local Length2 = buffer.len(Buffer2)
-	if Length1 ~= Length2 then
-		return false
-	end
 
-	local Difference = 0
-	for Index = 0, Length1 - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(
-			buffer.readu8(Buffer1, Index),
-			buffer.readu8(Buffer2, Index)
-			))
-	end
-
-	return Difference == 0
-end
 
 local function ConstructAuthData(AAD: buffer, Ciphertext: buffer): buffer
 	local AADLength = buffer.len(AAD)
@@ -241,7 +226,7 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	local AuthData = ConstructAuthData(AAD, Ciphertext)
 	local ExpectedTag = Poly1305(AuthData, AuthenticationKey)
 
-	if not ConstantTimeCompare(Tag, ExpectedTag) then
+	if not CtCompare(Tag, ExpectedTag) then
 		return nil
 	end
 

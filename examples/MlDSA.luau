@@ -1,8 +1,7 @@
 --!strict
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Get the library
-local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
+local Cryptography = require(path.to.rbx-cryptography)
 local MLDSA = Cryptography.Verification.MlDSA
 local CSPRNG = Cryptography.Utilities.CSPRNG
 

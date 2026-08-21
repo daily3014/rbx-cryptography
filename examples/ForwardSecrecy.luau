@@ -8,9 +8,8 @@
 --]=]
 --!strict
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Get the library
-local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
+local Cryptography = require(path.to.rbx-cryptography)
 
 -- Create variables for easy access
 local Blake3 = Cryptography.Hashing.Blake3
