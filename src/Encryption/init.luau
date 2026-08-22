@@ -2,8 +2,7 @@
 
 local Algorithms = table.freeze({
 	AEAD = require("@self/AEAD"),
-	AES = require("@self/AES"),
-	XOR = require("@self/XOR")
+	AES = require("@self/AES")
 })
 
 return Algorithms

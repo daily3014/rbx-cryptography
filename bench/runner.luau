@@ -25,6 +25,8 @@ type Unit = { Ratio: number, Name: string }
 type BenchNode = { Parent: BenchNode?, Name: string, Note: string?, [any]: any }
 type Sample = {
 	Name: string,
+	Size: number,
+
 	Best: number,
 	Median: number,
 	Selected: number,
@@ -185,6 +187,8 @@ local function Measure<Args...>(Name: string, Iterations: number, Body: (Args...
 
 	return {
 		Name = Name,
+		Size = MessageSize,
+
 		Best = Best,
 		Median = Median,
 		Selected = Selected,
@@ -195,6 +199,8 @@ end
 local function FromData(Name: string, Time: number): Sample
 	return {
 		Name = Name,
+		Size = MessageSize,
+
 		Best = Time,
 		Median = Time,
 		Selected = Time,
@@ -266,7 +272,7 @@ end
 local function Throughput<Args...>(Name: string, Body: (Args...) -> ...any, ...: Args...)
 	assert(ActiveNode, "Called Throughput(...) without Group/Package")
 	local Result = Measure(Name, Iterations, Body, ...)
-	local Amount, Unit = CalculateThroughput(Result.Selected, MessageSize)
+	local Amount, Unit = CalculateThroughput(Result.Selected, Result.Size)
 
 	ActiveNode[Name] = Result
 	Emit(string.format("%-14s %10.2f %s", Result.Name, Amount, Unit) .. Noisy(Result))
@@ -661,6 +667,63 @@ Package("Luau", function()
 
 			Rate("RandomFloat", 200, math.random :: () -> ())
 		end)
+
+		Group("XOR", function()
+			local Key32String = string.rep("A", 32)
+
+			-- way too slow, even with one iteration..
+			local OldIterations = Iterations
+			MessageSize = 100_000
+			local MessageString = string.rep("A", MessageSize)
+
+			Iterations = math.min(Iterations, 10)
+			Throughput(`string.char`, function(Message: string, Key: string)
+				local MessageLength, KeyLength = #Message, #Key
+
+				local Result = ""
+				for Index = 1, MessageLength do
+					local Byte = string.byte(Message, Index, Index)
+					local KeyPosition = ((Index - 1) % KeyLength) + 1
+					local KeyByte = string.byte(Key, KeyPosition, KeyPosition)
+
+					Result ..= string.char(bit32.bxor(Byte, KeyByte))
+				end
+
+				return Result
+			end, MessageString, Key32String)
+
+			Iterations = OldIterations
+			MessageSize = buffer.len(Message)
+			MessageString = buffer.tostring(Message)
+
+			Throughput(`string.gsub`, function(Message: string, Key: string)
+				local Index, KeyLength = 0, #Key
+				return Message:gsub(".", function(Character: string)
+					Index += 1
+
+					local Byte = string.byte(Character)
+					local KeyPosition = ((Index - 1) % KeyLength) + 1
+					local KeyByte = string.byte(Key, KeyPosition, KeyPosition)
+
+					return string.char(bit32.bxor(Byte, KeyByte))
+				end)
+			end, MessageString, Key32String)
+
+			Throughput(`table.concat`, function(Message: string, Key: string)
+				local KeyLength = #Key
+				local Characters = string.split(Message, "")
+
+				for Index, Character in Characters do
+					local Byte = string.byte(Message, Index, Index)
+					local KeyPosition = ((Index - 1) % KeyLength) + 1
+					local KeyByte = string.byte(Key, KeyPosition, KeyPosition)
+
+					Characters[Index] = string.char(bit32.bxor(Byte, KeyByte))
+				end
+
+				return table.concat(Characters, "")
+			end, MessageString, Key32String)
+		end)
 	end)
 end)
 
@@ -759,7 +822,6 @@ Package("ccryptolib", function()
 			Rate("KeyGen", 200, X25519.publicKey, SecretKeyA :: any)
 			Rate("Exchange", 200, X25519.exchange, SecretKeyA :: any, PublicKeyB)
 		end)
-
 	end)
 end)
 
@@ -894,7 +956,7 @@ local function FormatThroughput(Sample: Sample?, CustomBytes: number?): (string,
 		return "-", 0
 	end
 
-	local Size = CustomBytes or MessageSize
+	local Size = CustomBytes or Sample.Size or MessageSize
 
 	local Amount, UnitStr = CalculateThroughput(Sample.Selected, Size)
 	local RawMBs = CalculateThroughput(Sample.Selected, Size, "Megabyte")
@@ -1312,7 +1374,30 @@ local BenchStructure: { BenchSection } = {
 				},
 			},
 
-			{ Name = "XOR (Encrypt)", Target = "Utilities/XOR/Encrypt 32", Unit = "Throughput" },
+			{
+				Name = "XOR",
+				Target = "Utilities/XOR/Cipher 32",
+				Unit = "Throughput",
+				Alternatives = {
+					{
+						Package = "Luau",
+						Path = "Utilities/XOR/string.char",
+						Label = "string.char",
+					},
+
+					{
+						Package = "Luau",
+						Path = "Utilities/XOR/string.gsub",
+						Label = "string.gsub",
+					},
+
+					{
+						Package = "Luau",
+						Path = "Utilities/XOR/table.concat",
+						Label = "table.concat",
+					},
+				},
+			},
 		},
 	},
 }
