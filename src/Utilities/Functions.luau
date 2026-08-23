@@ -1,52 +1,77 @@
+--[=[
+	Cryptography library: Constant Time Utilities
+
+	Every Ct function is branch free on its condition. Conditions take either a
+	0 or 1 bit or a full 0xFFFFFFFF mask, so a mask returning compare feeds a
+	select directly with no boolean in between. CtCompare returns a boolean and
+	so branches, use it only where the caller was going to branch anyway.
+
+	Example usage:
+		-- ML-KEM implicit rejection, nothing branches on the secret
+		local ValidMask = Functions.CtCompareMask(Ciphertext, Recomputed)
+		Functions.CtSelectBuffer(ValidMask, SharedSecret, KPrime, JOutput)
+--]=]
+
 --!strict
 --!optimize 2
 --!native
 
 local Functions = {}
 
---- Compares two buffers in constant time, only exiting early if they have mismatching lengths
-function Functions.CtCompare(BufferA: buffer, BufferB: buffer): boolean
-	local Length = buffer.len(BufferA)
-	if Length ~= buffer.len(BufferB) then
-		return false
-	end
-
-	local Difference = 0
-	for Index = 0, Length - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu8(BufferA, Index), buffer.readu8(BufferB, Index)))
-	end
-
-	return Difference == 0
+local function CtNonZeroMask(X: number): number
+	return bit32.arshift(bit32.bor(X, -X), 31)
 end
 
---- Checks if a buffer is all zeroes in constant time
-function Functions.CtIsAllZero(Buffer: buffer): boolean
-	local Length = buffer.len(Buffer)
-	local Words = Length // 4
-	local Remainder = Length % 4
-	local Acc = 0
+local function CtIsZeroMask(X: number): number
+	return bit32.bnot(CtNonZeroMask(X))
+end
 
-	for Index = 0, Words - 1 do
-		Acc = bit32.bor(Acc, buffer.readu32(Buffer, Index * 4))
+local function CtCompareMask(BufferA: buffer, BufferB: buffer): number
+	local Length = buffer.len(BufferA)
+	if Length ~= buffer.len(BufferB) then
+		return 0x00000000
 	end
 
-	local ByteOffset = Words * 4
-	for Index = 0, Remainder - 1 do
-		Acc = bit32.bor(Acc, buffer.readu8(Buffer, ByteOffset + Index))
+	local WordBytes = Length - bit32.band(Length, 3)
+	local Difference = 0
+
+	for Offset = 0, WordBytes - 4, 4 do
+		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)))
+	end
+
+	for Offset = WordBytes, Length - 1 do
+		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu8(BufferA, Offset), buffer.readu8(BufferB, Offset)))
+	end
+
+	return CtIsZeroMask(Difference)
+end
+
+local function CtCompare(BufferA: buffer, BufferB: buffer): boolean
+	return CtCompareMask(BufferA, BufferB) ~= 0
+end
+
+local function CtIsAllZero(Buffer: buffer): boolean
+	local Length = buffer.len(Buffer)
+	local WordBytes = Length - bit32.band(Length, 3)
+	local Acc = 0
+
+	for Offset = 0, WordBytes - 4, 4 do
+		Acc = bit32.bor(Acc, buffer.readu32(Buffer, Offset))
+	end
+
+	for Offset = WordBytes, Length - 1 do
+		Acc = bit32.bor(Acc, buffer.readu8(Buffer, Offset))
 	end
 
 	return Acc == 0
 end
 
---- Swaps contents of BufferA and BufferB in constant time if ConditionBit == 1 (or non-zero)
-function Functions.CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buffer)
-	local Mask = if ConditionBit ~= 0 then 0xFFFFFFFF else 0
+local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buffer)
+	local Mask = CtNonZeroMask(ConditionBit)
 	local Length = buffer.len(BufferA)
-	local Words = Length // 4
-	local Remainder = Length % 4
+	local WordBytes = Length - bit32.band(Length, 3)
 
-	for Index = 0, Words - 1 do
-		local Offset = Index * 4
+	for Offset = 0, WordBytes - 4, 4 do
 		local A = buffer.readu32(BufferA, Offset)
 		local B = buffer.readu32(BufferB, Offset)
 		local Delta = bit32.band(Mask, bit32.bxor(A, B))
@@ -54,9 +79,7 @@ function Functions.CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB:
 		buffer.writeu32(BufferB, Offset, bit32.bxor(B, Delta))
 	end
 
-	local ByteOffset = Words * 4
-	for Index = 0, Remainder - 1 do
-		local Offset = ByteOffset + Index
+	for Offset = WordBytes, Length - 1 do
 		local A = buffer.readu8(BufferA, Offset)
 		local B = buffer.readu8(BufferB, Offset)
 		local Delta = bit32.band(Mask, bit32.bxor(A, B))
@@ -65,24 +88,19 @@ function Functions.CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB:
 	end
 end
 
---- Copies Source into Destination in constant time if ConditionBit == 1 (or non-zero)
-function Functions.CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffer)
-	local Mask = if ConditionBit ~= 0 then 0xFFFFFFFF else 0
+local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffer)
+	local Mask = CtNonZeroMask(ConditionBit)
 	local Length = buffer.len(Destination)
-	local Words = Length // 4
-	local Remainder = Length % 4
+	local WordBytes = Length - bit32.band(Length, 3)
 
-	for Index = 0, Words - 1 do
-		local Offset = Index * 4
+	for Offset = 0, WordBytes - 4, 4 do
 		local DestValue = buffer.readu32(Destination, Offset)
 		local SrcValue = buffer.readu32(Source, Offset)
 		local Delta = bit32.band(Mask, bit32.bxor(DestValue, SrcValue))
 		buffer.writeu32(Destination, Offset, bit32.bxor(DestValue, Delta))
 	end
 
-	local ByteOffset = Words * 4
-	for Index = 0, Remainder - 1 do
-		local Offset = ByteOffset + Index
+	for Offset = WordBytes, Length - 1 do
 		local DestValue = buffer.readu8(Destination, Offset)
 		local SrcValue = buffer.readu8(Source, Offset)
 		local Delta = bit32.band(Mask, bit32.bxor(DestValue, SrcValue))
@@ -90,63 +108,44 @@ function Functions.CtCopyIf(ConditionBit: number, Destination: buffer, Source: b
 	end
 end
 
---- Selects between SourceTrue and SourceFalse into Destination in constant time via ConditionBit
-function Functions.CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceTrue: buffer, SourceFalse: buffer)
-	local Mask = if ConditionBit ~= 0 then 0xFFFFFFFF else 0
+local function CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceTrue: buffer, SourceFalse: buffer)
+	local Mask = CtNonZeroMask(ConditionBit)
 	local InvMask = bit32.bnot(Mask)
 	local Length = buffer.len(Destination)
-	local Words = Length // 4
-	local Remainder = Length % 4
+	local WordBytes = Length - bit32.band(Length, 3)
 
-	for Index = 0, Words - 1 do
-		local Offset = Index * 4
+	for Offset = 0, WordBytes - 4, 4 do
 		local WordTrue = buffer.readu32(SourceTrue, Offset)
 		local WordFalse = buffer.readu32(SourceFalse, Offset)
-		local Selected = bit32.bor(bit32.band(WordTrue, Mask), bit32.band(WordFalse, InvMask))
-		buffer.writeu32(Destination, Offset, Selected)
+		buffer.writeu32(Destination, Offset, bit32.bor(bit32.band(WordTrue, Mask), bit32.band(WordFalse, InvMask)))
 	end
 
-	local ByteOffset = Words * 4
-	for Index = 0, Remainder - 1 do
-		local Offset = ByteOffset + Index
+	for Offset = WordBytes, Length - 1 do
 		local ByteTrue = buffer.readu8(SourceTrue, Offset)
 		local ByteFalse = buffer.readu8(SourceFalse, Offset)
-		local Selected = bit32.bor(bit32.band(ByteTrue, Mask), bit32.band(ByteFalse, InvMask))
-		buffer.writeu8(Destination, Offset, Selected)
+		buffer.writeu8(Destination, Offset, bit32.bor(bit32.band(ByteTrue, Mask), bit32.band(ByteFalse, InvMask)))
 	end
 end
 
---- Returns 0xFFFFFFFF if X == 0, else 0x00000000
-function Functions.CtIsZeroMask(X: number): number
-	local Diff = bit32.bor(X, -X)
-	return bit32.bnot(bit32.arshift(Diff, 31))
+local function CtEqMask(A: number, B: number): number
+	return CtIsZeroMask(bit32.bxor(A, B))
 end
 
---- Returns 0xFFFFFFFF if A == B, else 0x00000000
-function Functions.CtEqMask(A: number, B: number): number
-	return Functions.CtIsZeroMask(bit32.bxor(A, B))
-end
-
---- Returns 0xFFFFFFFF if A < B, else 0x00000000
-function Functions.CtLtMask(A: number, B: number): number
+local function CtLtMask(A: number, B: number): number
 	local Diff = bit32.bxor(A, bit32.bor(bit32.bxor(A, B), bit32.bxor(A - B, B)))
 	return bit32.arshift(Diff, 31)
 end
 
---- Returns A if Mask == 0xFFFFFFFF, or B if Mask == 0x00000000
-function Functions.CtSelect(Mask: number, A: number, B: number): number
+local function CtSelect(Mask: number, A: number, B: number): number
 	return bit32.bxor(B, bit32.band(Mask, bit32.bxor(A, B)))
 end
 
---- Swaps A and B if ConditionBit == 1 (or non-zero)
-function Functions.CtSwap(ConditionBit: number, A: number, B: number): (number, number)
-	local Mask = if ConditionBit ~= 0 then 0xFFFFFFFF else 0
-	local Delta = bit32.band(Mask, bit32.bxor(A, B))
+local function CtSwap(ConditionBit: number, A: number, B: number): (number, number)
+	local Delta = bit32.band(CtNonZeroMask(ConditionBit), bit32.bxor(A, B))
 	return bit32.bxor(A, Delta), bit32.bxor(B, Delta)
 end
 
---- Concatenates multiple buffers into a single buffer
-function Functions.Concatenate(...: buffer): buffer
+local function Concatenate(...: buffer): buffer
 	local Buffers = {...}
 	local TotalLength = 0
 
@@ -164,5 +163,19 @@ function Functions.Concatenate(...: buffer): buffer
 
 	return Result
 end
+
+Functions.CtNonZeroMask = CtNonZeroMask
+Functions.CtIsZeroMask = CtIsZeroMask
+Functions.CtCompareMask = CtCompareMask
+Functions.CtCompare = CtCompare
+Functions.CtIsAllZero = CtIsAllZero
+Functions.CtSwapBuffers = CtSwapBuffers
+Functions.CtCopyIf = CtCopyIf
+Functions.CtSelectBuffer = CtSelectBuffer
+Functions.CtEqMask = CtEqMask
+Functions.CtLtMask = CtLtMask
+Functions.CtSelect = CtSelect
+Functions.CtSwap = CtSwap
+Functions.Concatenate = Concatenate
 
 return Functions

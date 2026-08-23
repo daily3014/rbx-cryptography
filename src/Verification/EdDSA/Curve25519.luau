@@ -63,13 +63,15 @@ local function LadderStep(DifferencePoint: buffer, Point1: buffer, Point2: buffe
 end
 
 local function SwapPoint(ConditionBit: number, PointA: buffer, PointB: buffer)
-	local Mask = if ConditionBit ~= 0 then 0xFFFFFFFF else 0
-	for Offset = 0, MONTGOMERY_POINT_SIZE - 4, 4 do
-		local A = buffer.readu32(PointA, Offset)
-		local B = buffer.readu32(PointB, Offset)
-		local Delta = bit32.band(Mask, bit32.bxor(A, B))
-		buffer.writeu32(PointA, Offset, bit32.bxor(A, Delta))
-		buffer.writeu32(PointB, Offset, bit32.bxor(B, Delta))
+	local LowMask = integer.create(bit32.arshift(bit32.bor(ConditionBit, -ConditionBit), 31)) :: integer
+	local Mask = integer.bor(LowMask, integer.lshift(LowMask, 32i))
+
+	for Offset = 0, MONTGOMERY_POINT_SIZE - 8, 8 do
+		local A = buffer.readinteger(PointA, Offset)
+		local B = buffer.readinteger(PointB, Offset)
+		local Delta = integer.band(Mask, integer.bxor(A, B))
+		buffer.writeinteger(PointA, Offset, integer.bxor(A, Delta))
+		buffer.writeinteger(PointB, Offset, integer.bxor(B, Delta))
 	end
 end
 

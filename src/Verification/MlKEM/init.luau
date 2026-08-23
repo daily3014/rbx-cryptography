@@ -28,6 +28,7 @@ local SHA3 = require("../Hashing/SHA3")
 local Functions = require("../Utilities/Functions")
 local CtCompare = Functions.CtCompare
 local CtSelectBuffer = Functions.CtSelectBuffer
+local CtCompareMask = Functions.CtCompareMask
 
 local DECAP_G_INPUT = buffer.create(64)
 local DECAP_K_PRIME = buffer.create(32)
@@ -153,7 +154,7 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	buffer.copy(JOutput, 0, JOutputBuffer, 0, 32)
 
 	local KPrime = DECAP_K_PRIME
-	local IsValid = false
+	local ValidMask = 0x00000000
 
 	local MPrime = Pke.Decrypt(K, Du, Dv, KpkeSecretKey, Ciphertext)
 	if MPrime then
@@ -169,12 +170,12 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 
 		local CiphertextPrime = Pke.Encrypt(K, Eta1, Eta2, Du, Dv, KpkePublicKey, MPrime, RPrime)
 		if CiphertextPrime then
-			IsValid = CtCompare(Ciphertext, CiphertextPrime)
+			ValidMask = CtCompareMask(Ciphertext, CiphertextPrime)
 		end
 	end
 
 	local SharedSecret = buffer.create(32)
-	CtSelectBuffer(if IsValid then 1 else 0, SharedSecret, KPrime, JOutput)
+	CtSelectBuffer(ValidMask, SharedSecret, KPrime, JOutput)
 
 	return SharedSecret
 end
