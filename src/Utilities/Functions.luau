@@ -3,8 +3,13 @@
 
 	Every Ct function is branch free on its condition. Conditions take either a
 	0 or 1 bit or a full 0xFFFFFFFF mask, so a mask returning compare feeds a
-	select directly with no boolean in between. CtCompare returns a boolean and
-	so branches, use it only where the caller was going to branch anyway.
+	select with nothing in between. Both compares are branch free inside, a
+	comparison lowers to setcc rather than a jump, but a boolean exists to be
+	branched on by the caller, so reach for CtCompareMask whenever the answer
+	itself is secret and CtCompare only where the caller branches anyway.
+
+	Build masks with arithmetic. `if C ~= 0 then 0xFFFFFFFF else 0` reads as a
+	cmov and is not one, a ternary lowers to a real jump on the secret.
 
 	Example usage:
 		-- ML-KEM implicit rejection, nothing branches on the secret
