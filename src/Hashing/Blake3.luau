@@ -10,13 +10,12 @@
 		local Message = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring(string.rep("k", 32))
 		
-		--------Standard Hash--------
 		local Hash = Blake3.Digest(Message, 32)
 		
-		--------Keyed Hash--------
+		-- Keyed Hash
 		local KeyedHash = Blake3.DigestKeyed(Message, Key, 32)
 		
-		--------Key Derivation--------
+		-- Key Derivation
 		local Context = buffer.fromstring("my context")
 		local KeyDeriver = Blake3.DeriveKey(Context)
 		local DerivedKey = KeyDeriver(Message, 32)

@@ -5,8 +5,6 @@
 	Has three security levels: ML-DSA-44, ML-DSA-65, ML-DSA-87.
 
 	Example usage:
-		local MLDSA = require(script.MlDSA)
-
 		local PubKey, SecKey = MLDSA.ML_DSA_44.GenerateKeys()
 		local Message = buffer.fromstring("Hello World")
 		local Context = buffer.create(0)
@@ -32,6 +30,7 @@ local Params = require("@self/Params")
 
 local Utils = require("@self/Utils")
 local CSPRNG = require("../Utilities/CSPRNG")
+local CtCompare = require("../Utilities/Functions").CtCompare
 
 local KEYGEN_SEED_BYTE_LEN = 32
 local RND_BYTE_LEN = 32
@@ -42,35 +41,6 @@ local Q = 8380417
 local Mldsa = {
 	CSPRNG = CSPRNG
 }
-
-local function CompareBufferSlices(A: buffer, AOffset: number, B: buffer, BOffset: number, Length: number): boolean
-	local Difference = 0
-
-	if Length == 32 then
-		Difference = bit32.bor(
-			bit32.bxor(buffer.readu32(A, AOffset), buffer.readu32(B, BOffset)),
-			bit32.bxor(buffer.readu32(A, AOffset + 4), buffer.readu32(B, BOffset + 4)),
-			bit32.bxor(buffer.readu32(A, AOffset + 8), buffer.readu32(B, BOffset + 8)),
-			bit32.bxor(buffer.readu32(A, AOffset + 12), buffer.readu32(B, BOffset + 12)),
-			bit32.bxor(buffer.readu32(A, AOffset + 16), buffer.readu32(B, BOffset + 16)),
-			bit32.bxor(buffer.readu32(A, AOffset + 20), buffer.readu32(B, BOffset + 20)),
-			bit32.bxor(buffer.readu32(A, AOffset + 24), buffer.readu32(B, BOffset + 24)),
-			bit32.bxor(buffer.readu32(A, AOffset + 28), buffer.readu32(B, BOffset + 28))
-		)
-		return Difference == 0
-	end
-
-	local AlignedLength = bit32.band(Length, bit32.bnot(3))
-	for I = 0, AlignedLength - 4, 4 do
-		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu32(A, AOffset + I), buffer.readu32(B, BOffset + I)))
-	end
-
-	for I = AlignedLength, Length - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu8(A, AOffset + I), buffer.readu8(B, BOffset + I)))
-	end
-
-	return Difference == 0
-end
 
 local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L: number, D: number, Eta: number)
 	if not Params.CheckKeygenParams(K, L, D, Eta) then
@@ -522,7 +492,7 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 
 	local CTildaPrime = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 
-	local CompareResult = CompareBufferSlices(CTilda, 0, CTildaPrime, 0, CTildaSize)
+	local CompareResult = CtCompare(CTilda, CTildaPrime)
 	VerificationFailed = VerificationFailed or (not CompareResult)
 
 	return not VerificationFailed

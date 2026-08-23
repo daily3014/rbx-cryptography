@@ -714,7 +714,7 @@ Package("Luau", function()
 				local Characters = string.split(Message, "")
 
 				for Index, Character in Characters do
-					local Byte = string.byte(Message, Index, Index)
+					local Byte = string.byte(Character)
 					local KeyPosition = ((Index - 1) % KeyLength) + 1
 					local KeyByte = string.byte(Key, KeyPosition, KeyPosition)
 

@@ -6,8 +6,6 @@
 	as specified in NIST FIPS 203.
 	
 	Example usage:
-		local PKE = require(script.PKE)
-		
 		local Seed = buffer.fromstring("32_byte_seed_here...")
 		local PublicKey, SecretKey = PKE.MLKEM_1024.KeyGen(Seed)
 		

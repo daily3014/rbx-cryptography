@@ -5,8 +5,6 @@
 	Uses Cooley-Tukey and Gentleman-Sande algorithms with precomputed roots.
 
 	Example usage:
-		local NTT = require(script)
-
 		local Poly = buffer.create(256 * 4) -- 256 coefficients, 4 bytes each
 		NTT.ForwardNTTWithOffset(Poly, 0)
 --]=]

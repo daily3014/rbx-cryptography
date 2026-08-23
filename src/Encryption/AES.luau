@@ -11,15 +11,15 @@
 	that are not 16 bytes long.
 
 	Example usage:
-	local Key = CSPRNG.RandomBytes(32)
-	local IV = CSPRNG.RandomBytes(12)
+		local Key = CSPRNG.RandomBytes(32)
+		local IV = CSPRNG.RandomBytes(12)
 
-	local Message = "This is a secret message"
-	local Plaintext = buffer.fromstring(Message)
+		local Message = "This is a secret message"
+		local Plaintext = buffer.fromstring(Message)
 
-	local AAD = buffer.fromstring("user:john,timestamp:456745683")
-	local Ciphertext, Tag = AES.Encrypt(Plaintext, Key, IV, AAD)
-	local Decrypted = AES.Decrypt(Ciphertext, Key, IV, Tag, AAD)
+		local AAD = buffer.fromstring("user:john,timestamp:456745683")
+		local Ciphertext, Tag = AES.Encrypt(Plaintext, Key, IV, AAD)
+		local Decrypted = AES.Decrypt(Ciphertext, Key, IV, Tag, AAD)
 --]=]
 
 --!strict

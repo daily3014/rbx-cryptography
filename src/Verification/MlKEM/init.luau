@@ -6,9 +6,6 @@
 	CCA security using the Fujisaki Okamoto transform.
 	
 	Example usage:
-		local MlKem = require(script.MlKem)
-		local CSPRNG = require(script.CSPRNG)
-		
 		local D = CSPRNG.RandomBytes(32)
 		local Z = CSPRNG.RandomBytes(32)
 		local PublicKey, SecretKey = MlKem.MLKEM_1024.KeyGen(D, Z)
@@ -28,6 +25,9 @@ local CSPRNG = require("../Utilities/CSPRNG")
 local Params = require("@self/Params")
 local Utils = require("@self/Utils")
 local SHA3 = require("../Hashing/SHA3")
+local Functions = require("../Utilities/Functions")
+local CtCompare = Functions.CtCompare
+local CtSelectBuffer = Functions.CtSelectBuffer
 
 local DECAP_G_INPUT = buffer.create(64)
 local DECAP_K_PRIME = buffer.create(32)
@@ -153,7 +153,7 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	buffer.copy(JOutput, 0, JOutputBuffer, 0, 32)
 
 	local KPrime = DECAP_K_PRIME
-	local IsValid = 0x00000000
+	local IsValid = false
 
 	local MPrime = Pke.Decrypt(K, Du, Dv, KpkeSecretKey, Ciphertext)
 	if MPrime then
@@ -169,22 +169,18 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 
 		local CiphertextPrime = Pke.Encrypt(K, Eta1, Eta2, Du, Dv, KpkePublicKey, MPrime, RPrime)
 		if CiphertextPrime then
-			IsValid = Utils.CtMemcmp(Ciphertext, CiphertextPrime)
+			IsValid = CtCompare(Ciphertext, CiphertextPrime)
 		end
 	end
 
 	local SharedSecret = buffer.create(32)
-	Utils.CtCondMemcpy(IsValid, SharedSecret, KPrime, JOutput)
+	CtSelectBuffer(if IsValid then 1 else 0, SharedSecret, KPrime, JOutput)
 
 	return SharedSecret
 end
 
 function MlKem.SecretsEqual(Secret1: buffer, Secret2: buffer): boolean
-	if buffer.len(Secret1) ~= 32 or buffer.len(Secret2) ~= 32 then
-		return false
-	end
-
-	return Utils.CtMemcmp(Secret1, Secret2) == 0xFFFFFFFF
+	return CtCompare(Secret1, Secret2)
 end
 
 function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
@@ -200,7 +196,7 @@ function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 	buffer.copy(StoredH, 0, SecretKey, HOffset, 32)
 
 	local ComputedH = SHA3.SHA3_256_Internal(Ek)
-	return Utils.CtMemcmp(StoredH, ComputedH) == 0xFFFFFFFF
+	return CtCompare(StoredH, ComputedH)
 end
 
 MlKem.MLKEM_512 = {

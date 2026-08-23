@@ -1,15 +1,12 @@
 --[=[
 	Cryptography library: Curve25519 Montgomery
 
-	Return type: varies by function
 	Example usage:
-		local Curve25519 = require("Curve25519")
-
-		--------Usage Case 1: Point multiplication--------
+		-- Point multiplication
 		local BasePoint = Curve25519.G
 		local Result = Curve25519.Ladder(BasePoint, ScalarBits, BitCount)
 
-		--------Usage Case 2: Decode a public key--------
+		-- Decode a public key
 		local DecodedPoint = Curve25519.Decode(EncodedBytes)
 --]=]
 
@@ -18,6 +15,7 @@
 --!native
 
 local FieldPrime = require("./FieldPrime")
+local Curve25519 = {}
 
 local COORD_SIZE = 80
 local MONTGOMERY_POINT_SIZE = 2 * COORD_SIZE
@@ -64,7 +62,16 @@ local function LadderStep(DifferencePoint: buffer, Point1: buffer, Point2: buffe
 	return Point, SecondPoint
 end
 
-local Curve25519 = {}
+local function SwapPoint(ConditionBit: number, PointA: buffer, PointB: buffer)
+	local Mask = if ConditionBit ~= 0 then 0xFFFFFFFF else 0
+	for Offset = 0, MONTGOMERY_POINT_SIZE - 4, 4 do
+		local A = buffer.readu32(PointA, Offset)
+		local B = buffer.readu32(PointB, Offset)
+		local Delta = bit32.band(Mask, bit32.bxor(A, B))
+		buffer.writeu32(PointA, Offset, bit32.bxor(A, Delta))
+		buffer.writeu32(PointB, Offset, bit32.bxor(B, Delta))
+	end
+end
 
 function Curve25519.Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	local CurrentP = buffer.create(MONTGOMERY_POINT_SIZE)
@@ -74,17 +81,19 @@ function Curve25519.Ladder(DifferencePoint: buffer, ScalarBits: buffer, ScalarBi
 	local CurrentQ = buffer.create(MONTGOMERY_POINT_SIZE)
 	buffer.copy(CurrentQ, 0, DifferencePoint, 0, MONTGOMERY_POINT_SIZE)
 
+	local PrevBit = 0
 	local LadderStep = LadderStep
 
 	for BitIndex = ScalarBitCount, 1, -1 do
 		local BitValue = buffer.readu8(ScalarBits, BitIndex - 1)
-		if BitValue == 0 then
-			CurrentP, CurrentQ = LadderStep(DifferencePoint, CurrentP, CurrentQ)
-		else
-			CurrentQ, CurrentP = LadderStep(DifferencePoint, CurrentQ, CurrentP)
-		end
+		local Swap = bit32.bxor(PrevBit, BitValue)
+		SwapPoint(Swap, CurrentP, CurrentQ)
+		PrevBit = BitValue
+
+		CurrentP, CurrentQ = LadderStep(DifferencePoint, CurrentP, CurrentQ)
 	end
 
+	SwapPoint(PrevBit, CurrentP, CurrentQ)
 	return CurrentP
 end
 

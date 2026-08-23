@@ -5,8 +5,6 @@
 	Modular arithmetic over the field Z_q where q = 3329.
 	
 	Example usage:
-		local Field = require(script.Field)
-		
 		local Sum = Field.Add(1234, 567)
 		local Product = Field.Multiply(1234, 567)
 		local Inverse = Field.Invert(1234)

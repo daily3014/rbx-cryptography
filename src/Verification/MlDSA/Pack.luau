@@ -5,8 +5,6 @@
 	signature encoding defined in FIPS 204.
 
 	Example usage:
-		local BitPacking = require(script)
-
 		local H = buffer.create(4 * 256 * 4)
 		local Encoded = buffer.create(80 + 4) -- Omega + K for ML-DSA-44
 		BitPacking.EncodeHintBits(H, Encoded, 4, 80)

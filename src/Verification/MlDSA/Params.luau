@@ -4,8 +4,6 @@
 	FIPS 204 specification.
 
 	Example usage:
-		local Params = require(script)
-		
 		local IsValid = Params.CheckKeygenParams(4, 4, 13, 2) -- ML-DSA-44
 		local ValidEta = Params.CheckEta(2)
 --]=]

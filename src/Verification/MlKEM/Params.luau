@@ -5,7 +5,6 @@
 	 NIST FIPS 203 specification.
 
 	Example usage:
-		local Params = require(script.Params)
 		local IsValid = Params.CheckKeygenParams(4, 2) -- true
 		
 		local ValidD = Params.CheckD(11) -- true

@@ -9,6 +9,15 @@ local Algorithms = table.freeze({
 	XOR = require("@self/XOR"),
 
 	CtCompare = Functions.CtCompare,
+	CtIsAllZero = Functions.CtIsAllZero,
+	CtSwapBuffers = Functions.CtSwapBuffers,
+	CtCopyIf = Functions.CtCopyIf,
+	CtIsZeroMask = Functions.CtIsZeroMask,
+	CtEqMask = Functions.CtEqMask,
+	CtLtMask = Functions.CtLtMask,
+	CtSelect = Functions.CtSelect,
+	CtSwap = Functions.CtSwap,
+	CtSelectBuffer = Functions.CtSelectBuffer,
 	Concatenate = Functions.Concatenate
 })
 

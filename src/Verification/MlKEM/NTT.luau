@@ -5,8 +5,6 @@
 	Cooley-Tukey NTT and Gentleman-Sande inverse NTT algorithms
 		
 	Example usage:
-		local NTT = require(script.NTT)
-
 		local Poly = buffer.create(512) -- 256 coefficients * 2 bytes
 		NTT.NttAt(Poly, 0) -- Forward transform
 		NTT.InttAt(Poly, 0) -- Inverse transform

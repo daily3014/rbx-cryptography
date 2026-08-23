@@ -5,8 +5,6 @@
 	Converts polynomials to/from byte arrays with different bit lengths.
 		
 	Example usage:
-		local Serialize = require(script.Serialize)
-		
 		local Poly = buffer.create(512) -- 256 coefficients
 		local Encoded = Serialize.Encode(Poly, 12)
 		local Decoded = Serialize.Decode(Encoded, 12)

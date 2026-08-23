@@ -12,10 +12,10 @@
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		
-		--------Usage Case 1--------
+		-- Hashing a message
 		local Result = SHA1(Message)
 		
-		--------Usage Case 2--------
+		-- Hashing a message with a salt
 		local OptionalSalt = buffer.fromstring("Salty")
 		local Result = SHA1(Message, OptionalSalt)
 --]=]

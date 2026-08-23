@@ -5,8 +5,6 @@
 	 Uniform sampling from Rq and centered binomial distribution sampling.
 	
 	Example usage:
-		local Sampling = require(script.Sampling)
-		
 		local Rho = buffer.create(32)
 		local Matrix = Sampling.GenerateMatrix(3, Rho, false)
 		

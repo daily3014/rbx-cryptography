@@ -5,17 +5,14 @@
 	integer limbs in radix 2^25.5 (alternating 26/25 bits). The encoded
 	external form is the standard 32-byte little-endian Curve25519 value.
 
-	Return type: varies by function
 	Example usage:
-		local FieldPrime = require("FieldPrime")
-
-		--------Usage Case 1: Basic arithmetic--------
+		-- Basic arithmetic
 		local ElementA = FieldPrime.Num(42)
 		local ElementB = FieldPrime.Num(17)
 		local Sum = FieldPrime.Add(ElementA, ElementB)
 		local Product = FieldPrime.Mul(ElementA, ElementB)
 
-		--------Usage Case 2: Encoding/decoding--------
+		-- Encoding/decoding
 		local Encoded = FieldPrime.Encode(ElementA)
 		local Decoded = FieldPrime.Decode(Encoded)
 --]=]

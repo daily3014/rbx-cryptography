@@ -6,15 +6,11 @@
 
 	Return type: varies by function
 	Example usage:
-		local MultiPrecision = require("MultiPrecision")
-
-		--------Usage Case 1: Basic arithmetic--------
 		local NumberA = MultiPrecision.Num(42)
 		local NumberB = MultiPrecision.Num(17)
 		local Sum = MultiPrecision.Add(NumberA, NumberB)
 		local Product = MultiPrecision.Mul(NumberA, NumberB)
 
-		--------Usage Case 2: Carry operations--------
 		local LargeSum = MultiPrecision.Add(Sum, Product)
 		local Normalized = MultiPrecision.Carry(LargeSum)
 --]=]

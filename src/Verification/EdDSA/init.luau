@@ -1,22 +1,17 @@
 --[=[
 	Cryptography library: EdDSA (Ed25519) with Batch Verification
 
-	Return type: varies by function
 	Example usage:
-		local EdDSA = require("EdDSA")
-
-		--------Usage Case 1--------
 		local SecretKey = CSPRNG.RandomBytes(32)
 		local PublicKey = EdDSA.PublicKey(SecretKey)
 
-		--------Usage Case 2--------
 		local Message = buffer.fromstring("Hello World")
 		local Signature = EdDSA.Sign(Message, SecretKey, PublicKey)
 
-		--------Usage Case 3--------
+
 		local IsValid = EdDSA.Verify(Message, PublicKey, Signature)
 
-		--------Usage Case 4: Batch Verification--------
+		-- Batch Verification
 		local AllValid = EdDSA.VerifyBatch({
 			{Message = M1, PublicKey = PK1, Signature = S1},
 			{Message = M2, PublicKey = PK2, Signature = S2},

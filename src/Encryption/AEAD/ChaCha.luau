@@ -11,10 +11,10 @@
 		local Key = buffer.fromstring(string.rep("k", 32))
 		local Nonce = buffer.fromstring(string.rep("n", 12))
 		
-		--------Usage Case 1--------
+		-- Encrypting with a 12 byte nonce
 		local Encrypted = ChaCha.ChaCha20(Data, Key, Nonce)
 		
-		--------Usage Case 2--------
+		-- Encrypting with a 24 byte nonce
 		local LongNonce = buffer.fromstring(string.rep("n", 24))
 		local Encrypted = ChaCha.XChaCha20(Data, Key, LongNonce)
 --]=]

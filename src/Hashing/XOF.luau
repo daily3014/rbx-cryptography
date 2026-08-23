@@ -5,8 +5,6 @@
 	For ML-DSA sampling functions that use rejection sampling.
 	
 	Example usage:
-		local XOF = require(script)
-		
 		XOF.Reset128()
 		XOF.Absorb128(message)
 		local Chunk1 = XOF.Squeeze128(168)

@@ -14,10 +14,7 @@
 		local Nonce = buffer.fromstring(string.rep("n", 12))
 		local AAD = buffer.fromstring("additional data")
 		
-		--------Usage Case 1--------
 		local Ciphertext, Tag = AEAD.Encrypt(Plaintext, Key, Nonce, AAD, Rounds, UseXChaCha20)
-		
-		--------Usage Case 2--------
 		local DecryptedText = AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD, Rounds, UseXChaCha20)
 --]=]
 
