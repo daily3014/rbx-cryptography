@@ -72,8 +72,13 @@ local function CtIsAllZero(Buffer: buffer): boolean
 end
 
 local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buffer)
-	local Mask = CtNonZeroMask(ConditionBit)
 	local Length = buffer.len(BufferA)
+	local LengthB = buffer.len(BufferB)
+	if LengthB ~= Length then
+		error(`BufferB must be {Length} bytes, got {LengthB} bytes`, 2)
+	end
+
+	local Mask = CtNonZeroMask(ConditionBit)
 	local WordBytes = Length - bit32.band(Length, 3)
 
 	for Offset = 0, WordBytes - 4, 4 do
@@ -94,8 +99,13 @@ local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buf
 end
 
 local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffer)
-	local Mask = CtNonZeroMask(ConditionBit)
 	local Length = buffer.len(Destination)
+	local SourceLength = buffer.len(Source)
+	if SourceLength ~= Length then
+		error(`Source must be {Length} bytes, got {SourceLength} bytes`, 2)
+	end
+
+	local Mask = CtNonZeroMask(ConditionBit)
 	local WordBytes = Length - bit32.band(Length, 3)
 
 	for Offset = 0, WordBytes - 4, 4 do
@@ -114,9 +124,19 @@ local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffe
 end
 
 local function CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceTrue: buffer, SourceFalse: buffer)
+	local Length = buffer.len(Destination)
+	local TrueLength = buffer.len(SourceTrue)
+	local FalseLength = buffer.len(SourceFalse)
+	if TrueLength ~= Length then
+		error(`SourceTrue must be {Length} bytes, got {TrueLength} bytes`, 2)
+	end
+
+	if FalseLength ~= Length then
+		error(`SourceFalse must be {Length} bytes, got {FalseLength} bytes`, 2)
+	end
+
 	local Mask = CtNonZeroMask(ConditionBit)
 	local InvMask = bit32.bnot(Mask)
-	local Length = buffer.len(Destination)
 	local WordBytes = Length - bit32.band(Length, 3)
 
 	for Offset = 0, WordBytes - 4, 4 do
