@@ -195,6 +195,11 @@ local function GatherEntropy(CustomEntropy: buffer?): number
 	WriteToBuffer(MicroTimeBuffer)
 
 	if game then
+		local HttpService = game:FindService("HttpService") :: HttpService?
+		if HttpService then
+			WriteToBuffer(buffer.fromstring(HttpService:GenerateGUID(false)))
+		end
+
 		if game.JobId and #game.JobId > 0 then
 			local JobIdBuffer = buffer.fromstring(game.JobId)
 			WriteToBuffer(JobIdBuffer)
@@ -383,7 +388,7 @@ local function GetIntRange(Min: number, Max: number): number
 	if bit32.band(Range, Range - 1) == 0 then
 		return Min + bit32.band(Value, Range - 1)
 	else
-		while Value > Limit do
+		while Value >= Limit do
 			if CSPRNG.BufferPosition + 4 > CSPRNG.BufferSize then
 				GenerateBlock()
 			end
@@ -482,27 +487,56 @@ function CSPRNG.Random(): number
 	return GetFloat()
 end
 
+local function ValidateArgument(Name: string, Value: any, Integer: boolean, Optional: boolean): (boolean, string?)
+	if Value == nil then
+		if Optional then
+			return true, nil
+		end
+
+		return false, `{Name} must be a number`
+	end
+
+	if type(Value) ~= "number" then
+		return false, `{Name} must be a number, got {typeof(Value)}`
+	end
+
+	if not Value then
+		return true, nil
+	end
+
+	if not math.isfinite(Value) then
+		local Type = if math.isnan(Value) then "NaN" else "inf"
+
+		return false, `{Name} must be a finite number, got {Type}`
+	end
+
+	if Integer and Value % 1 ~= 0 then
+		return false, `{Name} must be an integer, got {Value}`
+	end
+
+	return true, nil
+end
+
 function CSPRNG.RandomInt(Min: number, Max: number?): number
-	if Max and type(Max) ~= "number" then
-		error(`Max must be a number or nil, got {typeof(Max)}`, 2)
-	end
+	assert(ValidateArgument("Min", Min, true, false))
+	assert(ValidateArgument("Max", Max, true, true))
 
-	if type(Min) ~= "number" then
-		error(`Min must be a number, got {typeof(Min)}`, 2)
-	end
-
-	if Max and Max < Min then
-		error(`Max ({Max}) can't be less than Min ({Min})`, 2)
-	end
-
-	if Max and Max == Min then
-		error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+	if Max then
+		if Max < Min then
+			error(`Max ({Max}) can't be less than Min ({Min})`, 2)
+		elseif Max == Min then
+			error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+		end
 	end
 
 	local ActualMax: number
 	local ActualMin: number
 
 	if Max == nil then
+		if Min < 1 then
+			error(`When passing one argument, Min must be at least 1, got {Min}`, 2)
+		end
+
 		ActualMax = Min
 		ActualMin = 1
 	else
@@ -514,26 +548,27 @@ function CSPRNG.RandomInt(Min: number, Max: number?): number
 end
 
 function CSPRNG.RandomNumber(Min: number, Max: number?): number
-	if Max and type(Max) ~= "number" then
-		error(`Max must be a number or nil, got {typeof(Max)}`, 2)
-	end
+	assert(ValidateArgument("Min", Min, false, false))
+	assert(ValidateArgument("Max", Max, false, true))
 
-	if type(Min) ~= "number" then
-		error(`Min must be a number, got {typeof(Min)}`, 2)
-	end
+	if Max then
+		if Max < Min then
+			error(`Max ({Max}) must be bigger than Min ({Min})`, 2)
+		end
 
-	if Max and Max < Min then
-		error(`Max ({Max}) must be bigger than Min ({Min})`, 2)
-	end
-
-	if Max and Max == Min then
-		error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+		if Max == Min then
+			error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+		end
 	end
 
 	local ActualMax: number
 	local ActualMin: number
 
 	if Max == nil then
+		if Min <= 0 then
+			error(`When passing one argument, Min must be more than 0, got {Min}`, 2)
+		end
+
 		ActualMax = Min
 		ActualMin = 0
 	else
@@ -561,16 +596,10 @@ function CSPRNG.RandomBytes(Count: number): buffer
 end
 
 function CSPRNG.RandomString(Length: number, AsBuffer: boolean?): string | buffer
-	if type(Length) ~= "number" then
-		error(`Length must be a number, got {typeof(Length)}`, 2)
-	end
+	assert(ValidateArgument("Length", Length, true, false))
 
 	if Length <= 0 then
 		error(`Length must be bigger than 0, got {Length}`, 2)
-	end
-
-	if Length % 1 ~= 0 then
-		error("Length must be an integer", 2)
 	end
 
 	if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
@@ -581,16 +610,10 @@ function CSPRNG.RandomString(Length: number, AsBuffer: boolean?): string | buffe
 end
 
 function CSPRNG.RandomHex(Length: number): string
-	if type(Length) ~= "number" then
-		error(`Length must be a number, got {typeof(Length)}`, 2)
-	end
+	assert(ValidateArgument("Length", Length, true, false))
 
 	if Length <= 0 then
 		error(`Length must be bigger than 0, got {Length}`, 2)
-	end
-
-	if Length % 1 ~= 0 then
-		error("Length must be an integer", 2)
 	end
 
 	if Length % 2 ~= 0 then
