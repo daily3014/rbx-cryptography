@@ -137,10 +137,10 @@ local function MD5(Message: buffer, Salt: buffer?): (string, buffer)
 	local A, B, C, D = DigestBlocks(ProcessedMessage, Length)
 	local Digest = buffer.create(16)
 
-	buffer.writeu32(Digest, 0, A)
-	buffer.writeu32(Digest, 4, B)
-	buffer.writeu32(Digest, 8, C)
-	buffer.writeu32(Digest, 12, D)
+	buffer.writeu32(Digest, 0, bit32.byteswap(A))
+	buffer.writeu32(Digest, 4, bit32.byteswap(B))
+	buffer.writeu32(Digest, 8, bit32.byteswap(C))
+	buffer.writeu32(Digest, 12, bit32.byteswap(D))
 
 	return string.format("%08x%08x%08x%08x", A, B, C, D), Digest
 end
