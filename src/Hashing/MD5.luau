@@ -14,6 +14,9 @@
 --!strict
 --!optimize 2
 --!native
+
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
 local OFFSETS = table.create(64, 0)
 local CONSTANTS = {
 	0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
@@ -119,7 +122,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 		D = bit32.bor(OldD + D, 0)
 	end
 
-	return bit32.byteswap(A), bit32.byteswap(B), bit32.byteswap(C), bit32.byteswap(D)
+	return A, B, C, D
 end
 
 local function MD5(Message: buffer, Salt: buffer?): (string, buffer)
@@ -140,7 +143,7 @@ local function MD5(Message: buffer, Salt: buffer?): (string, buffer)
 	buffer.writeu32(Digest, 8, C)
 	buffer.writeu32(Digest, 12, D)
 
-	return string.format("%08x%08x%08x%08x", A, B, C, D), Digest
+	return ToHex(Digest), Digest
 end
 
 return MD5

@@ -8,7 +8,7 @@
 	Sizes:
 		Digest: 20 bytes
 	
-	Return type: string
+	Return type: (string, buffer)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		
@@ -23,6 +23,9 @@
 --!strict
 --!optimize 2
 --!native
+
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
 
 local OFFSETS = buffer.create(320)
 
@@ -112,7 +115,7 @@ local function DigestBlocks(Blocks: buffer, Length: number): (number, number, nu
 	return A, B, C, D, E
 end
 
-local function SHA1(Message: buffer, Salt: buffer?): string
+local function SHA1(Message: buffer, Salt: buffer?): (string, buffer)
 	if Salt and buffer.len(Salt) > 0 then
 		local MessageWithSalt = buffer.create(buffer.len(Message) + buffer.len(Salt))
 
@@ -123,7 +126,16 @@ local function SHA1(Message: buffer, Salt: buffer?): string
 	end
 
 	local ProcessedMessage, Length = PreProcess(Message)
-	return string.format("%08x%08x%08x%08x%08x", DigestBlocks(ProcessedMessage, Length))
+	local A, B, C, D, E = DigestBlocks(ProcessedMessage, Length)
+
+	local Digest = buffer.create(20)
+	buffer.writeu32(Digest, 0, bit32.byteswap(A))
+	buffer.writeu32(Digest, 4, bit32.byteswap(B))
+	buffer.writeu32(Digest, 8, bit32.byteswap(C))
+	buffer.writeu32(Digest, 12, bit32.byteswap(D))
+	buffer.writeu32(Digest, 16, bit32.byteswap(E))
+
+	return ToHex(Digest), Digest
 end
 
 return SHA1

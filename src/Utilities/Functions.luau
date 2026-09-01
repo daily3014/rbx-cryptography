@@ -171,11 +171,17 @@ local function CtSwap(ConditionBit: number, A: number, B: number): (number, numb
 end
 
 local function Concatenate(...: buffer): buffer
+	local Given = select("#", ...)
 	local Buffers = {...}
 	local TotalLength = 0
 
-	for _, Buffer in Buffers do
-		TotalLength += buffer.len(Buffer)
+	for Index = 1, Given do
+		local Held = Buffers[Index]
+		if not Held then
+			error(`Concatenate argument {Index} of {Given} is {typeof(Held)}, expected a buffer`, 2)
+		end
+
+		TotalLength += buffer.len(Held)
 	end
 
 	local Result = buffer.create(TotalLength)
