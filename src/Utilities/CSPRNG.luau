@@ -31,8 +31,10 @@ local ChaCha = require("../Encryption/AEAD/ChaCha")
 local Conversions = require("./Conversions")
 local ToHex = Conversions.ToHex
 
-type RandomStringSig = & ((Length: number, AsBuffer: false?) -> string)
+type RandomStringSig =
+		& ((Length: number, AsBuffer: false?) -> string)
 		& ((Length: number, AsBuffer: true) -> buffer)
+		& ((Length: number, AsBuffer: boolean) -> string | buffer)
 
 type CSPRNGModule = {
 	AddEntropy: (Entropy: buffer?) -> (),
