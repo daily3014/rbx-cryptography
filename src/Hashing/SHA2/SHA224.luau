@@ -14,6 +14,7 @@
 --!optimize 2
 --!native
 
+--stylua: ignore start
 local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 	local RoundConstants = {
 		0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -31,6 +32,7 @@ local CONSTANTS = buffer.create(256) do -- CONSTANTS = k
 		buffer.writeu32(CONSTANTS, BufferOffset, Constant)
 	end
 end
+--stylua: ignore end
 
 local function PreProcess(Contents: buffer): (buffer, number)
 	local ContentLength = buffer.len(Contents)
@@ -107,13 +109,13 @@ local function SHA224(Message: buffer): (string, buffer)
 
 	local Digest = buffer.create(28)
 
-	buffer.writeu32(Digest, 0, A)
-	buffer.writeu32(Digest, 4, B)
-	buffer.writeu32(Digest, 8, C)
-	buffer.writeu32(Digest, 12, D)
-	buffer.writeu32(Digest, 16, E)
-	buffer.writeu32(Digest, 20, F)
-	buffer.writeu32(Digest, 24, G)
+	buffer.writeu32(Digest, 0, bit32.byteswap(A))
+	buffer.writeu32(Digest, 4, bit32.byteswap(B))
+	buffer.writeu32(Digest, 8, bit32.byteswap(C))
+	buffer.writeu32(Digest, 12, bit32.byteswap(D))
+	buffer.writeu32(Digest, 16, bit32.byteswap(E))
+	buffer.writeu32(Digest, 20, bit32.byteswap(F))
+	buffer.writeu32(Digest, 24, bit32.byteswap(G))
 
 	return string.format("%08x%08x%08x%08x%08x%08x%08x", A, B, C, D, E, F, G), Digest
 end
