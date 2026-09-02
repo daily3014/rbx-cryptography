@@ -34,7 +34,6 @@ local SHA3 = require("../../Hashing/SHA3")
 
 local LOG2N = 8
 local N = 2^LOG2N
-local POLY_SIZE = N * 2
 local Q = 3329
 
 local TEMP_V = buffer.create(N * 2)
@@ -45,6 +44,43 @@ local KEYGEN_RHO = buffer.create(32)
 local KEYGEN_SIGMA = buffer.create(32)
 
 local Pke = {}
+
+local function AddNoiseAndMessage(V: buffer, E2: buffer, Message: buffer)
+	local Modulus = Q
+	local Half = 1665
+
+	for ByteIndex = 0, 31 do
+		local Byte = buffer.readu8(Message, ByteIndex)
+		local Base = ByteIndex * 16
+
+		for Bit = 0, 7 do
+			local Offset = Base + Bit * 2
+			local M = bit32.band(bit32.rshift(Byte, Bit), 1) * Half
+			buffer.writeu16(V, Offset, (buffer.readu16(V, Offset) + buffer.readu16(E2, Offset) + M) % Modulus)
+		end
+	end
+end
+
+local function SubCompressEncode1(V: buffer, T: buffer): buffer
+	local Modulus = Q
+	local Output = buffer.create(32)
+
+	for ByteIndex = 0, 31 do
+		local Base = ByteIndex * 16
+		local Byte = 0
+
+		for Bit = 0, 7 do
+			local Offset = Base + Bit * 2
+			local Diff = buffer.readu16(V, Offset) - buffer.readu16(T, Offset)
+			local Rounded = (Diff * 2 + 1664) // Modulus
+			Byte = bit32.bor(Byte, bit32.lshift(bit32.band(Rounded, 1), Bit))
+		end
+
+		buffer.writeu8(Output, ByteIndex, Byte)
+	end
+
+	return Output
+end
 
 function Pke.KeyGen(K: number, Eta1: number, Seed: buffer): (buffer, buffer)
 	if not Params.CheckKeygenParams(K, Eta1) then
@@ -132,25 +168,9 @@ function Pke.Encrypt(K: number, Eta1: number, Eta2: number, Du: number, Dv: numb
 	PolyVec.VecAddTo(E1, U, K)
 
 	local V = TEMP_V
-
-	local PolySize = POLY_SIZE
-	local PolyMulAdd = Ntt.PolyMulAddAt
-	Ntt.PolyMulAt(TPrime, 0, R, 0, V, 0)
-	for I = 1, K - 1 do
-		PolyMulAdd(TPrime, I * PolySize, R, I * PolySize, V, 0)
-	end
-
-	for J = 0, N - 1 do
-		local Off = J * 2
-		buffer.writeu16(V, Off, buffer.readu16(V, Off) % Q)
-	end
-
+	Ntt.PolyVecDotAt(TPrime, 0, R, 0, K, V, 0)
 	Ntt.InttAt(V, 0)
-	Ntt.PolyAdd(V, E2, V)
-
-	local M = Serialize.Decode(Message, 1)
-	Compression.PolyDecompress(M, 1)
-	Ntt.PolyAdd(V, M, V)
+	AddNoiseAndMessage(V, E2, Message)
 
 	PolyVec.VecCompress(U, K, Du)
 	local EncodedU = PolyVec.VecEncode(U, K, Du)
@@ -200,24 +220,9 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, SecretKey: buffer, Ciphe
 	PolyVec.VecNtt(U, K)
 
 	local T = TEMP_T
-
-	local PolySize = POLY_SIZE
-	local PolyMulAdd = Ntt.PolyMulAddAt
-	Ntt.PolyMulAt(SPrime, 0, U, 0, T, 0)
-	for I = 1, K - 1 do
-		PolyMulAdd(SPrime, I * PolySize, U, I * PolySize, T, 0)
-	end
-
-	for J = 0, N - 1 do
-		local Off = J * 2
-		buffer.writeu16(T, Off, buffer.readu16(T, Off) % Q)
-	end
-
+	Ntt.PolyVecDotAt(SPrime, 0, U, 0, K, T, 0)
 	Ntt.InttAt(T, 0)
-	Ntt.PolySub(V, T, V)
-
-	Compression.PolyCompress(V, 1)
-	local Plaintext = Serialize.Encode(V, 1)
+	local Plaintext = SubCompressEncode1(V, T)
 
 	return Plaintext
 end

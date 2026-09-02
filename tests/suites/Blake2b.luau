@@ -55,7 +55,7 @@ Testing.Describe("BLAKE2b Tadashi Tests", function()
 				Testing.Test(TestName, function()
 					local KeyBytes = FromHex(Test.key)
 					local Key: buffer? = if buffer.len(KeyBytes) > 0 then KeyBytes else nil
-					local Digest = Blake2b(FromHex(Test.msg), Test.outputLen, Key)
+					local Digest = Blake2b.Digest(FromHex(Test.msg), Test.outputLen, Key)
 					Testing.Expect(Digest).ToBe(Test.digest)
 				end)
 			end

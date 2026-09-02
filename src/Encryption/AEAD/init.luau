@@ -26,8 +26,6 @@ local ChaCha = require("@self/ChaCha")
 local Poly1305 = require("@self/Poly1305")
 local CtCompare = require("../Utilities/Functions").CtCompare
 
-local QWORD = 8
-
 local CHACHA20_KEY_SIZE = 32
 local CHACHA20_NONCE_SIZE = 12
 local XCHACHA20_NONCE_SIZE = 24
@@ -36,49 +34,11 @@ local POLY1305_TAG_SIZE = 16
 local AEAD = {
 	ChaCha20 = ChaCha.ChaCha20,
 	XChaCha20 = ChaCha.XChaCha20,
-	Poly1305 = Poly1305,
+	Poly1305 = Poly1305.Tag,
 	Internal = {
 		HChaCha20 = ChaCha.HChaCha20,
 	},
 }
-
-local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) | typeof(ChaCha.XChaCha20)
-	if UseXChaCha20 then
-		return ChaCha.XChaCha20
-	else
-		return ChaCha.ChaCha20
-	end
-end
-
-
-
-local function ConstructAuthData(AAD: buffer, Ciphertext: buffer): buffer
-	local AADLength = buffer.len(AAD)
-	local CiphertextLength = buffer.len(Ciphertext)
-
-	local AADPadding = (-AADLength) % 16
-	local CiphertextPadding = (-CiphertextLength) % 16
-
-	local TotalSize = AADLength + AADPadding + CiphertextLength + CiphertextPadding + 16
-	local AuthData = buffer.create(TotalSize)
-	local Offset = 0
-
-	buffer.copy(AuthData, Offset, AAD, 0, AADLength)
-	Offset += AADLength + AADPadding
-	buffer.copy(AuthData, Offset, Ciphertext, 0, CiphertextLength)
-	Offset += CiphertextLength + CiphertextPadding
-	buffer.writeu32(AuthData, Offset, AADLength)
-	buffer.writeu32(AuthData, Offset + QWORD, CiphertextLength)
-
-	return AuthData
-end
-
-local function GenerateAuthKey(Key: buffer, Nonce: buffer, Rounds: number?, UseXChaCha20: boolean?): buffer
-	local BlockRounds = Rounds or 20
-	local ZeroBlock = buffer.create(32)
-
-	return GetFn(UseXChaCha20)(ZeroBlock, Key, Nonce, 0, BlockRounds)
-end
 
 function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAuthData: buffer?, Rounds: number?, UseXChaCha20: boolean?): (buffer, buffer)
 	if Message == nil then
@@ -139,10 +99,9 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or buffer.create(0)
 
-	local AuthenticationKey = GenerateAuthKey(Key, Nonce, BlockRounds, UseXChaCha20)
-	local Ciphertext = GetFn(UseXChaCha20)(Message, Key, Nonce, 1, BlockRounds)
-	local AuthData = ConstructAuthData(AAD, Ciphertext)
-	local Tag = Poly1305(AuthData, AuthenticationKey)
+	local State, AuthenticationKey = ChaCha.AeadKeySetup(Key, Nonce, BlockRounds, UseXChaCha20)
+	local Ciphertext = ChaCha.AeadCrypt(State, Message, BlockRounds)
+	local Tag = Poly1305.AeadTag(AuthenticationKey, AAD, Ciphertext)
 
 	return Ciphertext, Tag
 end
@@ -219,15 +178,14 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or buffer.create(0)
 
-	local AuthenticationKey = GenerateAuthKey(Key, Nonce, BlockRounds, UseXChaCha20)
-	local AuthData = ConstructAuthData(AAD, Ciphertext)
-	local ExpectedTag = Poly1305(AuthData, AuthenticationKey)
+	local State, AuthenticationKey = ChaCha.AeadKeySetup(Key, Nonce, BlockRounds, UseXChaCha20)
+	local ExpectedTag = Poly1305.AeadTag(AuthenticationKey, AAD, Ciphertext)
 
 	if not CtCompare(Tag, ExpectedTag) then
 		return nil
 	end
 
-	return GetFn(UseXChaCha20)(Ciphertext, Key, Nonce, 1, BlockRounds)
+	return ChaCha.AeadCrypt(State, Ciphertext, BlockRounds)
 end
 
 return AEAD

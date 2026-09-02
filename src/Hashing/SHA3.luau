@@ -50,18 +50,19 @@ end
 
 local LANES = buffer.create(200)
 local SQUEEZE_ZERO = buffer.create(168)
+local TAIL_BLOCK = buffer.create(200)
 
 local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: number, BlockSizeInBytes: number): ()
 	local QuadWordsQuantity = BlockSizeInBytes // 8
 	local RC = ROUND_CONSTANTS
 
-	local Lane01, Lane02, Lane03 = buffer.readinteger(Lanes, 0), buffer.readinteger(Lanes, 8), buffer.readinteger(Lanes, 16)
+	local Lane01, Lane02, Lane03 = buffer.readinteger(Lanes, 0), integer.bnot(buffer.readinteger(Lanes, 8)), integer.bnot(buffer.readinteger(Lanes, 16))
 	local Lane04, Lane05, Lane06 = buffer.readinteger(Lanes, 24), buffer.readinteger(Lanes, 32), buffer.readinteger(Lanes, 40)
-	local Lane07, Lane08, Lane09 = buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 56), buffer.readinteger(Lanes, 64)
+	local Lane07, Lane08, Lane09 = buffer.readinteger(Lanes, 48), buffer.readinteger(Lanes, 56), integer.bnot(buffer.readinteger(Lanes, 64))
 	local Lane10, Lane11, Lane12 = buffer.readinteger(Lanes, 72), buffer.readinteger(Lanes, 80), buffer.readinteger(Lanes, 88)
-	local Lane13, Lane14, Lane15 = buffer.readinteger(Lanes, 96), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 112)
-	local Lane16, Lane17, Lane18 = buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 128), buffer.readinteger(Lanes, 136)
-	local Lane19, Lane20, Lane21 = buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 152), buffer.readinteger(Lanes, 160)
+	local Lane13, Lane14, Lane15 = integer.bnot(buffer.readinteger(Lanes, 96)), buffer.readinteger(Lanes, 104), buffer.readinteger(Lanes, 112)
+	local Lane16, Lane17, Lane18 = buffer.readinteger(Lanes, 120), buffer.readinteger(Lanes, 128), integer.bnot(buffer.readinteger(Lanes, 136))
+	local Lane19, Lane20, Lane21 = buffer.readinteger(Lanes, 144), buffer.readinteger(Lanes, 152), integer.bnot(buffer.readinteger(Lanes, 160))
 	local Lane22, Lane23, Lane24 = buffer.readinteger(Lanes, 168), buffer.readinteger(Lanes, 176), buffer.readinteger(Lanes, 184)
 	local Lane25 = buffer.readinteger(Lanes, 192)
 
@@ -172,32 +173,32 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 				Lane01 = integer.bxor(Delta, Lane01)
 	
 				Lane01, Lane02, Lane03, Lane04, Lane05 =
-					integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
-					integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
-					integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
-					integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
-					(integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02)))
+					integer.bxor(Lane01, integer.bor(Lane02, Lane03)),
+					integer.bxor(Lane02, integer.bor(integer.bnot(Lane03), Lane04)),
+					integer.bxor(Lane03, integer.band(Lane04, Lane05)),
+					integer.bxor(Lane04, integer.bor(Lane05, Lane01)),
+					(integer.bxor(Lane05, integer.band(Lane01, Lane02)))
 				
 				Lane06, Lane07, Lane08, Lane09, Lane10 =
-					integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
-					integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
-					integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
-					integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
-					(integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10)))
+					integer.bxor(Lane09, integer.bor(Lane10, Lane06)),
+					integer.bxor(Lane10, integer.band(Lane06, Lane07)),
+					integer.bnot(integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08))),
+					integer.bxor(Lane07, integer.bor(Lane08, Lane09)),
+					(integer.bxor(Lane08, integer.band(Lane09, Lane10)))
 	
 				Lane11, Lane12, Lane13, Lane14, Lane15 =
-					integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
-					integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
+					integer.bxor(Lane12, integer.bor(Lane13, Lane14)),
+					integer.bxor(Lane13, integer.band(Lane14, Lane15)),
 					integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
-					integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
-					(integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13)))
+					integer.bnot(integer.bxor(Lane15, integer.bor(Lane11, Lane12))),
+					(integer.bxor(Lane11, integer.band(Lane12, Lane13)))
 	
 				Lane16, Lane17, Lane18, Lane19, Lane20 =
-					integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
-					integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
-					integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
-					integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
-					(integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16)))
+					integer.bxor(Lane20, integer.band(Lane16, Lane17)),	
+					integer.bxor(Lane16, integer.bor(Lane17, Lane18)),
+					integer.bxor(Lane17, integer.bor(integer.bnot(Lane18), Lane19)),
+					integer.bnot(integer.bxor(Lane18, integer.band(Lane19, Lane20))),
+					(integer.bxor(Lane19, integer.bor(Lane20, Lane16)))
 	
 				-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
 				Lane21, Lane22, Lane23, Lane24, Lane25 =
@@ -209,10 +210,10 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 	
 				Lane21, Lane22, Lane23, Lane24, Lane25 =
 					integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
-					integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
-					integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
-					integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
-					(integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24)))
+					integer.bnot(integer.bxor(Lane24, integer.bor(Lane25, Lane21))),
+					integer.bxor(Lane25, integer.band(Lane21, Lane22)),
+					integer.bxor(Lane21, integer.bor(Lane22, Lane23)),
+					(integer.bxor(Lane22, integer.band(Lane23, Lane24)))
 	
 				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex))
 			end
@@ -249,32 +250,32 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 				Lane01 = integer.bxor(Delta, Lane01)
 	
 				Lane01, Lane02, Lane03, Lane04, Lane05 =
-					integer.bxor(Lane01, integer.band(integer.bnot(Lane02), Lane03)),
-					integer.bxor(Lane02, integer.band(integer.bnot(Lane03), Lane04)),
-					integer.bxor(Lane03, integer.band(integer.bnot(Lane04), Lane05)),
-					integer.bxor(Lane04, integer.band(integer.bnot(Lane05), Lane01)),
-					(integer.bxor(Lane05, integer.band(integer.bnot(Lane01), Lane02)))
+					integer.bxor(Lane01, integer.bor(Lane02, Lane03)),
+					integer.bxor(Lane02, integer.bor(integer.bnot(Lane03), Lane04)),
+					integer.bxor(Lane03, integer.band(Lane04, Lane05)),
+					integer.bxor(Lane04, integer.bor(Lane05, Lane01)),
+					(integer.bxor(Lane05, integer.band(Lane01, Lane02)))
 				
 				Lane06, Lane07, Lane08, Lane09, Lane10 =
-					integer.bxor(Lane09, integer.band(integer.bnot(Lane10), Lane06)),
-					integer.bxor(Lane10, integer.band(integer.bnot(Lane06), Lane07)),
-					integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08)),
-					integer.bxor(Lane07, integer.band(integer.bnot(Lane08), Lane09)),
-					(integer.bxor(Lane08, integer.band(integer.bnot(Lane09), Lane10)))
+					integer.bxor(Lane09, integer.bor(Lane10, Lane06)),
+					integer.bxor(Lane10, integer.band(Lane06, Lane07)),
+					integer.bnot(integer.bxor(Lane06, integer.band(integer.bnot(Lane07), Lane08))),
+					integer.bxor(Lane07, integer.bor(Lane08, Lane09)),
+					(integer.bxor(Lane08, integer.band(Lane09, Lane10)))
 	
 				Lane11, Lane12, Lane13, Lane14, Lane15 =
-					integer.bxor(Lane12, integer.band(integer.bnot(Lane13), Lane14)),
-					integer.bxor(Lane13, integer.band(integer.bnot(Lane14), Lane15)),
+					integer.bxor(Lane12, integer.bor(Lane13, Lane14)),
+					integer.bxor(Lane13, integer.band(Lane14, Lane15)),
 					integer.bxor(Lane14, integer.band(integer.bnot(Lane15), Lane11)),
-					integer.bxor(Lane15, integer.band(integer.bnot(Lane11), Lane12)),
-					(integer.bxor(Lane11, integer.band(integer.bnot(Lane12), Lane13)))
+					integer.bnot(integer.bxor(Lane15, integer.bor(Lane11, Lane12))),
+					(integer.bxor(Lane11, integer.band(Lane12, Lane13)))
 	
 				Lane16, Lane17, Lane18, Lane19, Lane20 =
-					integer.bxor(Lane20, integer.band(integer.bnot(Lane16), Lane17)),	
-					integer.bxor(Lane16, integer.band(integer.bnot(Lane17), Lane18)),
-					integer.bxor(Lane17, integer.band(integer.bnot(Lane18), Lane19)),
-					integer.bxor(Lane18, integer.band(integer.bnot(Lane19), Lane20)),
-					(integer.bxor(Lane19, integer.band(integer.bnot(Lane20), Lane16)))
+					integer.bxor(Lane20, integer.band(Lane16, Lane17)),	
+					integer.bxor(Lane16, integer.bor(Lane17, Lane18)),
+					integer.bxor(Lane17, integer.bor(integer.bnot(Lane18), Lane19)),
+					integer.bnot(integer.bxor(Lane18, integer.band(Lane19, Lane20))),
+					(integer.bxor(Lane19, integer.bor(Lane20, Lane16)))
 	
 				-- TYPE ERROR: type solver infers Lane21-Lane25 to be integer? after this point
 				Lane21, Lane22, Lane23, Lane24, Lane25 =
@@ -286,10 +287,10 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 	
 				Lane21, Lane22, Lane23, Lane24, Lane25 =
 					integer.bxor(Lane23, integer.band(integer.bnot(Lane24), Lane25)),
-					integer.bxor(Lane24, integer.band(integer.bnot(Lane25), Lane21)),
-					integer.bxor(Lane25, integer.band(integer.bnot(Lane21), Lane22)),
-					integer.bxor(Lane21, integer.band(integer.bnot(Lane22), Lane23)),
-					(integer.bxor(Lane22, integer.band(integer.bnot(Lane23), Lane24)))
+					integer.bnot(integer.bxor(Lane24, integer.bor(Lane25, Lane21))),
+					integer.bxor(Lane25, integer.band(Lane21, Lane22)),
+					integer.bxor(Lane21, integer.bor(Lane22, Lane23)),
+					(integer.bxor(Lane22, integer.band(Lane23, Lane24)))
 	
 				Lane01 = integer.bxor(Lane01, buffer.readinteger(RC, RoundIndex + 8))
 			end
@@ -297,26 +298,26 @@ local function Keccak(Lanes: buffer, InputBuffer: buffer, Offset: number, Size: 
 	end
 
 	buffer.writeinteger(Lanes, 0, Lane01)
-	buffer.writeinteger(Lanes, 8, Lane02)
-	buffer.writeinteger(Lanes, 16, Lane03)
+	buffer.writeinteger(Lanes, 8, integer.bnot(Lane02))
+	buffer.writeinteger(Lanes, 16, integer.bnot(Lane03))
 	buffer.writeinteger(Lanes, 24, Lane04)
 	buffer.writeinteger(Lanes, 32, Lane05)
 	buffer.writeinteger(Lanes, 40, Lane06)
 	buffer.writeinteger(Lanes, 48, Lane07)
 	buffer.writeinteger(Lanes, 56, Lane08)
-	buffer.writeinteger(Lanes, 64, Lane09)
+	buffer.writeinteger(Lanes, 64, integer.bnot(Lane09))
 	buffer.writeinteger(Lanes, 72, Lane10)
 	buffer.writeinteger(Lanes, 80, Lane11)
 	buffer.writeinteger(Lanes, 88, Lane12)
-	buffer.writeinteger(Lanes, 96, Lane13)
+	buffer.writeinteger(Lanes, 96, integer.bnot(Lane13))
 	buffer.writeinteger(Lanes, 104, Lane14)
 	buffer.writeinteger(Lanes, 112, Lane15)
 	buffer.writeinteger(Lanes, 120, Lane16)
 	buffer.writeinteger(Lanes, 128, Lane17)
-	buffer.writeinteger(Lanes, 136, Lane18)
+	buffer.writeinteger(Lanes, 136, integer.bnot(Lane18))
 	buffer.writeinteger(Lanes, 144, Lane19)
 	buffer.writeinteger(Lanes, 152, Lane20)
-	buffer.writeinteger(Lanes, 160, Lane21)
+	buffer.writeinteger(Lanes, 160, integer.bnot(Lane21))
 	buffer.writeinteger(Lanes, 168, Lane22)
 	buffer.writeinteger(Lanes, 176, Lane23)
 	buffer.writeinteger(Lanes, 184, Lane24)
@@ -325,35 +326,25 @@ end
 
 local function ProcessSponge(Message: buffer, CapacityBits: number, OutputBytes: number, DomainSeparator: number): buffer
 	local RateBytes = (1600 - CapacityBits) // 8
-	buffer.fill(LANES, 0, 0)
-
 	local Lanes = LANES
+	buffer.fill(Lanes, 0, 0)
 
-	local MessageLength: number = buffer.len(Message)
-	local PaddedLength: number = MessageLength + 1
+	local MessageLength = buffer.len(Message)
+	local TailLength = MessageLength % RateBytes
+	local FullBytes = MessageLength - TailLength
 
-	local Remainder = PaddedLength % RateBytes
-	if Remainder ~= 0 then
-		PaddedLength += (RateBytes - Remainder)
+	if FullBytes > 0 then
+		Keccak(Lanes, Message, 0, FullBytes, RateBytes)
 	end
 
-	local PaddedMessage = buffer.create(PaddedLength)
-
-	if MessageLength > 0 then
-		buffer.copy(PaddedMessage, 0, Message, 0, MessageLength)
+	local Tail = TAIL_BLOCK
+	buffer.fill(Tail, 0, 0, RateBytes)
+	if TailLength > 0 then
+		buffer.copy(Tail, 0, Message, FullBytes, TailLength)
 	end
-
-	if PaddedLength - MessageLength == 1 then
-		buffer.writeu8(PaddedMessage, MessageLength, bit32.bor(DomainSeparator, 0x80))
-	else
-		buffer.writeu8(PaddedMessage, MessageLength, DomainSeparator)
-		if PaddedLength - MessageLength > 2 then
-			buffer.fill(PaddedMessage, MessageLength + 1, 0, PaddedLength - MessageLength - 2)
-		end
-		buffer.writeu8(PaddedMessage, PaddedLength - 1, 0x80)
-	end
-
-	Keccak(Lanes, PaddedMessage, 0, PaddedLength, RateBytes)
+	buffer.writeu8(Tail, TailLength, DomainSeparator)
+	buffer.writeu8(Tail, RateBytes - 1, bit32.bor(buffer.readu8(Tail, RateBytes - 1), 0x80))
+	Keccak(Lanes, Tail, 0, RateBytes, RateBytes)
 
 	local Output = buffer.create(OutputBytes)
 	local OutputOffset = 0

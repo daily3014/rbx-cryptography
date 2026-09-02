@@ -325,7 +325,7 @@ Package("rbx-cryptography", function()
 		end)
 
 		Group("Blake", function()
-			Throughput("Blake2b", Crypto.Hashing.Blake2b, Message, OutputBytes, nil)
+			Throughput("Blake2b", Crypto.Hashing.Blake2b.Digest, Message, OutputBytes, nil)
 			Throughput("Blake3", Crypto.Hashing.Blake3.Digest, Message, OutputBytes)
 		end)
 

@@ -108,23 +108,23 @@ local function VariableHash(OutBuf: buffer, OutOffset: number, OutLen: number, I
 	buffer.copy(Tmp, 4, Input, 0, InputLen)
 
 	if OutLen <= 64 then
-		local _, Hash = Blake2b(Tmp, OutLen)
+		local Hash = Blake2b.DigestBuffer(Tmp, OutLen)
 		buffer.copy(OutBuf, OutOffset, Hash, 0, OutLen)
 		return
 	end
 
-	local _, V = Blake2b(Tmp, 64)
+	local V = Blake2b.DigestBuffer(Tmp, 64)
 	buffer.copy(OutBuf, OutOffset, V, 0, 32)
 	local Pos = 32
 
 	while OutLen - Pos > 64 do
-		local _, NewV = Blake2b(V, 64)
+		local NewV = Blake2b.DigestBuffer(V, 64)
 		V = NewV
 		buffer.copy(OutBuf, OutOffset + Pos, V, 0, 32)
 		Pos += 32
 	end
 
-	local _, Final = Blake2b(V, OutLen - Pos)
+	local Final = Blake2b.DigestBuffer(V, OutLen - Pos)
 	buffer.copy(OutBuf, OutOffset + Pos, Final, 0, OutLen - Pos)
 end
 
@@ -877,7 +877,7 @@ local function Argon2id(Password: buffer, Salt: buffer, Options: Argon2idOptions
 	Pointer += 4
 	buffer.copy(H0Input, Pointer, AssociatedData, 0, AssocLen)
 
-	local H0 = select(2, Blake2b(H0Input, 64))
+	local H0 = Blake2b.DigestBuffer(H0Input, 64)
 
 	local Memory = buffer.create(TotalBlocks * BLOCK_BYTES)
 	local InitInput = buffer.create(64 + 4 + 4)

@@ -34,22 +34,10 @@ end
 
 function PolyVec.MatVecMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number)
 	local PolySize = POLY_SIZE
-	local Modulus = Q
-	local PolyMulAdd = Ntt.PolyMulAddAt
-	local PolyMul = Ntt.PolyMulAt
+	local PolyVecDot = Ntt.PolyVecDotAt
 
 	for I = 0, ARows - 1 do
-		local COffset = I * PolySize
-
-		PolyMul(A, I * ACols * PolySize, B, 0, C, COffset)
-		for K = 1, ACols - 1 do
-			PolyMulAdd(A, (I * ACols + K) * PolySize, B, K * PolySize, C, COffset)
-		end
-
-		for J = 0, N - 1 do
-			local Off = COffset + J * 2
-			buffer.writeu16(C, Off, buffer.readu16(C, Off) % Modulus)
-		end
+		PolyVecDot(A, I * ACols * PolySize, B, 0, ACols, C, I * PolySize)
 	end
 end
 

@@ -27,7 +27,7 @@
 --!native
 
 type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number) -> ()
-type BlockCipher = (RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number) -> ()
+type BlockCipher = (RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number, BlockCount: number?, Xor: buffer?, XorOffset: number?) -> ()
 
 local AES = {}
 local CtCompare = require("../Utilities/Functions").CtCompare
@@ -36,6 +36,19 @@ local ALL_TABLES = buffer.create(32 * 16 * 16)
 local DOUBLES = buffer.create(128 * 16)
 local BYTE_TABLES = buffer.create(16 * 256 * 16)
 local LAST_H = buffer.create(16)
+local EMPTY = buffer.create(0)
+local GHASH_TMP = buffer.create(16)
+local GCMHASH_TMP = buffer.create(16)
+local GCTR_CB = buffer.create(16)
+local GCTR_TMP = buffer.create(16)
+local GCM_J0INC = buffer.create(16)
+local J0_SCRATCH = buffer.create(16)
+local S_SCRATCH = buffer.create(16)
+local TAG_SCRATCH = buffer.create(16)
+local KEY_CACHE_KEY = buffer.create(32)
+local KEY_CACHE_LENGTH = 0
+local KEY_CACHE_ROUND_KEYS = buffer.create(240)
+local KEY_CACHE_H = buffer.create(16)
 local TABLES_KEY_VALID = false
 
 local KEY_CONFIGS = {
@@ -197,13 +210,19 @@ local function ExpandKeySchedule(Key: buffer, KeyLength: number, OutputBuffer: b
 	return OutputBuffer
 end
 
-local function EncryptBlock128(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
+local function EncryptBlock128(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number, BlockCount: number?, Xor: buffer?, XorOffset: number?)
 	local LT = TTABLES
 
-	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
-	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
-	local C2 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 8), buffer.readu32(RoundKeys, 8))
-	local C3 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 12), buffer.readu32(RoundKeys, 12))
+	local Count = BlockCount or 1
+	local InOffset = PlaintextOffset
+	local OutOffset = OutputOffset
+	local XOffset = XorOffset or 0
+
+	for _ = 1, Count do
+	local C0 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 0), buffer.readu32(RoundKeys, 0))
+	local C1 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 4), buffer.readu32(RoundKeys, 4))
+	local C2 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 8), buffer.readu32(RoundKeys, 8))
+	local C3 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 12), buffer.readu32(RoundKeys, 12))
 
 	do
 		local NewC0 = bit32.bxor(
@@ -498,42 +517,59 @@ local function EncryptBlock128(RoundKeys: buffer, Plaintext: buffer, PlaintextOf
 	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
 	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
 	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
-	buffer.writeu32(Output, OutputOffset, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 160)))
+	local O0 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 160))
 
 	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
-	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 164)))
+	local O4 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 164))
 
 	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
-	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 168)))
+	local O8 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 168))
 
 	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
-	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 172)))
+	local O12 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 172))
+
+	if Xor then
+		buffer.writeu32(Output, OutOffset, bit32.bxor(O0, buffer.readu32(Xor, XOffset)))
+		buffer.writeu32(Output, OutOffset + 4, bit32.bxor(O4, buffer.readu32(Xor, XOffset + 4)))
+		buffer.writeu32(Output, OutOffset + 8, bit32.bxor(O8, buffer.readu32(Xor, XOffset + 8)))
+		buffer.writeu32(Output, OutOffset + 12, bit32.bxor(O12, buffer.readu32(Xor, XOffset + 12)))
+		XOffset += 16
+
+		local Counter = bit32.byteswap(buffer.readu32(Plaintext, InOffset + 12))
+		buffer.writeu32(Plaintext, InOffset + 12, bit32.byteswap(bit32.bor(Counter + 1, 0)))
+	else
+		buffer.writeu32(Output, OutOffset, O0)
+		buffer.writeu32(Output, OutOffset + 4, O4)
+		buffer.writeu32(Output, OutOffset + 8, O8)
+		buffer.writeu32(Output, OutOffset + 12, O12)
+	end
+
+	OutOffset += 16
+	end
 end
 
-local function EncryptBlock192(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
+local function EncryptBlock192(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number, BlockCount: number?, Xor: buffer?, XorOffset: number?)
 	local LT = TTABLES
 
-	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
-	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
-	local C2 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 8), buffer.readu32(RoundKeys, 8))
-	local C3 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 12), buffer.readu32(RoundKeys, 12))
+	local Count = BlockCount or 1
+	local InOffset = PlaintextOffset
+	local OutOffset = OutputOffset
+	local XOffset = XorOffset or 0
+
+	for _ = 1, Count do
+	local C0 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 0), buffer.readu32(RoundKeys, 0))
+	local C1 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 4), buffer.readu32(RoundKeys, 4))
+	local C2 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 8), buffer.readu32(RoundKeys, 8))
+	local C3 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 12), buffer.readu32(RoundKeys, 12))
 
 	do
 		local NewC0 = bit32.bxor(
@@ -892,42 +928,59 @@ local function EncryptBlock192(RoundKeys: buffer, Plaintext: buffer, PlaintextOf
 	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
 	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
 	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
-	buffer.writeu32(Output, OutputOffset, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 192)))
+	local O0 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 192))
 
 	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
-	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 196)))
+	local O4 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 196))
 
 	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
-	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 200)))
+	local O8 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 200))
 
 	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
-	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 204)))
+	local O12 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 204))
+
+	if Xor then
+		buffer.writeu32(Output, OutOffset, bit32.bxor(O0, buffer.readu32(Xor, XOffset)))
+		buffer.writeu32(Output, OutOffset + 4, bit32.bxor(O4, buffer.readu32(Xor, XOffset + 4)))
+		buffer.writeu32(Output, OutOffset + 8, bit32.bxor(O8, buffer.readu32(Xor, XOffset + 8)))
+		buffer.writeu32(Output, OutOffset + 12, bit32.bxor(O12, buffer.readu32(Xor, XOffset + 12)))
+		XOffset += 16
+
+		local Counter = bit32.byteswap(buffer.readu32(Plaintext, InOffset + 12))
+		buffer.writeu32(Plaintext, InOffset + 12, bit32.byteswap(bit32.bor(Counter + 1, 0)))
+	else
+		buffer.writeu32(Output, OutOffset, O0)
+		buffer.writeu32(Output, OutOffset + 4, O4)
+		buffer.writeu32(Output, OutOffset + 8, O8)
+		buffer.writeu32(Output, OutOffset + 12, O12)
+	end
+
+	OutOffset += 16
+	end
 end
 
-local function EncryptBlock256(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number)
+local function EncryptBlock256(RoundKeys: buffer, Plaintext: buffer, PlaintextOffset: number, Output: buffer, OutputOffset: number, BlockCount: number?, Xor: buffer?, XorOffset: number?)
 	local LT = TTABLES
 
-	local C0 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 0), buffer.readu32(RoundKeys, 0))
-	local C1 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 4), buffer.readu32(RoundKeys, 4))
-	local C2 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 8), buffer.readu32(RoundKeys, 8))
-	local C3 = bit32.bxor(buffer.readu32(Plaintext, PlaintextOffset + 12), buffer.readu32(RoundKeys, 12))
+	local Count = BlockCount or 1
+	local InOffset = PlaintextOffset
+	local OutOffset = OutputOffset
+	local XOffset = XorOffset or 0
+
+	for _ = 1, Count do
+	local C0 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 0), buffer.readu32(RoundKeys, 0))
+	local C1 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 4), buffer.readu32(RoundKeys, 4))
+	local C2 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 8), buffer.readu32(RoundKeys, 8))
+	local C3 = bit32.bxor(buffer.readu32(Plaintext, InOffset + 12), buffer.readu32(RoundKeys, 12))
 
 	do
 		local NewC0 = bit32.bxor(
@@ -1350,33 +1403,44 @@ local function EncryptBlock256(RoundKeys: buffer, Plaintext: buffer, PlaintextOf
 	local B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 8), 0xFF))
 	local Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 16), 0xFF))
 	local D = buffer.readu8(LSBox, bit32.rshift(C3, 24))
-	buffer.writeu32(Output, OutputOffset, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 224)))
+	local O0 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 224))
 
 	A = buffer.readu8(LSBox, bit32.band(C1, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C2, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C0, 24))
-	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 228)))
+	local O4 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 228))
 
 	A = buffer.readu8(LSBox, bit32.band(C2, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C3, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C1, 24))
-	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 232)))
+	local O8 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 232))
 
 	A = buffer.readu8(LSBox, bit32.band(C3, 0xFF))
 	B = buffer.readu8(LSBox, bit32.band(bit32.rshift(C0, 8), 0xFF))
 	Cc = buffer.readu8(LSBox, bit32.band(bit32.rshift(C1, 16), 0xFF))
 	D = buffer.readu8(LSBox, bit32.rshift(C2, 24))
-	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(
-		bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)),
-		buffer.readu32(RoundKeys, 236)))
+	local O12 = bit32.bxor(bit32.bor(A, bit32.lshift(B, 8), bit32.lshift(Cc, 16), bit32.lshift(D, 24)), buffer.readu32(RoundKeys, 236))
+
+	if Xor then
+		buffer.writeu32(Output, OutOffset, bit32.bxor(O0, buffer.readu32(Xor, XOffset)))
+		buffer.writeu32(Output, OutOffset + 4, bit32.bxor(O4, buffer.readu32(Xor, XOffset + 4)))
+		buffer.writeu32(Output, OutOffset + 8, bit32.bxor(O8, buffer.readu32(Xor, XOffset + 8)))
+		buffer.writeu32(Output, OutOffset + 12, bit32.bxor(O12, buffer.readu32(Xor, XOffset + 12)))
+		XOffset += 16
+
+		local Counter = bit32.byteswap(buffer.readu32(Plaintext, InOffset + 12))
+		buffer.writeu32(Plaintext, InOffset + 12, bit32.byteswap(bit32.bor(Counter + 1, 0)))
+	else
+		buffer.writeu32(Output, OutOffset, O0)
+		buffer.writeu32(Output, OutOffset + 4, O4)
+		buffer.writeu32(Output, OutOffset + 8, O8)
+		buffer.writeu32(Output, OutOffset + 12, O12)
+	end
+
+	OutOffset += 16
+	end
 end
 
 local function SelectBlockCipher(MaterialLength: number): BlockCipher
@@ -1624,7 +1688,7 @@ end
 local function Ghash(Tables: buffer, X: buffer, XLen: number, Y: buffer)
 	local M = math.floor(XLen / 16)
 	local XPos = 0
-	local Tmp = buffer.create(16)
+	local Tmp = GHASH_TMP
 	local GfMult = GfMult
 
 	for _ = 1, M do
@@ -1660,8 +1724,8 @@ local function Gctr(RoundKeys: buffer, KeyMaterialLength: number, ICB: buffer, X
 	end
 
 	local N = math.floor(XLen / 16)
-	local CB = buffer.create(16)
-	local Tmp = buffer.create(16)
+	local CB = GCTR_CB
+	local Tmp = GCTR_TMP
 	local XPos = 0
 	local YPos = 0
 
@@ -1672,20 +1736,10 @@ local function Gctr(RoundKeys: buffer, KeyMaterialLength: number, ICB: buffer, X
 
 	local Encrypt = SelectBlockCipher(KeyMaterialLength)
 
-	for I = 0, N - 1 do
-		Encrypt(RoundKeys, CB, 0, Tmp, 0)
-
-		buffer.writeu32(Y, YPos + 0, bit32.bxor(buffer.readu32(X, XPos + 0), buffer.readu32(Tmp, 0)))
-		buffer.writeu32(Y, YPos + 4, bit32.bxor(buffer.readu32(X, XPos + 4), buffer.readu32(Tmp, 4)))
-		buffer.writeu32(Y, YPos + 8, bit32.bxor(buffer.readu32(X, XPos + 8), buffer.readu32(Tmp, 8)))
-		buffer.writeu32(Y, YPos + 12, bit32.bxor(buffer.readu32(X, XPos + 12), buffer.readu32(Tmp, 12)))
-
-		XPos += 16
-		YPos += 16
-
-		local Val = bit32.byteswap(buffer.readu32(CB, 12))
-		Val = (Val + 1) % 0x100000000
-		buffer.writeu32(CB, 12, bit32.byteswap(Val))
+	if N > 0 then
+		Encrypt(RoundKeys, CB, 0, Y, 0, N, X, 0)
+		XPos = N * 16
+		YPos = XPos
 	end
 
 	local Last = XLen - XPos
@@ -1734,7 +1788,7 @@ local function GcmGctr(RoundKeys: buffer, KeyMaterialLength: number, J0: buffer,
 		return
 	end
 
-	local J0Inc = buffer.create(16)
+	local J0Inc = GCM_J0INC
 
 	buffer.writeu32(J0Inc, 0, buffer.readu32(J0, 0))
 	buffer.writeu32(J0Inc, 4, buffer.readu32(J0, 4))
@@ -1742,14 +1796,14 @@ local function GcmGctr(RoundKeys: buffer, KeyMaterialLength: number, J0: buffer,
 	buffer.writeu32(J0Inc, 12, buffer.readu32(J0, 12))
 
 	local Val = bit32.byteswap(buffer.readu32(J0Inc, 12))
-	Val = (Val + 1) % 0x100000000
+	Val = bit32.bor(Val + 1, 0)
 	buffer.writeu32(J0Inc, 12, bit32.byteswap(Val))
 
 	Gctr(RoundKeys, KeyMaterialLength, J0Inc, Input, Len, Output)
 end
 
 local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffer, CryptLen: number, S: buffer)
-	local Tmp = buffer.create(16)
+	local Tmp = GCMHASH_TMP
 	local GfMult = GfMult
 
 	buffer.writeu32(S, 0, 0)
@@ -1824,6 +1878,29 @@ local function GcmHash(Tables: buffer, AAD: buffer, AADLen: number, Crypt: buffe
 	GfMult(S, Tables)
 end
 
+local function KeySetup(Key: buffer, KeyLength: number): (buffer, number, buffer)
+	local KeyConfig = KEY_CONFIGS[KeyLength]
+	local RoundKeys = KEY_CACHE_ROUND_KEYS
+	local H = KEY_CACHE_H
+
+	if KEY_CACHE_LENGTH == KeyLength then
+		local Cached = buffer.create(KeyLength)
+		buffer.copy(Cached, 0, KEY_CACHE_KEY, 0, KeyLength)
+		if CtCompare(Cached, Key) then
+			return RoundKeys, KeyConfig.MaterialLength, H
+		end
+	end
+
+	ExpandKeySchedule(Key, KeyLength, RoundKeys)
+	buffer.fill(H, 0, 0, 16)
+	SelectBlockCipher(KeyConfig.MaterialLength)(RoundKeys, H, 0, H, 0)
+
+	buffer.copy(KEY_CACHE_KEY, 0, Key, 0, KeyLength)
+	KEY_CACHE_LENGTH = KeyLength
+
+	return RoundKeys, KeyConfig.MaterialLength, H
+end
+
 function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): (buffer, buffer)
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
@@ -1847,22 +1924,18 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 		error("IV cannot be empty", 2)
 	end
 
-	local KeyConfig = KEY_CONFIGS[KeyLength]
-	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
-	local KeyMaterialLength = KeyConfig.MaterialLength
+	local RoundKeys, KeyMaterialLength, H = KeySetup(Key, KeyLength)
 
-	local AADLen = buffer.len(AAD or buffer.create(0))
+	local AADLen = buffer.len(AAD or EMPTY)
 	local PlainLen = buffer.len(Plaintext)
-	local AuthData = AAD or buffer.create(0)
+	local AuthData = AAD or EMPTY
 
 	local OutputBuffer = buffer.create(PlainLen)
 	local OutputTag = buffer.create(16)
 
-	local H = buffer.create(16)
-	local J0 = buffer.create(16)
-	local S = buffer.create(16)
+	local J0 = J0_SCRATCH
+	local S = S_SCRATCH
 
-	SelectBlockCipher(KeyMaterialLength)(RoundKeys, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
 	GcmGctr(RoundKeys, KeyMaterialLength, J0, Plaintext, PlainLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, OutputBuffer, PlainLen, S)
@@ -1898,30 +1971,26 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 		error("IV cannot be empty", 2)
 	end
 
-	local KeyConfig = KEY_CONFIGS[KeyLength]
-	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
-	local KeyMaterialLength = KeyConfig.MaterialLength
+	local RoundKeys, KeyMaterialLength, H = KeySetup(Key, KeyLength)
 
-	local AADLen = buffer.len(AAD or buffer.create(0))
+	local AADLen = buffer.len(AAD or EMPTY)
 	local CryptLen = buffer.len(Ciphertext)
-	local AuthData = AAD or buffer.create(0)
+	local AuthData = AAD or EMPTY
 
-	local OutputBuffer = buffer.create(CryptLen)
+	local J0 = J0_SCRATCH
+	local S = S_SCRATCH
+	local ComputedTag = TAG_SCRATCH
 
-	local H = buffer.create(16)
-	local J0 = buffer.create(16)
-	local S = buffer.create(16)
-	local ComputedTag = buffer.create(16)
-
-	SelectBlockCipher(KeyMaterialLength)(RoundKeys, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
-	GcmGctr(RoundKeys, KeyMaterialLength, J0, Ciphertext, CryptLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, Ciphertext, CryptLen, S)
 	Gctr(RoundKeys, KeyMaterialLength, J0, S, 16, ComputedTag)
 
 	if not CtCompare(Tag, ComputedTag) then
 		return nil
 	end
+
+	local OutputBuffer = buffer.create(CryptLen)
+	GcmGctr(RoundKeys, KeyMaterialLength, J0, Ciphertext, CryptLen, OutputBuffer)
 
 	return OutputBuffer
 end

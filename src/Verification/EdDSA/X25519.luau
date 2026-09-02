@@ -31,6 +31,7 @@
 
 local FieldPrime = require("./FieldPrime")
 local Curve25519 = require("./Curve25519")
+local CtIsAllZero = require("../../Utilities/Functions").CtIsAllZero
 
 local COORD_SIZE = 80
 local X25519_SECRET_KEY_SIZE = 32
@@ -130,7 +131,12 @@ function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer
 		error(`TheirPublicKey must be exactly {X25519_PUBLIC_KEY_SIZE} bytes long, got {TheirPublicKeyLength} bytes`, 2)
 	end
 
-	return ScalarMult(SecretKey, Curve25519.Decode(TheirPublicKey))
+	local SharedSecret = ScalarMult(SecretKey, Curve25519.Decode(TheirPublicKey))
+	if CtIsAllZero(SharedSecret) then
+		error("TheirPublicKey is a low order point, the shared secret would be all zero", 2)
+	end
+
+	return SharedSecret
 end
 
 return X25519

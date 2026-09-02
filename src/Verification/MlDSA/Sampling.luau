@@ -42,13 +42,14 @@ local function SeedMatches(Cached: buffer, Rho: buffer): boolean
 	return true
 end
 
-function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
+function Sampling.ExpandA(Rho: buffer, K: number, L: number): buffer
 	local Dimensions = K * 16 + L
 	local Cached = MATRIX_CACHE_VALUE
 	if Cached and MATRIX_CACHE_DIMENSIONS == Dimensions and SeedMatches(MATRIX_CACHE_RHO, Rho) then
-		buffer.copy(Mat, 0, Cached, 0, K * L * N * 4)
-		return
+		return Cached
 	end
+
+	local Mat = buffer.create(K * L * N * 4)
 
 	buffer.copy(WORKSPACE_MSG_34, 0, Rho, 0, 32)
 
@@ -118,11 +119,11 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 		end
 	end
 
-	local Store = buffer.create(K * L * N * 4)
-	buffer.copy(Store, 0, Mat, 0, K * L * N * 4)
 	buffer.copy(MATRIX_CACHE_RHO, 0, Rho, 0, 32)
 	MATRIX_CACHE_DIMENSIONS = Dimensions
-	MATRIX_CACHE_VALUE = Store
+	MATRIX_CACHE_VALUE = Mat
+
+	return Mat
 end
 
 function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number, StartNonce: number)
@@ -331,10 +332,10 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 				local D2 = G1 - V2
 				local D3 = G1 - V3
 
-				buffer.writeu32(Vec, POffset + 0, D0 % Modulus)
-				buffer.writeu32(Vec, POffset + 4, D1 % Modulus)
-				buffer.writeu32(Vec, POffset + 8, D2 % Modulus)
-				buffer.writeu32(Vec, POffset + 12, D3 % Modulus)
+				buffer.writeu32(Vec, POffset + 0, D0 + bit32.band(Modulus, bit32.arshift(D0, 31)))
+				buffer.writeu32(Vec, POffset + 4, D1 + bit32.band(Modulus, bit32.arshift(D1, 31)))
+				buffer.writeu32(Vec, POffset + 8, D2 + bit32.band(Modulus, bit32.arshift(D2, 31)))
+				buffer.writeu32(Vec, POffset + 12, D3 + bit32.band(Modulus, bit32.arshift(D3, 31)))
 			end
 		else
 			for J = 0, 63 do
@@ -355,10 +356,10 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 				local D2 = G1 - V2
 				local D3 = G1 - V3
 
-				buffer.writeu32(Vec, POffset + 0, D0 % Modulus)
-				buffer.writeu32(Vec, POffset + 4, D1 % Modulus)
-				buffer.writeu32(Vec, POffset + 8, D2 % Modulus)
-				buffer.writeu32(Vec, POffset + 12, D3 % Modulus)
+				buffer.writeu32(Vec, POffset + 0, D0 + bit32.band(Modulus, bit32.arshift(D0, 31)))
+				buffer.writeu32(Vec, POffset + 4, D1 + bit32.band(Modulus, bit32.arshift(D1, 31)))
+				buffer.writeu32(Vec, POffset + 8, D2 + bit32.band(Modulus, bit32.arshift(D2, 31)))
+				buffer.writeu32(Vec, POffset + 12, D3 + bit32.band(Modulus, bit32.arshift(D3, 31)))
 			end
 		end
 	end

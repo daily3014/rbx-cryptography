@@ -24,6 +24,14 @@ local ZETA_NEG_EXP = NTT.ZETA_NEG_EXP
 
 local PolyVec = {}
 
+local function NonZeroMask(X: number): number
+	return bit32.arshift(bit32.bor(X, -X), 31)
+end
+
+local function WrapNegative(X: number): number
+	return X + bit32.band(Q, bit32.arshift(X, 31))
+end
+
 function PolyVec.ForwardNTT(Vec: buffer, K: number)
 	local Num = N
 	for I = 0, K - 1 do
@@ -219,14 +227,14 @@ function PolyVec.AddTo(Src: buffer, Dst: buffer, K: number)
 	end
 end
 
-function PolyVec.Negate(Vec: buffer, K: number)
+function PolyVec.SubFromVec(Src: buffer, Dst: buffer, K: number)
 	local TotalElements = K * N
 	local Modulus = Q
-
 	for I = 0, TotalElements - 1 do
 		local Offset = I * 4
-		local Value = buffer.readu32(Vec, Offset)
-		buffer.writeu32(Vec, Offset, (Modulus - Value) % Modulus)
+		local SrcValue = buffer.readu32(Src, Offset)
+		local DstValue = buffer.readu32(Dst, Offset)
+		buffer.writeu32(Dst, Offset, (SrcValue - DstValue) % Modulus)
 	end
 end
 
@@ -511,13 +519,11 @@ function PolyVec.HighBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
-
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(Src, JOffset)
-
 			local T3 = math.floor((R + T0 - 1) / Alpha)
-			buffer.writeu32(Dst, JOffset, T3 % M)
+			buffer.writeu32(Dst, JOffset, bit32.band(T3, NonZeroMask(T3 - M)))
 		end
 	end
 end
@@ -525,20 +531,16 @@ end
 function PolyVec.LowBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
 	local M = math.floor((Q - 1) / Alpha)
-	local Modulus = Q
 	local Num = N
 
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
-
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(Src, JOffset)
-
 			local T3 = math.floor((R + T0 - 1) / Alpha)
-			local Flag = math.floor(T3 / M)
-			local R0 = (R - T3 * Alpha) % Modulus
-			buffer.writeu32(Dst, JOffset, (R0 - Flag) % Modulus)
+			local Flag = 1 - bit32.band(NonZeroMask(T3 - M), 1)
+			buffer.writeu32(Dst, JOffset, WrapNegative(R - T3 * Alpha - Flag))
 		end
 	end
 end
@@ -560,6 +562,18 @@ function PolyVec.MultiplyByPoly(PolyBuffer: buffer, SrcVec: buffer, DstVec: buff
 			buffer.writeu32(DstVec, JOffset, Product)
 		end
 	end
+end
+
+function PolyVec.NormExceeds(Vec: buffer, K: number, Bound: number): boolean
+	local Modulus = Q
+	for I = 0, K * N - 1 do
+		local Value = buffer.readu32(Vec, I * 4)
+		if math.min(Value, Modulus - Value) >= Bound then
+			return true
+		end
+	end
+
+	return false
 end
 
 function PolyVec.InfinityNorm(Vec: buffer, K: number): number
@@ -590,19 +604,15 @@ function PolyVec.MakeHint(PolyA: buffer, PolyB: buffer, PolyC: buffer, K: number
 
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
-
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local Z = buffer.readu32(PolyA, JOffset)
 			local R = buffer.readu32(PolyB, JOffset)
-
-			local T3_R = math.floor((R + T0 - 1) / Alpha)
-			local R1 = T3_R % M
-
-			local Sum = (R + Z) % Modulus
-			local T3_V = math.floor((Sum + T0 - 1) / Alpha)
-			local V1 = T3_V % M
-
+			local T3R = math.floor((R + T0 - 1) / Alpha)
+			local R1 = bit32.band(T3R, NonZeroMask(T3R - M))
+			local Sum = WrapNegative(R + Z - Modulus)
+			local T3V = math.floor((Sum + T0 - 1) / Alpha)
+			local V1 = bit32.band(T3V, NonZeroMask(T3V - M))
 			buffer.writeu32(PolyC, JOffset, math.min(1, bit32.bxor(R1, V1)))
 		end
 	end
@@ -611,33 +621,36 @@ end
 function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number, Alpha: number)
 	local M = math.floor((Q - 1) / Alpha)
 	local T0 = bit32.rshift(Alpha, 1)
-	local T1 = Q - T0
-	local Modulus = Q
 
 	for I = 0, K - 1 do
 		local Offset = I * N * 4
-
 		for J = 0, N - 1 do
 			local JOffset = Offset + J * 4
 			local H = buffer.readu32(PolyH, JOffset)
 			local R = buffer.readu32(PolyR, JOffset)
-
 			local T3 = math.floor((R + T0 - 1) / Alpha)
-			local R0 = (R - T3 * Alpha) % Modulus
-			local Flag = T3 == M
-
-			local R1 = if Flag then 0 else T3
-			local R0_ = if Flag then (R0 - 1) % Modulus else R0
+			local R0 = R - T3 * Alpha
+			local R1 = T3
+			if T3 == M then
+				R1 = 0
+				R0 -= 1
+			end
 
 			if H == 1 then
-				if R0_ > 0 and R0_ < T1 then
+				if R0 > 0 then
 					R1 += 1
 				else
 					R1 -= 1
 				end
 			end
 
-			buffer.writeu32(PolyRZ, JOffset, (R1 % M + M) % M)
+			if R1 == M then
+				R1 = 0
+			elseif R1 < 0 then
+				R1 = M - 1
+			end
+
+			buffer.writeu32(PolyRZ, JOffset, R1)
 		end
 	end
 end

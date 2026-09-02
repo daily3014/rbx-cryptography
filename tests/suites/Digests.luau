@@ -33,7 +33,7 @@ local Digesters: { { Name: string, Vectors: any, Size: number, Call: Digester } 
 	{ Name = "SHA3-512", Vectors = require("../tadashi/sha3_512_test"), Size = 64, Call = function(Message) return SHA3.SHA3_512(Message) end },
 	{ Name = "SHAKE128", Vectors = require("../tadashi/shake128_test"), Size = 0, Call = function(Message, OutputBytes) return SHA3.SHAKE128(Message, OutputBytes) end },
 	{ Name = "SHAKE256", Vectors = require("../tadashi/shake256_test"), Size = 0, Call = function(Message, OutputBytes) return SHA3.SHAKE256(Message, OutputBytes) end },
-	{ Name = "Blake2b", Vectors = require("../tadashi/blake2b_test"), Size = 0, Call = function(Message, OutputBytes) return Blake2b(Message, OutputBytes) end },
+	{ Name = "Blake2b", Vectors = require("../tadashi/blake2b_test"), Size = 0, Call = function(Message, OutputBytes) return Blake2b.Digest(Message, OutputBytes) end },
 	{ Name = "Blake3", Vectors = require("../tadashi/blake3_test"), Size = 0, Call = function(Message, OutputBytes) return Blake3.Digest(Message, OutputBytes) end },
 }
 

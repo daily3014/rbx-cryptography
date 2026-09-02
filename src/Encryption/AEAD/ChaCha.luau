@@ -49,23 +49,23 @@ local TAU_CONSTANTS = buffer.create(16) do
 	end
 end
 
-local function ProcessBlock20(InitialState: buffer)
-	local S0 = buffer.readu32(InitialState, 0)
-	local S1 = buffer.readu32(InitialState, 4)
-	local S2 = buffer.readu32(InitialState, 8)
-	local S3 = buffer.readu32(InitialState, 12)
-	local S4 = buffer.readu32(InitialState, 16)
-	local S5 = buffer.readu32(InitialState, 20)
-	local S6 = buffer.readu32(InitialState, 24)
-	local S7 = buffer.readu32(InitialState, 28)
-	local S8 = buffer.readu32(InitialState, 32)
-	local S9 = buffer.readu32(InitialState, 36)
-	local S10 = buffer.readu32(InitialState, 40)
-	local S11 = buffer.readu32(InitialState, 44)
-	local S12 = buffer.readu32(InitialState, 48)
-	local S13 = buffer.readu32(InitialState, 52)
-	local S14 = buffer.readu32(InitialState, 56)
-	local S15 = buffer.readu32(InitialState, 60)
+local function ProcessBlock20(State: buffer, Data: buffer, Output: buffer, Offset: number)
+	local S0 = buffer.readu32(State, 0)
+	local S1 = buffer.readu32(State, 4)
+	local S2 = buffer.readu32(State, 8)
+	local S3 = buffer.readu32(State, 12)
+	local S4 = buffer.readu32(State, 16)
+	local S5 = buffer.readu32(State, 20)
+	local S6 = buffer.readu32(State, 24)
+	local S7 = buffer.readu32(State, 28)
+	local S8 = buffer.readu32(State, 32)
+	local S9 = buffer.readu32(State, 36)
+	local S10 = buffer.readu32(State, 40)
+	local S11 = buffer.readu32(State, 44)
+	local S12 = buffer.readu32(State, 48)
+	local S13 = buffer.readu32(State, 52)
+	local S14 = buffer.readu32(State, 56)
+	local S15 = buffer.readu32(State, 60)
 
 	S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 16)
 	S8 = bit32.bor(S8 + S12, 0); S4 = bit32.lrotate(bit32.bxor(S4, S8), 12)
@@ -388,34 +388,34 @@ local function ProcessBlock20(InitialState: buffer)
 	S3 = bit32.bor(S3 + S4, 0); S14 = bit32.lrotate(bit32.bxor(S14, S3), 8)
 	S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 7)
 
-	buffer.writeu32(InitialState, 0, buffer.readu32(InitialState, 0) + S0)
-	buffer.writeu32(InitialState, 4, buffer.readu32(InitialState, 4) + S1)
-	buffer.writeu32(InitialState, 8, buffer.readu32(InitialState, 8) + S2)
-	buffer.writeu32(InitialState, 12, buffer.readu32(InitialState, 12) + S3)
-	buffer.writeu32(InitialState, 16, buffer.readu32(InitialState, 16) + S4)
-	buffer.writeu32(InitialState, 20, buffer.readu32(InitialState, 20) + S5)
-	buffer.writeu32(InitialState, 24, buffer.readu32(InitialState, 24) + S6)
-	buffer.writeu32(InitialState, 28, buffer.readu32(InitialState, 28) + S7)
-	buffer.writeu32(InitialState, 32, buffer.readu32(InitialState, 32) + S8)
-	buffer.writeu32(InitialState, 36, buffer.readu32(InitialState, 36) + S9)
-	buffer.writeu32(InitialState, 40, buffer.readu32(InitialState, 40) + S10)
-	buffer.writeu32(InitialState, 44, buffer.readu32(InitialState, 44) + S11)
-	buffer.writeu32(InitialState, 48, buffer.readu32(InitialState, 48) + S12)
-	buffer.writeu32(InitialState, 52, buffer.readu32(InitialState, 52) + S13)
-	buffer.writeu32(InitialState, 56, buffer.readu32(InitialState, 56) + S14)
-	buffer.writeu32(InitialState, 60, buffer.readu32(InitialState, 60) + S15)
+	buffer.writeu32(Output, Offset, bit32.bxor(buffer.readu32(Data, Offset), buffer.readu32(State, 0) + S0))
+	buffer.writeu32(Output, Offset + 4, bit32.bxor(buffer.readu32(Data, Offset + 4), buffer.readu32(State, 4) + S1))
+	buffer.writeu32(Output, Offset + 8, bit32.bxor(buffer.readu32(Data, Offset + 8), buffer.readu32(State, 8) + S2))
+	buffer.writeu32(Output, Offset + 12, bit32.bxor(buffer.readu32(Data, Offset + 12), buffer.readu32(State, 12) + S3))
+	buffer.writeu32(Output, Offset + 16, bit32.bxor(buffer.readu32(Data, Offset + 16), buffer.readu32(State, 16) + S4))
+	buffer.writeu32(Output, Offset + 20, bit32.bxor(buffer.readu32(Data, Offset + 20), buffer.readu32(State, 20) + S5))
+	buffer.writeu32(Output, Offset + 24, bit32.bxor(buffer.readu32(Data, Offset + 24), buffer.readu32(State, 24) + S6))
+	buffer.writeu32(Output, Offset + 28, bit32.bxor(buffer.readu32(Data, Offset + 28), buffer.readu32(State, 28) + S7))
+	buffer.writeu32(Output, Offset + 32, bit32.bxor(buffer.readu32(Data, Offset + 32), buffer.readu32(State, 32) + S8))
+	buffer.writeu32(Output, Offset + 36, bit32.bxor(buffer.readu32(Data, Offset + 36), buffer.readu32(State, 36) + S9))
+	buffer.writeu32(Output, Offset + 40, bit32.bxor(buffer.readu32(Data, Offset + 40), buffer.readu32(State, 40) + S10))
+	buffer.writeu32(Output, Offset + 44, bit32.bxor(buffer.readu32(Data, Offset + 44), buffer.readu32(State, 44) + S11))
+	buffer.writeu32(Output, Offset + 48, bit32.bxor(buffer.readu32(Data, Offset + 48), buffer.readu32(State, 48) + S12))
+	buffer.writeu32(Output, Offset + 52, bit32.bxor(buffer.readu32(Data, Offset + 52), buffer.readu32(State, 52) + S13))
+	buffer.writeu32(Output, Offset + 56, bit32.bxor(buffer.readu32(Data, Offset + 56), buffer.readu32(State, 56) + S14))
+	buffer.writeu32(Output, Offset + 60, bit32.bxor(buffer.readu32(Data, Offset + 60), buffer.readu32(State, 60) + S15))
 end
 
-local function ProcessBlock(InitialState: buffer, Rounds: number)
+local function ProcessBlock(State: buffer, Rounds: number, Data: buffer, Output: buffer, Offset: number)
 	local S0: number, S1: number, S2: number, S3: number, S4: number, S5: number, S6: number, S7: number, S8: number, S9: number, S10: number, S11: number, S12: number, S13: number, S14: number, S15: number =
-		buffer.readu32(InitialState, 0), buffer.readu32(InitialState, 4),
-		buffer.readu32(InitialState, 8), buffer.readu32(InitialState, 12),
-		buffer.readu32(InitialState, 16), buffer.readu32(InitialState, 20),
-		buffer.readu32(InitialState, 24), buffer.readu32(InitialState, 28),
-		buffer.readu32(InitialState, 32), buffer.readu32(InitialState, 36),
-		buffer.readu32(InitialState, 40), buffer.readu32(InitialState, 44),
-		buffer.readu32(InitialState, 48), buffer.readu32(InitialState, 52),
-		buffer.readu32(InitialState, 56), buffer.readu32(InitialState, 60)
+		buffer.readu32(State, 0), buffer.readu32(State, 4),
+		buffer.readu32(State, 8), buffer.readu32(State, 12),
+		buffer.readu32(State, 16), buffer.readu32(State, 20),
+		buffer.readu32(State, 24), buffer.readu32(State, 28),
+		buffer.readu32(State, 32), buffer.readu32(State, 36),
+		buffer.readu32(State, 40), buffer.readu32(State, 44),
+		buffer.readu32(State, 48), buffer.readu32(State, 52),
+		buffer.readu32(State, 56), buffer.readu32(State, 60)
 
 	for Round = 1, Rounds, 2 do
 		S0 = bit32.bor(S0 + S4, 0); S12 = bit32.lrotate(bit32.bxor(S12, S0), 16)
@@ -459,22 +459,22 @@ local function ProcessBlock(InitialState: buffer, Rounds: number)
 		S9 = bit32.bor(S9 + S14, 0); S4 = bit32.lrotate(bit32.bxor(S4, S9), 7)
 	end
 
-	buffer.writeu32(InitialState, 0, buffer.readu32(InitialState, 0) + S0)
-	buffer.writeu32(InitialState, 4, buffer.readu32(InitialState, 4) + S1)
-	buffer.writeu32(InitialState, 8, buffer.readu32(InitialState, 8) + S2)
-	buffer.writeu32(InitialState, 12, buffer.readu32(InitialState, 12) + S3)
-	buffer.writeu32(InitialState, 16, buffer.readu32(InitialState, 16) + S4)
-	buffer.writeu32(InitialState, 20, buffer.readu32(InitialState, 20) + S5)
-	buffer.writeu32(InitialState, 24, buffer.readu32(InitialState, 24) + S6)
-	buffer.writeu32(InitialState, 28, buffer.readu32(InitialState, 28) + S7)
-	buffer.writeu32(InitialState, 32, buffer.readu32(InitialState, 32) + S8)
-	buffer.writeu32(InitialState, 36, buffer.readu32(InitialState, 36) + S9)
-	buffer.writeu32(InitialState, 40, buffer.readu32(InitialState, 40) + S10)
-	buffer.writeu32(InitialState, 44, buffer.readu32(InitialState, 44) + S11)
-	buffer.writeu32(InitialState, 48, buffer.readu32(InitialState, 48) + S12)
-	buffer.writeu32(InitialState, 52, buffer.readu32(InitialState, 52) + S13)
-	buffer.writeu32(InitialState, 56, buffer.readu32(InitialState, 56) + S14)
-	buffer.writeu32(InitialState, 60, buffer.readu32(InitialState, 60) + S15)
+	buffer.writeu32(Output, Offset, bit32.bxor(buffer.readu32(Data, Offset), buffer.readu32(State, 0) + S0))
+	buffer.writeu32(Output, Offset + 4, bit32.bxor(buffer.readu32(Data, Offset + 4), buffer.readu32(State, 4) + S1))
+	buffer.writeu32(Output, Offset + 8, bit32.bxor(buffer.readu32(Data, Offset + 8), buffer.readu32(State, 8) + S2))
+	buffer.writeu32(Output, Offset + 12, bit32.bxor(buffer.readu32(Data, Offset + 12), buffer.readu32(State, 12) + S3))
+	buffer.writeu32(Output, Offset + 16, bit32.bxor(buffer.readu32(Data, Offset + 16), buffer.readu32(State, 16) + S4))
+	buffer.writeu32(Output, Offset + 20, bit32.bxor(buffer.readu32(Data, Offset + 20), buffer.readu32(State, 20) + S5))
+	buffer.writeu32(Output, Offset + 24, bit32.bxor(buffer.readu32(Data, Offset + 24), buffer.readu32(State, 24) + S6))
+	buffer.writeu32(Output, Offset + 28, bit32.bxor(buffer.readu32(Data, Offset + 28), buffer.readu32(State, 28) + S7))
+	buffer.writeu32(Output, Offset + 32, bit32.bxor(buffer.readu32(Data, Offset + 32), buffer.readu32(State, 32) + S8))
+	buffer.writeu32(Output, Offset + 36, bit32.bxor(buffer.readu32(Data, Offset + 36), buffer.readu32(State, 36) + S9))
+	buffer.writeu32(Output, Offset + 40, bit32.bxor(buffer.readu32(Data, Offset + 40), buffer.readu32(State, 40) + S10))
+	buffer.writeu32(Output, Offset + 44, bit32.bxor(buffer.readu32(Data, Offset + 44), buffer.readu32(State, 44) + S11))
+	buffer.writeu32(Output, Offset + 48, bit32.bxor(buffer.readu32(Data, Offset + 48), buffer.readu32(State, 48) + S12))
+	buffer.writeu32(Output, Offset + 52, bit32.bxor(buffer.readu32(Data, Offset + 52), buffer.readu32(State, 52) + S13))
+	buffer.writeu32(Output, Offset + 56, bit32.bxor(buffer.readu32(Data, Offset + 56), buffer.readu32(State, 56) + S14))
+	buffer.writeu32(Output, Offset + 60, bit32.bxor(buffer.readu32(Data, Offset + 60), buffer.readu32(State, 60) + S15))
 end
 
 local function InitializeState(Key: buffer, Nonce: buffer, Counter: number): buffer
@@ -496,6 +496,44 @@ local function InitializeState(Key: buffer, Nonce: buffer, Counter: number): buf
 	buffer.copy(State, 52, Nonce, 0, 12)
 
 	return State
+end
+
+local function Crypt(State: buffer, Data: buffer, Output: buffer, DataLength: number, BlockCounter: number, BlockRounds: number)
+
+	local TailLength = DataLength % BLOCK_SIZE
+	local FullBytes = DataLength - TailLength
+	local DataOffset = 0
+
+	if BlockRounds == 20 then
+		while DataOffset < FullBytes do
+			buffer.writeu32(State, 48, BlockCounter)
+			ProcessBlock20(State, Data, Output, DataOffset)
+			DataOffset += BLOCK_SIZE
+			BlockCounter += 1
+		end
+	else
+		while DataOffset < FullBytes do
+			buffer.writeu32(State, 48, BlockCounter)
+			ProcessBlock(State, BlockRounds, Data, Output, DataOffset)
+			DataOffset += BLOCK_SIZE
+			BlockCounter += 1
+		end
+	end
+
+	if TailLength > 0 then
+		local TailIn = buffer.create(BLOCK_SIZE)
+		local TailOut = buffer.create(BLOCK_SIZE)
+		buffer.copy(TailIn, 0, Data, DataOffset, TailLength)
+		buffer.writeu32(State, 48, BlockCounter)
+
+		if BlockRounds == 20 then
+			ProcessBlock20(State, TailIn, TailOut, 0)
+		else
+			ProcessBlock(State, BlockRounds, TailIn, TailOut, 0)
+		end
+
+		buffer.copy(Output, DataOffset, TailOut, 0, TailLength)
+	end
 end
 
 function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?): buffer
@@ -578,54 +616,8 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 	end
 
 	local Output = buffer.create(DataLength)
-
-	local DataOffset = 0
-
 	local State = InitializeState(Key, Nonce, BlockCounter)
-	local StateBackup = buffer.create(64)
-	buffer.copy(StateBackup, 0, State, 0)
-
-	local Use20 = BlockRounds == 20
-
-	while DataOffset < DataLength do
-		if Use20 then
-			ProcessBlock20(State)
-		else
-			ProcessBlock(State, BlockRounds)
-		end
-
-		local BytesToProcess = math.min(BLOCK_SIZE, DataLength - DataOffset)
-
-		if BytesToProcess == BLOCK_SIZE then
-			buffer.writeinteger(Output, DataOffset, integer.bxor(buffer.readinteger(Data, DataOffset), buffer.readinteger(State, 0)))
-			buffer.writeinteger(Output, DataOffset + 8, integer.bxor(buffer.readinteger(Data, DataOffset + 8), buffer.readinteger(State, 8)))
-			buffer.writeinteger(Output, DataOffset + 16, integer.bxor(buffer.readinteger(Data, DataOffset + 16), buffer.readinteger(State, 16)))
-			buffer.writeinteger(Output, DataOffset + 24, integer.bxor(buffer.readinteger(Data, DataOffset + 24), buffer.readinteger(State, 24)))
-			buffer.writeinteger(Output, DataOffset + 32, integer.bxor(buffer.readinteger(Data, DataOffset + 32), buffer.readinteger(State, 32)))
-			buffer.writeinteger(Output, DataOffset + 40, integer.bxor(buffer.readinteger(Data, DataOffset + 40), buffer.readinteger(State, 40)))
-			buffer.writeinteger(Output, DataOffset + 48, integer.bxor(buffer.readinteger(Data, DataOffset + 48), buffer.readinteger(State, 48)))
-			buffer.writeinteger(Output, DataOffset + 56, integer.bxor(buffer.readinteger(Data, DataOffset + 56), buffer.readinteger(State, 56)))
-		else
-			local Leftover = BytesToProcess % 4
-
-			for Index = 0, BytesToProcess - Leftover - 1, 4 do
-				local DataWord = buffer.readu32(Data, DataOffset + Index)
-				local KeystreamWord = buffer.readu32(State, Index)
-				buffer.writeu32(Output, DataOffset + Index, bit32.bxor(DataWord, KeystreamWord))
-			end
-
-			for Index = BytesToProcess - Leftover, BytesToProcess - 1 do
-				local DataByte = buffer.readu8(Data, DataOffset + Index)
-				local KeystreamByte = buffer.readu8(State, Index)
-				buffer.writeu8(Output, DataOffset + Index, bit32.bxor(DataByte, KeystreamByte))
-			end
-		end
-
-		DataOffset += BytesToProcess
-		BlockCounter += 1
-		buffer.copy(State, 0, StateBackup, 0)
-		buffer.writeu32(State, 48, BlockCounter)
-	end
+	Crypt(State, Data, Output, DataLength, BlockCounter, BlockRounds)
 
 	return Output
 end
@@ -1142,6 +1134,41 @@ function ChaCha.XChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: num
 	buffer.copy(ChaNonce, 4, Nonce, 16, 8)
 
 	return ChaCha.ChaCha20(Data, Subkey, ChaNonce, Counter, Rounds)
+end
+
+function ChaCha.AeadKeySetup(Key: buffer, Nonce: buffer, BlockRounds: number, UseXChaCha20: boolean?): (buffer, buffer)
+	local StreamKey = Key
+	local StreamNonce = Nonce
+
+	if UseXChaCha20 then
+		local HNonce = buffer.create(16)
+		buffer.copy(HNonce, 0, Nonce, 0, 16)
+		StreamKey = ChaCha.HChaCha20(Key, HNonce, BlockRounds)
+		StreamNonce = buffer.create(CHACHA20_NONCE_SIZE)
+		buffer.copy(StreamNonce, 4, Nonce, 16, 8)
+	end
+
+	local State = InitializeState(StreamKey, StreamNonce, 0)
+	local KeyBlock = buffer.create(BLOCK_SIZE)
+
+	if BlockRounds == 20 then
+		ProcessBlock20(State, KeyBlock, KeyBlock, 0)
+	else
+		ProcessBlock(State, BlockRounds, KeyBlock, KeyBlock, 0)
+	end
+
+	local AuthKey = buffer.create(32)
+	buffer.copy(AuthKey, 0, KeyBlock, 0, 32)
+
+	return State, AuthKey
+end
+
+function ChaCha.AeadCrypt(State: buffer, Data: buffer, BlockRounds: number): buffer
+	local DataLength = buffer.len(Data)
+	local Output = buffer.create(DataLength)
+	Crypt(State, Data, Output, DataLength, 1, BlockRounds)
+
+	return Output
 end
 
 return ChaCha

@@ -40,6 +40,7 @@ type X25519Data = {
 	testGroups: {X25519Group},
 }
 
+local ZERO_SHARED = string.rep("00", 32)
 local X25519_URL = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/x25519_test.json"
 
 Testing.Describe("X25519 Tadashi Tests", function()
@@ -55,7 +56,11 @@ Testing.Describe("X25519 Tadashi Tests", function()
 				end
 
 				Testing.Test(TestName, function()
-					if Test.iterations then
+					if Test.shared == ZERO_SHARED then
+						Testing.Expect(function()
+							X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))
+						end).ToThrow()
+					elseif Test.iterations then
 						local K = FromHex(Test.sk)
 						local U = FromHex(Test.pk)
 						for _ = 1, Test.iterations do

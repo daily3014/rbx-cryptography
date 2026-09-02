@@ -12,7 +12,7 @@
 local Bridge = require("../Bridge")
 local Testing = require("../")
 
-local Poly1305 = require("../../src/Encryption/AEAD/Poly1305")
+local Poly1305 = require("../../src/Encryption/AEAD/Poly1305").Tag
 local FromHex = Testing.FromHex
 local ToHex = Testing.ToHex
 

@@ -93,10 +93,10 @@ function Ntt.ForwardNTTWithOffset(Poly: buffer, BaseOffset: number)
 		local TmpA = (ZetaA * PolyALen) % Modulus
 		local TmpB = (ZetaB * PolyBLen) % Modulus
 
-		buffer.writeu32(Poly, OffsetA + 4, (PolyA - TmpA + Modulus) % Modulus)
-		buffer.writeu32(Poly, OffsetA, (PolyA + TmpA) % Modulus)
-		buffer.writeu32(Poly, OffsetB + 4, (PolyB - TmpB + Modulus) % Modulus)
-		buffer.writeu32(Poly, OffsetB, (PolyB + TmpB) % Modulus)
+		buffer.writeu32(Poly, OffsetA + 4, PolyA - TmpA + Modulus)
+		buffer.writeu32(Poly, OffsetA, PolyA + TmpA)
+		buffer.writeu32(Poly, OffsetB + 4, PolyB - TmpB + Modulus)
+		buffer.writeu32(Poly, OffsetB, PolyB + TmpB)
 	end
 end
 

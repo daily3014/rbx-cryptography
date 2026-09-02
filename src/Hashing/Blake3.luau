@@ -62,8 +62,16 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 end
 
 local OUTPUT_SCRATCH = buffer.create(64)
+local STACK_SCRATCH = buffer.create(STACK_BUFFER_SIZE)
+local STATE_CV_SCRATCH = buffer.create(CV_SIZE)
+local POP_CV_SCRATCH = buffer.create(CV_SIZE)
+local MERGE_BLOCK_SCRATCH = buffer.create(EXTENDED_CV_SIZE)
+local STACK_CV_SCRATCH = buffer.create(CV_SIZE)
+local BLOCK_SCRATCH = buffer.create(EXTENDED_CV_SIZE)
+local PADDED_SCRATCH = buffer.create(BLOCK_SIZE)
+local OUTPUT_BLOCK_SCRATCH = buffer.create(EXTENDED_CV_SIZE)
 
-local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, BlockLength: number, Flags: number, IsFull: boolean?, Storage: buffer?): buffer
+local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, BlockLength: number, Flags: number, IsFull: boolean?, Storage: buffer?, BlockCount: number?, FirstFlag: number?, LastFlag: number?): buffer
 	local Hash00 = integer.mul(integer.create(buffer.readu32(Hash, 0)), DUP)
 	local Hash01 = integer.mul(integer.create(buffer.readu32(Hash, 4)), DUP)
 	local Hash02 = integer.mul(integer.create(buffer.readu32(Hash, 8)), DUP)
@@ -73,32 +81,48 @@ local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: numbe
 	local Hash06 = integer.mul(integer.create(buffer.readu32(Hash, 24)), DUP)
 	local Hash07 = integer.mul(integer.create(buffer.readu32(Hash, 28)), DUP)
 
-	local V00, V01, V02, V03 = Hash00, Hash01, Hash02, Hash03
-	local V04, V05, V06, V07 = Hash04, Hash05, Hash06, Hash07
-	local V08, V09, V10, V11 = 0x6A09E6676A09E667i, 0xBB67AE85BB67AE85i, 0x3C6EF3723C6EF372i, 0xA54FF53AA54FF53Ai
+	local Count = BlockCount or 1
+	local StartFlag = FirstFlag or 0
+	local EndFlag = LastFlag or 0
 
 	local CounterLow = Counter % 0x100000000
-	local V12 = integer.mul(integer.create(CounterLow), DUP)
-	local V13 = integer.mul(integer.create((Counter - CounterLow) / 0x100000000), DUP)
-	local V14 = integer.mul(integer.create(BlockLength), DUP)
-	local V15 = integer.mul(integer.create(Flags), DUP)
+	local CounterLowLane = integer.mul(integer.create(CounterLow), DUP)
+	local CounterHighLane = integer.mul(integer.create((Counter - CounterLow) / 0x100000000), DUP)
+	local BlockLengthLane = integer.mul(integer.create(BlockLength), DUP)
+	local Offset = MessageOffset
 
-	local M00 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 0)), DUP)
-	local M01 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 4)), DUP)
-	local M02 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 8)), DUP)
-	local M03 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 12)), DUP)
-	local M04 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 16)), DUP)
-	local M05 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 20)), DUP)
-	local M06 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 24)), DUP)
-	local M07 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 28)), DUP)
-	local M08 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 32)), DUP)
-	local M09 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 36)), DUP)
-	local M10 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 40)), DUP)
-	local M11 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 44)), DUP)
-	local M12 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 48)), DUP)
-	local M13 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 52)), DUP)
-	local M14 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 56)), DUP)
-	local M15 = integer.mul(integer.create(buffer.readu32(MessageBlock, MessageOffset + 60)), DUP)
+	for BlockIndex = 1, Count do
+		local BlockFlags = Flags
+		if BlockIndex == 1 then
+			BlockFlags += StartFlag
+		end
+
+		if BlockIndex == Count then
+			BlockFlags += EndFlag
+		end
+
+		local V00, V01, V02, V03 = Hash00, Hash01, Hash02, Hash03
+		local V04, V05, V06, V07 = Hash04, Hash05, Hash06, Hash07
+		local V08, V09, V10, V11 = 0x6A09E6676A09E667i, 0xBB67AE85BB67AE85i, 0x3C6EF3723C6EF372i, 0xA54FF53AA54FF53Ai
+		local V12, V13, V14 = CounterLowLane, CounterHighLane, BlockLengthLane
+		local V15 = integer.mul(integer.create(BlockFlags), DUP)
+
+		local M00 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset)), DUP)
+		local M01 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 4)), DUP)
+		local M02 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 8)), DUP)
+		local M03 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 12)), DUP)
+		local M04 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 16)), DUP)
+		local M05 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 20)), DUP)
+		local M06 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 24)), DUP)
+		local M07 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 28)), DUP)
+		local M08 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 32)), DUP)
+		local M09 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 36)), DUP)
+		local M10 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 40)), DUP)
+		local M11 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 44)), DUP)
+		local M12 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 48)), DUP)
+		local M13 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 52)), DUP)
+		local M14 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 56)), DUP)
+		local M15 = integer.mul(integer.create(buffer.readu32(MessageBlock, Offset + 60)), DUP)
 
 		V00 = integer.bor(integer.band(integer.add(integer.add(V00, V04), M00), MASK), integer.lshift(integer.add(integer.add(V00, V04), M00), 32i)); V12 = integer.bxor(V12, V00); V12 = integer.rrotate(V12, 16i)
 		V08 = integer.bor(integer.band(integer.add(V08, V12), MASK), integer.lshift(integer.add(V08, V12), 32i)); V04 = integer.bxor(V04, V08); V04 = integer.rrotate(V04, 12i)
@@ -331,54 +355,65 @@ local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: numbe
 		V03 = integer.bor(integer.band(integer.add(integer.add(V03, V04), M13), MASK), integer.lshift(integer.add(integer.add(V03, V04), M13), 32i)); V14 = integer.bxor(V14, V03); V14 = integer.rrotate(V14, 8i)
 		V09 = integer.bor(integer.band(integer.add(V09, V14), MASK), integer.lshift(integer.add(V09, V14), 32i)); V04 = integer.bxor(V04, V09); V04 = integer.rrotate(V04, 7i)
 
-	if IsFull then
-		local Result = Storage or buffer.create(EXTENDED_CV_SIZE)
-		buffer.writeu32(Result, 0, integer.tonumber(integer.band(integer.bxor(V00, V08), MASK)))
-		buffer.writeu32(Result, 4, integer.tonumber(integer.band(integer.bxor(V01, V09), MASK)))
-		buffer.writeu32(Result, 8, integer.tonumber(integer.band(integer.bxor(V02, V10), MASK)))
-		buffer.writeu32(Result, 12, integer.tonumber(integer.band(integer.bxor(V03, V11), MASK)))
-		buffer.writeu32(Result, 16, integer.tonumber(integer.band(integer.bxor(V04, V12), MASK)))
-		buffer.writeu32(Result, 20, integer.tonumber(integer.band(integer.bxor(V05, V13), MASK)))
-		buffer.writeu32(Result, 24, integer.tonumber(integer.band(integer.bxor(V06, V14), MASK)))
-		buffer.writeu32(Result, 28, integer.tonumber(integer.band(integer.bxor(V07, V15), MASK)))
-		buffer.writeu32(Result, 32, integer.tonumber(integer.band(integer.bxor(V08, Hash00), MASK)))
-		buffer.writeu32(Result, 36, integer.tonumber(integer.band(integer.bxor(V09, Hash01), MASK)))
-		buffer.writeu32(Result, 40, integer.tonumber(integer.band(integer.bxor(V10, Hash02), MASK)))
-		buffer.writeu32(Result, 44, integer.tonumber(integer.band(integer.bxor(V11, Hash03), MASK)))
-		buffer.writeu32(Result, 48, integer.tonumber(integer.band(integer.bxor(V12, Hash04), MASK)))
-		buffer.writeu32(Result, 52, integer.tonumber(integer.band(integer.bxor(V13, Hash05), MASK)))
-		buffer.writeu32(Result, 56, integer.tonumber(integer.band(integer.bxor(V14, Hash06), MASK)))
-		buffer.writeu32(Result, 60, integer.tonumber(integer.band(integer.bxor(V15, Hash07), MASK)))
-		return Result
-	else
-		local Result = Storage or buffer.create(CV_SIZE)
-		buffer.writeu32(Result, 0, integer.tonumber(integer.band(integer.bxor(V00, V08), MASK)))
-		buffer.writeu32(Result, 4, integer.tonumber(integer.band(integer.bxor(V01, V09), MASK)))
-		buffer.writeu32(Result, 8, integer.tonumber(integer.band(integer.bxor(V02, V10), MASK)))
-		buffer.writeu32(Result, 12, integer.tonumber(integer.band(integer.bxor(V03, V11), MASK)))
-		buffer.writeu32(Result, 16, integer.tonumber(integer.band(integer.bxor(V04, V12), MASK)))
-		buffer.writeu32(Result, 20, integer.tonumber(integer.band(integer.bxor(V05, V13), MASK)))
-		buffer.writeu32(Result, 24, integer.tonumber(integer.band(integer.bxor(V06, V14), MASK)))
-		buffer.writeu32(Result, 28, integer.tonumber(integer.band(integer.bxor(V07, V15), MASK)))
-		return Result
+		if BlockIndex < Count then
+			Hash00 = integer.bxor(V00, V08)
+			Hash01 = integer.bxor(V01, V09)
+			Hash02 = integer.bxor(V02, V10)
+			Hash03 = integer.bxor(V03, V11)
+			Hash04 = integer.bxor(V04, V12)
+			Hash05 = integer.bxor(V05, V13)
+			Hash06 = integer.bxor(V06, V14)
+			Hash07 = integer.bxor(V07, V15)
+			Offset += BLOCK_SIZE
+		elseif IsFull then
+			local Result = Storage or buffer.create(EXTENDED_CV_SIZE)
+			buffer.writeu32(Result, 0, integer.tonumber(integer.band(integer.bxor(V00, V08), MASK)))
+			buffer.writeu32(Result, 4, integer.tonumber(integer.band(integer.bxor(V01, V09), MASK)))
+			buffer.writeu32(Result, 8, integer.tonumber(integer.band(integer.bxor(V02, V10), MASK)))
+			buffer.writeu32(Result, 12, integer.tonumber(integer.band(integer.bxor(V03, V11), MASK)))
+			buffer.writeu32(Result, 16, integer.tonumber(integer.band(integer.bxor(V04, V12), MASK)))
+			buffer.writeu32(Result, 20, integer.tonumber(integer.band(integer.bxor(V05, V13), MASK)))
+			buffer.writeu32(Result, 24, integer.tonumber(integer.band(integer.bxor(V06, V14), MASK)))
+			buffer.writeu32(Result, 28, integer.tonumber(integer.band(integer.bxor(V07, V15), MASK)))
+			buffer.writeu32(Result, 32, integer.tonumber(integer.band(integer.bxor(V08, Hash00), MASK)))
+			buffer.writeu32(Result, 36, integer.tonumber(integer.band(integer.bxor(V09, Hash01), MASK)))
+			buffer.writeu32(Result, 40, integer.tonumber(integer.band(integer.bxor(V10, Hash02), MASK)))
+			buffer.writeu32(Result, 44, integer.tonumber(integer.band(integer.bxor(V11, Hash03), MASK)))
+			buffer.writeu32(Result, 48, integer.tonumber(integer.band(integer.bxor(V12, Hash04), MASK)))
+			buffer.writeu32(Result, 52, integer.tonumber(integer.band(integer.bxor(V13, Hash05), MASK)))
+			buffer.writeu32(Result, 56, integer.tonumber(integer.band(integer.bxor(V14, Hash06), MASK)))
+			buffer.writeu32(Result, 60, integer.tonumber(integer.band(integer.bxor(V15, Hash07), MASK)))
+			return Result
+		else
+			local Result = Storage or buffer.create(CV_SIZE)
+			buffer.writeu32(Result, 0, integer.tonumber(integer.band(integer.bxor(V00, V08), MASK)))
+			buffer.writeu32(Result, 4, integer.tonumber(integer.band(integer.bxor(V01, V09), MASK)))
+			buffer.writeu32(Result, 8, integer.tonumber(integer.band(integer.bxor(V02, V10), MASK)))
+			buffer.writeu32(Result, 12, integer.tonumber(integer.band(integer.bxor(V03, V11), MASK)))
+			buffer.writeu32(Result, 16, integer.tonumber(integer.band(integer.bxor(V04, V12), MASK)))
+			buffer.writeu32(Result, 20, integer.tonumber(integer.band(integer.bxor(V05, V13), MASK)))
+			buffer.writeu32(Result, 24, integer.tonumber(integer.band(integer.bxor(V06, V14), MASK)))
+			buffer.writeu32(Result, 28, integer.tonumber(integer.band(integer.bxor(V07, V15), MASK)))
+			return Result
+		end
 	end
+
+	return Storage or buffer.create(CV_SIZE)
 end
 
 
 local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message: buffer, Length: number): buffer
 	local MessageLength = buffer.len(Message)
-	local StateCvs = buffer.create(STACK_BUFFER_SIZE)
-	local StateCv = buffer.create(CV_SIZE)
+	local StateCvs = STACK_SCRATCH
+	local StateCv = STATE_CV_SCRATCH
 
 	local StackSize = 0
 	local StateCounter = 0
 
-	local StateChunkNumber = 0
-	local StateEndFlag = 0
 
 	local BlockSize = BLOCK_SIZE
+	local ChunkBytes = 16 * BLOCK_SIZE
 	local CvSize = CV_SIZE
-	local ExtendedCvSize = EXTENDED_CV_SIZE
 
 	local StateStartFlag = CHUNK_START
 	local ChunkStart = CHUNK_START
@@ -388,22 +423,24 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	local RootFlag = ROOT_FLAG
 	local FlagsParent = Flags + ParentFlag
 
-	local PopCv = buffer.create(CvSize)
-	local MergeBlock = buffer.create(ExtendedCvSize)
-	local StackCv = buffer.create(CvSize)
-	local Block = buffer.create(ExtendedCvSize)
+	local PopCv = POP_CV_SCRATCH
+	local MergeBlock = MERGE_BLOCK_SCRATCH
+	local StackCv = STACK_CV_SCRATCH
+	local Block = BLOCK_SCRATCH
 
 	buffer.copy(StateCv, 0, InitialHashVector, 0, CvSize)
 
-	for BlockOffset = 0, MessageLength - BlockSize - 1, BlockSize do
-		local StateFlags = Flags + StateStartFlag + StateEndFlag
-		StateCv = Compress(StateCv, Message, BlockOffset, StateCounter, BlockSize, StateFlags, false, StateCv)
-		StateStartFlag = 0
-		StateChunkNumber += 1
-
-		if StateChunkNumber == 15 then
-			StateEndFlag = ChunkEnd
-		elseif StateChunkNumber == 16 then
+	local BlockOffset = 0
+	while BlockOffset < MessageLength - BlockSize do
+		local Remaining = MessageLength - BlockOffset
+		if Remaining <= ChunkBytes then
+			local Count = (Remaining - 1) // BlockSize
+			Compress(InitialHashVector, Message, BlockOffset, StateCounter, BlockSize, Flags, false, StateCv, Count, ChunkStart, 0)
+			BlockOffset += Count * BlockSize
+			StateStartFlag = 0
+		else
+			Compress(InitialHashVector, Message, BlockOffset, StateCounter, BlockSize, Flags, false, StateCv, 16, ChunkStart, ChunkEnd)
+			BlockOffset += ChunkBytes
 			local MergeCv = StateCv
 			local MergeAmount = StateCounter + 1
 
@@ -422,13 +459,12 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 			buffer.copy(StateCv, 0, InitialHashVector, 0, CvSize)
 			StateStartFlag = ChunkStart
 			StateCounter += 1
-			StateChunkNumber = 0
-			StateEndFlag = 0
 		end
 	end
 
 	local LastLength = MessageLength == 0 and 0 or ((MessageLength - 1) % BlockSize + 1)
-	local PaddedMessage = buffer.create(BlockSize)
+	local PaddedMessage = PADDED_SCRATCH
+	buffer.fill(PaddedMessage, 0, 0, BlockSize)
 	if LastLength > 0 then
 		buffer.copy(PaddedMessage, 0, Message, MessageLength - LastLength, LastLength)
 	end
@@ -449,11 +485,8 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 		end
 
 		OutputCv = InitialHashVector
-		local FirstStackCv = buffer.create(CvSize)
-		buffer.copy(FirstStackCv, 0, StateCvs, 0, CvSize)
-		OutputBlock = buffer.create(ExtendedCvSize)
-
-		buffer.copy(OutputBlock, 0, FirstStackCv, 0, CvSize)
+		OutputBlock = OUTPUT_BLOCK_SCRATCH
+		buffer.copy(OutputBlock, 0, StateCvs, 0, CvSize)
 		buffer.copy(OutputBlock, CvSize, MergeCv, 0, CvSize)
 
 		OutputLength = BlockSize

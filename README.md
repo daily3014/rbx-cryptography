@@ -18,8 +18,6 @@
 
 - Thanks to those who gave feedback and testing
 - Special thanks to all contributors and bug reporters
-- AES was originally made by @RobloxGamerPro200007
-- XChaCha20 was originally made by @littleBitsman
 
 ## Disclaimer
 
@@ -129,10 +127,10 @@ Output Size: 64 Bytes
 | ----------- | ---------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | SHA-256     | **239 MB/s**     | 71 MB/s (HashLib)<br>61 MB/s (ccryptolib)<br>74 MB/s (luau-hashing) | **3.4x faster** than HashLib<br>**3.9x faster** than ccryptolib<br>**3.2x faster** than luau-hashing    |
 | SHA-512     | **515 MB/s**     | 36 MB/s (HashLib)<br>36 MB/s (ccryptolib)<br>25 MB/s (luau-hashing) | **14.4x faster** than HashLib<br>**14.3x faster** than ccryptolib<br>**20.4x faster** than luau-hashing |
-| SHA3-512    | **210 MB/s**     | 16 MB/s (HashLib)                                                   | **13.5x faster** than HashLib                                                                           |
-| BLAKE2B     | **1.1 GB/s**     | 56 MB/s (luau-hashing)                                              | **20.3x faster** than luau-hashing                                                                      |
-| BLAKE3      | **489 MB/s**     | 125 MB/s (ccryptolib)                                               | **3.9x faster** than ccryptolib                                                                         |
-| HMAC-BLAKE3 | **457 MB/s**     | -                                                                   | -                                                                                                       |
+| SHA3-512    | **221 MB/s**     | 16 MB/s (HashLib)                                                   | **13.8x faster** than HashLib                                                                           |
+| BLAKE2B     | **1.4 GB/s**     | 56 MB/s (luau-hashing)                                              | **25.6x faster** than luau-hashing                                                                      |
+| BLAKE3      | **530 MB/s**     | 125 MB/s (ccryptolib)                                               | **4.2x faster** than ccryptolib                                                                         |
+| HMAC-BLAKE3 | **475 MB/s**     | -                                                                   | -                                                                                                       |
 | KMAC-128    | **460 MB/s**     | -                                                                   | -                                                                                                       |
 | KMAC-256    | **377 MB/s**     | -                                                                   | -                                                                                                       |
 
@@ -148,18 +146,18 @@ Output Size: 64 Bytes
 
 | Algorithm                   | rbx-cryptography | Alternative                                    | Improvement                                                           |
 | --------------------------- | ---------------- | ---------------------------------------------- | --------------------------------------------------------------------- |
-| ChaCha20 (Encrypt)          | **774 MB/s**     | 14 MB/s (EncryptedNet)<br>96 MB/s (ccryptolib) | **53.4x faster** than EncryptedNet<br>**8.1x faster** than ccryptolib |
-| ChaCha20-Poly1305 (Encrypt) | **511 MB/s**     | 67 MB/s (ccryptolib)                           | **7.6x faster** than ccryptolib                                       |
-| AES-GCM (Encrypt)           | **145 MB/s**     | 73 MB/s (RobloxGamerPro200007 AES256-CTR)      | **2.0x faster** than RobloxGamerPro200007 AES256-CTR                  |
+| ChaCha20 (Encrypt)          | **986 MB/s**     | 14 MB/s (EncryptedNet)<br>96 MB/s (ccryptolib) | **70.4x faster** than EncryptedNet<br>**10.3x faster** than ccryptolib |
+| ChaCha20-Poly1305 (Encrypt) | **625 MB/s**     | 67 MB/s (ccryptolib)                           | **9.3x faster** than ccryptolib                                       |
+| AES-GCM (Encrypt)           | **184 MB/s**     | 73 MB/s (RobloxGamerPro200007 AES256-CTR)      | **2.5x faster** than RobloxGamerPro200007 AES256-CTR                  |
 
 ### Digital Signatures & Key Exchange
 
 | Algorithm   | Time                                                                                          | Alternative           | Improvement       |
 | ----------- | --------------------------------------------------------------------------------------------- | --------------------- | ----------------- |
 | EdDSA       | Roundtrip: **183.1 us**<br>Sign: **29.1 us**<br>Verify: **154.0 us**                          | 643.0 us (ccryptolib) | **3.5x faster**   |
-| ML-DSA-87   | Roundtrip: **1.374 ms**<br>Sign: **841.6 us**<br>KeyGen: **325.6 us**<br>Verify: **207.2 us** | 477.676 ms (WASM)     | **347.6x faster** |
+| ML-DSA-87   | Roundtrip: **1.069 ms**<br>Sign: **637.8 us**<br>KeyGen: **313.6 us**<br>Verify: **117.6 us** | 477.676 ms (WASM)     | **446.9x faster** |
 | X25519      | Roundtrip: **619.8 us**<br>Exchange: **320.8 us**<br>KeyGen: **299.0 us**                     | 1.171 ms (ccryptolib) | **1.9x faster**   |
-| ML-KEM-1024 | Roundtrip: **297.9 us**<br>KeyGen: **107.3 us**<br>Decap: **109.5 us**<br>Encap: **81.1 us**  | 82.845 ms (WASM)      | **278.1x faster** |
+| ML-KEM-1024 | Roundtrip: **243.3 us**<br>KeyGen: **94.5 us**<br>Decap: **86.7 us**<br>Encap: **62.0 us**    | 82.845 ms (WASM)      | **340.5x faster** |
 
 ### Utilities
 
@@ -168,7 +166,7 @@ Output Size: 64 Bytes
 | Base64 (Encode)      | **1.8 GB/s**     | 40 MB/s (HashLib)<br>430 MB/s (Lute)<br>867 MB/s (Reselim)<br>1.1 GB/s (Roblox) | **46.3x faster** than HashLib<br>**4.3x faster** than Lute<br>**2.1x faster** than Reselim<br>**1.6x faster** than Roblox |
 | Base64 (Decode)      | **3.4 GB/s**     | 42 MB/s (HashLib)<br>573 MB/s (Lute)<br>929 MB/s (Reselim)<br>1.8 GB/s (Roblox) | **80.2x faster** than HashLib<br>**5.9x faster** than Lute<br>**3.7x faster** than Reselim<br>**1.9x faster** than Roblox |
 | Base64 (Roundtrip)   | **1.2 GB/s**     | 20 MB/s (HashLib)<br>255 MB/s (Lute)<br>450 MB/s (Reselim)<br>684 MB/s (Roblox) | **61.0x faster** than HashLib<br>**4.7x faster** than Lute<br>**2.7x faster** than Reselim<br>**1.8x faster** than Roblox |
-| CSPRNG (RandomBytes) | **625 MB/s**     | 302 MB/s (math.random¹)                                                         | **2.1x faster** than math.random                                                                                          |
+| CSPRNG (RandomBytes) | **709 MB/s**     | 302 MB/s (math.random¹)                                                         | **2.3x faster** than math.random                                                                                          |
 | XOR                  | **2.7 GB/s**     | 137 KB/s (string.char)<br>16 MB/s (string.gsub)<br>19 MB/s (table.concat)       | **19909.7x faster** than string.char<br>**168.3x faster** than string.gsub<br>**139.6x faster** than table.concat         |
 
 ¹ Unlike CSPRNG, math.random is not suitable for cryptographic use. Finding the seed for a specific sequence of numbers is a trivial task for modern GPUs and CPUs.
