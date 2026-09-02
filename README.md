@@ -166,7 +166,7 @@ Output Size: 64 Bytes
 | Base64 (Encode)      | **1.8 GB/s**     | 40 MB/s (HashLib)<br>430 MB/s (Lute)<br>867 MB/s (Reselim)<br>1.1 GB/s (Roblox) | **46.3x faster** than HashLib<br>**4.3x faster** than Lute<br>**2.1x faster** than Reselim<br>**1.6x faster** than Roblox |
 | Base64 (Decode)      | **3.4 GB/s**     | 42 MB/s (HashLib)<br>573 MB/s (Lute)<br>929 MB/s (Reselim)<br>1.8 GB/s (Roblox) | **80.2x faster** than HashLib<br>**5.9x faster** than Lute<br>**3.7x faster** than Reselim<br>**1.9x faster** than Roblox |
 | Base64 (Roundtrip)   | **1.2 GB/s**     | 20 MB/s (HashLib)<br>255 MB/s (Lute)<br>450 MB/s (Reselim)<br>684 MB/s (Roblox) | **61.0x faster** than HashLib<br>**4.7x faster** than Lute<br>**2.7x faster** than Reselim<br>**1.8x faster** than Roblox |
-| CSPRNG (RandomBytes) | **709 MB/s**     | 302 MB/s (math.random¹)                                                         | **2.3x faster** than math.random                                                                                          |
+| CSPRNG (RandomBytes) | **709 MB/s**     | 302 MB/s (math.random)                                                         	| **2.3x faster** than math.random                                                                                          |
 | XOR                  | **2.7 GB/s**     | 137 KB/s (string.char)<br>16 MB/s (string.gsub)<br>19 MB/s (table.concat)       | **19909.7x faster** than string.char<br>**168.3x faster** than string.gsub<br>**139.6x faster** than table.concat         |
 
 ¹ Unlike CSPRNG, math.random is not suitable for cryptographic use. Finding the seed for a specific sequence of numbers is a trivial task for modern GPUs and CPUs.
