@@ -113,7 +113,10 @@ local function Bytepad(Data: buffer, Rate: number): buffer
 	return Result
 end
 
-local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateBytes: number): ()
+local SQUEEZE_ZERO = buffer.create(168)
+local TAIL = buffer.create(2 * 168)
+
+local function KMACCore(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?, RateBytes: number): ()
 	local Lanes = buffer.create(200)
 
 	local OutputBytes = buffer.len(Output)
@@ -128,36 +131,44 @@ local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateB
 	buffer.copy(PrefixData, EncodedFunctionNameSize, EncodedCustomization, 0, EncodedCustomizationSize)
 
 	local BytepaddedPrefix = Bytepad(PrefixData, RateBytes)
-	local BytepaddedPrefixSize = buffer.len(BytepaddedPrefix)
-	local DataSize = buffer.len(Data)
-	local TotalInputSize = BytepaddedPrefixSize + DataSize
+	Keccak(Lanes, BytepaddedPrefix, 0, buffer.len(BytepaddedPrefix), RateBytes)
 
-	local PaddedLength = TotalInputSize + 1
-	local Remainder = PaddedLength % RateBytes
-	if Remainder ~= 0 then
-		PaddedLength += (RateBytes - Remainder)
+	local BytepaddedKey = Bytepad(EncodeString(Key), RateBytes)
+	Keccak(Lanes, BytepaddedKey, 0, buffer.len(BytepaddedKey), RateBytes)
+
+	local DataSize = buffer.len(Data)
+	local FullBytes = DataSize - DataSize % RateBytes
+	if FullBytes > 0 then
+		Keccak(Lanes, Data, 0, FullBytes, RateBytes)
 	end
 
-	local PaddedMessage = buffer.create(PaddedLength)
-	buffer.copy(PaddedMessage, 0, BytepaddedPrefix, 0, BytepaddedPrefixSize)
-	buffer.copy(PaddedMessage, BytepaddedPrefixSize, Data, 0, DataSize)
+	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
+	local Remaining = DataSize - FullBytes
+	local TailInputSize = Remaining + RightEncodedLengthSize
+
+	local TailLength = TailInputSize + 1
+	local Remainder = TailLength % RateBytes
+	if Remainder ~= 0 then
+		TailLength += (RateBytes - Remainder)
+	end
+
+	buffer.fill(TAIL, 0, 0, TailLength)
+	buffer.copy(TAIL, 0, Data, FullBytes, Remaining)
+	buffer.copy(TAIL, Remaining, RightEncodedLength, 0, RightEncodedLengthSize)
 
 	local DomainSeparator = 0x04
-	if PaddedLength - TotalInputSize == 1 then
-		buffer.writeu8(PaddedMessage, TotalInputSize, bit32.bor(DomainSeparator, 0x80))
+	if TailLength - TailInputSize == 1 then
+		buffer.writeu8(TAIL, TailInputSize, bit32.bor(DomainSeparator, 0x80))
 	else
-		buffer.writeu8(PaddedMessage, TotalInputSize, DomainSeparator)
-		if PaddedLength - TotalInputSize > 2 then
-			buffer.fill(PaddedMessage, TotalInputSize + 1, 0, PaddedLength - TotalInputSize - 2)
-		end
-		buffer.writeu8(PaddedMessage, PaddedLength - 1, 0x80)
+		buffer.writeu8(TAIL, TailInputSize, DomainSeparator)
+		buffer.writeu8(TAIL, TailLength - 1, 0x80)
 	end
 
-	Keccak(Lanes, PaddedMessage, 0, PaddedLength, RateBytes)
+	Keccak(Lanes, TAIL, 0, TailLength, RateBytes)
 
+	local Keccak = Keccak
+	local SqueezeZero = SQUEEZE_ZERO
 	local OutputOffset = 0
-	local ZeroBuffer = buffer.create(RateBytes)
-
 	while OutputOffset < OutputBytes do
 		local BytesThisRound = math.min(RateBytes, OutputBytes - OutputOffset)
 
@@ -165,49 +176,19 @@ local function CSHAKE(Output: buffer, CustomBuffer: buffer?, Data: buffer, RateB
 		OutputOffset += BytesThisRound
 
 		if OutputOffset < OutputBytes then
-			Keccak(Lanes, ZeroBuffer, 0, RateBytes, RateBytes)
+			Keccak(Lanes, SqueezeZero, 0, RateBytes, RateBytes)
 		end
 	end
 end
 
 function KMAC.KMAC128(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?): (string, buffer)
-	local OutputBytes = buffer.len(Output)
-
-	local EncodedKey = EncodeString(Key)
-	local BytepaddedKey = Bytepad(EncodedKey, 168)
-
-	local BytepaddedKeySize = buffer.len(BytepaddedKey)
-	local DataSize = buffer.len(Data)
-
-	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
-
-	local CombinedData = buffer.create(BytepaddedKeySize + DataSize + RightEncodedLengthSize)
-	buffer.copy(CombinedData, 0, BytepaddedKey, 0, BytepaddedKeySize)
-	buffer.copy(CombinedData, BytepaddedKeySize, Data, 0, DataSize)
-	buffer.copy(CombinedData, BytepaddedKeySize + DataSize, RightEncodedLength, 0, RightEncodedLengthSize)
-
-	CSHAKE(Output, CustomBuffer, CombinedData, 168)
+	KMACCore(Data, Key, Output, CustomBuffer, 168)
 
 	return ToHex(Output), Output
 end
 
 function KMAC.KMAC256(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?): (string, buffer)
-	local OutputBytes = buffer.len(Output)
-
-	local EncodedKey = EncodeString(Key)
-	local BytepaddedKey = Bytepad(EncodedKey, 136)
-
-	local BytepaddedKeySize = buffer.len(BytepaddedKey)
-	local DataSize = buffer.len(Data)
-
-	local RightEncodedLength, RightEncodedLengthSize = RightEncode(OutputBytes * 8)
-
-	local CombinedData = buffer.create(BytepaddedKeySize + DataSize + RightEncodedLengthSize)
-	buffer.copy(CombinedData, 0, BytepaddedKey, 0, BytepaddedKeySize)
-	buffer.copy(CombinedData, BytepaddedKeySize, Data, 0, DataSize)
-	buffer.copy(CombinedData, BytepaddedKeySize + DataSize, RightEncodedLength, 0, RightEncodedLengthSize)
-
-	CSHAKE(Output, CustomBuffer, CombinedData, 136)
+	KMACCore(Data, Key, Output, CustomBuffer, 136)
 
 	return ToHex(Output), Output
 end

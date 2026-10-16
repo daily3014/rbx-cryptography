@@ -36,32 +36,28 @@ local SHIFTS = {
 	6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21
 }
 
-local function PreProcess(Contents: buffer): (buffer, number)
+local TAIL = buffer.create(128)
+
+local function PadTail(Contents: buffer, Offset: number): (buffer, number)
+	local Tail = TAIL
 	local ContentLength = buffer.len(Contents)
+	local Remaining = ContentLength - Offset
+	local TailLength = if Remaining < 56 then 64 else 128
+	buffer.fill(Tail, 0, 0, TailLength)
+	buffer.copy(Tail, 0, Contents, Offset, Remaining)
+	buffer.writeu8(Tail, Remaining, 0x80)
+
 	local BitLength = ContentLength * 8
-
-	local Padding = (56 - ((ContentLength + 1) % 64)) % 64
-
-	local NewContentLength = ContentLength + 1 + Padding + 8
-	local NewContent = buffer.create(NewContentLength)
-
-	buffer.copy(NewContent, 0, Contents)
-
-	buffer.writeu8(NewContent, ContentLength, 0x80)
-
-	local LengthOffset = ContentLength + 1 + Padding
-	for Index = 0, 7 do
+	for Index = TailLength - 8, TailLength - 1 do
 		local Byte = BitLength % 256
-		buffer.writeu8(NewContent, LengthOffset + Index, Byte)
-		BitLength = bit32.rshift(BitLength, 8)	
+		buffer.writeu8(Tail, Index, Byte)
+		BitLength = (BitLength - Byte) / 256
 	end
 
-	return NewContent, NewContentLength
+	return Tail, TailLength
 end
 
-local function DigestBlocks(Blocks: buffer, Length: number): (number, number, number, number)
-	local A, B, C, D = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
-
+local function DigestBlocks(Blocks: buffer, Length: number, A: number, B: number, C: number, D: number): (number, number, number, number)
 	local Offsets = OFFSETS
 	local Constants = CONSTANTS
 	local Shifts = SHIFTS
@@ -133,9 +129,12 @@ local function MD5(Message: buffer, Salt: buffer?): (string, buffer)
 		Message = MessageWithSalt
 	end
 
-	local ProcessedMessage, Length = PreProcess(Message)
+	local A, B, C, D = 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476
 
-	local A, B, C, D = DigestBlocks(ProcessedMessage, Length)
+	local FullLength = buffer.len(Message) - buffer.len(Message) % 64
+	A, B, C, D = DigestBlocks(Message, FullLength, A, B, C, D)
+	local Tail, TailLength = PadTail(Message, FullLength)
+	A, B, C, D = DigestBlocks(Tail, TailLength, A, B, C, D)
 	local Digest = buffer.create(16)
 	
 	buffer.writeu32(Digest, 0, A)

@@ -19,3 +19,4 @@ wally.lock
 pesde.lock
 .vscode/
 .pesde/
+bench/libraries/signet/

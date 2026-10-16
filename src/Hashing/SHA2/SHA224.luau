@@ -35,20 +35,23 @@ local CONSTANTS = buffer.create(512) do
 	end
 end
 
-local function PreProcess(Contents: buffer): (buffer, number)
+local TAIL = buffer.create(128)
+
+local function PadTail(Contents: buffer, Offset: number): (buffer, number)
+	local Tail = TAIL
 	local ContentLength = buffer.len(Contents)
-	local Padding = -(ContentLength + 9) % 64
-	local NewContentLength = ContentLength + 1 + Padding + 8
-	local NewContent = buffer.create(NewContentLength)
-	buffer.copy(NewContent, 0, Contents)
-	buffer.writeu8(NewContent, ContentLength, 128)
+	local Remaining = ContentLength - Offset
+	local TailLength = if Remaining < 56 then 64 else 128
+	buffer.fill(Tail, 0, 0, TailLength)
+	buffer.copy(Tail, 0, Contents, Offset, Remaining)
+	buffer.writeu8(Tail, Remaining, 128)
 	local Length8 = ContentLength * 8
-	for Index = 7, 0, -1 do
+	for Index = TailLength - 1, TailLength - 8, -1 do
 		local Remainder = Length8 % 256
-		buffer.writeu8(NewContent, Index + ContentLength + 1 + Padding, Remainder)
+		buffer.writeu8(Tail, Index, Remainder)
 		Length8 = (Length8 - Remainder) / 256
 	end
-	return NewContent, NewContentLength
+	return Tail, TailLength
 end
 
 local OFFSETS = buffer.create(512)
@@ -392,10 +395,7 @@ local function ProcessSchedule(Offsets: buffer)
 	end
 end
 
-local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, integer, integer, integer, integer, integer)
-	local A, B, C, D = 0xc1059ed8i, 0x367cd507i, 0x3070dd17i, 0xf70e5939i
-	local E, F, G, H = 0xffc00b31i, 0x68581511i, 0x64f98fa7i, 0xbefa4fa4i
-
+local function DigestBlocks(Blocks: buffer, Length: number, A: integer, B: integer, C: integer, D: integer, E: integer, F: integer, G: integer, H: integer): (integer, integer, integer, integer, integer, integer, integer, integer)
 	local Offsets = OFFSETS
 	local Constants = CONSTANTS
 
@@ -931,12 +931,17 @@ local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, 
 		H = integer.band(integer.add(H, OldH), MASK)
 	end
 
-	return A, B, C, D, E, F, G
+	return A, B, C, D, E, F, G, H
 end
 
 local function SHA224(Message: buffer): (string, buffer)
-	local ProcessedMessage, Length = PreProcess(Message)
-	local A, B, C, D, E, F, G = DigestBlocks(ProcessedMessage, Length)
+	local A, B, C, D = 0xc1059ed8i, 0x367cd507i, 0x3070dd17i, 0xf70e5939i
+	local E, F, G, H = 0xffc00b31i, 0x68581511i, 0x64f98fa7i, 0xbefa4fa4i
+
+	local FullLength = buffer.len(Message) - buffer.len(Message) % 64
+	A, B, C, D, E, F, G, H = DigestBlocks(Message, FullLength, A, B, C, D, E, F, G, H)
+	local Tail, TailLength = PadTail(Message, FullLength)
+	A, B, C, D, E, F, G = DigestBlocks(Tail, TailLength, A, B, C, D, E, F, G, H)
 
 	local Digest = buffer.create(28)
 	buffer.writeu32(Digest, 0, bit32.byteswap(integer.tonumber(A)))

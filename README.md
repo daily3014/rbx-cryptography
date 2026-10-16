@@ -156,7 +156,7 @@ Output Size: 64 Bytes
 | ----------- | --------------------------------------------------------------------------------------------- | --------------------- | ----------------- |
 | EdDSA       | Roundtrip: **183.1 us**<br>Sign: **29.1 us**<br>Verify: **154.0 us**                          | 643.0 us (ccryptolib) | **3.5x faster**   |
 | ML-DSA-87   | Roundtrip: **1.069 ms**<br>Sign: **637.8 us**<br>KeyGen: **313.6 us**<br>Verify: **117.6 us** | 477.676 ms (WASM)     | **446.9x faster** |
-| X25519      | Roundtrip: **619.8 us**<br>Exchange: **320.8 us**<br>KeyGen: **299.0 us**                     | 1.171 ms (ccryptolib) | **1.9x faster**   |
+| X25519      | Roundtrip: **231.4 us**<br>Exchange: **118.1 us**<br>KeyGen: **113.3 us**                     | 1.171 ms (ccryptolib) | **5.1x faster**   |
 | ML-KEM-1024 | Roundtrip: **243.3 us**<br>KeyGen: **94.5 us**<br>Decap: **86.7 us**<br>Encap: **62.0 us**    | 82.845 ms (WASM)      | **340.5x faster** |
 
 ### Utilities

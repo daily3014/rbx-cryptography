@@ -47,25 +47,24 @@ end
 
 local W = buffer.create(80 * 8)
 
-local function PreProcess(Contents: buffer): (buffer, number)
-	local ContentLength = buffer.len(Contents)
-	local Padding = (128 - ((ContentLength + 17) % 128)) % 128
-	local NewLength = ContentLength + 1 + Padding + 16
+local TAIL = buffer.create(256)
 
-	local Result = buffer.create(NewLength)
-	buffer.copy(Result, 0, Contents)
-	buffer.writeu8(Result, ContentLength, 0x80)
-	buffer.fill(Result, ContentLength + 1, 0, Padding + 8)
+local function PadTail(Contents: buffer, Offset: number): (buffer, number)
+	local Tail = TAIL
+	local ContentLength = buffer.len(Contents)
+	local Remaining = ContentLength - Offset
+	local TailLength = if Remaining < 112 then 128 else 256
+	buffer.fill(Tail, 0, 0, TailLength)
+	buffer.copy(Tail, 0, Contents, Offset, Remaining)
+	buffer.writeu8(Tail, Remaining, 0x80)
 
 	local BitLength = ContentLength * 8
-	local LengthOffset = ContentLength + 1 + Padding + 8
-
-	for Index = 7, 0, -1 do
-		buffer.writeu8(Result, LengthOffset + Index, BitLength % 256)
+	for Index = TailLength - 1, TailLength - 8, -1 do
+		buffer.writeu8(Tail, Index, BitLength % 256)
 		BitLength = BitLength // 256
 	end
 
-	return Result, NewLength
+	return Tail, TailLength
 end
 
 local function ProcessSchedule(LW: buffer)
@@ -519,10 +518,7 @@ local function ProcessSchedule(LW: buffer)
 	end
 end
 
-local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, integer, integer, integer, integer)
-	local H1, H2, H3, H4 = 0xcbbb9d5dc1059ed8i, 0x629a292a367cd507i, 0x9159015a3070dd17i, 0x152fecd8f70e5939i
-	local H5, H6, H7, H8 = 0x67332667ffc00b31i, 0x8eb44a8768581511i, 0xdb0c2e0d64f98fa7i, 0x47b5481dbefa4fa4i
-
+local function DigestBlocks(Blocks: buffer, Length: number, H1: integer, H2: integer, H3: integer, H4: integer, H5: integer, H6: integer, H7: integer, H8: integer): (integer, integer, integer, integer, integer, integer, integer, integer)
 	local LW, LK = W, K
 
 	for Offset = 0, Length - 1, 128 do
@@ -1266,13 +1262,18 @@ local function DigestBlocks(Blocks: buffer, Length: number): (integer, integer, 
 		H8 = integer.add(H8, H)
 	end
 
-	return H1, H2, H3, H4, H5, H6
+	return H1, H2, H3, H4, H5, H6, H7, H8
 end
 
 
 local function SHA384(Message: buffer): (string, buffer)
-	local Processed, Length = PreProcess(Message)
-	local H1, H2, H3, H4, H5, H6 = DigestBlocks(Processed, Length)
+	local H1, H2, H3, H4 = 0xcbbb9d5dc1059ed8i, 0x629a292a367cd507i, 0x9159015a3070dd17i, 0x152fecd8f70e5939i
+	local H5, H6, H7, H8 = 0x67332667ffc00b31i, 0x8eb44a8768581511i, 0xdb0c2e0d64f98fa7i, 0x47b5481dbefa4fa4i
+
+	local FullLength = buffer.len(Message) - buffer.len(Message) % 128
+	H1, H2, H3, H4, H5, H6, H7, H8 = DigestBlocks(Message, FullLength, H1, H2, H3, H4, H5, H6, H7, H8)
+	local Tail, TailLength = PadTail(Message, FullLength)
+	H1, H2, H3, H4, H5, H6 = DigestBlocks(Tail, TailLength, H1, H2, H3, H4, H5, H6, H7, H8)
 
 	local Result = buffer.create(48)
 	buffer.writeinteger(Result, 0,  integer.bswap(H1))
