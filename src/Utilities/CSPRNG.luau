@@ -54,6 +54,7 @@ local MAX_UINT32 = 0xFFFFFFFF
 
 local POOL_SIZE = 2048
 local REKEY_BLOCKS = 1024
+local GUID_COUNT = 3
 local JITTER_SAMPLES = 512
 local SOURCE_LIMIT = 1024
 
@@ -84,85 +85,50 @@ local function GatherEntropy(UserEntropy: buffer?)
 		Offset += Size
 	end
 
-	if tick then
-		local TimeBuffer = buffer.create(8)
-		buffer.writef64(TimeBuffer, 0, tick())
-		WriteToBuffer(TimeBuffer)
-	end
-
-	local ClockBuffer = buffer.create(8)
-	buffer.writef64(ClockBuffer, 0, os.clock())
-	WriteToBuffer(ClockBuffer)
-
-	local UnixTime = os.time()
-	local UnixBuffer = buffer.create(8)
-	buffer.writeu32(UnixBuffer, 0, UnixTime % 0x100000000)
-	buffer.writeu32(UnixBuffer, 4, math.floor(UnixTime / 0x100000000))
-	WriteToBuffer(UnixBuffer)
-
-	if DateTime then
-		local DateTimeMillis = DateTime.now().UnixTimestampMillis
-		local DateTimeBuffer = buffer.create(8)
-		buffer.writef64(DateTimeBuffer, 0, DateTimeMillis)
-		WriteToBuffer(DateTimeBuffer)
-	end
-
-	local JitterSamples = buffer.create(JITTER_SAMPLES)
-	local JitterMix = 0
-	local LongestRun = 0
-	local CurrentRun = 0
-	local PreviousSample = -1
-	for Index = 0, JITTER_SAMPLES - 1 do
-		local StartTime = os.clock()
-		local Scratch = buffer.create(64 + JitterMix % 4096)
-		buffer.writeu32(Scratch, 0, Index)
-		local Sample = math.floor((os.clock() - StartTime) * 1000000000) % 256
-
-		JitterMix += Sample
-		buffer.writeu8(JitterSamples, Index, Sample)
-
-		CurrentRun = if Sample == PreviousSample then CurrentRun + 1 else 0
-		PreviousSample = Sample
-		if CurrentRun > LongestRun then
-			LongestRun = CurrentRun
-		end
-	end
-
-	if LongestRun > JITTER_SAMPLES // 8 then
-		warn("CSPRNG: timing jitter appears degenerate (low-resolution clock); entropy may be weak")
-	end
-
-	WriteToBuffer(JitterSamples)
-
-	if game then
-		local HttpService = game:FindService("HttpService") :: HttpService?
-		if HttpService then
+	local HttpService = if game then game:GetService("HttpService") else nil
+	if HttpService then
+		for _ = 1, GUID_COUNT do
 			WriteToBuffer(buffer.fromstring(HttpService:GenerateGUID(false)))
 		end
+	else
+		local ClockBuffer = buffer.create(16)
+		buffer.writef64(ClockBuffer, 0, os.clock())
+		buffer.writef64(ClockBuffer, 8, os.time())
+		WriteToBuffer(ClockBuffer)
 
-		if game.JobId and #game.JobId > 0 then
-			WriteToBuffer(buffer.fromstring(game.JobId))
+		local JitterSamples = buffer.create(JITTER_SAMPLES)
+		local JitterMix = 0
+		local LongestRun = 0
+		local CurrentRun = 0
+		local PreviousSample = -1
+		for Index = 0, JITTER_SAMPLES - 1 do
+			local StartTime = os.clock()
+			local Scratch = buffer.create(64 + JitterMix % 4096)
+			buffer.writeu32(Scratch, 0, Index)
+			local Sample = math.floor((os.clock() - StartTime) * 1000000000) % 256
+
+			JitterMix += Sample
+			buffer.writeu8(JitterSamples, Index, Sample)
+
+			CurrentRun = if Sample == PreviousSample then CurrentRun + 1 else 0
+			PreviousSample = Sample
+			if CurrentRun > LongestRun then
+				LongestRun = CurrentRun
+			end
 		end
 
-		if game.PlaceId then
-			local PlaceIdBuffer = buffer.create(8)
-			buffer.writeu32(PlaceIdBuffer, 0, game.PlaceId % 0x100000000)
-			buffer.writeu32(PlaceIdBuffer, 4, math.floor(game.PlaceId / 0x100000000))
-			WriteToBuffer(PlaceIdBuffer)
+		if LongestRun > JITTER_SAMPLES // 8 then
+			warn("CSPRNG: timing jitter appears degenerate (low-resolution clock); entropy may be weak")
 		end
 
-		if workspace and workspace.DistributedGameTime then
-			local DistTimeBuffer = buffer.create(8)
-			buffer.writef64(DistTimeBuffer, 0, workspace.DistributedGameTime)
-			WriteToBuffer(DistTimeBuffer)
+		WriteToBuffer(JitterSamples)
+
+		local Pointers = tostring(newproxy())
+		if coroutine then
+			Pointers ..= tostring(coroutine.running())
 		end
+		WriteToBuffer(buffer.fromstring(Pointers))
 	end
-
-	local Pointers = tostring(newproxy())
-	if coroutine then
-		Pointers ..= tostring(coroutine.running())
-	end
-	WriteToBuffer(buffer.fromstring(Pointers))
 
 	local PreviousLength = buffer.len(Key) + buffer.len(Nonce)
 	local UserLength = if UserEntropy then buffer.len(UserEntropy) else 0
