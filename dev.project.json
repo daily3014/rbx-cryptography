@@ -5,20 +5,14 @@
 		"ReplicatedStorage": {
 			"$ignoreUnknownInstances": true,
 			"Cryptography": {
-				"$path": "src",
-				"Testing": {
-					"$path": "tests"
-				}
+				"$path": "src"
 			}
 		},
 		"ServerStorage": {
 			"$ignoreUnknownInstances": true
 		},
 		"ServerScriptService": {
-			"$ignoreUnknownInstances": true,
-			"TestRunner": {
-				"$path": "scripts/run-tests.server.luau"
-			}
+			"$ignoreUnknownInstances": true
 		}
 	}
 }

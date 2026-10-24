@@ -3,8 +3,6 @@
 
 	Return type: varies by function
 	Example usage:
-		local FieldPrime = require("FieldPrime")
-
 		--------Usage Case 1: Basic arithmetic--------
 		local ElementA = FieldPrime.Num(42)
 		local ElementB = FieldPrime.Num(17)

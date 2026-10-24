@@ -8,10 +8,8 @@ local Algorithms = table.freeze({
 	SHA1 = require("@self/SHA1"),
 	SHA2 = require("@self/SHA2"),
 	SHA3 = require("@self/SHA3"),
-	XXH32 = require("@self/XXH32"),
 	Blake2b = require("@self/Blake2b"),
-	Blake3 = require("@self/Blake3"),
-	MurMur = require("@self/Murmur")
+	Blake3 = require("@self/Blake3")
 })
 
 return Algorithms

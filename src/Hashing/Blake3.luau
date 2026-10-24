@@ -26,6 +26,8 @@
 --!optimize 2
 --!native
 
+local EncodingService = if game then game:GetService("EncodingService") else nil
+
 local Blake3 = {}
 
 local BLOCK_SIZE = 64
@@ -389,9 +391,48 @@ function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 		end
 	end
 
+	if EncodingService and (Length == nil or Length == 32) then
+		local Result = EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Blake3)
+		return ToHex(Result), Result
+	end
+
 	local Result = ProcessMessage(INITIAL_VECTORS, 0, Message, Length or 32)
 
 	return ToHex(Result), Result
+end
+
+function Blake3.DigestBuffer(Message: buffer, Length: number?): buffer
+	if Message == nil then
+		error("Message cannot be nil", 2)
+	end
+
+	if typeof(Message) ~= "buffer" then
+		error(`Message must be a buffer, got {typeof(Message)}`, 2)
+	end
+
+	if Length then
+		if typeof(Length) ~= "number" then
+			error(`Length must be a number, got {typeof(Length)}`, 2)
+		end
+
+		if Length ~= math.floor(Length) then
+			error(`Length must be an integer, got {Length}`, 2)
+		end
+
+		if Length < BLAKE3_MIN_OUTPUT_BYTES then
+			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
+		end
+
+		if Length > BLAKE3_MAX_OUTPUT_BYTES then
+			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
+		end
+	end
+
+	if EncodingService and (Length == nil or Length == 32) then
+		return EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Blake3)
+	end
+
+	return ProcessMessage(INITIAL_VECTORS, 0, Message, Length or 32)
 end
 
 function Blake3.DigestKeyed(Message: buffer, Key: buffer, Length: number?): (string, buffer)

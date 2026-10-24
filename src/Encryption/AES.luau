@@ -2,18 +2,24 @@
 	Cryptography library: AES
 	
 	Sizes:
-		Init Vector: 16 bytes
+		Init Vector: any non-zero length (12 bytes recommended)
 		Key Size: 16 / 24 / 32 bytes
-	
+		Tag: 16 bytes
+
+	Return type: Encrypt (buffer, buffer), Decrypt buffer?
+	Decrypt returns nil when authentication fails, including tags
+	that are not 16 bytes long.
+
 	Example usage:
-	local Key = CSPRNG.RandomBytes(32)
-	local IV = CSPRNG.RandomBytes(12)
+		local Key = CSPRNG.RandomBytes(32)
+		local IV = CSPRNG.RandomBytes(12)
 
-	local Message = "This is a secret message"
-	local Plaintext = buffer.fromstring(Message)
+		local Message = "This is a secret message"
+		local Plaintext = buffer.fromstring(Message)
 
-	local AAD = buffer.fromstring("user:john,timestamp:456745683")
-	local Ciphertext, Tag = AES.Encrypt(Plaintext, Key, IV, AAD)
+		local AAD = buffer.fromstring("user:john,timestamp:456745683")
+		local Ciphertext, Tag = AES.Encrypt(Plaintext, Key, IV, AAD)
+		local Decrypted = AES.Decrypt(Ciphertext, Key, IV, Tag, AAD)
 --]=]
 
 --!strict
@@ -23,6 +29,7 @@
 type Processor = (PlaintextBlock: buffer, PlaintextOffset: number, OutputBuffer: buffer, OutputOffset: number) -> ()
 
 local AES = {}
+local CtCompare = require("../Utilities/Functions").CtCompare
 
 local SBOX_16BIT = buffer.create(131072) 
 local SMIX_TABLE0 = buffer.create(65536)
@@ -292,24 +299,6 @@ local function EncryptBlock(RoundKeys: buffer, MaterialLength: number, Plaintext
 				bit32.bxor(buffer.readu8(Tbl0, I12), buffer.readu8(SMIX_TABLE1, I14), buffer.readu8(RoundKeys, MaterialLength + 28)) * 2),
 		buffer.readu32(RoundKeys, MaterialLength + 44)
 		))
-end
-
-local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
-	local Length1 = buffer.len(Buffer1)
-	local Length2 = buffer.len(Buffer2)
-	if Length1 ~= Length2 then
-		return false
-	end
-
-	local Difference = 0
-	for Index = 0, Length1 - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(
-			buffer.readu8(Buffer1, Index),
-			buffer.readu8(Buffer2, Index)
-			))
-	end
-
-	return Difference == 0
 end
 
 local function BuildShoupTables(H: buffer): buffer
@@ -652,11 +641,15 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
+	local IVLen = buffer.len(IV)
+	if IVLen == 0 then
+		error("IV cannot be empty", 2)
+	end
+
 	local KeyConfig = KEY_CONFIGS[KeyLength]
 	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
 	local KeyMaterialLength = KeyConfig.MaterialLength
 
-	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
 	local PlainLen = buffer.len(Plaintext)
 	local AuthData = AAD or buffer.create(0)
@@ -677,7 +670,7 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 	return OutputBuffer, OutputTag
 end
 
-function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?): (boolean, buffer?)
+function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, AAD: buffer?): buffer?
 	if not Key or typeof(Key) ~= "buffer" then
 		error("Key must be a buffer", 2)
 	end
@@ -699,16 +692,18 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 		error("Key must be 16, 24, or 32 bytes", 2)
 	end
 
+	local IVLen = buffer.len(IV)
+	if IVLen == 0 then
+		error("IV cannot be empty", 2)
+	end
+
 	local KeyConfig = KEY_CONFIGS[KeyLength]
 	local RoundKeys = ExpandKeySchedule(Key, KeyLength, buffer.create(KeyConfig.ExpandedLength))
 	local KeyMaterialLength = KeyConfig.MaterialLength
 
-	local IVLen = buffer.len(IV)
 	local AADLen = buffer.len(AAD or buffer.create(0))
 	local CryptLen = buffer.len(Ciphertext)
 	local AuthData = AAD or buffer.create(0)
-
-	local OutputBuffer = buffer.create(CryptLen)
 
 	local H = buffer.create(16)
 	local J0 = buffer.create(16)
@@ -717,15 +712,17 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 
 	EncryptBlock(RoundKeys, KeyMaterialLength, H, 0, H, 0)
 	local Tables = PrepareJ0(H, IV, IVLen, J0)
-	GcmGctr(RoundKeys, KeyMaterialLength, J0, Ciphertext, CryptLen, OutputBuffer)
 	GcmHash(Tables, AuthData, AADLen, Ciphertext, CryptLen, S)
 	Gctr(RoundKeys, KeyMaterialLength, J0, S, 16, ComputedTag)
 
-	if not ConstantTimeCompare(Tag, ComputedTag) then
-		return false, nil
+	if not CtCompare(Tag, ComputedTag) then
+		return nil
 	end
 
-	return true, OutputBuffer
+	local OutputBuffer = buffer.create(CryptLen)
+	GcmGctr(RoundKeys, KeyMaterialLength, J0, Ciphertext, CryptLen, OutputBuffer)
+
+	return OutputBuffer
 end
 
 return AES

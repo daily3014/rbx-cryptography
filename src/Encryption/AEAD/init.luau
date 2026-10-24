@@ -2,22 +2,19 @@
 	Cryptography library: ChaCha20-Poly1305 AEAD
 	
 	Sizes:
-		Key: 16/32 bytes
-		Nonce: 12/24 bytes
+		Key: 32 bytes
+		Nonce: 12 bytes (24 with XChaCha20)
 		Tag: 16 bytes
 		Rounds: even positive integer (default: 20)
-	
+
 	Return type: buffer, buffer (ciphertext, tag)
 	Example usage:
 		local Plaintext = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring(string.rep("k", 32))
 		local Nonce = buffer.fromstring(string.rep("n", 12))
 		local AAD = buffer.fromstring("additional data")
-		
-		--------Usage Case 1--------
+
 		local Ciphertext, Tag = AEAD.Encrypt(Plaintext, Key, Nonce, AAD, Rounds, UseXChaCha20)
-		
-		--------Usage Case 2--------
 		local DecryptedText = AEAD.Decrypt(Ciphertext, Key, Nonce, Tag, AAD, Rounds, UseXChaCha20)
 --]=]
 
@@ -27,6 +24,7 @@
 
 local ChaCha = require("@self/ChaCha")
 local Poly1305 = require("@self/Poly1305")
+local CtCompare = require("../Utilities/Functions").CtCompare
 
 local QWORD = 8
 
@@ -38,7 +36,10 @@ local POLY1305_TAG_SIZE = 16
 local AEAD = {
 	ChaCha20 = ChaCha.ChaCha20,
 	XChaCha20 = ChaCha.XChaCha20,
-	Poly1305 = Poly1305
+	Poly1305 = Poly1305.Tag,
+	Internal = {
+		HChaCha20 = ChaCha.HChaCha20,
+	},
 }
 
 local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) | typeof(ChaCha.XChaCha20)
@@ -47,24 +48,6 @@ local function GetFn(UseXChaCha20: boolean?): typeof(ChaCha.ChaCha20) | typeof(C
 	else
 		return ChaCha.ChaCha20
 	end
-end
-
-local function ConstantTimeCompare(Buffer1: buffer, Buffer2: buffer): boolean
-	local Length1 = buffer.len(Buffer1)
-	local Length2 = buffer.len(Buffer2)
-	if Length1 ~= Length2 then
-		return false
-	end
-
-	local Difference = 0
-	for Index = 0, Length1 - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(
-			buffer.readu8(Buffer1, Index),
-			buffer.readu8(Buffer2, Index)
-			))
-	end
-
-	return Difference == 0
 end
 
 local function ConstructAuthData(AAD: buffer, Ciphertext: buffer): buffer
@@ -102,11 +85,6 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
-	end
-
-	local MessageLength = buffer.len(Message)
-	if MessageLength == 0 then
-		error("Message cannot be empty", 2)
 	end
 
 	if Key == nil then
@@ -162,7 +140,7 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 	local AuthenticationKey = GenerateAuthKey(Key, Nonce, BlockRounds, UseXChaCha20)
 	local Ciphertext = GetFn(UseXChaCha20)(Message, Key, Nonce, 1, BlockRounds)
 	local AuthData = ConstructAuthData(AAD, Ciphertext)
-	local Tag = Poly1305(AuthData, AuthenticationKey)
+	local Tag = Poly1305.Tag(AuthData, AuthenticationKey)
 
 	return Ciphertext, Tag
 end
@@ -174,11 +152,6 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 
 	if typeof(Ciphertext) ~= "buffer" then
 		error(`Ciphertext must be a buffer, got {typeof(Ciphertext)}`, 2)
-	end
-
-	local CiphertextLength = buffer.len(Ciphertext)
-	if CiphertextLength == 0 then
-		error("Ciphertext cannot be empty", 2)
 	end
 
 	if Key == nil then
@@ -246,9 +219,9 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 
 	local AuthenticationKey = GenerateAuthKey(Key, Nonce, BlockRounds, UseXChaCha20)
 	local AuthData = ConstructAuthData(AAD, Ciphertext)
-	local ExpectedTag = Poly1305(AuthData, AuthenticationKey)
+	local ExpectedTag = Poly1305.Tag(AuthData, AuthenticationKey)
 
-	if not ConstantTimeCompare(Tag, ExpectedTag) then
+	if not CtCompare(Tag, ExpectedTag) then
 		return nil
 	end
 

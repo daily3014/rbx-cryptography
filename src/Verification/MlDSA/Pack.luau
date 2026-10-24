@@ -5,8 +5,6 @@
 	Supports encoding/decoding of polynomial coefficients and hint bits.
 
 	Example usage:
-		local BitPacking = require(script)
-		
 		local Poly = buffer.create(256 * 4)
 		local Encoded = buffer.create(96) -- For 3-bit encoding
 		BitPacking.Encode(Poly, Encoded, 3)

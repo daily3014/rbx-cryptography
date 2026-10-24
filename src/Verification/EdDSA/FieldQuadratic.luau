@@ -3,8 +3,6 @@
 
 	Return type: varies by function
 	Example usage:
-		local FieldQuadratic = require("FieldQuadratic")
-
 		--------Usage Case 1: Basic scalar arithmetic--------
 		local ScalarA = FieldQuadratic.Decode(SomeBytes)
 		local ScalarB = FieldQuadratic.Decode(OtherBytes)
@@ -25,7 +23,6 @@ local MultiPrecision = require("./MultiPrecision")
 local CONSTANT_ZERO = MultiPrecision.Num(0)
 
 local OUTPUT_BUFFER = buffer.create(8192)
-local RULE_BUFFER = buffer.create(8192)
 local DECODE_WIDE_LOW = buffer.create(96)
 local DECODE_WIDE_HIGH = buffer.create(96)
 local DECODE_BUFFER = buffer.create(96)
@@ -79,17 +76,6 @@ local MONTGOMERY_T1 = buffer.create(96) do
 	}
 	for Index = 1, 11 do
 		buffer.writef64(MONTGOMERY_T1, (Index - 1) * 8, Values[Index])
-	end
-end
-
-local DIVIDE_8 = buffer.create(96) do
-	local Values = {
-		5110253, 3039345, 2503500, 11779568, 15416472,
-		16766550, 16777215, 16777215, 16777215, 16777215,
-		4095
-	}
-	for Index = 1, 11 do
-		buffer.writef64(DIVIDE_8, (Index - 1) * 8, Values[Index])
 	end
 end
 
@@ -161,10 +147,6 @@ end
 
 function FieldQuadratic.Neg(ScalarA: buffer): buffer
 	return Reduce(MultiPrecision.Sub(FIELD_ORDER, ScalarA))
-end
-
-function FieldQuadratic.Sub(ScalarA: buffer, ScalarB: buffer): buffer
-	return FieldQuadratic.Add(ScalarA, FieldQuadratic.Neg(ScalarB))
 end
 
 function FieldQuadratic.Mul(ScalarA: buffer, ScalarB: buffer): buffer
@@ -258,10 +240,6 @@ function FieldQuadratic.DecodeClamped(ClampedBuffer: buffer): buffer
 	return FieldQuadratic.Decode(ClampedCopy)
 end
 
-function FieldQuadratic.Eighth(MontgomeryScalar: buffer): buffer
-	return FieldQuadratic.Mul(MontgomeryScalar, DIVIDE_8)
-end
-
 function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 	local DemontResult = Demontgomery(MontgomeryScalar)
 	local BitOutput, BitCount = RebaseLE(DemontResult, 11, 2 ^ 24, 2)
@@ -271,112 +249,6 @@ function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 	end
 
 	return BitOutput, BitCount
-end
-
-function FieldQuadratic.MakeRuleset(ScalarA: buffer, ScalarB: buffer): (buffer, number, buffer, number)
-	local DTable = Demontgomery(ScalarA)
-	local ETable = Demontgomery(ScalarB)
-	local FTable = MultiPrecision.Sub(DTable, ETable)
-
-	local DMod2 = MultiPrecision.Mod2(DTable)
-	local EMod2 = MultiPrecision.Mod2(ETable)
-
-	local DMod3 = MultiPrecision.Mod3(DTable)
-	local EMod3 = MultiPrecision.Mod3(ETable)
-
-	local EFloat = MultiPrecision.Approx(ETable)
-	local FFloat = MultiPrecision.Approx(FTable)
-
-	local Mod3Lut = {[0] = 0, 2, 1}
-
-	local RuleBuffer = RULE_BUFFER
-	local RuleCount = 0
-
-	while FFloat ~= 0 do
-		local Rule = -1
-
-		if FFloat < 0 then
-			Rule = 0
-			DTable, ETable = ETable, DTable
-			DMod2, EMod2 = EMod2, DMod2
-			DMod3, EMod3 = EMod3, DMod3
-			EFloat = MultiPrecision.Approx(ETable)
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = -FFloat
-		elseif 4 * FFloat < EFloat and DMod3 == Mod3Lut[EMod3] then
-			Rule = 1
-			DTable, ETable = MultiPrecision.Third(MultiPrecision.Add(DTable, FTable)), MultiPrecision.Third(MultiPrecision.Sub(ETable, FTable)) :: buffer
-			DMod2, EMod2 = EMod2, DMod2
-			DMod3, EMod3 = MultiPrecision.Mod3(DTable), MultiPrecision.Mod3(ETable)
-			EFloat = MultiPrecision.Approx(ETable)
-		elseif 4 * FFloat < EFloat and DMod2 == EMod2 and DMod3 == EMod3 then
-			Rule = 2
-			DTable = MultiPrecision.Half(FTable)
-			DMod2 = MultiPrecision.Mod2(DTable)
-			DMod3 = Mod3Lut[(DMod3 - EMod3) % 3]
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		elseif FFloat < 3 * EFloat then
-			Rule = 3
-			DTable = MultiPrecision.CarryWeak(FTable)
-			DMod2 = (DMod2 - EMod2) % 2
-			DMod3 = (DMod3 - EMod3) % 3
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		elseif DMod2 == EMod2 then
-			Rule = 2
-			DTable = MultiPrecision.Half(FTable)
-			DMod2 = MultiPrecision.Mod2(DTable)
-			DMod3 = Mod3Lut[(DMod3 - EMod3) % 3]
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		elseif DMod2 == 0 then
-			Rule = 5
-			DTable = MultiPrecision.Half(DTable)
-			DMod2 = MultiPrecision.Mod2(DTable)
-			DMod3 = Mod3Lut[DMod3]
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		elseif DMod3 == 0 then
-			Rule = 6
-			DTable = MultiPrecision.CarryWeak(MultiPrecision.Sub(MultiPrecision.Third(DTable), ETable))
-			DMod2 = (DMod2 - EMod2) % 2
-			DMod3 = MultiPrecision.Mod3(DTable)
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		elseif DMod3 == Mod3Lut[EMod3] then
-			Rule = 7
-			DTable = MultiPrecision.Third(MultiPrecision.Sub(FTable, ETable))
-			DMod3 = MultiPrecision.Mod3(DTable)
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		elseif DMod3 == EMod3 then
-			Rule = 8
-			DTable = MultiPrecision.Third(FTable)
-			DMod2 = (DMod2 - EMod2) % 2
-			DMod3 = MultiPrecision.Mod3(DTable)
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		else
-			Rule = 9
-			ETable = MultiPrecision.Half(ETable)
-			EMod2 = MultiPrecision.Mod2(ETable)
-			EMod3 = Mod3Lut[EMod3]
-			EFloat = MultiPrecision.Approx(ETable)
-			FTable = MultiPrecision.Sub(DTable, ETable)
-			FFloat = MultiPrecision.Approx(FTable)
-		end
-
-		buffer.writef64(RuleBuffer, RuleCount * 8, Rule)
-		RuleCount += 1
-	end
-
-	local FinalBits, FinalBitCount = RebaseLE(DTable, 11, 2 ^ 24, 2)
-	while FinalBitCount > 0 and buffer.readf64(FinalBits, (FinalBitCount - 1) * 8) == 0 do
-		FinalBitCount -= 1
-	end
-
-	return FinalBits, FinalBitCount, RuleBuffer, RuleCount
 end
 
 return FieldQuadratic

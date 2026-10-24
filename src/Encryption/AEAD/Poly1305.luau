@@ -10,7 +10,7 @@
 		local Message = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring(string.rep("k", 32))
 		
-		local Tag = Poly1305(Message, Key)
+		local Tag = Poly1305.Tag(Message, Key)
 --]=]
 
 --!strict
@@ -27,7 +27,7 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	local PaddedMessage = Message
 	local ProcessLength = MessageLength
 
-	if MessageLength % BLOCK_SIZE ~= 0 or MessageLength == 0 then
+	if MessageLength % BLOCK_SIZE ~= 0 then
 		local PaddingSize = BLOCK_SIZE - (MessageLength % BLOCK_SIZE)
 		ProcessLength = MessageLength + PaddingSize
 		PaddedMessage = buffer.create(ProcessLength)
@@ -190,7 +190,9 @@ local function ProcessMessage(Message: buffer, Key: buffer): buffer
 	return Output
 end
 
-local function Poly1305(Message: buffer, Key: buffer): buffer
+local Poly1305 = {}
+
+function Poly1305.Tag(Message: buffer, Key: buffer): buffer
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end

@@ -1,22 +1,16 @@
 --[=[
 	Cryptography library: EdDSA (Ed25519) with Batch Verification
 
-	Return type: varies by function
 	Example usage:
-		local EdDSA = require("EdDSA")
-
-		--------Usage Case 1--------
-		local SecretKey = RandomBytes.Generate(32)
+		local SecretKey = CSPRNG.RandomBytes(32)
 		local PublicKey = EdDSA.PublicKey(SecretKey)
 
-		--------Usage Case 2--------
 		local Message = buffer.fromstring("Hello World")
 		local Signature = EdDSA.Sign(Message, SecretKey, PublicKey)
 
-		--------Usage Case 3--------
 		local IsValid = EdDSA.Verify(Message, PublicKey, Signature)
 
-		--------Usage Case 4: Batch Verification--------
+		-- Batch Verification
 		local AllValid = EdDSA.VerifyBatch({
 			{Message = M1, PublicKey = PK1, Signature = S1},
 			{Message = M2, PublicKey = PK2, Signature = S2},
@@ -30,34 +24,14 @@
 
 local FieldQuadratic = require("@self/FieldQuadratic")
 local FieldPrime = require("@self/FieldPrime")
-local SHA512 = require("@self/SHA512")
+local SHA512 = require("../Hashing/SHA2/SHA512").SHA512_Internal
 local Edwards25519 = require("@self/Edwards25519")
 local X25519 = require("@self/X25519")
-local CSPRNG = require("@self/CSPRNG")
+local Concatenate = require("../Utilities/Functions").Concatenate
 
 local ED25519_SECRET_KEY_SIZE = 32
 local ED25519_PUBLIC_KEY_SIZE = 32
 local ED25519_SIGNATURE_SIZE = 64
-
-local function ConcatBuffers(...): buffer
-	local Buffers = {...}
-	local TotalLength = 0
-
-	for _, Buffer in Buffers do
-		TotalLength += buffer.len(Buffer)
-	end
-
-	local Result = buffer.create(TotalLength)
-	local Offset = 0
-
-	for _, Buffer in Buffers do
-		local Length = buffer.len(Buffer)
-		buffer.copy(Result, Offset, Buffer, 0, Length)
-		Offset += Length
-	end
-
-	return Result
-end
 
 export type SignatureEntry = {
 	PublicKey: buffer,
@@ -66,7 +40,6 @@ export type SignatureEntry = {
 }
 
 local EDDSA = {
-	CSPRNG = CSPRNG,
 	X25519 = X25519
 }
 
@@ -138,7 +111,7 @@ function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buff
 	local SecondHalf = buffer.create(32)
 	buffer.copy(SecondHalf, 0, Hash, 32, 32)
 
-	local NonceSource = ConcatBuffers(SecondHalf, Message)
+	local NonceSource = Concatenate(SecondHalf, Message)
 	local NonceHash = SHA512(NonceSource)
 	local NonceK = FieldQuadratic.DecodeWide(NonceHash)
 
@@ -146,14 +119,14 @@ function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buff
 	local CommitmentR = Edwards25519.MulG(NonceBits, NonceBitCount)
 	local CommitmentString = Edwards25519.Encode(CommitmentR)
 
-	local ChallengeInput = ConcatBuffers(CommitmentString, PublicKey, Message)
+	local ChallengeInput = Concatenate(CommitmentString, PublicKey, Message)
 	local ChallengeHash = SHA512(ChallengeInput)
 	local ChallengeE = FieldQuadratic.DecodeWide(ChallengeHash)
 
 	local ResponseS = FieldQuadratic.Add(NonceK, FieldQuadratic.Mul(ScalarX, ChallengeE))
 	local ResponseString = FieldQuadratic.Encode(ResponseS)
 
-	return ConcatBuffers(CommitmentString, ResponseString)
+	return Concatenate(CommitmentString, ResponseString)
 end
 
 function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): boolean
@@ -215,7 +188,7 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 		return false
 	end
 
-	local ChallengeInput = ConcatBuffers(CommitmentBytes, PublicKey, Message)
+	local ChallengeInput = Concatenate(CommitmentBytes, PublicKey, Message)
 	local ChallengeHash = SHA512(ChallengeInput)
 	local ChallengeScalar = FieldQuadratic.DecodeWide(ChallengeHash)
 
@@ -302,7 +275,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 			return false
 		end
 
-		local ChallengeInput = ConcatBuffers(CommitmentBytes, PublicKey, Message)
+		local ChallengeInput = Concatenate(CommitmentBytes, PublicKey, Message)
 		local ChallengeHash = SHA512(ChallengeInput)
 		local ChallengeScalar = FieldQuadratic.DecodeWide(ChallengeHash)
 
@@ -319,7 +292,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 		}
 	end
 
-	local TranscriptBuffer = ConcatBuffers(table.unpack(TranscriptData))
+	local TranscriptBuffer = Concatenate(table.unpack(TranscriptData))
 
 	local SumS: buffer? = nil
 	local Accumulator: buffer? = nil
@@ -327,7 +300,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 	for Index, Parsed in ParsedData do
 		local IndexBuffer = buffer.create(2)
 		buffer.writeu16(IndexBuffer, 0, Index)
-		local ZInput = ConcatBuffers(IndexBuffer, TranscriptBuffer)
+		local ZInput = Concatenate(IndexBuffer, TranscriptBuffer)
 		local ZHash = SHA512(ZInput)
 
 		local ZBytes = buffer.create(32)

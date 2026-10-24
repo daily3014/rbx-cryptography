@@ -1,0 +1,475 @@
+--[=[
+	Cryptography library: Cryptographically Secure RNG
+
+	Usage:
+		local RandomFloat = CSPRNG.Random()
+		local RandomInt = CSPRNG.RandomInt(1, 100)
+		local RandomNumber = CSPRNG.RandomNumber(0.5, 10.5)
+		local RandomBytes = CSPRNG.RandomBytes(32)
+		local RandomHex = CSPRNG.RandomHex(16)
+		local FastString = CSPRNG.RandomString(16, false)
+		local FastBuffer = CSPRNG.RandomString(32, true)
+
+		CSPRNG.AddEntropy(SomeBuffer)
+		CSPRNG.AddEntropy()
+
+	Key generation just uses RandomBytes(32): X25519 clamps the scalar internally
+	and Ed25519 hashes the seed, so neither wants pre-clamped bytes.
+
+	AddEntropy folds the given bytes into the internal state and regenerates the
+	keystream pool. The buffer may be any length, and passing nothing simply
+	refreshes from the built-in sources. Entropy is only ever mixed in, never
+	replaced, so injecting weak bytes can never lower the existing strength.
+--]=]
+
+--!strict
+--!optimize 2
+--!native
+
+local Blake3 = require("../Hashing/Blake3")
+local ChaCha = require("../Encryption/AEAD/ChaCha")
+local Conversions = require("./Conversions")
+local ToHex = Conversions.ToHex
+
+type RandomStringSig =
+		& ((Length: number, AsBuffer: false?) -> string)
+		& ((Length: number, AsBuffer: true) -> buffer)
+		& ((Length: number, AsBuffer: boolean) -> string | buffer)
+
+type CSPRNGModule = {
+	AddEntropy: (Entropy: buffer?) -> (),
+
+	Random: () -> number,
+	RandomInt: (Min: number, Max: number?) -> number,
+	RandomNumber: (Min: number, Max: number?) -> number,
+	RandomBytes: (Count: number) -> buffer,
+	RandomHex: (Length: number) -> string,
+	RandomString: RandomStringSig,
+	MakeRandomString: (CharacterSet: string | buffer) -> RandomStringSig
+}
+
+local KEY_SIZE = 32
+local NONCE_SIZE = 12
+local MAX_UINT32 = 0xFFFFFFFF
+
+local POOL_SIZE = 2048
+local REKEY_BLOCKS = 1024
+local GUID_COUNT = 3
+local JITTER_SAMPLES = 512
+local SOURCE_LIMIT = 1024
+
+local CSPRNG = {} :: CSPRNGModule
+
+local ZERO_SOURCE = buffer.create(KEY_SIZE + POOL_SIZE)
+
+local Key = buffer.create(0)
+local Nonce = buffer.create(0)
+local StreamBuffer = buffer.create(0)
+
+local Counter = 0
+local BufferPosition = 0
+local BufferSize = 0
+
+local function GatherEntropy(UserEntropy: buffer?)
+	local Sources = buffer.create(SOURCE_LIMIT)
+	local Offset = 0
+
+	local function WriteToBuffer(Source: buffer)
+		local Size = buffer.len(Source)
+
+		if Offset + Size > SOURCE_LIMIT then
+            error(`Exceeded the size of Sources, this is a bug!`, 2)
+        end
+
+		buffer.copy(Sources, Offset, Source, 0, Size)
+		Offset += Size
+	end
+
+	local HttpService = if game then game:GetService("HttpService") else nil
+	if HttpService then
+		for _ = 1, GUID_COUNT do
+			WriteToBuffer(buffer.fromstring(HttpService:GenerateGUID(false)))
+		end
+	else
+		local ClockBuffer = buffer.create(16)
+		buffer.writef64(ClockBuffer, 0, os.clock())
+		buffer.writef64(ClockBuffer, 8, os.time())
+		WriteToBuffer(ClockBuffer)
+
+		local JitterSamples = buffer.create(JITTER_SAMPLES)
+		local JitterMix = 0
+		local LongestRun = 0
+		local CurrentRun = 0
+		local PreviousSample = -1
+		for Index = 0, JITTER_SAMPLES - 1 do
+			local StartTime = os.clock()
+			local Scratch = buffer.create(64 + JitterMix % 4096)
+			buffer.writeu32(Scratch, 0, Index)
+			local Sample = math.floor((os.clock() - StartTime) * 1000000000) % 256
+
+			JitterMix += Sample
+			buffer.writeu8(JitterSamples, Index, Sample)
+
+			CurrentRun = if Sample == PreviousSample then CurrentRun + 1 else 0
+			PreviousSample = Sample
+			if CurrentRun > LongestRun then
+				LongestRun = CurrentRun
+			end
+		end
+
+		if LongestRun > JITTER_SAMPLES // 8 then
+			warn("CSPRNG: timing jitter appears degenerate (low-resolution clock); entropy may be weak")
+		end
+
+		WriteToBuffer(JitterSamples)
+
+		local Pointers = tostring(newproxy())
+		if coroutine then
+			Pointers ..= tostring(coroutine.running())
+		end
+		WriteToBuffer(buffer.fromstring(Pointers))
+	end
+
+	local PreviousLength = buffer.len(Key) + buffer.len(Nonce)
+	local UserLength = if UserEntropy then buffer.len(UserEntropy) else 0
+	local Material = buffer.create(PreviousLength + Offset + UserLength)
+
+	buffer.copy(Material, 0, Key, 0, buffer.len(Key))
+	buffer.copy(Material, buffer.len(Key), Nonce, 0, buffer.len(Nonce))
+	buffer.copy(Material, PreviousLength, Sources, 0, Offset)
+	if UserEntropy then
+		buffer.copy(Material, PreviousLength + Offset, UserEntropy, 0, UserLength)
+	end
+
+	local KeyMaterial = Blake3.DigestBuffer(Material, KEY_SIZE + NONCE_SIZE)
+
+	Key = buffer.create(KEY_SIZE)
+	buffer.copy(Key, 0, KeyMaterial, 0, KEY_SIZE)
+
+	Nonce = buffer.create(NONCE_SIZE)
+	buffer.copy(Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
+
+	Counter = 0
+end
+
+local function GenerateBlock()
+	local Stream = ChaCha.ChaCha20(ZERO_SOURCE, Key, Nonce, 0)
+
+	buffer.copy(Key, 0, Stream, 0, KEY_SIZE)
+	buffer.fill(Stream, 0, 0, KEY_SIZE)
+
+	StreamBuffer = Stream
+	BufferPosition = KEY_SIZE
+	BufferSize = KEY_SIZE + POOL_SIZE
+	Counter += 1
+
+	if Counter % REKEY_BLOCKS == 0 then
+		GatherEntropy()
+	end
+end
+
+local function GetBytes(Count: number): buffer
+	local Result = buffer.create(Count)
+	local ResultPosition = 0
+
+	while ResultPosition < Count do
+		local Position = BufferPosition
+		if Position >= BufferSize then
+			GenerateBlock()
+			Position = BufferPosition
+		end
+
+		local BytesToCopy = math.min(Count - ResultPosition, BufferSize - Position)
+
+		buffer.copy(Result, ResultPosition, StreamBuffer, Position, BytesToCopy)
+		ResultPosition += BytesToCopy
+		BufferPosition = Position + BytesToCopy
+	end
+
+	return Result
+end
+
+local function GetFloat(): number
+	if BufferPosition + 8 > BufferSize then
+		GenerateBlock()
+	end
+
+	local Position = BufferPosition
+	local Stream = StreamBuffer
+	local Value1 = buffer.readu32(Stream, Position)
+	local Value2 = buffer.readu32(Stream, Position + 4)
+	BufferPosition = Position + 8
+
+	local High = bit32.rshift(Value1, 5)
+	local Low = bit32.rshift(Value2, 6)
+
+	return (High * 67108864.0 + Low) / 9007199254740992.0
+end
+
+local function GetIntRange(Min: number, Max: number): number
+	local Range = Max - Min + 1
+
+	if Range > 0x100000000 then
+		error(`Range must be at most 2^32, got {Range}`, 3)
+	end
+
+	if BufferPosition + 4 > BufferSize then
+		GenerateBlock()
+	end
+
+	local Position = BufferPosition
+	local Value = buffer.readu32(StreamBuffer, Position)
+	BufferPosition = Position + 4
+
+	if Range == 0x100000000 then
+		return Min + Value
+	end
+
+	if bit32.band(Range, Range - 1) == 0 then
+		return Min + bit32.band(Value, Range - 1)
+	end
+
+	local Limit = MAX_UINT32 - (MAX_UINT32 % Range)
+	while Value >= Limit do
+		if BufferPosition + 4 > BufferSize then
+			GenerateBlock()
+		end
+		Position = BufferPosition
+		Value = buffer.readu32(StreamBuffer, Position)
+		BufferPosition = Position + 4
+	end
+
+	return Min + (Value % Range)
+end
+
+local function GetNumberRange(Min: number, Max: number): number
+	if Min > Max then
+		Min, Max = Max, Min
+	end
+
+	local Range = Max - Min
+	if Range <= 0 then
+		return Min
+	end
+
+	return Min + (GetFloat() * Range)
+end
+
+local function GetRandomString(Length: number, CharacterSet: buffer?, AsBuffer: boolean?): string | buffer
+	local Characters = buffer.create(Length)
+
+	if CharacterSet then
+		local SetRange = buffer.len(CharacterSet) - 1
+
+		for Index = 0, Length - 1 do
+			local Position = GetIntRange(0, SetRange)
+			buffer.writeu8(Characters, Index, buffer.readu8(CharacterSet, Position))
+		end
+	else
+		for Index = 0, Length - 1 do
+			buffer.writeu8(Characters, Index, GetIntRange(36, 122))
+		end
+	end
+
+	return if AsBuffer
+		then Characters
+		else buffer.tostring(Characters)
+end
+
+CSPRNG.Random = GetFloat
+
+local function ValidateArgument(Name: string, Value: any, Integer: boolean, Optional: boolean): (boolean, string?)
+	if Value == nil then
+		if Optional then
+			return true, nil
+		end
+
+		return false, `{Name} must be a number`
+	end
+
+	if type(Value) ~= "number" then
+		return false, `{Name} must be a number, got {typeof(Value)}`
+	end
+
+	if not Value then
+		return true, nil
+	end
+
+	if Integer and Value % 1 ~= 0 then
+		return false, `{Name} must be an integer, got {Value}`
+	end
+
+	if not math.isfinite(Value) then
+		local Type = if math.isnan(Value)
+			then "NaN"
+			else "inf"
+
+		return false, `{Name} must be a finite number, got {Type}`
+	end
+
+	return true, nil
+end
+
+function CSPRNG.RandomInt(Min: number, Max: number?): number
+	assert(ValidateArgument("Min", Min, true, false))
+	assert(ValidateArgument("Max", Max, true, true))
+
+	if Max then
+		if Max < Min then
+			error(`Max ({Max}) can't be less than Min ({Min})`, 2)
+		elseif Max == Min then
+			error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+		end
+	end
+
+	local ActualMax: number
+	local ActualMin: number
+
+	if Max == nil then
+		if Min < 1 then
+			error(`When passing one argument, Min must be at least 1, got {Min}`, 2)
+		end
+
+		ActualMax = Min
+		ActualMin = 1
+	else
+		ActualMax = Max
+		ActualMin = Min
+	end
+
+	return GetIntRange(ActualMin, ActualMax)
+end
+
+function CSPRNG.RandomNumber(Min: number, Max: number?): number
+	assert(ValidateArgument("Min", Min, false, false))
+	assert(ValidateArgument("Max", Max, false, true))
+
+	if Max then
+		if Max < Min then
+			error(`Max ({Max}) must be bigger than Min ({Min})`, 2)
+		end
+
+		if Max == Min then
+			error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+		end
+	end
+
+	local ActualMax: number
+	local ActualMin: number
+
+	if Max == nil then
+		if Min <= 0 then
+			error(`When passing one argument, Min must be more than 0, got {Min}`, 2)
+		end
+
+		ActualMax = Min
+		ActualMin = 0
+	else
+		ActualMax = Max
+		ActualMin = Min
+	end
+
+	return GetNumberRange(ActualMin, ActualMax)
+end
+
+function CSPRNG.RandomBytes(Count: number): buffer
+	if type(Count) ~= "number" then
+		error(`Count must be a number, got {typeof(Count)}`, 2)
+	end
+
+	if Count <= 0 then
+		error(`Count must be bigger than 0, got {Count}`, 2)
+	end
+
+	if Count % 1 ~= 0 then
+		error("Count must be an integer", 2)
+	end
+
+	return GetBytes(Count)
+end
+
+local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
+	assert(ValidateArgument("Length", Length, true, false))
+
+	if Length <= 0 then
+		error(`Length must be bigger than 0, got {Length}`, 2)
+	end
+
+	if not math.isfinite(Length) then
+		error(`Length must be finite, got {Length}`)
+	end
+
+	if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
+		error(`AsBuffer must be a boolean or nil, got {typeof(AsBuffer)}`, 2)
+	end
+
+	return GetRandomString(Length, nil, AsBuffer)
+end
+
+CSPRNG.RandomString = RandomString :: any
+
+function CSPRNG.MakeRandomString(CharacterSet: string | buffer): RandomStringSig
+	if type(CharacterSet) ~= "string" and typeof(CharacterSet) ~= "buffer" then
+		error(`CharacterSet must be a string or buffer, got {typeof(CharacterSet)}`, 2)
+	end
+
+	local Set = if type(CharacterSet) == "buffer"
+		then CharacterSet
+		else buffer.fromstring(CharacterSet)
+
+	if buffer.len(Set) == 0 then
+		error("CharacterSet cannot be empty", 2)
+	end
+
+	return function(Length: number, AsBuffer: boolean?): string | buffer
+		assert(ValidateArgument("Length", Length, true, false))
+
+		if Length <= 0 then
+			error(`Length must be bigger than 0, got {Length}`, 2)
+		end
+
+		if not math.isfinite(Length) then
+			error(`Length must be finite, got {Length}`)
+		end
+
+		if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
+			error(`AsBuffer must be a boolean or nil, got {typeof(AsBuffer)}`, 2)
+		end
+
+		return GetRandomString(Length, Set, AsBuffer)
+	end :: any
+end
+
+function CSPRNG.RandomHex(Length: number): string
+	if type(Length) ~= "number" then
+		error(`Length must be a number, got {typeof(Length)}`, 2)
+	end
+
+	if Length <= 0 then
+		error(`Length must be bigger than 0, got {Length}`, 2)
+	end
+
+	if Length % 1 ~= 0 then
+		error("Length must be an integer", 2)
+	end
+
+	if Length % 2 ~= 0 then
+		error(`Length must be even, got {Length}`, 2)
+	end
+
+	return ToHex(GetBytes(Length / 2))
+end
+
+function CSPRNG.AddEntropy(Entropy: buffer?)
+	if Entropy ~= nil and type(Entropy) ~= "buffer" then
+		error(`Entropy must be a buffer or nil, got {typeof(Entropy)}`, 2)
+	end
+
+	GatherEntropy(Entropy)
+	GenerateBlock()
+end
+
+GatherEntropy()
+GenerateBlock()
+
+return CSPRNG

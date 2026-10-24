@@ -1,31 +1,31 @@
 --[=[
 	Cryptography library: BLAKE2b
-	
-	Return type: string
+
+	Sizes:
+		Output: 1 to 64 bytes (default 64)
+		Key: 0 to 64 bytes (optional)
+
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
-		
-		-- BLAKE2b-128 (128-bit output)
-		local Result128 = BLAKE2b(Message, 16)
-		
-		-- BLAKE2b-256 (256-bit output)
-		local Result256 = BLAKE2b(Message, 32)
-		
-		-- BLAKE2b-384 (384-bit output)
-		local Result384 = BLAKE2b(Message, 48)
-		
-		-- BLAKE2b-512 (512-bit output, default)
-		local Result512 = BLAKE2b(Message, 64)
-		-- or simply: local Result512 = BLAKE2b(Message)
-		
+
+		-- BLAKE2b-512, hex string and buffer
+		local Hash, HashBuffer = Blake2b.Digest(Message)
+
+		-- BLAKE2b-256, buffer only
+		local HashBuffer256 = Blake2b.DigestBuffer(Message, 32)
+
 		-- With optional key
-		local OptionalKey = buffer.fromstring("MyKey")
-		local Result = BLAKE2b(Message, 64, OptionalKey)
+		local Key = buffer.fromstring("MyKey")
+		local KeyedHash, KeyedBuffer = Blake2b.Digest(Message, 64, Key)
 --]=]
 
 --!strict
 --!optimize 2
 --!native
+
+local EncodingService = if game then game:GetService("EncodingService") else nil
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
 
 local BLOCK_SIZE_BYTES = 128
 local DEFAULT_OUTPUT_BYTES = 64
@@ -392,7 +392,7 @@ local function ProcessCompressionRound(HighWords: {number}, LowWords: {number}, 
 	StateLow[8] = bit32.bxor(StateLow[8], WL8, WorkL16)
 end
 
-local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): (string, buffer)
+local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): buffer
 	local KeyLength = KeyData and buffer.len(KeyData) or 0
 	local DataLength = buffer.len(InputData)
 
@@ -433,41 +433,19 @@ local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buff
 		ProcessCompressionRound(BlockHigh, BlockLow, ProcessedBytes + CopyBytes, true, StateHigh, StateLow)
 	end
 
-	local Digest = buffer.create(OutputLength)
-	local Offset = 0
-
+	local State = buffer.create(64)
 	for Index = 1, 8 do
-		if Offset + 4 <= OutputLength then
-			buffer.writeu32(Digest, Offset, StateLow[Index])
-			Offset += 4
-		end
-
-		if Offset + 4 <= OutputLength then
-			buffer.writeu32(Digest, Offset, StateHigh[Index])
-			Offset += 4
-		end
-
-		if Offset >= OutputLength then
-			break
-		end
+		buffer.writeu32(State, (Index - 1) * 8, StateLow[Index])
+		buffer.writeu32(State, (Index - 1) * 8 + 4, StateHigh[Index])
 	end
 
-	local FinalDigest = string.format(
-		"%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x",
-		bit32.byteswap(StateLow[1]), bit32.byteswap(StateHigh[1]),
-		bit32.byteswap(StateLow[2]), bit32.byteswap(StateHigh[2]),
-		bit32.byteswap(StateLow[3]), bit32.byteswap(StateHigh[3]),
-		bit32.byteswap(StateLow[4]), bit32.byteswap(StateHigh[4]),
-		bit32.byteswap(StateLow[5]), bit32.byteswap(StateHigh[5]),
-		bit32.byteswap(StateLow[6]), bit32.byteswap(StateHigh[6]),
-		bit32.byteswap(StateLow[7]), bit32.byteswap(StateHigh[7]),
-		bit32.byteswap(StateLow[8]), bit32.byteswap(StateHigh[8])
-	)
+	local Digest = buffer.create(OutputLength)
+	buffer.copy(Digest, 0, State, 0, OutputLength)
 
-	return string.sub(FinalDigest, 1, OutputLength * 2), Digest
+	return Digest
 end
 
-local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer?): (string, buffer)
+local function Validate(InputData: buffer, OutputLength: number?, KeyData: buffer?)
 	if InputData == nil then
 		error("InputData cannot be nil", 2)
 	end
@@ -505,7 +483,28 @@ local function BLAKE2b(InputData: buffer, OutputLength: number?, KeyData: buffer
 		end
 	end
 
+end
+
+local Blake2b = {}
+
+function Blake2b.Digest(InputData: buffer, OutputLength: number?, KeyData: buffer?): (string, buffer)
+	Validate(InputData, OutputLength, KeyData)
+	if EncodingService and OutputLength == 32 and KeyData == nil then
+		local Result = EncodingService:ComputeBufferHash(InputData, Enum.HashAlgorithm.Blake2b)
+		return ToHex(Result), Result
+	end
+
+	local Result = HashDigest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
+	return ToHex(Result), Result
+end
+
+function Blake2b.DigestBuffer(InputData: buffer, OutputLength: number?, KeyData: buffer?): buffer
+	Validate(InputData, OutputLength, KeyData)
+	if EncodingService and OutputLength == 32 and KeyData == nil then
+		return EncodingService:ComputeBufferHash(InputData, Enum.HashAlgorithm.Blake2b)
+	end
+
 	return HashDigest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
 end
 
-return BLAKE2b
+return Blake2b

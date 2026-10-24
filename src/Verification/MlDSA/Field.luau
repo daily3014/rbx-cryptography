@@ -5,8 +5,6 @@
 	All operations maintain elements in canonical form [0, Q).
 
 	Example usage:
-		local Field = require(script)
-		
 		local A = 12345
 		local B = 67890
 		local Sum = Field.Add(A, B)

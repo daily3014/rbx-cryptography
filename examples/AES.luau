@@ -48,9 +48,9 @@ print("Encryption successful!")
 print("Ciphertext length:", buffer.len(Ciphertext))
 print("Tag length:", buffer.len(Tag))
 
--- Decrypt and verify (returns false on failure, true and buffer on success)
-local Success, DecryptedData = AES.Decrypt(Ciphertext, Key, IV, Tag, AAD)
-if Success and DecryptedData then
+-- Decrypt and verify (returns the plaintext buffer, or nil on authentication failure)
+local DecryptedData = AES.Decrypt(Ciphertext, Key, IV, Tag, AAD)
+if DecryptedData then
 	local DecryptedMessage = buffer.tostring(DecryptedData)
 	print("Decryption successful!")
 	print("Original message:", Message)

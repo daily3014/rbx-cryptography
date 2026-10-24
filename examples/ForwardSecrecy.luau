@@ -20,10 +20,10 @@ local AEAD = Cryptography.Encryption.AEAD
 local CSPRNG = Cryptography.Utilities.CSPRNG
 
 -- Long-term identity keys (persistent across sessions)
-local ClientIdentityPrivate = CSPRNG.Ed25519Random()
+local ClientIdentityPrivate = CSPRNG.RandomBytes(32)
 local ClientIdentityPublic = EdDSA.PublicKey(ClientIdentityPrivate)
 
-local ServerIdentityPrivate = CSPRNG.Ed25519Random()
+local ServerIdentityPrivate = CSPRNG.RandomBytes(32)
 local _ServerIdentityPublic = EdDSA.PublicKey(ServerIdentityPrivate)
 
 -- *Client and server exchange identity public keys*
@@ -40,10 +40,10 @@ local function GetSessionKey(EphemeralSharedSecret: buffer, ClientPublic: buffer
 end
 
 -- SESSION 1: Generate fresh ephemeral keys
-local ClientEphemeralPrivate1 = CSPRNG.Ed25519Random()
+local ClientEphemeralPrivate1 = CSPRNG.RandomBytes(32)
 local ClientEphemeralPublic1 = EdDSA.PublicKey(ClientEphemeralPrivate1)
 
-local ServerEphemeralPrivate1 = CSPRNG.Ed25519Random()
+local ServerEphemeralPrivate1 = CSPRNG.RandomBytes(32)
 local ServerEphemeralPublic1 = EdDSA.PublicKey(ServerEphemeralPrivate1)
 
 -- *Ephemeral public keys are exchanged*
@@ -63,10 +63,10 @@ ClientEphemeralPrivate1 = buffer.create(0)
 ServerEphemeralPrivate1 = buffer.create(0)
 
 -- SESSION 2: Generate completely new ephemeral keys
-local ClientEphemeralPrivate2 = CSPRNG.Ed25519Random()
+local ClientEphemeralPrivate2 = CSPRNG.RandomBytes(32)
 local ClientEphemeralPublic2 = EdDSA.PublicKey(ClientEphemeralPrivate2)
 
-local ServerEphemeralPrivate2 = CSPRNG.Ed25519Random()
+local ServerEphemeralPrivate2 = CSPRNG.RandomBytes(32)
 local ServerEphemeralPublic2 = EdDSA.PublicKey(ServerEphemeralPrivate2)
 
 -- Derive different session key for session 2

@@ -5,7 +5,6 @@
 	 NIST FIPS 203 specification.
 
 	Example usage:
-		local Params = require(script.Params)
 		local IsValid = Params.CheckKeygenParams(4, 2) -- true
 		
 		local ValidD = Params.CheckD(11) -- true
@@ -19,7 +18,7 @@
 local Params = {}
 
 function Params.CheckD(D: number): boolean
-	return D < 12
+	return (D == 1) or (D == 4) or (D == 5) or (D == 10) or (D == 11)
 end
 
 function Params.CheckEta(Eta: number): boolean
@@ -33,8 +32,6 @@ end
 function Params.CheckL(L: number): boolean
 	return (L == 1) or (L == 4) or (L == 5) or (L == 10) or (L == 11) or (L == 12)
 end
-
-
 
 function Params.CheckKeygenParams(K: number, Eta1: number): boolean
 	local Flag0 = (K == 2) and (Eta1 == 3)

@@ -14,6 +14,9 @@
 --!optimize 2
 --!native
 
+local Conversions = require("../../Utilities/Conversions")
+local ToHex = Conversions.ToHex
+
 local K_HI = {
 	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
 	0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
@@ -198,38 +201,28 @@ local function DigestBlocks(Blocks: buffer, Length: number)
 		H8Lo = bit32.bor(H8Lo, 0)
 	end
 
-	buffer.writeu32(DIGEST, 0, H1Hi)
-	buffer.writeu32(DIGEST, 4, H1Lo)
-	buffer.writeu32(DIGEST, 8, H2Hi)
-	buffer.writeu32(DIGEST, 12, H2Lo)
-	buffer.writeu32(DIGEST, 16, H3Hi)
-	buffer.writeu32(DIGEST, 20, H3Lo)
-	buffer.writeu32(DIGEST, 24, H4Hi)
-	buffer.writeu32(DIGEST, 28, H4Lo)
-	buffer.writeu32(DIGEST, 32, H5Hi)
-	buffer.writeu32(DIGEST, 36, H5Lo)
-	buffer.writeu32(DIGEST, 40, H6Hi)
-	buffer.writeu32(DIGEST, 44, H6Lo)
+	buffer.writeu32(DIGEST, 0, bit32.byteswap(H1Hi))
+	buffer.writeu32(DIGEST, 4, bit32.byteswap(H1Lo))
+	buffer.writeu32(DIGEST, 8, bit32.byteswap(H2Hi))
+	buffer.writeu32(DIGEST, 12, bit32.byteswap(H2Lo))
+	buffer.writeu32(DIGEST, 16, bit32.byteswap(H3Hi))
+	buffer.writeu32(DIGEST, 20, bit32.byteswap(H3Lo))
+	buffer.writeu32(DIGEST, 24, bit32.byteswap(H4Hi))
+	buffer.writeu32(DIGEST, 28, bit32.byteswap(H4Lo))
+	buffer.writeu32(DIGEST, 32, bit32.byteswap(H5Hi))
+	buffer.writeu32(DIGEST, 36, bit32.byteswap(H5Lo))
+	buffer.writeu32(DIGEST, 40, bit32.byteswap(H6Hi))
+	buffer.writeu32(DIGEST, 44, bit32.byteswap(H6Lo))
 end
 
 local function SHA384(Message: buffer): (string, buffer)
 	local Processed, Length = PreProcess(Message)
 	DigestBlocks(Processed, Length)
 
-	local H1Hi, H1Lo = buffer.readu32(DIGEST, 0), buffer.readu32(DIGEST, 4)
-	local H2Hi, H2Lo = buffer.readu32(DIGEST, 8), buffer.readu32(DIGEST, 12)
-	local H3Hi, H3Lo = buffer.readu32(DIGEST, 16), buffer.readu32(DIGEST, 20)
-	local H4Hi, H4Lo = buffer.readu32(DIGEST, 24), buffer.readu32(DIGEST, 28)
-	local H5Hi, H5Lo = buffer.readu32(DIGEST, 32), buffer.readu32(DIGEST, 36)
-	local H6Hi, H6Lo = buffer.readu32(DIGEST, 40), buffer.readu32(DIGEST, 44)
-
 	local Result = buffer.create(48)
 	buffer.copy(Result, 0, DIGEST)
 
-	return string.format(
-		"%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x",
-		H1Hi, H1Lo, H2Hi, H2Lo, H3Hi, H3Lo, H4Hi, H4Lo, H5Hi, H5Lo, H6Hi, H6Lo
-	), Result
+	return ToHex(Result), Result
 end
 
 return SHA384

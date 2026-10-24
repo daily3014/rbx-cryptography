@@ -2,8 +2,6 @@
 	ML-DSA Sampling
 	
 	Example usage:
-		local Sampling = require(script)
-		
 		local Rho = buffer.create(32)
 		local Matrix = buffer.create(4 * 4 * 256 * 4)
 		Sampling.ExpandA(Rho, Matrix, 4, 4)
@@ -13,7 +11,7 @@
 --!optimize 2
 --!native
 
-local XOF = require("./XOF")
+local XOF = require("../../Hashing/XOF")
 local Params = require("./Params")
 
 local N = 256

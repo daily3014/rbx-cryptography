@@ -3,9 +3,6 @@
 
 	Return type: varies by function
 	Example usage:
-		local Edwards = require("Edwards25519")
-		local FieldQuadratic = require("FieldQuadratic")
-
 		--------Usage Case 1: Point addition--------
 		local Point1 = Edwards.Decode(SomeEncodedBuffer)
 		local Point2 = Edwards.Decode(AnotherEncodedBuffer)

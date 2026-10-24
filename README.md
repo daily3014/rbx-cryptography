@@ -20,7 +20,6 @@
 - Special thanks to all contributors and bug reporters
 - AES was originally made by @RobloxGamerPro200007
 - XChaCha20 was originally made by @littleBitsman
-- Murmur3 hash was originally made by @kohltastrophe
 
 ## Disclaimer
 
@@ -55,7 +54,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 **Digital Signature Schemes**
 
-- [Ed25519](https://github.com/daily3014/rbx-cryptography/blob/main/src/Verification/EdDSA) signatures with masked operations for side-channel protection
+- [Ed25519](https://github.com/daily3014/rbx-cryptography/blob/main/src/Verification/EdDSA): Digital signatures over Curve25519 ([RFC 8032](https://doi.org/10.17487/RFC8032))
 
 **Key Exchange**
 
@@ -79,11 +78,6 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 - **SHA-3 Family**: SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE-128, SHAKE-256 ([FIPS 202](https://doi.org/10.6028/NIST.FIPS.202))
 - **BLAKE Family**: [BLAKE3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake2b.luau)
 
-**Non-cryptographic Hash Functions**
-
-- [XXH32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/XXH32.luau): Ultra-fast non-cryptographic hash
-- [Murmur3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Murmur.luau): Fast non-cryptographic hash
-
 **Message Authentication**
 
 - [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
@@ -99,14 +93,6 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [ChaCha20](https://github.com/daily3014/rbx-cryptography/tree/main/src/Encryption/AEAD): Stream cipher ([RFC 8439](https://doi.org/10.17487/RFC8439))
 - [AES-GCM](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/AES.luau): Advanced Encryption Standard
-- [Simon](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/Simon.luau): Lightweight block cipher
-- [Speck](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/Speck.luau): Lightweight block cipher
-- [XOR](https://github.com/daily3014/rbx-cryptography/blob/main/src/Encryption/XOR.luau): Simple additive cipher
-
-**Checksums**
-
-- [CRC32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Checksums/CRC32.luau): Cyclic Redundancy Check (JAM/ISO modes)
-- [Adler-32](https://github.com/daily3014/rbx-cryptography/blob/main/src/Checksums/Adler.luau): Checksum algorithm
 
 ### Utilities
 
@@ -114,10 +100,11 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [Base64](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/Base64.luau): Encode and decode
 - [Hexadecimal](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/Conversions.luau): Buffer to/from hex string conversion
+- [XOR](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/XOR.luau): Simple additive cipher, useful as a one-time pad
 
 **Random Generation**
 
-- [CSPRNG](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/CSPRNG): Cryptographically Secure Pseudo-Random Number Generator with entropy management
+- [CSPRNG](https://github.com/daily3014/rbx-cryptography/blob/main/src/Utilities/CSPRNG.luau): Cryptographically Secure Pseudo-Random Number Generator with entropy management
 - Random strings and bytes generation
 
 ## Performance
@@ -135,8 +122,6 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Ben
 | HMAC-BLAKE3 | 20k       | **145 μs**   | -        | -                        | -                 | -                             |
 | KMAC-128    | 20k       | **443 μs**   | -        | -                        | -                 | -                             |
 | KMAC-256    | 20k       | **501 μs**   | -        | -                        | -                 | -                             |
-| Adler-32    | 200k      | **163 μs**   | -        | 1.65 ms (Naive Approach) | -                 | **10.1x faster**              |
-| CRC32       | 200k      | **1.43 ms**  | -        | 6.26 ms (DevForum)       | -                 | **4.4x faster**               |
 
 ### Encryption
 
@@ -146,10 +131,6 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Ben
 | ChaCha20 (Roundtrip)          | 20k       | **338 μs**   | ~15 ms (EncryptedNet)                      | -                  | **44.4x faster**    |
 | ChaCha20-Poly1305 (Encrypt)   | 20k       | **232 μs**   | -                                          | -                  | -                   |
 | ChaCha20-Poly1305 (Roundtrip) | 20k       | **448 μs**   | -                                          | -                  | -                   |
-| Simon (Encrypt)               | 20k       | **239 μs**   | -                                          | -                  | -                   |
-| Simon (Roundtrip)             | 20k       | **466 μs**   | -                                          | -                  | -                   |
-| Speck (Encrypt)               | 20k       | **193 μs**   | -                                          | -                  | -                   |
-| Speck (Roundtrip)             | 20k       | **388 μs**   | -                                          | -                  | -                   |
 | AES-GCM (Encrypt)             | 20k       | **833 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **2.3x faster**     |
 | AES-GCM (Roundtrip)           | 20k       | **1.5 ms**   | -                                          | -                  | -                   |
 | XOR (Encrypt)                 | 1 million | **1.10 ms**  | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **155,454x faster** |
@@ -171,27 +152,19 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Ben
 
 _Roundtrip: Complete encrypt/decrypt or sign/verify cycle_
 
-## Testing and Benchmarking
+## Testing
 
 ### Running Tests
 
-To run the complete test suite:
-
 ```bash
-bash scripts/test.sh
+luau --codegen -O2 tests/runner.luau
 ```
 
-This will launch Roblox Studio, execute all tests, and display results in your terminal.
-
-### Development Testing
-
-For continuous testing during development:
+To suppress verbose output and run silently:
 
 ```bash
-bash scripts/dev.sh
+luau --codegen -O2 tests/runner.luau -a silent
 ```
-
-This starts a Rojo server. Open Roblox Studio and sync Rojo into a Baseplate. Whenever you run the game server, the test suites will run and results will show in the Output widget.
 
 ## Contributing
 
