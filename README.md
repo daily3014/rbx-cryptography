@@ -137,8 +137,8 @@ Performance benchmarks conducted in Roblox Studio on AMD Ryzen AI 7 PRO 360 usin
 
 | Algorithm  | Operation                                 | Time        | Breakdown                                      |
 | ---------- | ----------------------------------------- | ----------- | ---------------------------------------------- |
-| EdDSA      | Public Key + Sign + Verify (50 KB message) | **1.80 ms** | Sign 1.00 ms, Verify 741 μs                    |
-| ML-DSA-44  | KeyGen + Sign + Verify                    | **TBD**     | -                                              |
+| EdDSA      | Public Key + Sign + Verify				 | **369 μs**  | Public Key 43 μs, Sign 58 μs, Verify 266 μs    |
+| ML-DSA-44  | KeyGen + Sign + Verify                    | **794 μs**  | KeyGen 237 μs, Sign 413 μs, Verify 102 μs      |
 | ML-KEM-512 | KeyGen + Encapsulate + Decapsulate        | **201 μs**  | KeyGen 62 μs, Encapsulate 67 μs, Decapsulate 65 μs |
 
 ### Utilities
