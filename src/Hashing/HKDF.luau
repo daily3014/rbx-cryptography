@@ -13,51 +13,47 @@
 --!optimize 2
 --!native
 
-local HMAC = require("./HMAC")
+local Compute = require("./HMACCore").Compute
 
 type HashFunction = (...any) -> (string, buffer)
 
 local function HKDF(IKM: buffer, Salt: buffer?, Info: buffer?, Length: number, HashFunction: HashFunction, BlockSize: number, HashLength: number, _BigEndian: boolean?): buffer
 	local ActualSalt = if Salt and buffer.len(Salt) > 0 then Salt else buffer.create(HashLength)
-	local ActualInfo = Info or buffer.create(0)
-	local InfoLength = buffer.len(ActualInfo)
+	local InfoLength = if Info then buffer.len(Info) else 0
 
 	local Iterations = math.ceil(Length / HashLength)
 	if Iterations > 255 then
 		error(`HKDF output length {Length} exceeds maximum {255 * HashLength}`)
 	end
 
-	local _, PRK = HMAC(IKM, ActualSalt, HashFunction, BlockSize)
-
-	local MaxInputSize = HashLength + InfoLength + 1
-	local Input = buffer.create(MaxInputSize)
+	local PRK = Compute(IKM, ActualSalt, HashFunction, BlockSize)
 
 	local OKM = buffer.create(Length)
-	local PreviousLength = 0
 
-	for Index = 1, Iterations do
-		local InputSize = PreviousLength + InfoLength + 1
+	local First = buffer.create(InfoLength + 1)
+	if Info and InfoLength > 0 then
+		buffer.copy(First, 0, Info, 0, InfoLength)
+	end
+	buffer.writeu8(First, InfoLength, 1)
 
-		if InfoLength > 0 then
-			buffer.copy(Input, PreviousLength, ActualInfo)
-		end
-		buffer.writeu8(Input, PreviousLength + InfoLength, Index)
+	local Block = Compute(First, PRK, HashFunction, BlockSize)
+	buffer.copy(OKM, 0, Block, 0, math.min(HashLength, Length))
 
-		local InputSlice: buffer
-		if InputSize == MaxInputSize then
-			InputSlice = Input
-		else
-			InputSlice = buffer.create(InputSize)
-			buffer.copy(InputSlice, 0, Input, 0, InputSize)
+	if Iterations > 1 then
+		local Input = buffer.create(HashLength + InfoLength + 1)
+		if Info and InfoLength > 0 then
+			buffer.copy(Input, HashLength, Info, 0, InfoLength)
 		end
 
-		local _, Block = HMAC(InputSlice, PRK, HashFunction, BlockSize)
+		for Index = 2, Iterations do
+			buffer.copy(Input, 0, Block, 0, HashLength)
+			buffer.writeu8(Input, HashLength + InfoLength, Index)
 
-		local Offset = (Index - 1) * HashLength
-		buffer.copy(OKM, Offset, Block, 0, math.min(HashLength, Length - Offset))
+			Block = Compute(Input, PRK, HashFunction, BlockSize)
 
-		buffer.copy(Input, 0, Block)
-		PreviousLength = HashLength
+			local Offset = (Index - 1) * HashLength
+			buffer.copy(OKM, Offset, Block, 0, math.min(HashLength, Length - Offset))
+		end
 	end
 
 	return OKM

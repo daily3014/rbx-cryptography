@@ -30,12 +30,12 @@
 
 local Conversions = require("../Utilities/Conversions")
 local ToHex = Conversions.ToHex
-local Keccak = require("./SHA3").Keccak_Internal
+local SHA3 = require("./SHA3")
+local Keccak = SHA3.Keccak_Internal
+local Permute = SHA3.Permute_Internal
+local Extract = SHA3.Extract_Internal
 
 local KMAC = {}
-
-local FUNCTION_NAME = buffer.fromstring("KMAC")
-local EMPTY_CUSTOMIZATION = buffer.create(0)
 
 local LEFT_ENCODE_RESULT = buffer.create(5)
 local RIGHT_ENCODE_RESULT = buffer.create(5)
@@ -82,60 +82,44 @@ local function RightEncode(Value: number): (buffer, number)
 	return Result, ByteLength + 1
 end
 
-local function EncodeString(Data: buffer): buffer
-	local DataLength = buffer.len(Data)
-
-	local LengthEncoding, LengthEncodingSize = LeftEncode(DataLength * 8)
-
-	local Result = buffer.create(LengthEncodingSize + DataLength)
-
-	buffer.copy(Result, 0, LengthEncoding, 0, LengthEncodingSize)
-	buffer.copy(Result, LengthEncodingSize, Data, 0, DataLength)
-
-	return Result
-end
-
-local function Bytepad(Data: buffer, Rate: number): buffer
-	local DataLength = buffer.len(Data)
-
-	local RateEncoding, RateEncodingSize = LeftEncode(Rate)
-
-	local TotalPrePadLength = RateEncodingSize + DataLength
-	local PadLength = Rate - (TotalPrePadLength % Rate)
-	if PadLength == Rate then
-		PadLength = 0
-	end
-
-	local Result = buffer.create(TotalPrePadLength + PadLength)
-	buffer.copy(Result, 0, RateEncoding, 0, RateEncodingSize)
-	buffer.copy(Result, RateEncodingSize, Data, 0, DataLength)
-
-	return Result
-end
-
-local SQUEEZE_ZERO = buffer.create(168)
+local STATE_A = buffer.create(100)
+local STATE_B = buffer.create(100)
 local TAIL = buffer.create(2 * 168)
+local PAD_BLOCK = buffer.create(2 * 168)
 
 local function KMACCore(Data: buffer, Key: buffer, Output: buffer, CustomBuffer: buffer?, RateBytes: number): ()
-	local LanesLow = buffer.create(100)
-	local LanesHigh = buffer.create(100)
+	local LanesLow = STATE_A
+	local LanesHigh = STATE_B
 
 	local OutputBytes = buffer.len(Output)
 
-	local EncodedFunctionName = EncodeString(FUNCTION_NAME)
-	local EncodedFunctionNameSize = buffer.len(EncodedFunctionName)
+	local CustomLength = if CustomBuffer then buffer.len(CustomBuffer) else 0
+	local CustomEncoding, CustomEncodingSize = LeftEncode(CustomLength * 8)
+	local PrefixSize = 8 + CustomEncodingSize + CustomLength
+	local PrefixPadded = PrefixSize + (-PrefixSize) % RateBytes
+	local Prefix = if PrefixPadded <= 336 then PAD_BLOCK else buffer.create(PrefixPadded)
+	buffer.fill(Prefix, 0, 0, PrefixPadded)
+	buffer.writeu8(Prefix, 0, 1)
+	buffer.writeu8(Prefix, 1, RateBytes)
+	buffer.writeu16(Prefix, 2, 0x2001)
+	buffer.writeu32(Prefix, 4, 0x43414D4B)
+	buffer.copy(Prefix, 8, CustomEncoding, 0, CustomEncodingSize)
+	if CustomBuffer and CustomLength > 0 then
+		buffer.copy(Prefix, 8 + CustomEncodingSize, CustomBuffer, 0, CustomLength)
+	end
+	Keccak(LanesLow, LanesHigh, Prefix, 0, PrefixPadded, RateBytes, true)
 
-	local EncodedCustomization = EncodeString(CustomBuffer or EMPTY_CUSTOMIZATION)
-	local EncodedCustomizationSize = buffer.len(EncodedCustomization)
-	local PrefixData = buffer.create(EncodedFunctionNameSize + EncodedCustomizationSize)
-	buffer.copy(PrefixData, 0, EncodedFunctionName, 0, EncodedFunctionNameSize)
-	buffer.copy(PrefixData, EncodedFunctionNameSize, EncodedCustomization, 0, EncodedCustomizationSize)
-
-	local BytepaddedPrefix = Bytepad(PrefixData, RateBytes)
-	Keccak(LanesLow, LanesHigh, BytepaddedPrefix, 0, buffer.len(BytepaddedPrefix), RateBytes)
-
-	local BytepaddedKey = Bytepad(EncodeString(Key), RateBytes)
-	Keccak(LanesLow, LanesHigh, BytepaddedKey, 0, buffer.len(BytepaddedKey), RateBytes)
+	local KeyLength = buffer.len(Key)
+	local KeyEncoding, KeyEncodingSize = LeftEncode(KeyLength * 8)
+	local KeySize = 2 + KeyEncodingSize + KeyLength
+	local KeyPadded = KeySize + (-KeySize) % RateBytes
+	local KeyBlock = if KeyPadded <= 336 then PAD_BLOCK else buffer.create(KeyPadded)
+	buffer.fill(KeyBlock, 0, 0, KeyPadded)
+	buffer.writeu8(KeyBlock, 0, 1)
+	buffer.writeu8(KeyBlock, 1, RateBytes)
+	buffer.copy(KeyBlock, 2, KeyEncoding, 0, KeyEncodingSize)
+	buffer.copy(KeyBlock, 2 + KeyEncodingSize, Key, 0, KeyLength)
+	Keccak(LanesLow, LanesHigh, KeyBlock, 0, KeyPadded, RateBytes)
 
 	local DataSize = buffer.len(Data)
 	local FullBytes = DataSize - DataSize % RateBytes
@@ -167,32 +151,17 @@ local function KMACCore(Data: buffer, Key: buffer, Output: buffer, CustomBuffer:
 
 	Keccak(LanesLow, LanesHigh, TAIL, 0, TailLength, RateBytes)
 
-	local Keccak = Keccak
-	local SqueezeZero = SQUEEZE_ZERO
 	local OutputOffset = 0
-	while OutputOffset < OutputBytes do
+	while true do
 		local BytesThisRound = math.min(RateBytes, OutputBytes - OutputOffset)
-		local FullLanes = BytesThisRound // 8
-
-		for Lane = 0, FullLanes - 1 do
-			buffer.writeu32(Output, OutputOffset + Lane * 8, buffer.readu32(LanesLow, Lane * 4))
-			buffer.writeu32(Output, OutputOffset + Lane * 8 + 4, buffer.readu32(LanesHigh, Lane * 4))
-		end
-
-		for ByteIndex = FullLanes * 8, BytesThisRound - 1 do
-			local LaneOffset = (ByteIndex // 8) * 4
-			local ByteInLane = ByteIndex % 8
-			local Value = if ByteInLane < 4
-				then bit32.extract(buffer.readu32(LanesLow, LaneOffset), ByteInLane * 8, 8)
-				else bit32.extract(buffer.readu32(LanesHigh, LaneOffset), (ByteInLane - 4) * 8, 8)
-			buffer.writeu8(Output, OutputOffset + ByteIndex, Value)
-		end
-
+		Extract(LanesLow, LanesHigh, Output, OutputOffset, BytesThisRound)
 		OutputOffset += BytesThisRound
 
-		if OutputOffset < OutputBytes then
-			Keccak(LanesLow, LanesHigh, SqueezeZero, 0, RateBytes, RateBytes)
+		if OutputOffset >= OutputBytes then
+			break
 		end
+
+		Permute(LanesLow, LanesHigh)
 	end
 end
 

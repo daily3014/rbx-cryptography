@@ -6,7 +6,7 @@
 		local Message = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring("Key")
 		local BlockSize = 64 -- SHA256 block length (= string.len(SHA256(...)))
-		
+
 		local Result = HMAC(Message, Key, SHA2.SHA256, BlockSize)
 --]=]
 
@@ -14,51 +14,17 @@
 --!optimize 2
 --!native
 
-local Concatenate = require("../Utilities/Functions").Concatenate
+local Conversions = require("../Utilities/Conversions")
+local HMACCore = require("./HMACCore")
+
+local ToHex = Conversions.ToHex
+local Compute = HMACCore.Compute
+
 export type HashFunction = (...any) -> (string, buffer)
 
-local function FromByteAndSize(Byte: number, Size: number)
-	local Buffer = buffer.create(Size)
-	buffer.fill(Buffer, 0, Byte)
-	return Buffer
-end
-
-local function XORBuffer(LeftBuffer: buffer, RightBuffer: buffer)
-	local Size = math.min(buffer.len(LeftBuffer), buffer.len(RightBuffer))
-	local NewBuffer = buffer.create(Size)
-
-	for Index = 0, Size - 1 do
-		local LeftValue = buffer.readu8(LeftBuffer, Index)
-		local RightValue = buffer.readu8(RightBuffer, Index)
-		buffer.writeu8(NewBuffer, Index, bit32.bxor(LeftValue, RightValue))
-	end
-
-	return NewBuffer
-end
-
-local function ComputeBlockSizedKey(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): buffer
-	local KeyLength = buffer.len(Key)
-	if KeyLength > BlockSizeBytes then
-		local _, Digest = HashFunction(Key)
-		local PaddedKey = buffer.create(BlockSizeBytes)
-		buffer.copy(PaddedKey, 0, Digest)
-		return PaddedKey
-	elseif KeyLength < BlockSizeBytes then
-		local PaddedKey = buffer.create(BlockSizeBytes)
-		buffer.copy(PaddedKey, 0, Key)
-		return PaddedKey
-	end
-
-	return Key
-end
-
 local function HMAC(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number, _BigEndian: boolean?): (string, buffer)
-	local BlockSizedKey = ComputeBlockSizedKey(Key, HashFunction, BlockSizeBytes)
-	local OuterPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x5C, BlockSizeBytes))
-	local InnerPaddedKey = XORBuffer(BlockSizedKey, FromByteAndSize(0x36, BlockSizeBytes))
-	local _, HashedMessageWithInnerKey = HashFunction(Concatenate(InnerPaddedKey, Message))
-	local FinalMessage = Concatenate(OuterPaddedKey, HashedMessageWithInnerKey)
-	return HashFunction(FinalMessage)
+	local Digest, Hex = Compute(Message, Key, HashFunction, BlockSizeBytes)
+	return Hex or ToHex(Digest), Digest
 end
 
 return HMAC

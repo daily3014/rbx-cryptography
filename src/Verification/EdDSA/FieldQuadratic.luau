@@ -79,6 +79,8 @@ local MONTGOMERY_T1 = buffer.create(96) do
 	end
 end
 
+local MONTGOMERY_T2: buffer
+
 local function Reduce(LargeNumber: buffer): buffer
 	local Difference = MultiPrecision.Sub(LargeNumber, FIELD_ORDER)
 
@@ -94,31 +96,6 @@ local function Demontgomery(MontgomeryScalar: buffer): buffer
 	local _, ResultHigh = MultiPrecision.DWAdd(MontgomeryScalar, CONSTANT_ZERO, ReductionLow, ReductionHigh)
 
 	return Reduce(ResultHigh)
-end
-
-local function RebaseLE(InputBuffer: buffer, InputLength: number, FromBase: number, ToBase: number): (buffer, number)
-	local OutputLength = 0
-	local Accumulator = 0
-	local Multiplier = 1
-
-	for Index = 0, InputLength - 1 do
-		Accumulator += buffer.readf64(InputBuffer, Index * 8) * Multiplier
-		Multiplier *= FromBase
-		while Multiplier >= ToBase do
-			local Remainder = Accumulator % ToBase
-			Accumulator = (Accumulator - Remainder) / ToBase
-			Multiplier /= ToBase
-			buffer.writef64(OUTPUT_BUFFER, OutputLength * 8, Remainder)
-			OutputLength += 1
-		end
-	end
-
-	if Multiplier > 0 then
-		buffer.writef64(OUTPUT_BUFFER, OutputLength * 8, Accumulator)
-		OutputLength += 1
-	end
-
-	return OUTPUT_BUFFER, OutputLength
 end
 
 local FieldQuadratic = {}
@@ -163,18 +140,15 @@ function FieldQuadratic.Encode(MontgomeryScalar: buffer): buffer
 	local ByteIndex = 0
 	for LimbIndex = 0, 9 do
 		local Value = buffer.readf64(DemontResult, LimbIndex * 8)
-		buffer.writeu8(EncodedBuffer, ByteIndex, Value % 256)
-		Value = Value // 256
-		buffer.writeu8(EncodedBuffer, ByteIndex + 1, Value % 256)
-		Value = Value // 256
-		buffer.writeu8(EncodedBuffer, ByteIndex + 2, Value % 256)
+		buffer.writeu8(EncodedBuffer, ByteIndex, bit32.band(Value, 0xff))
+		buffer.writeu8(EncodedBuffer, ByteIndex + 1, bit32.band(bit32.rshift(Value, 8), 0xff))
+		buffer.writeu8(EncodedBuffer, ByteIndex + 2, bit32.band(bit32.rshift(Value, 16), 0xff))
 		ByteIndex += 3
 	end
 
 	local LastValue = buffer.readf64(DemontResult, 10 * 8)
-	buffer.writeu8(EncodedBuffer, 30, LastValue % 256)
-	LastValue = LastValue // 256
-	buffer.writeu8(EncodedBuffer, 31, LastValue % 256)
+	buffer.writeu8(EncodedBuffer, 30, bit32.band(LastValue, 0xff))
+	buffer.writeu8(EncodedBuffer, 31, bit32.band(bit32.rshift(LastValue, 8), 0xff))
 
 	return EncodedBuffer
 end
@@ -221,8 +195,7 @@ function FieldQuadratic.DecodeWide(WideBuffer: buffer): buffer
 	buffer.writef64(HighPart, 10 * 8, buffer.readu8(WideBuffer, 63))
 
 	local MontLow = FieldQuadratic.Montgomery(LowPart)
-	local MontHigh = FieldQuadratic.Montgomery(HighPart)
-	local MontMontHigh = FieldQuadratic.Montgomery(MontHigh)
+	local MontMontHigh = FieldQuadratic.Mul(HighPart, MONTGOMERY_T2)
 
 	return FieldQuadratic.Add(MontLow, MontMontHigh)
 end
@@ -242,13 +215,19 @@ end
 
 function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 	local DemontResult = Demontgomery(MontgomeryScalar)
-	local BitOutput, BitCount = RebaseLE(DemontResult, 11, 2 ^ 24, 2)
+	local Output = OUTPUT_BUFFER
 
-	if BitCount > 253 then
-		BitCount = 253
+	for Limb = 0, 10 do
+		local Value = buffer.readf64(DemontResult, Limb * 8)
+		local Base = Limb * 192
+		for Bit = 0, 23 do
+			buffer.writef64(Output, Base + Bit * 8, bit32.band(bit32.rshift(Value, Bit), 1))
+		end
 	end
 
-	return BitOutput, BitCount
+	return Output, 253
 end
+
+MONTGOMERY_T2 = FieldQuadratic.Mul(MONTGOMERY_T1, MONTGOMERY_T1)
 
 return FieldQuadratic

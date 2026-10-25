@@ -148,59 +148,349 @@ function FieldPrime.Sub(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 end
 
 function FieldPrime.Carry(ElementA: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
-		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
-		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
-		buffer.readf64(ElementA, 32), buffer.readf64(ElementA, 40),
-		buffer.readf64(ElementA, 48), buffer.readf64(ElementA, 56),
-		buffer.readf64(ElementA, 64), buffer.readf64(ElementA, 72),
-		buffer.readf64(ElementA, 80), buffer.readf64(ElementA, 88)
-
-	local C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11
-
-	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	A00 += 19 / 2 ^ 255 * C11
-
-	C00 = A00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	A01 += C00
-	C01 = A01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	A02 += C01
-	C02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	A03 += C02
-	C03 = A03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	A04 += C03
-	C04 = A04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	A05 += C04
-	C05 = A05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	A06 += C05
-	C06 = A06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	A07 += C06
-	C07 = A07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	A08 += C07
-	C08 = A08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	A09 += C08
-	C09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	A10 += C09
-	C10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	A11 = A11 - C11 + C10
-
-	C11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-
+	local A00 = buffer.readf64(ElementA, 0)
+	local A01 = buffer.readf64(ElementA, 8)
+	local A02 = buffer.readf64(ElementA, 16)
+	local A03 = buffer.readf64(ElementA, 24)
+	local A04 = buffer.readf64(ElementA, 32)
+	local A05 = buffer.readf64(ElementA, 40)
+	local A06 = buffer.readf64(ElementA, 48)
+	local A07 = buffer.readf64(ElementA, 56)
+	local A08 = buffer.readf64(ElementA, 64)
+	local A09 = buffer.readf64(ElementA, 72)
+	local A10 = buffer.readf64(ElementA, 80)
+	local A11 = buffer.readf64(ElementA, 88)
 	local Buf = Storage or buffer.create(SIZE)
+	local K00 = A00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local K01 = A01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local K02 = A02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local K03 = A03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local K04 = A04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local K05 = A05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local K06 = A06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local K07 = A07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local K08 = A08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local K09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local K10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local K11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	local B00 = (A00 - K00) + K11 * (19 / 2 ^ 255)
+	local B01 = (A01 - K01) + K00
+	local B02 = (A02 - K02) + K01
+	local B03 = (A03 - K03) + K02
+	local B04 = (A04 - K04) + K03
+	local B05 = (A05 - K05) + K04
+	local B06 = (A06 - K06) + K05
+	local B07 = (A07 - K07) + K06
+	local B08 = (A08 - K08) + K07
+	local B09 = (A09 - K09) + K08
+	local B10 = (A10 - K10) + K09
+	local B11 = (A11 - K11) + K10
+	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	buffer.writef64(Buf, 0, (B00 - J00) + J11 * (19 / 2 ^ 255))
+	buffer.writef64(Buf, 8, (B01 - J01) + J00)
+	buffer.writef64(Buf, 16, (B02 - J02) + J01)
+	buffer.writef64(Buf, 24, (B03 - J03) + J02)
+	buffer.writef64(Buf, 32, (B04 - J04) + J03)
+	buffer.writef64(Buf, 40, (B05 - J05) + J04)
+	buffer.writef64(Buf, 48, (B06 - J06) + J05)
+	buffer.writef64(Buf, 56, (B07 - J07) + J06)
+	buffer.writef64(Buf, 64, (B08 - J08) + J07)
+	buffer.writef64(Buf, 72, (B09 - J09) + J08)
+	buffer.writef64(Buf, 80, (B10 - J10) + J09)
+	buffer.writef64(Buf, 88, (B11 - J11) + J10)
+	return Buf
+end
 
-	buffer.writef64(Buf, 0, A00 - C00 + 19 / 2 ^ 255 * C11)
-	buffer.writef64(Buf, 8, A01 - C01)
-	buffer.writef64(Buf, 16, A02 - C02)
-	buffer.writef64(Buf, 24, A03 - C03)
-	buffer.writef64(Buf, 32, A04 - C04)
-	buffer.writef64(Buf, 40, A05 - C05)
-	buffer.writef64(Buf, 48, A06 - C06)
-	buffer.writef64(Buf, 56, A07 - C07)
-	buffer.writef64(Buf, 64, A08 - C08)
-	buffer.writef64(Buf, 72, A09 - C09)
-	buffer.writef64(Buf, 80, A10 - C10)
-	buffer.writef64(Buf, 88, A11 - C11)
+function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
+	local A00 = buffer.readf64(ElementA, 0)
+	local A01 = buffer.readf64(ElementA, 8)
+	local A02 = buffer.readf64(ElementA, 16)
+	local A03 = buffer.readf64(ElementA, 24)
+	local A04 = buffer.readf64(ElementA, 32)
+	local A05 = buffer.readf64(ElementA, 40)
+	local A06 = buffer.readf64(ElementA, 48)
+	local A07 = buffer.readf64(ElementA, 56)
+	local A08 = buffer.readf64(ElementA, 64)
+	local A09 = buffer.readf64(ElementA, 72)
+	local A10 = buffer.readf64(ElementA, 80)
+	local A11 = buffer.readf64(ElementA, 88)
+	local B00 = buffer.readf64(ElementB, 0)
+	local B01 = buffer.readf64(ElementB, 8)
+	local B02 = buffer.readf64(ElementB, 16)
+	local B03 = buffer.readf64(ElementB, 24)
+	local B04 = buffer.readf64(ElementB, 32)
+	local B05 = buffer.readf64(ElementB, 40)
+	local B06 = buffer.readf64(ElementB, 48)
+	local B07 = buffer.readf64(ElementB, 56)
+	local B08 = buffer.readf64(ElementB, 64)
+	local B09 = buffer.readf64(ElementB, 72)
+	local B10 = buffer.readf64(ElementB, 80)
+	local B11 = buffer.readf64(ElementB, 88)
+	local C00 = (A01 * B11 + A02 * B10 + A03 * B09 + A04 * B08 + A05 * B07 + A06 * B06 + A07 * B05 + A08 * B04 + A09 * B03 + A10 * B02 + A11 * B01) * (19 / 2 ^ 255) + (A00 * B00)
+	local C01 = (A02 * B11 + A03 * B10 + A04 * B09 + A05 * B08 + A06 * B07 + A07 * B06 + A08 * B05 + A09 * B04 + A10 * B03 + A11 * B02) * (19 / 2 ^ 255) + (A00 * B01 + A01 * B00)
+	local C02 = (A03 * B11 + A04 * B10 + A05 * B09 + A06 * B08 + A07 * B07 + A08 * B06 + A09 * B05 + A10 * B04 + A11 * B03) * (19 / 2 ^ 255) + (A00 * B02 + A01 * B01 + A02 * B00)
+	local C03 = (A04 * B11 + A05 * B10 + A06 * B09 + A07 * B08 + A08 * B07 + A09 * B06 + A10 * B05 + A11 * B04) * (19 / 2 ^ 255) + (A00 * B03 + A01 * B02 + A02 * B01 + A03 * B00)
+	local C04 = (A05 * B11 + A06 * B10 + A07 * B09 + A08 * B08 + A09 * B07 + A10 * B06 + A11 * B05) * (19 / 2 ^ 255) + (A00 * B04 + A01 * B03 + A02 * B02 + A03 * B01 + A04 * B00)
+	local C05 = (A06 * B11 + A07 * B10 + A08 * B09 + A09 * B08 + A10 * B07 + A11 * B06) * (19 / 2 ^ 255) + (A00 * B05 + A01 * B04 + A02 * B03 + A03 * B02 + A04 * B01 + A05 * B00)
+	local C06 = (A07 * B11 + A08 * B10 + A09 * B09 + A10 * B08 + A11 * B07) * (19 / 2 ^ 255) + (A00 * B06 + A01 * B05 + A02 * B04 + A03 * B03 + A04 * B02 + A05 * B01 + A06 * B00)
+	local C07 = (A08 * B11 + A09 * B10 + A10 * B09 + A11 * B08) * (19 / 2 ^ 255) + (A00 * B07 + A01 * B06 + A02 * B05 + A03 * B04 + A04 * B03 + A05 * B02 + A06 * B01 + A07 * B00)
+	local C08 = (A09 * B11 + A10 * B10 + A11 * B09) * (19 / 2 ^ 255) + (A00 * B08 + A01 * B07 + A02 * B06 + A03 * B05 + A04 * B04 + A05 * B03 + A06 * B02 + A07 * B01 + A08 * B00)
+	local C09 = (A10 * B11 + A11 * B10) * (19 / 2 ^ 255) + (A00 * B09 + A01 * B08 + A02 * B07 + A03 * B06 + A04 * B05 + A05 * B04 + A06 * B03 + A07 * B02 + A08 * B01 + A09 * B00)
+	local C10 = (A11 * B11) * (19 / 2 ^ 255) + (A00 * B10 + A01 * B09 + A02 * B08 + A03 * B07 + A04 * B06 + A05 * B05 + A06 * B04 + A07 * B03 + A08 * B02 + A09 * B01 + A10 * B00)
+	local C11 = A00 * B11 + A01 * B10 + A02 * B09 + A03 * B08 + A04 * B07 + A05 * B06 + A06 * B05 + A07 * B04 + A08 * B03 + A09 * B02 + A10 * B01 + A11 * B00
+	local Buf = Storage or buffer.create(SIZE)
+	local K00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local K01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local K02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local K03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local K04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local K05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local K06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local K07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local K08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local K09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local K10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local K11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	local B00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
+	local B01 = (C01 - K01) + K00
+	local B02 = (C02 - K02) + K01
+	local B03 = (C03 - K03) + K02
+	local B04 = (C04 - K04) + K03
+	local B05 = (C05 - K05) + K04
+	local B06 = (C06 - K06) + K05
+	local B07 = (C07 - K07) + K06
+	local B08 = (C08 - K08) + K07
+	local B09 = (C09 - K09) + K08
+	local B10 = (C10 - K10) + K09
+	local B11 = (C11 - K11) + K10
+	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	buffer.writef64(Buf, 0, (B00 - J00) + J11 * (19 / 2 ^ 255))
+	buffer.writef64(Buf, 8, (B01 - J01) + J00)
+	buffer.writef64(Buf, 16, (B02 - J02) + J01)
+	buffer.writef64(Buf, 24, (B03 - J03) + J02)
+	buffer.writef64(Buf, 32, (B04 - J04) + J03)
+	buffer.writef64(Buf, 40, (B05 - J05) + J04)
+	buffer.writef64(Buf, 48, (B06 - J06) + J05)
+	buffer.writef64(Buf, 56, (B07 - J07) + J06)
+	buffer.writef64(Buf, 64, (B08 - J08) + J07)
+	buffer.writef64(Buf, 72, (B09 - J09) + J08)
+	buffer.writef64(Buf, 80, (B10 - J10) + J09)
+	buffer.writef64(Buf, 88, (B11 - J11) + J10)
+	return Buf
+end
 
+function FieldPrime.Square(ElementA: buffer, Storage: buffer?): buffer
+	local A00 = buffer.readf64(ElementA, 0)
+	local A01 = buffer.readf64(ElementA, 8)
+	local A02 = buffer.readf64(ElementA, 16)
+	local A03 = buffer.readf64(ElementA, 24)
+	local A04 = buffer.readf64(ElementA, 32)
+	local A05 = buffer.readf64(ElementA, 40)
+	local A06 = buffer.readf64(ElementA, 48)
+	local A07 = buffer.readf64(ElementA, 56)
+	local A08 = buffer.readf64(ElementA, 64)
+	local A09 = buffer.readf64(ElementA, 72)
+	local A10 = buffer.readf64(ElementA, 80)
+	local A11 = buffer.readf64(ElementA, 88)
+	local D00 = A00 * 2
+	local D01 = A01 * 2
+	local D02 = A02 * 2
+	local D03 = A03 * 2
+	local D04 = A04 * 2
+	local D05 = A05 * 2
+	local D06 = A06 * 2
+	local D07 = A07 * 2
+	local D08 = A08 * 2
+	local D09 = A09 * 2
+	local D10 = A10 * 2
+	local C00 = (A11 * D01 + A10 * D02 + A09 * D03 + A08 * D04 + A07 * D05 + A06 * A06) * (19 / 2 ^ 255) + (A00 * A00)
+	local C01 = (A11 * D02 + A10 * D03 + A09 * D04 + A08 * D05 + A07 * D06) * (19 / 2 ^ 255) + (A01 * D00)
+	local C02 = (A11 * D03 + A10 * D04 + A09 * D05 + A08 * D06 + A07 * A07) * (19 / 2 ^ 255) + (A02 * D00 + A01 * A01)
+	local C03 = (A11 * D04 + A10 * D05 + A09 * D06 + A08 * D07) * (19 / 2 ^ 255) + (A03 * D00 + A02 * D01)
+	local C04 = (A11 * D05 + A10 * D06 + A09 * D07 + A08 * A08) * (19 / 2 ^ 255) + (A04 * D00 + A03 * D01 + A02 * A02)
+	local C05 = (A11 * D06 + A10 * D07 + A09 * D08) * (19 / 2 ^ 255) + (A05 * D00 + A04 * D01 + A03 * D02)
+	local C06 = (A11 * D07 + A10 * D08 + A09 * A09) * (19 / 2 ^ 255) + (A06 * D00 + A05 * D01 + A04 * D02 + A03 * A03)
+	local C07 = (A11 * D08 + A10 * D09) * (19 / 2 ^ 255) + (A07 * D00 + A06 * D01 + A05 * D02 + A04 * D03)
+	local C08 = (A11 * D09 + A10 * A10) * (19 / 2 ^ 255) + (A08 * D00 + A07 * D01 + A06 * D02 + A05 * D03 + A04 * A04)
+	local C09 = (A11 * D10) * (19 / 2 ^ 255) + (A09 * D00 + A08 * D01 + A07 * D02 + A06 * D03 + A05 * D04)
+	local C10 = (A11 * A11) * (19 / 2 ^ 255) + (A10 * D00 + A09 * D01 + A08 * D02 + A07 * D03 + A06 * D04 + A05 * A05)
+	local C11 = A11 * D00 + A10 * D01 + A09 * D02 + A08 * D03 + A07 * D04 + A06 * D05
+	local Buf = Storage or buffer.create(SIZE)
+	local K00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local K01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local K02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local K03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local K04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local K05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local K06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local K07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local K08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local K09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local K10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local K11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	local B00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
+	local B01 = (C01 - K01) + K00
+	local B02 = (C02 - K02) + K01
+	local B03 = (C03 - K03) + K02
+	local B04 = (C04 - K04) + K03
+	local B05 = (C05 - K05) + K04
+	local B06 = (C06 - K06) + K05
+	local B07 = (C07 - K07) + K06
+	local B08 = (C08 - K08) + K07
+	local B09 = (C09 - K09) + K08
+	local B10 = (C10 - K10) + K09
+	local B11 = (C11 - K11) + K10
+	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	buffer.writef64(Buf, 0, (B00 - J00) + J11 * (19 / 2 ^ 255))
+	buffer.writef64(Buf, 8, (B01 - J01) + J00)
+	buffer.writef64(Buf, 16, (B02 - J02) + J01)
+	buffer.writef64(Buf, 24, (B03 - J03) + J02)
+	buffer.writef64(Buf, 32, (B04 - J04) + J03)
+	buffer.writef64(Buf, 40, (B05 - J05) + J04)
+	buffer.writef64(Buf, 48, (B06 - J06) + J05)
+	buffer.writef64(Buf, 56, (B07 - J07) + J06)
+	buffer.writef64(Buf, 64, (B08 - J08) + J07)
+	buffer.writef64(Buf, 72, (B09 - J09) + J08)
+	buffer.writef64(Buf, 80, (B10 - J10) + J09)
+	buffer.writef64(Buf, 88, (B11 - J11) + J10)
+	return Buf
+end
+
+function FieldPrime.NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
+	if SquareCount <= 0 then
+		return ElementA
+	end
+	local A00 = buffer.readf64(ElementA, 0)
+	local A01 = buffer.readf64(ElementA, 8)
+	local A02 = buffer.readf64(ElementA, 16)
+	local A03 = buffer.readf64(ElementA, 24)
+	local A04 = buffer.readf64(ElementA, 32)
+	local A05 = buffer.readf64(ElementA, 40)
+	local A06 = buffer.readf64(ElementA, 48)
+	local A07 = buffer.readf64(ElementA, 56)
+	local A08 = buffer.readf64(ElementA, 64)
+	local A09 = buffer.readf64(ElementA, 72)
+	local A10 = buffer.readf64(ElementA, 80)
+	local A11 = buffer.readf64(ElementA, 88)
+	for _ = 1, SquareCount do
+	local D00 = A00 * 2
+	local D01 = A01 * 2
+	local D02 = A02 * 2
+	local D03 = A03 * 2
+	local D04 = A04 * 2
+	local D05 = A05 * 2
+	local D06 = A06 * 2
+	local D07 = A07 * 2
+	local D08 = A08 * 2
+	local D09 = A09 * 2
+	local D10 = A10 * 2
+	local C00 = (A11 * D01 + A10 * D02 + A09 * D03 + A08 * D04 + A07 * D05 + A06 * A06) * (19 / 2 ^ 255) + (A00 * A00)
+	local C01 = (A11 * D02 + A10 * D03 + A09 * D04 + A08 * D05 + A07 * D06) * (19 / 2 ^ 255) + (A01 * D00)
+	local C02 = (A11 * D03 + A10 * D04 + A09 * D05 + A08 * D06 + A07 * A07) * (19 / 2 ^ 255) + (A02 * D00 + A01 * A01)
+	local C03 = (A11 * D04 + A10 * D05 + A09 * D06 + A08 * D07) * (19 / 2 ^ 255) + (A03 * D00 + A02 * D01)
+	local C04 = (A11 * D05 + A10 * D06 + A09 * D07 + A08 * A08) * (19 / 2 ^ 255) + (A04 * D00 + A03 * D01 + A02 * A02)
+	local C05 = (A11 * D06 + A10 * D07 + A09 * D08) * (19 / 2 ^ 255) + (A05 * D00 + A04 * D01 + A03 * D02)
+	local C06 = (A11 * D07 + A10 * D08 + A09 * A09) * (19 / 2 ^ 255) + (A06 * D00 + A05 * D01 + A04 * D02 + A03 * A03)
+	local C07 = (A11 * D08 + A10 * D09) * (19 / 2 ^ 255) + (A07 * D00 + A06 * D01 + A05 * D02 + A04 * D03)
+	local C08 = (A11 * D09 + A10 * A10) * (19 / 2 ^ 255) + (A08 * D00 + A07 * D01 + A06 * D02 + A05 * D03 + A04 * A04)
+	local C09 = (A11 * D10) * (19 / 2 ^ 255) + (A09 * D00 + A08 * D01 + A07 * D02 + A06 * D03 + A05 * D04)
+	local C10 = (A11 * A11) * (19 / 2 ^ 255) + (A10 * D00 + A09 * D01 + A08 * D02 + A07 * D03 + A06 * D04 + A05 * A05)
+	local C11 = A11 * D00 + A10 * D01 + A09 * D02 + A08 * D03 + A07 * D04 + A06 * D05
+	local K00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local K01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local K02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local K03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local K04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local K05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local K06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local K07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local K08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local K09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local K10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local K11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	local B00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
+	local B01 = (C01 - K01) + K00
+	local B02 = (C02 - K02) + K01
+	local B03 = (C03 - K03) + K02
+	local B04 = (C04 - K04) + K03
+	local B05 = (C05 - K05) + K04
+	local B06 = (C06 - K06) + K05
+	local B07 = (C07 - K07) + K06
+	local B08 = (C08 - K08) + K07
+	local B09 = (C09 - K09) + K08
+	local B10 = (C10 - K10) + K09
+	local B11 = (C11 - K11) + K10
+	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	A00 = (B00 - J00) + J11 * (19 / 2 ^ 255)
+	A01 = (B01 - J01) + J00
+	A02 = (B02 - J02) + J01
+	A03 = (B03 - J03) + J02
+	A04 = (B04 - J04) + J03
+	A05 = (B05 - J05) + J04
+	A06 = (B06 - J06) + J05
+	A07 = (B07 - J07) + J06
+	A08 = (B08 - J08) + J07
+	A09 = (B09 - J09) + J08
+	A10 = (B10 - J10) + J09
+	A11 = (B11 - J11) + J10
+	end
+	local Buf = if StoreInBuffer then ElementA else buffer.create(SIZE)
+	buffer.writef64(Buf, 0, A00)
+	buffer.writef64(Buf, 8, A01)
+	buffer.writef64(Buf, 16, A02)
+	buffer.writef64(Buf, 24, A03)
+	buffer.writef64(Buf, 32, A04)
+	buffer.writef64(Buf, 40, A05)
+	buffer.writef64(Buf, 48, A06)
+	buffer.writef64(Buf, 56, A07)
+	buffer.writef64(Buf, 64, A08)
+	buffer.writef64(Buf, 72, A09)
+	buffer.writef64(Buf, 80, A10)
+	buffer.writef64(Buf, 88, A11)
 	return Buf
 end
 
@@ -288,326 +578,6 @@ function FieldPrime.Eq(ElementA: buffer, ElementB: buffer): boolean
 	return DifferenceAccumulator == 0
 end
 
-local A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number,
-A07: number, A08: number, A09: number, A10: number, A11: number
-local B00: number, B01: number, B02: number, B03: number, B04: number, B05: number, B06: number,
-B07: number, B08: number, B09: number, B10: number, B11: number
-
-function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): buffer
-	local CompoundV = COMPOUND_V
-	A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
-		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
-		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
-		buffer.readf64(ElementA, 32), buffer.readf64(ElementA, 40),
-		buffer.readf64(ElementA, 48), buffer.readf64(ElementA, 56),
-		buffer.readf64(ElementA, 64), buffer.readf64(ElementA, 72),
-		buffer.readf64(ElementA, 80), buffer.readf64(ElementA, 88)
-
-	B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11 =
-		buffer.readf64(ElementB, 0), buffer.readf64(ElementB, 8),
-		buffer.readf64(ElementB, 16), buffer.readf64(ElementB, 24),
-		buffer.readf64(ElementB, 32), buffer.readf64(ElementB, 40),
-		buffer.readf64(ElementB, 48), buffer.readf64(ElementB, 56),
-		buffer.readf64(ElementB, 64), buffer.readf64(ElementB, 72),
-		buffer.readf64(ElementB, 80), buffer.readf64(ElementB, 88)
-
-	local T00: number, T01: number, T02: number, T03: number, T04: number, T05: number, T06: number,
-	T07: number, T08: number, T09: number, T10: number, T11: number =
-		A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11
-
-	local U00: number, U01: number, U02: number, U03: number, U04: number, U05: number, U06: number,
-	U07: number, U08: number, U09: number, U10: number, U11: number =
-		B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11
-
-	local C00 = T11 * U01
-		+ T10 * U02
-		+ T09 * U03
-		+ T08 * U04
-		+ T07 * U05
-		+ T06 * U06
-		+ T05 * U07
-		+ T04 * U08
-		+ T03 * U09
-		+ T02 * U10
-		+ T01 * U11
-
-	local C01 = T11 * U02
-		+ T10 * U03
-		+ T09 * U04
-		+ T08 * U05
-		+ T07 * U06
-		+ T06 * U07
-		+ T05 * U08
-		+ T04 * U09
-		+ T03 * U10
-		+ T02 * U11
-
-	local C02 = T11 * U03
-		+ T10 * U04
-		+ T09 * U05
-		+ T08 * U06
-		+ T07 * U07
-		+ T06 * U08
-		+ T05 * U09
-		+ T04 * U10
-		+ T03 * U11
-
-	local C03 = T11 * U04
-		+ T10 * U05
-		+ T09 * U06
-		+ T08 * U07
-		+ T07 * U08
-		+ T06 * U09
-		+ T05 * U10
-		+ T04 * U11
-
-	local C04 = T11 * U05
-		+ T10 * U06
-		+ T09 * U07
-		+ T08 * U08
-		+ T07 * U09
-		+ T06 * U10
-		+ T05 * U11
-
-	local C05 = T11 * U06
-		+ T10 * U07
-		+ T09 * U08
-		+ T08 * U09
-		+ T07 * U10
-		+ T06 * U11
-
-	local C06 = T11 * U07
-		+ T10 * U08
-		+ T09 * U09
-		+ T08 * U10
-		+ T07 * U11
-
-	local C07 = T11 * U08
-		+ T10 * U09
-		+ T09 * U10
-		+ T08 * U11
-
-	local C08 = T11 * U09
-		+ T10 * U10
-		+ T09 * U11
-
-	local C09 = T11 * U10 + T10 * U11
-	local C10 = T11 * U11
-
-	C00 *= CompoundV
-	C00 += T00 * U00
-
-	C01 *= CompoundV
-	C01 += T01 * U00
-		+ T00 * U01
-
-	C02 *= CompoundV
-	C02 += T02 * U00
-		+ T01 * U01
-		+ T00 * U02
-
-	C03 *= CompoundV
-	C03 += T03 * U00
-		+ T02 * U01
-		+ T01 * U02
-		+ T00 * U03
-
-	C04 *= CompoundV
-	C04 += T04 * U00
-		+ T03 * U01
-		+ T02 * U02
-		+ T01 * U03
-		+ T00 * U04
-
-	C05 *= CompoundV
-	C05 += T05 * U00
-		+ T04 * U01
-		+ T03 * U02
-		+ T02 * U03
-		+ T01 * U04
-		+ T00 * U05
-
-	C06 *= CompoundV
-	C06 += T06 * U00
-		+ T05 * U01
-		+ T04 * U02
-		+ T03 * U03
-		+ T02 * U04
-		+ T01 * U05
-		+ T00 * U06
-
-	C07 *= CompoundV
-	C07 += T07 * U00
-		+ T06 * U01
-		+ T05 * U02
-		+ T04 * U03
-		+ T03 * U04
-		+ T02 * U05
-		+ T01 * U06
-		+ T00 * U07
-
-	C08 *= CompoundV
-	C08 += T08 * U00
-		+ T07 * U01
-		+ T06 * U02
-		+ T05 * U03
-		+ T04 * U04
-		+ T03 * U05
-		+ T02 * U06
-		+ T01 * U07
-		+ T00 * U08
-
-	C09 *= CompoundV
-	C09 += T09 * U00
-		+ T08 * U01
-		+ T07 * U02
-		+ T06 * U03
-		+ T05 * U04
-		+ T04 * U05
-		+ T03 * U06
-		+ T02 * U07
-		+ T01 * U08
-		+ T00 * U09
-
-	C10 *= CompoundV
-	C10 += T10 * U00
-		+ T09 * U01
-		+ T08 * U02
-		+ T07 * U03
-		+ T06 * U04
-		+ T05 * U05
-		+ T04 * U06
-		+ T03 * U07
-		+ T02 * U08
-		+ T01 * U09
-		+ T00 * U10
-
-	local C11 = T11 * U00
-		+ T10 * U01
-		+ T09 * U02
-		+ T08 * U03
-		+ T07 * U04
-		+ T06 * U05
-		+ T05 * U06
-		+ T04 * U07
-		+ T03 * U08
-		+ T02 * U09
-		+ T01 * U10
-		+ T00 * U11
-
-	T10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	C11 += T10
-	T11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	C00 += CompoundV * T11
-
-	T00 = C00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	C01 += T00
-	T01 = C01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	C02 += T01
-	T02 = C02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	C03 += T02
-	T03 = C03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	C04 += T03
-	T04 = C04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	C05 += T04
-	T05 = C05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	C06 += T05
-	T06 = C06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	C07 += T06
-	T07 = C07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	C08 += T07
-	T08 = C08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	C09 += T08
-	T09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	C10 = C10 - T10 + T09
-	T10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	C11 = C11 - T11 + T10
-
-	T11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-
-	local Buf = Storage or buffer.create(SIZE)
-
-	buffer.writef64(Buf, 0, C00 - T00 + CompoundV * T11)
-	buffer.writef64(Buf, 8, C01 - T01)
-	buffer.writef64(Buf, 16, C02 - T02)
-	buffer.writef64(Buf, 24, C03 - T03)
-	buffer.writef64(Buf, 32, C04 - T04)
-	buffer.writef64(Buf, 40, C05 - T05)
-	buffer.writef64(Buf, 48, C06 - T06)
-	buffer.writef64(Buf, 56, C07 - T07)
-	buffer.writef64(Buf, 64, C08 - T08)
-	buffer.writef64(Buf, 72, C09 - T09)
-	buffer.writef64(Buf, 80, C10 - T10)
-	buffer.writef64(Buf, 88, C11 - T11)
-
-	return Buf
-end
-
-function FieldPrime.Square(ElementA: buffer, Storage: buffer?): buffer
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
-		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
-		buffer.readf64(ElementA, 16), buffer.readf64(ElementA, 24),
-		buffer.readf64(ElementA, 32), buffer.readf64(ElementA, 40),
-		buffer.readf64(ElementA, 48), buffer.readf64(ElementA, 56),
-		buffer.readf64(ElementA, 64), buffer.readf64(ElementA, 72),
-		buffer.readf64(ElementA, 80), buffer.readf64(ElementA, 88)
-
-	local D00 = A00 * 2
-	local D01 = A01 * 2
-	local D02 = A02 * 2
-	local D03 = A03 * 2
-	local D04 = A04 * 2
-	local D05 = A05 * 2
-	local D06 = A06 * 2
-	local D07 = A07 * 2
-	local D08 = A08 * 2
-	local D09 = A09 * 2
-	local D10 = A10 * 2
-
-	local ReductionFactor = 19 / 2 ^ 255
-
-	local H00 = A11 * D01 + A10 * D02 + A09 * D03 + A08 * D04 + A07 * D05 + A06 * A06
-	local H01 = A11 * D02 + A10 * D03 + A09 * D04 + A08 * D05 + A07 * D06
-	local H02 = A11 * D03 + A10 * D04 + A09 * D05 + A08 * D06 + A07 * A07
-	local H03 = A11 * D04 + A10 * D05 + A09 * D06 + A08 * D07
-	local H04 = A11 * D05 + A10 * D06 + A09 * D07 + A08 * A08
-	local H05 = A11 * D06 + A10 * D07 + A09 * D08
-	local H06 = A11 * D07 + A10 * D08 + A09 * A09
-	local H07 = A11 * D08 + A10 * D09
-	local H08 = A11 * D09 + A10 * A10
-	local H09 = A11 * D10
-	local H10 = A11 * A11
-
-	local L00 = A00 * A00
-	local L01 = A01 * D00
-	local L02 = A02 * D00 + A01 * A01
-	local L03 = A03 * D00 + A02 * D01
-	local L04 = A04 * D00 + A03 * D01 + A02 * A02
-	local L05 = A05 * D00 + A04 * D01 + A03 * D02
-	local L06 = A06 * D00 + A05 * D01 + A04 * D02 + A03 * A03
-	local L07 = A07 * D00 + A06 * D01 + A05 * D02 + A04 * D03
-	local L08 = A08 * D00 + A07 * D01 + A06 * D02 + A05 * D03 + A04 * A04
-	local L09 = A09 * D00 + A08 * D01 + A07 * D02 + A06 * D03 + A05 * D04
-	local L10 = A10 * D00 + A09 * D01 + A08 * D02 + A07 * D03 + A06 * D04 + A05 * A05
-	local L11 = A11 * D00 + A10 * D01 + A09 * D02 + A08 * D03 + A07 * D04 + A06 * D05
-
-	local Result = Storage or buffer.create(SIZE)
-	buffer.writef64(Result, 0, H00 * ReductionFactor + L00)
-	buffer.writef64(Result, 8, H01 * ReductionFactor + L01)
-	buffer.writef64(Result, 16, H02 * ReductionFactor + L02)
-	buffer.writef64(Result, 24, H03 * ReductionFactor + L03)
-	buffer.writef64(Result, 32, H04 * ReductionFactor + L04)
-	buffer.writef64(Result, 40, H05 * ReductionFactor + L05)
-	buffer.writef64(Result, 48, H06 * ReductionFactor + L06)
-	buffer.writef64(Result, 56, H07 * ReductionFactor + L07)
-	buffer.writef64(Result, 64, H08 * ReductionFactor + L08)
-	buffer.writef64(Result, 72, H09 * ReductionFactor + L09)
-	buffer.writef64(Result, 80, H10 * ReductionFactor + L10)
-	buffer.writef64(Result, 88, L11)
-
-	return FieldPrime.Carry(Result, Result)
-end
-
 function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): buffer
 	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
 		buffer.readf64(ElementA, 0), buffer.readf64(ElementA, 8),
@@ -676,23 +646,6 @@ function FieldPrime.KMul(ElementA: buffer, SmallK: number, Storage: buffer?): bu
 	buffer.writef64(Buf, 88, A11 - C11)
 
 	return Buf
-end
-
-function FieldPrime.NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer: boolean?): buffer
-	local Square = FieldPrime.Square
-	if StoreInBuffer then
-		for _ = 1, SquareCount do
-			Square(ElementA, ElementA)
-		end
-
-		return ElementA
-	else
-		for _ = 1, SquareCount do
-			ElementA = Square(ElementA)
-		end
-
-		return ElementA
-	end
 end
 
 function FieldPrime.Invert(ElementA: buffer, Storage: buffer?): buffer

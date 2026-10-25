@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Get the library
 local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
 local CSPRNG = Cryptography.Utilities.CSPRNG
--- Also accessible through EdDSA, MLKEM andMLDSA: Verification.EdDSA/MLKEM/MLDSA.CSPRNG
+-- Also accessible through MlKEM and MlDSA: Verification.MlKEM.CSPRNG / Verification.MlDSA.CSPRNG
 
 --[[
 	CSPRNG stands for:

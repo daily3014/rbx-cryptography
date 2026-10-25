@@ -2,6 +2,7 @@
 	HKDF Tadashi Test Suite
 
 	Test Vector Sources:
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hkdf_sha256_test.json
 		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hkdf_sha512_test.json
 --]=]
 
@@ -44,6 +45,13 @@ type HkdfData = {
 }
 
 local HKDF_VARIANTS = {
+	{
+		Name = "HKDF-SHA256",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hkdf_sha256_test.json",
+		HashFn = SHA2.SHA256,
+		BlockSize = 64,
+		HashLen = 32,
+	},
 	{
 		Name = "HKDF-SHA512",
 		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hkdf_sha512_test.json",

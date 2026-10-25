@@ -32,17 +32,17 @@ function MultiPrecision.Carry(LargeNumber: buffer, Storage: buffer?): buffer
 		buffer.readf64(LargeNumber, 64), buffer.readf64(LargeNumber, 72),
 		buffer.readf64(LargeNumber, 80)
 
-	local Low00 = A00 % 2 ^ 24; A01 += (A00 - Low00) * 2 ^ -24
-	local Low01 = A01 % 2 ^ 24; A02 += (A01 - Low01) * 2 ^ -24
-	local Low02 = A02 % 2 ^ 24; A03 += (A02 - Low02) * 2 ^ -24
-	local Low03 = A03 % 2 ^ 24; A04 += (A03 - Low03) * 2 ^ -24
-	local Low04 = A04 % 2 ^ 24; A05 += (A04 - Low04) * 2 ^ -24
-	local Low05 = A05 % 2 ^ 24; A06 += (A05 - Low05) * 2 ^ -24
-	local Low06 = A06 % 2 ^ 24; A07 += (A06 - Low06) * 2 ^ -24
-	local Low07 = A07 % 2 ^ 24; A08 += (A07 - Low07) * 2 ^ -24
-	local Low08 = A08 % 2 ^ 24; A09 += (A08 - Low08) * 2 ^ -24
-	local Low09 = A09 % 2 ^ 24; A10 += (A09 - Low09) * 2 ^ -24
-	local Low10 = A10 % 2 ^ 24
+	local Carry00 = math.floor(A00 * 2 ^ -24); local Low00 = A00 - Carry00 * 2 ^ 24; A01 += Carry00
+	local Carry01 = math.floor(A01 * 2 ^ -24); local Low01 = A01 - Carry01 * 2 ^ 24; A02 += Carry01
+	local Carry02 = math.floor(A02 * 2 ^ -24); local Low02 = A02 - Carry02 * 2 ^ 24; A03 += Carry02
+	local Carry03 = math.floor(A03 * 2 ^ -24); local Low03 = A03 - Carry03 * 2 ^ 24; A04 += Carry03
+	local Carry04 = math.floor(A04 * 2 ^ -24); local Low04 = A04 - Carry04 * 2 ^ 24; A05 += Carry04
+	local Carry05 = math.floor(A05 * 2 ^ -24); local Low05 = A05 - Carry05 * 2 ^ 24; A06 += Carry05
+	local Carry06 = math.floor(A06 * 2 ^ -24); local Low06 = A06 - Carry06 * 2 ^ 24; A07 += Carry06
+	local Carry07 = math.floor(A07 * 2 ^ -24); local Low07 = A07 - Carry07 * 2 ^ 24; A08 += Carry07
+	local Carry08 = math.floor(A08 * 2 ^ -24); local Low08 = A08 - Carry08 * 2 ^ 24; A09 += Carry08
+	local Carry09 = math.floor(A09 * 2 ^ -24); local Low09 = A09 - Carry09 * 2 ^ 24; A10 += Carry09
+	local Carry10 = math.floor(A10 * 2 ^ -24); local Low10 = A10 - Carry10 * 2 ^ 24
 
 	local Buf = Storage or buffer.create(SIZE)
 
@@ -57,7 +57,7 @@ function MultiPrecision.Carry(LargeNumber: buffer, Storage: buffer?): buffer
 	buffer.writef64(Buf, 64, Low08)
 	buffer.writef64(Buf, 72, Low09)
 	buffer.writef64(Buf, 80, Low10)
-	buffer.writef64(Buf, 88, (A10 - Low10) * 2 ^ -24)
+	buffer.writef64(Buf, 88, Carry10)
 
 	return Buf
 end

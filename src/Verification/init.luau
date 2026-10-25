@@ -1,9 +1,17 @@
 --!strict
 
-local Algorithms = table.freeze({
-	EdDSA = require("@self/EdDSA"),
-	MlDSA = require("@self/MlDSA"),
-	MlKEM = require("@self/MlKEM"),
+local Lazy = require("./Lazy")
+
+export type Algorithms = {
+	EdDSA: typeof(require("@self/EdDSA")),
+	MlDSA: typeof(require("@self/MlDSA")),
+	MlKEM: typeof(require("@self/MlKEM")),
+}
+
+local Algorithms: Algorithms = Lazy.Group("Verification", {
+	EdDSA = function() return require("@self/EdDSA") end,
+	MlDSA = function() return require("@self/MlDSA") end,
+	MlKEM = function() return require("@self/MlKEM") end,
 })
 
 return Algorithms

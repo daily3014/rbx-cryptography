@@ -116,6 +116,19 @@ local function SampleNtt(XofInput: buffer, Poly: buffer, PolyBase: number)
 		XOF.Squeeze128Into(Chunk, 168, 0)
 		local Offset = 0
 
+		while Offset <= 164 and CoeffIndex <= 254 do
+			local Word = buffer.readu32(Chunk, Offset)
+			local D1 = bit32.band(Word, 0xFFF)
+			local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+
+			buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D1)
+			CoeffIndex += bit32.rshift(D1 - LQ, 31)
+			buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D2)
+			CoeffIndex += bit32.rshift(D2 - LQ, 31)
+
+			Offset += 3
+		end
+
 		while Offset + 4 <= 168 and CoeffIndex < LN do
 			local Word = buffer.readu32(Chunk, Offset)
 			local D1 = bit32.band(Word, 0xFFF)

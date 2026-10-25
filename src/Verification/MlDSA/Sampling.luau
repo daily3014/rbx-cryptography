@@ -22,13 +22,42 @@ local Sampling = {}
 local WORKSPACE_MSG_34 = buffer.create(34)
 local WORKSPACE_MSG_66 = buffer.create(66)
 
-function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
+local EXPAND_A_SQUEEZE = buffer.create(504)
+local EXPAND_S_SQUEEZE = buffer.create(272)
+local EXPAND_MASK_SQUEEZE = buffer.create(640)
+local SAMPLE_BALL_TAU = buffer.create(8)
+local SAMPLE_BALL_SQUEEZE = buffer.create(136)
+
+local MATRIX_CACHE_RHO = buffer.create(32)
+local MATRIX_CACHE_DIMENSIONS = 0
+local MATRIX_CACHE_VALUE: buffer? = nil
+
+local function SeedMatches(Cached: buffer, Rho: buffer): boolean
+	for Offset = 0, 28, 4 do
+		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, Offset) then
+			return false
+		end
+	end
+
+	return true
+end
+
+function Sampling.ExpandA(Rho: buffer, K: number, L: number): buffer
+	local Dimensions = K * 16 + L
+	local Cached = MATRIX_CACHE_VALUE
+	if Cached and MATRIX_CACHE_DIMENSIONS == Dimensions and SeedMatches(MATRIX_CACHE_RHO, Rho) then
+		return Cached
+	end
+
+	local Mat = buffer.create(K * L * N * 4)
+
 	buffer.copy(WORKSPACE_MSG_34, 0, Rho, 0, 32)
 
 	local Message = WORKSPACE_MSG_34
 	local Num = N
 	local Modulus = Q
 	local XOF = XOF
+	local Squeeze = EXPAND_A_SQUEEZE
 
 	for I = 0, K - 1 do
 		for J = 0, L - 1 do
@@ -44,26 +73,22 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 			local ChunkSize = 504
 
 			while CoeffCount < Num do
-				local TotalOutput = XOF.Squeeze128(ChunkSize)
+				XOF.Squeeze128Into(Squeeze, ChunkSize, 0)
+				local TotalOutput = Squeeze
 				local ByteOffset = 0
-				local OutputLen = buffer.len(TotalOutput)
+				local OutputLen = ChunkSize
 
 				while CoeffCount < Num and ByteOffset + 5 < OutputLen do
-					local Chunk = buffer.readu32(TotalOutput, ByteOffset)
-					local B3 = buffer.readu8(TotalOutput, ByteOffset + 4)
-					local B4 = buffer.readu8(TotalOutput, ByteOffset + 5)
+					local Chunk1 = buffer.readu32(TotalOutput, ByteOffset)
+					local Chunk2 = buffer.readu32(TotalOutput, ByteOffset + 2)
 
-					local T3 = bit32.band(Chunk, 0x7FFFFF)
+					local T3 = bit32.band(Chunk1, 0x7FFFFF)
 					if T3 < Modulus then
 						buffer.writeu32(Mat, Offset + CoeffCount * 4, T3)
 						CoeffCount += 1
 					end
 
-					local T4 = bit32.bor(
-						bit32.rshift(Chunk, 24),
-						bit32.lshift(B3, 8),
-						bit32.lshift(bit32.band(B4, 0x7F), 16)
-					)
+					local T4 = bit32.band(bit32.rshift(Chunk2, 8), 0x7FFFFF)
 					if T4 < Modulus and CoeffCount < Num then
 						buffer.writeu32(Mat, Offset + CoeffCount * 4, T4)
 						CoeffCount += 1
@@ -93,6 +118,12 @@ function Sampling.ExpandA(Rho: buffer, Mat: buffer, K: number, L: number)
 			end
 		end
 	end
+
+	buffer.copy(MATRIX_CACHE_RHO, 0, Rho, 0, 32)
+	MATRIX_CACHE_DIMENSIONS = Dimensions
+	MATRIX_CACHE_VALUE = Mat
+
+	return Mat
 end
 
 function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number, StartNonce: number)
@@ -105,13 +136,13 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 	local Message = WORKSPACE_MSG_66
 	local Num = N
 	local Modulus = Q
+	local Squeeze = EXPAND_S_SQUEEZE
 
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
 		local NewNonce = StartNonce + I
 
-		buffer.writeu8(Message, 64, bit32.band(NewNonce, 0xFF))
-		buffer.writeu8(Message, 65, bit32.band(bit32.rshift(NewNonce, 8), 0xFF))
+		buffer.writeu16(Message, 64, NewNonce)
 
 		XOF.Reset256()
 		XOF.Absorb256(Message)
@@ -120,9 +151,10 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 		local ChunkSize = if Eta == 2 then 136 else 272
 
 		while CoeffCount < Num do
-			local TotalOutput = XOF.Squeeze256(ChunkSize)
+			XOF.Squeeze256Into(Squeeze, ChunkSize, 0)
+			local TotalOutput = Squeeze
 			local ByteOffset = 0
-			local OutputLen = buffer.len(TotalOutput)
+			local OutputLen = ChunkSize
 
 			if Eta == 2 then
 				while CoeffCount < Num and ByteOffset + 3 < OutputLen do
@@ -138,35 +170,35 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 					local T7 = bit32.band(bit32.rshift(Chunk, 28), 0x0F)
 
 					if T0 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T0 % 5) + (if (T0 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T0 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T1 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T1 % 5) + (if (T1 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T1 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T2 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T2 % 5) + (if (T2 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T2 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T3 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T3 % 5) + (if (T3 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T3 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T4 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T4 % 5) + (if (T4 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T4 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T5 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T5 % 5) + (if (T5 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T5 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T6 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T6 % 5) + (if (T6 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T6 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if T7 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T7 % 5) + (if (T7 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T7 % 5) % Modulus)
 						CoeffCount += 1
 					end
 
@@ -186,35 +218,35 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 					local T7 = bit32.band(bit32.rshift(Chunk, 28), 0x0F)
 
 					if T0 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T0 + (if T0 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T0) % Modulus)
 						CoeffCount += 1
 					end
 					if T1 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T1 + (if T1 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T1) % Modulus)
 						CoeffCount += 1
 					end
 					if T2 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T2 + (if T2 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T2) % Modulus)
 						CoeffCount += 1
 					end
 					if T3 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T3 + (if T3 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T3) % Modulus)
 						CoeffCount += 1
 					end
 					if T4 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T4 + (if T4 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T4) % Modulus)
 						CoeffCount += 1
 					end
 					if T5 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T5 + (if T5 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T5) % Modulus)
 						CoeffCount += 1
 					end
 					if T6 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T6 + (if T6 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T6) % Modulus)
 						CoeffCount += 1
 					end
 					if T7 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T7 + (if T7 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T7) % Modulus)
 						CoeffCount += 1
 					end
 
@@ -229,20 +261,20 @@ function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number,
 
 				if Eta == 2 then
 					if T0 < 15 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T0 % 5) + (if (T0 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T0 % 5) % Modulus)
 						CoeffCount += 1
 					end
 					if CoeffCount < Num and T1 < 15 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 2 - (T1 % 5) + (if (T1 % 5) > 2 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T1 % 5) % Modulus)
 						CoeffCount += 1
 					end
 				else
 					if T0 < 9 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T0 + (if T0 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T0) % Modulus)
 						CoeffCount += 1
 					end
 					if CoeffCount < Num and T1 < 9 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, 4 - T1 + (if T1 > 4 then Modulus else 0))
+						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T1) % Modulus)
 						CoeffCount += 1
 					end
 				end
@@ -267,85 +299,73 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 	local Num = N
 	local Modulus = Q
 	local G1 = Gamma1
+	local Squeeze = EXPAND_MASK_SQUEEZE
 
 	for I = 0, L - 1 do
 		local Offset = I * Num * 4
 		local NewNonce = Nonce + I
 
-		buffer.writeu8(Message, 64, bit32.band(NewNonce, 0xFF))
-		buffer.writeu8(Message, 65, bit32.band(bit32.rshift(NewNonce, 8), 0xFF))
+		buffer.writeu16(Message, 64, NewNonce)
 
 		XOF.Reset256()
 		XOF.Absorb256(Message)
 
-		local Src = XOF.Squeeze256(BufSize)
+		XOF.Squeeze256Into(Squeeze, BufSize, 0)
+		local Src = Squeeze
 
 		if Gamma1BitWidth == 18 then
 			for J = 0, 63 do
 				local BOffset = J * 9
 				local POffset = Offset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
 				local B8 = buffer.readu8(Src, BOffset + 8)
 
-				local V0 = bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0x3), 16))
-				local V1 = bit32.bor(bit32.rshift(B2, 2), bit32.lshift(B3, 6), bit32.lshift(bit32.band(B4, 0xF), 14))
-				local V2 = bit32.bor(bit32.rshift(B4, 4), bit32.lshift(B5, 4), bit32.lshift(bit32.band(B6, 0x3F), 12))
-				local V3 = bit32.bor(bit32.rshift(B6, 6), bit32.lshift(B7, 2), bit32.lshift(B8, 10))
+				local V0 = bit32.band(W0, 0x3FFFF)
+				local V1 = bit32.band(bit32.bor(bit32.rshift(W0, 18), bit32.lshift(W1, 14)), 0x3FFFF)
+				local V2 = bit32.band(bit32.rshift(W1, 4), 0x3FFFF)
+				local V3 = bit32.bor(bit32.rshift(W1, 22), bit32.lshift(B8, 10))
 
 				local D0 = G1 - V0
 				local D1 = G1 - V1
 				local D2 = G1 - V2
 				local D3 = G1 - V3
 
-				buffer.writeu32(Vec, POffset + 0, if D0 < 0 then D0 + Modulus else D0)
-				buffer.writeu32(Vec, POffset + 4, if D1 < 0 then D1 + Modulus else D1)
-				buffer.writeu32(Vec, POffset + 8, if D2 < 0 then D2 + Modulus else D2)
-				buffer.writeu32(Vec, POffset + 12, if D3 < 0 then D3 + Modulus else D3)
+				buffer.writeu32(Vec, POffset + 0, D0 + bit32.band(Modulus, bit32.arshift(D0, 31)))
+				buffer.writeu32(Vec, POffset + 4, D1 + bit32.band(Modulus, bit32.arshift(D1, 31)))
+				buffer.writeu32(Vec, POffset + 8, D2 + bit32.band(Modulus, bit32.arshift(D2, 31)))
+				buffer.writeu32(Vec, POffset + 12, D3 + bit32.band(Modulus, bit32.arshift(D3, 31)))
 			end
 		else
 			for J = 0, 63 do
 				local BOffset = J * 10
 				local POffset = Offset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
-				local B8 = buffer.readu8(Src, BOffset + 8)
-				local B9 = buffer.readu8(Src, BOffset + 9)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
+				local Hi = buffer.readu16(Src, BOffset + 8)
 
-				local V0 = bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0xF), 16))
-				local V1 = bit32.bor(bit32.rshift(B2, 4), bit32.lshift(B3, 4), bit32.lshift(B4, 12))
-				local V2 = bit32.bor(B5, bit32.lshift(B6, 8), bit32.lshift(bit32.band(B7, 0xF), 16))
-				local V3 = bit32.bor(bit32.rshift(B7, 4), bit32.lshift(B8, 4), bit32.lshift(B9, 12))
+				local V0 = bit32.band(W0, 0xFFFFF)
+				local V1 = bit32.band(bit32.bor(bit32.rshift(W0, 20), bit32.lshift(W1, 12)), 0xFFFFF)
+				local V2 = bit32.band(bit32.rshift(W1, 8), 0xFFFFF)
+				local V3 = bit32.bor(bit32.rshift(W1, 28), bit32.lshift(Hi, 4))
 
 				local D0 = G1 - V0
 				local D1 = G1 - V1
 				local D2 = G1 - V2
 				local D3 = G1 - V3
 
-				buffer.writeu32(Vec, POffset + 0, if D0 < 0 then D0 + Modulus else D0)
-				buffer.writeu32(Vec, POffset + 4, if D1 < 0 then D1 + Modulus else D1)
-				buffer.writeu32(Vec, POffset + 8, if D2 < 0 then D2 + Modulus else D2)
-				buffer.writeu32(Vec, POffset + 12, if D3 < 0 then D3 + Modulus else D3)
+				buffer.writeu32(Vec, POffset + 0, D0 + bit32.band(Modulus, bit32.arshift(D0, 31)))
+				buffer.writeu32(Vec, POffset + 4, D1 + bit32.band(Modulus, bit32.arshift(D1, 31)))
+				buffer.writeu32(Vec, POffset + 8, D2 + bit32.band(Modulus, bit32.arshift(D2, 31)))
+				buffer.writeu32(Vec, POffset + 12, D3 + bit32.band(Modulus, bit32.arshift(D3, 31)))
 			end
 		end
 	end
 end
 
-function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number, Lambda: number)
+function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number)
 	if not Params.CheckTau(Tau) then
 		error("Invalid Tau parameter")
 	end
@@ -355,19 +375,21 @@ function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number, Lambda: 
 	XOF.Reset256()
 	XOF.Absorb256(Seed)
 
-	local TauBits = XOF.Squeeze256(8)
-	local TauBitsLow = buffer.readu32(TauBits, 0)
-	local TauBitsHigh = buffer.readu32(TauBits, 4)
+	XOF.Squeeze256Into(SAMPLE_BALL_TAU, 8, 0)
+	local TauBitsLow = buffer.readu32(SAMPLE_BALL_TAU, 0)
+	local TauBitsHigh = buffer.readu32(SAMPLE_BALL_TAU, 4)
 
 	local From = N - Tau
 	local I = From
 	local ChunkSize = 136
 	local Modulus = Q
+	local Squeeze = SAMPLE_BALL_SQUEEZE
 
 	while I < N do
-		local RandomBytes = XOF.Squeeze256(ChunkSize)
+		XOF.Squeeze256Into(Squeeze, ChunkSize, 0)
+		local RandomBytes = Squeeze
 		local ByteOffset = 0
-		local OutputLen = buffer.len(RandomBytes)
+		local OutputLen = ChunkSize
 
 		while I < N and ByteOffset + 3 < OutputLen do
 			local Chunk = buffer.readu32(RandomBytes, ByteOffset)

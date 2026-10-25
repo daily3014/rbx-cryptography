@@ -1,9 +1,9 @@
 --[=[
 	Stateful SHAKE XOF (Extensible Output Function)
-	
+
 	Non-OOP implementation with reusable state buffers.
 	For ML-DSA sampling functions that use rejection sampling.
-	
+
 	Example usage:
 		XOF.Reset128()
 		XOF.Absorb128(message)
@@ -15,21 +15,25 @@
 --!optimize 2
 --!native
 
-local Keccak = require("./SHA3").Keccak_Internal
+local SHA3 = require("./SHA3")
+local Keccak = SHA3.Keccak_Internal
+local Permute = SHA3.Permute_Internal
+local Extract = SHA3.Extract_Internal
 
 local RATE_128 = 168
 local RATE_256 = 136
 
-local LanesLow128 = buffer.create(100)
-local LanesHigh128 = buffer.create(100)
+local StateA128 = buffer.create(100)
+local StateB128 = buffer.create(100)
+local Block128 = buffer.create(RATE_128)
 local SqueezeOffset128 = 0
+local Fresh128 = false
 
-local LanesLow256 = buffer.create(100)
-local LanesHigh256 = buffer.create(100)
+local StateA256 = buffer.create(100)
+local StateB256 = buffer.create(100)
+local Block256 = buffer.create(RATE_256)
 local SqueezeOffset256 = 0
-
-local ZeroBuffer128 = buffer.create(RATE_128)
-local ZeroBuffer256 = buffer.create(RATE_256)
+local Fresh256 = false
 
 local PaddedBuffer128 = buffer.create(RATE_128)
 local PaddedBuffer256 = buffer.create(RATE_256)
@@ -41,15 +45,17 @@ local SqueezeBuffer256_192 = buffer.create(192)
 local XOF = {}
 
 function XOF.Reset128()
-	buffer.fill(LanesLow128, 0, 0, 100)
-	buffer.fill(LanesHigh128, 0, 0, 100)
+	buffer.fill(StateA128, 0, 0, 100)
+	buffer.fill(StateB128, 0, 0, 100)
 	SqueezeOffset128 = 0
+	Fresh128 = true
 end
 
 function XOF.Reset256()
-	buffer.fill(LanesLow256, 0, 0, 100)
-	buffer.fill(LanesHigh256, 0, 0, 100)
+	buffer.fill(StateA256, 0, 0, 100)
+	buffer.fill(StateB256, 0, 0, 100)
 	SqueezeOffset256 = 0
+	Fresh256 = true
 end
 
 function XOF.Absorb128(Message: buffer)
@@ -70,7 +76,9 @@ function XOF.Absorb128(Message: buffer)
 		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
 	end
 
-	Keccak(LanesLow128, LanesHigh128, PaddedMessage, 0, RateBytes, RateBytes)
+	Keccak(StateA128, StateB128, PaddedMessage, 0, RateBytes, RateBytes, Fresh128)
+	Fresh128 = false
+	Extract(StateA128, StateB128, Block128, 0, RateBytes)
 end
 
 function XOF.Absorb256(Message: buffer)
@@ -91,57 +99,26 @@ function XOF.Absorb256(Message: buffer)
 		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
 	end
 
-	Keccak(LanesLow256, LanesHigh256, PaddedMessage, 0, RateBytes, RateBytes)
+	Keccak(StateA256, StateB256, PaddedMessage, 0, RateBytes, RateBytes, Fresh256)
+	Fresh256 = false
+	Extract(StateA256, StateB256, Block256, 0, RateBytes)
 end
 
 function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
 	local OutOffset = OutputOffset or 0
-	local RateBytes = RATE_128
-	local LanesLow = LanesLow128
-	local LanesHigh = LanesHigh128
 	local SqueezeOffset = SqueezeOffset128
-	local ZeroBuffer = ZeroBuffer128
+	local Block = Block128
 
 	local Written = 0
 	while Written < OutputBytes do
-		if SqueezeOffset >= RateBytes then
-			Keccak(LanesLow, LanesHigh, ZeroBuffer, 0, RateBytes, RateBytes)
+		if SqueezeOffset >= RATE_128 then
+			Permute(StateA128, StateB128)
+			Extract(StateA128, StateB128, Block, 0, RATE_128)
 			SqueezeOffset = 0
 		end
 
-		local BytesThisRound = RateBytes - SqueezeOffset
-		if BytesThisRound > OutputBytes - Written then
-			BytesThisRound = OutputBytes - Written
-		end
-
-		local ByteIndex = 0
-		while ByteIndex < BytesThisRound do
-			local AbsoluteIndex = SqueezeOffset + ByteIndex
-			local Lane = bit32.rshift(AbsoluteIndex, 3)
-			local ByteInLane = bit32.band(AbsoluteIndex, 7)
-			local LaneOffset = bit32.lshift(Lane, 2)
-
-			if ByteInLane == 0 and ByteIndex + 8 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex + 4, buffer.readu32(LanesHigh, LaneOffset))
-				ByteIndex += 8
-			elseif ByteInLane == 0 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
-				ByteIndex += 4
-			elseif ByteInLane == 4 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesHigh, LaneOffset))
-				ByteIndex += 4
-			else
-				local Value
-				if ByteInLane < 4 then
-					Value = bit32.extract(buffer.readu32(LanesLow, LaneOffset), bit32.lshift(ByteInLane, 3), 8)
-				else
-					Value = bit32.extract(buffer.readu32(LanesHigh, LaneOffset), bit32.lshift(ByteInLane - 4, 3), 8)
-				end
-				buffer.writeu8(Output, OutOffset + Written + ByteIndex, Value)
-				ByteIndex += 1
-			end
-		end
+		local BytesThisRound = math.min(RATE_128 - SqueezeOffset, OutputBytes - Written)
+		buffer.copy(Output, OutOffset + Written, Block, SqueezeOffset, BytesThisRound)
 
 		Written += BytesThisRound
 		SqueezeOffset += BytesThisRound
@@ -158,52 +135,19 @@ end
 
 function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
 	local OutOffset = OutputOffset or 0
-	local RateBytes = RATE_256
-	local LanesLow = LanesLow256
-	local LanesHigh = LanesHigh256
 	local SqueezeOffset = SqueezeOffset256
-	local ZeroBuffer = ZeroBuffer256
+	local Block = Block256
 
 	local Written = 0
 	while Written < OutputBytes do
-		if SqueezeOffset >= RateBytes then
-			Keccak(LanesLow, LanesHigh, ZeroBuffer, 0, RateBytes, RateBytes)
+		if SqueezeOffset >= RATE_256 then
+			Permute(StateA256, StateB256)
+			Extract(StateA256, StateB256, Block, 0, RATE_256)
 			SqueezeOffset = 0
 		end
 
-		local BytesThisRound = RateBytes - SqueezeOffset
-		if BytesThisRound > OutputBytes - Written then
-			BytesThisRound = OutputBytes - Written
-		end
-
-		local ByteIndex = 0
-		while ByteIndex < BytesThisRound do
-			local AbsoluteIndex = SqueezeOffset + ByteIndex
-			local Lane = bit32.rshift(AbsoluteIndex, 3)
-			local ByteInLane = bit32.band(AbsoluteIndex, 7)
-			local LaneOffset = bit32.lshift(Lane, 2)
-
-			if ByteInLane == 0 and ByteIndex + 8 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex + 4, buffer.readu32(LanesHigh, LaneOffset))
-				ByteIndex += 8
-			elseif ByteInLane == 0 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesLow, LaneOffset))
-				ByteIndex += 4
-			elseif ByteInLane == 4 and ByteIndex + 4 <= BytesThisRound then
-				buffer.writeu32(Output, OutOffset + Written + ByteIndex, buffer.readu32(LanesHigh, LaneOffset))
-				ByteIndex += 4
-			else
-				local Value
-				if ByteInLane < 4 then
-					Value = bit32.extract(buffer.readu32(LanesLow, LaneOffset), bit32.lshift(ByteInLane, 3), 8)
-				else
-					Value = bit32.extract(buffer.readu32(LanesHigh, LaneOffset), bit32.lshift(ByteInLane - 4, 3), 8)
-				end
-				buffer.writeu8(Output, OutOffset + Written + ByteIndex, Value)
-				ByteIndex += 1
-			end
-		end
+		local BytesThisRound = math.min(RATE_256 - SqueezeOffset, OutputBytes - Written)
+		buffer.copy(Output, OutOffset + Written, Block, SqueezeOffset, BytesThisRound)
 
 		Written += BytesThisRound
 		SqueezeOffset += BytesThisRound
@@ -213,8 +157,8 @@ function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: n
 end
 
 function XOF.Squeeze256(OutputBytes: number): buffer
-	local Output = if OutputBytes == 128 then SqueezeBuffer256_128 
-		elseif OutputBytes == 192 then SqueezeBuffer256_192 
+	local Output = if OutputBytes == 128 then SqueezeBuffer256_128
+		elseif OutputBytes == 192 then SqueezeBuffer256_192
 		else buffer.create(OutputBytes)
 	XOF.Squeeze256Into(Output, OutputBytes, 0)
 	return Output

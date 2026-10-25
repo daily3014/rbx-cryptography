@@ -27,84 +27,48 @@ local function XOR(StringBuffer: buffer, KeyBuffer: buffer): buffer
 	end
 
 	local OutputBuffer = buffer.create(StringLength)
-	buffer.copy(OutputBuffer, 0, StringBuffer, 0, StringLength)
 
-	if KeyLength == 1 then
-		local KeyByte = buffer.readu8(KeyBuffer, 0)
-		local KeyWord = bit32.bor(
-			KeyByte,
-			bit32.lshift(KeyByte, 8),
-			bit32.lshift(KeyByte, 16),
-			bit32.lshift(KeyByte, 24)
-		)
-		
-		local Offset = 0
-		while Offset + 3 < StringLength do
-			buffer.writeu32(OutputBuffer, Offset, bit32.bxor(buffer.readu32(OutputBuffer, Offset), KeyWord))
-			Offset += 4
+	local Key = KeyBuffer
+	local Period = KeyLength
+	if KeyLength % 4 ~= 0 or (KeyLength < 128 and StringLength >= 1024) then
+		local Unit = KeyLength
+		while Unit % 4 ~= 0 do
+			Unit += KeyLength
 		end
-		
-		while Offset < StringLength do
-			buffer.writeu8(OutputBuffer, Offset, bit32.bxor(buffer.readu8(OutputBuffer, Offset), KeyByte))
-			Offset += 1
+		Period = Unit * math.max(1, math.ceil(math.min(256, StringLength) / Unit))
+		Key = buffer.create(Period)
+		buffer.copy(Key, 0, KeyBuffer, 0, KeyLength)
+		local Filled = KeyLength
+		while Filled < Period do
+			local Amount = math.min(Filled, Period - Filled)
+			buffer.copy(Key, Filled, Key, 0, Amount)
+			Filled += Amount
 		end
-		
-		return OutputBuffer
 	end
 
-	if KeyLength == 4 then
-		local KeyWord = buffer.readu32(KeyBuffer, 0)
-		local Offset = 0
-		while Offset + 3 < StringLength do
-			buffer.writeu32(OutputBuffer, Offset, bit32.bxor(buffer.readu32(OutputBuffer, Offset), KeyWord))
-			Offset += 4
-		end
-		
-		for Index = 0, StringLength - Offset - 1 do
-			local ByteOffset = Offset + Index
-			buffer.writeu8(OutputBuffer, ByteOffset, bit32.bxor(
-				buffer.readu8(OutputBuffer, ByteOffset),
-				buffer.readu8(KeyBuffer, Index)
-				))
-		end
-		
-		return OutputBuffer
-	end
+	local Offset = 0
+	while Offset < StringLength do
+		local Chunk = math.min(Period, StringLength - Offset)
+		local Words = Chunk - Chunk % 4
+		local Blocks = Chunk - Chunk % 16
 
-	local ExtendedKeyLength = math.min(StringLength, KeyLength * 256)
-	local ExtendedKeyBuffer = buffer.create(ExtendedKeyLength)
-
-	local Pos = 0 
-	while Pos < ExtendedKeyLength do
-		local CopyLen = math.min(KeyLength, ExtendedKeyLength - Pos)
-		buffer.copy(ExtendedKeyBuffer, Pos, KeyBuffer, 0, CopyLen)
-		Pos += CopyLen
-	end
-
-	local StringOffset = 0
-	while StringOffset < StringLength do
-		local ChunkSize = math.min(ExtendedKeyLength, StringLength - StringOffset)
-		local KeyOffset = 0
-
-		while KeyOffset + 3 < ChunkSize and StringOffset + KeyOffset + 3 < StringLength do
-			local Offset = StringOffset + KeyOffset
-			buffer.writeu32(OutputBuffer, Offset, bit32.bxor(
-				buffer.readu32(OutputBuffer, Offset),
-				buffer.readu32(ExtendedKeyBuffer, KeyOffset)
-				))
-			KeyOffset += 4
+		for Index = 0, Blocks - 16, 16 do
+			local Position = Offset + Index
+			buffer.writeu32(OutputBuffer, Position, bit32.bxor(buffer.readu32(StringBuffer, Position), buffer.readu32(Key, Index)))
+			buffer.writeu32(OutputBuffer, Position + 4, bit32.bxor(buffer.readu32(StringBuffer, Position + 4), buffer.readu32(Key, Index + 4)))
+			buffer.writeu32(OutputBuffer, Position + 8, bit32.bxor(buffer.readu32(StringBuffer, Position + 8), buffer.readu32(Key, Index + 8)))
+			buffer.writeu32(OutputBuffer, Position + 12, bit32.bxor(buffer.readu32(StringBuffer, Position + 12), buffer.readu32(Key, Index + 12)))
 		end
 
-		while KeyOffset < ChunkSize and StringOffset + KeyOffset < StringLength do
-			local Offset = StringOffset + KeyOffset
-			buffer.writeu8(OutputBuffer, Offset, bit32.bxor(
-				buffer.readu8(OutputBuffer, Offset),
-				buffer.readu8(ExtendedKeyBuffer, KeyOffset)
-				))
-			KeyOffset += 1
+		for Index = Blocks, Words - 4, 4 do
+			buffer.writeu32(OutputBuffer, Offset + Index, bit32.bxor(buffer.readu32(StringBuffer, Offset + Index), buffer.readu32(Key, Index)))
 		end
 
-		StringOffset += ChunkSize
+		for Index = Words, Chunk - 1 do
+			buffer.writeu8(OutputBuffer, Offset + Index, bit32.bxor(buffer.readu8(StringBuffer, Offset + Index), buffer.readu8(Key, Index)))
+		end
+
+		Offset += Chunk
 	end
 
 	return OutputBuffer

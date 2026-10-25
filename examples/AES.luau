@@ -10,7 +10,7 @@ Cryptography library: Advanced Encryption Standard (Galois/Counter Mode)
 		AES-GCM is also not key committing meaning the same ciphertext can decrypt to
 		different plaintexts under different keys with valid authentication tags. 
 		This is the "Invisible Salamander" attack, where an attacker has a message 
-		that appears normal to moderators but evil to recievers, or vice versa. 
+		that appears normal to moderators but evil to receivers, or vice versa. 
 		Affects group messaging, and any scenario with multiple valid keys.
 		
 		The S-box lookup tables are vulnerable to cache timing attacks in

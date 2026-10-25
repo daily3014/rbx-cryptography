@@ -8,6 +8,8 @@ local SHA2 = require("../../src/Hashing/SHA2")
 local SHA3 = require("../../src/Hashing/SHA3")
 local Blake2b = require("../../src/Hashing/Blake2b")
 local Blake3 = require("../../src/Hashing/Blake3")
+local MD5 = require("../../src/Hashing/MD5")
+local SHA1 = require("../../src/Hashing/SHA1")
 local HMAC = require("../../src/Hashing/HMAC")
 
 local Describe = Testing.Describe
@@ -19,7 +21,10 @@ local FromHex = Testing.FromHex
 type Digester = (Message: buffer, OutputBytes: number) -> (string, buffer)
 
 local Digesters: { { Name: string, Vectors: any, Size: number, Call: Digester } } = {
+	{ Name = "MD5", Vectors = require("../tadashi/md5_test"), Size = 16, Call = function(Message) return MD5(Message) end },
+	{ Name = "SHA1", Vectors = require("../tadashi/sha1_test"), Size = 20, Call = function(Message) return SHA1(Message) end },
 	{ Name = "SHA224", Vectors = require("../tadashi/sha224_test"), Size = 28, Call = function(Message) return SHA2.SHA224(Message) end },
+	{ Name = "SHA256", Vectors = require("../tadashi/sha256_test"), Size = 32, Call = function(Message) return SHA2.SHA256(Message) end },
 	{ Name = "SHA384", Vectors = require("../tadashi/sha384_test"), Size = 48, Call = function(Message) return SHA2.SHA384(Message) end },
 	{ Name = "SHA512", Vectors = require("../tadashi/sha512_test"), Size = 64, Call = function(Message) return SHA2.SHA512(Message) end },
 	{ Name = "SHA3-224", Vectors = require("../tadashi/sha3_224_test"), Size = 28, Call = function(Message) return SHA3.SHA3_224(Message) end },
@@ -32,7 +37,7 @@ local Digesters: { { Name: string, Vectors: any, Size: number, Call: Digester } 
 	{ Name = "Blake3", Vectors = require("../tadashi/blake3_test"), Size = 0, Call = function(Message, OutputBytes) return Blake3.Digest(Message, OutputBytes) end },
 }
 
-local Blocks: { [string]: number } = { SHA224 = 64, SHA384 = 128, SHA512 = 128 }
+local Blocks: { [string]: number } = { MD5 = 64, SHA1 = 64, SHA224 = 64, SHA256 = 64, SHA384 = 128, SHA512 = 128 }
 
 local PATTERN_LIMIT = 1048576
 

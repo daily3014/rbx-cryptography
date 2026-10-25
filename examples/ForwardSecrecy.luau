@@ -3,8 +3,11 @@
 	Forward Secrecy - Client to Server Key Exchange with Ephemeral Keys
 
 	This example shows how to do proper ephemeral key exchange that provides forward secrecy.
-	Fresh private keys are generated each session and destroyed after use.
+	Fresh X25519 keys are generated each session and destroyed after use.
 	Even if long-term keys are compromised, past communications remain secure.
+
+	Long-term Ed25519 identity keys sign the ephemeral public keys so each side
+	knows who it is talking to (without this, a man in the middle could swap keys).
 --]=]
 --!strict
 
@@ -14,84 +17,79 @@ local Cryptography = require(ReplicatedStorage:WaitForChild("Cryptography"))
 
 -- Create variables for easy access
 local Blake3 = Cryptography.Hashing.Blake3
-local FromHex = Cryptography.Utilities.Conversions.FromHex
 local EdDSA = Cryptography.Verification.EdDSA
+local X25519 = EdDSA.X25519
 local AEAD = Cryptography.Encryption.AEAD
 local CSPRNG = Cryptography.Utilities.CSPRNG
+local Concatenate = Cryptography.Utilities.Concatenate
 
 -- Long-term identity keys (persistent across sessions)
 local ClientIdentityPrivate = CSPRNG.RandomBytes(32)
 local ClientIdentityPublic = EdDSA.PublicKey(ClientIdentityPrivate)
 
 local ServerIdentityPrivate = CSPRNG.RandomBytes(32)
-local _ServerIdentityPublic = EdDSA.PublicKey(ServerIdentityPrivate)
+local ServerIdentityPublic = EdDSA.PublicKey(ServerIdentityPrivate)
 
 -- *Client and server exchange identity public keys*
 
-local function GetSessionKey(EphemeralSharedSecret: buffer, ClientPublic: buffer, ServerPublic: buffer): buffer
-	local CombinedInput = buffer.create(96)
+-- Session keys are derived under a fixed context string so they never collide with other uses of the same secret
+local DeriveSessionKey = Blake3.DeriveKey(buffer.fromstring("MyGame 2025-01-01 session key"))
 
-	buffer.copy(CombinedInput, 0, EphemeralSharedSecret, 0, 32)
-	buffer.copy(CombinedInput, 32, ClientPublic, 0, 32)
-	buffer.copy(CombinedInput, 64, ServerPublic, 0, 32)
-
-	local KeyMaterial = Blake3.Digest(CombinedInput, 32)
-	return FromHex(KeyMaterial)
+local function GetSessionKey(SharedSecret: buffer, ClientPublic: buffer, ServerPublic: buffer): buffer
+	local _, SessionKey = DeriveSessionKey(Concatenate(SharedSecret, ClientPublic, ServerPublic), 32)
+	return SessionKey
 end
 
--- SESSION 1: Generate fresh ephemeral keys
-local ClientEphemeralPrivate1 = CSPRNG.RandomBytes(32)
-local ClientEphemeralPublic1 = EdDSA.PublicKey(ClientEphemeralPrivate1)
+local function RunSession(Message: string): (buffer, buffer, buffer, buffer)
+	-- Generate fresh ephemeral keys
+	local ClientEphemeralPrivate = CSPRNG.RandomBytes(32)
+	local ClientEphemeralPublic = X25519.PublicKey(ClientEphemeralPrivate)
 
-local ServerEphemeralPrivate1 = CSPRNG.RandomBytes(32)
-local ServerEphemeralPublic1 = EdDSA.PublicKey(ServerEphemeralPrivate1)
+	local ServerEphemeralPrivate = CSPRNG.RandomBytes(32)
+	local ServerEphemeralPublic = X25519.PublicKey(ServerEphemeralPrivate)
 
--- *Ephemeral public keys are exchanged*
+	-- Authentication: each side signs its ephemeral public key with its long-term identity key
+	local ClientSignature = EdDSA.Sign(ClientEphemeralPublic, ClientIdentityPrivate, ClientIdentityPublic)
+	local ServerSignature = EdDSA.Sign(ServerEphemeralPublic, ServerIdentityPrivate, ServerIdentityPublic)
 
--- Both sides derive the same session key from ephemeral exchange
--- Note: In real implementation, use proper X25519.Exchange(ClientEphemeralPrivate1, ServerEphemeralPublic1)
-local SharedSecret1 = CSPRNG.RandomBytes(32) -- Simulated shared secret
-local SessionKey1 = GetSessionKey(SharedSecret1, ClientEphemeralPublic1, ServerEphemeralPublic1)
+	-- *Ephemeral public keys and signatures are exchanged*
 
--- Encrypt with ephemeral session key
-local Message1 = buffer.fromstring("Session 1 data")
-local Nonce1 = buffer.fromstring("nonce1234567")
-local Encrypted1, Tag1 = AEAD.Encrypt(Message1, SessionKey1, Nonce1)
+	-- Each side checks the other's signature before trusting the ephemeral key
+	assert(EdDSA.Verify(ClientEphemeralPublic, ClientIdentityPublic, ClientSignature), "Client ephemeral key not signed by client")
+	assert(EdDSA.Verify(ServerEphemeralPublic, ServerIdentityPublic, ServerSignature), "Server ephemeral key not signed by server")
 
--- Overwrite ephemeral private keys (the actual forward secrecy)
-ClientEphemeralPrivate1 = buffer.create(0)
-ServerEphemeralPrivate1 = buffer.create(0)
+	-- Both sides compute the same shared secret without ever sending it
+	local ClientShared = X25519.Exchange(ClientEphemeralPrivate, ServerEphemeralPublic)
+	local ServerShared = X25519.Exchange(ServerEphemeralPrivate, ClientEphemeralPublic)
 
--- SESSION 2: Generate completely new ephemeral keys
-local ClientEphemeralPrivate2 = CSPRNG.RandomBytes(32)
-local ClientEphemeralPublic2 = EdDSA.PublicKey(ClientEphemeralPrivate2)
+	local ClientSessionKey = GetSessionKey(ClientShared, ClientEphemeralPublic, ServerEphemeralPublic)
+	local ServerSessionKey = GetSessionKey(ServerShared, ClientEphemeralPublic, ServerEphemeralPublic)
 
-local ServerEphemeralPrivate2 = CSPRNG.RandomBytes(32)
-local ServerEphemeralPublic2 = EdDSA.PublicKey(ServerEphemeralPrivate2)
+	-- Overwrite ephemeral private keys (the actual forward secrecy)
+	buffer.fill(ClientEphemeralPrivate, 0, 0)
+	buffer.fill(ServerEphemeralPrivate, 0, 0)
 
--- Derive different session key for session 2
-local SharedSecret2 = CSPRNG.RandomBytes(32) -- Different shared secret
-local SessionKey2 = GetSessionKey(SharedSecret2, ClientEphemeralPublic2, ServerEphemeralPublic2)
+	-- Client encrypts with its session key
+	local Nonce = CSPRNG.RandomBytes(12)
+	local Encrypted, Tag = AEAD.Encrypt(buffer.fromstring(Message), ClientSessionKey, Nonce)
 
--- Encrypt new message
-local Message2 = buffer.fromstring("Session 2 data")
-local Nonce2 = buffer.fromstring("nonce7654321")
-local Encrypted2, Tag2 = AEAD.Encrypt(Message2, SessionKey2, Nonce2)
+	return Encrypted, Tag, Nonce, ServerSessionKey
+end
 
--- Destroy second session ephemeral keys
-ClientEphemeralPrivate2 = buffer.create(0)
-ServerEphemeralPrivate2 = buffer.create(0)
+-- SESSION 1
+local Encrypted1, Tag1, Nonce1, ServerKey1 = RunSession("Session 1 data")
 
--- Authentication: Sign ephemeral public keys with long-term identity keys
-local EphemeralSignature = EdDSA.Sign(ClientEphemeralPublic2, ClientIdentityPrivate, ClientIdentityPublic)
-local SignatureValid = EdDSA.Verify(ClientEphemeralPublic2, ClientIdentityPublic, EphemeralSignature)
+-- SESSION 2: completely new ephemeral keys, so a completely different session key
+local Encrypted2, Tag2, Nonce2, ServerKey2 = RunSession("Session 2 data")
 
--- Verify decryption works
-local Decrypted1 = AEAD.Decrypt(Encrypted1, SessionKey1, Nonce1, Tag1)
-local Decrypted2 = AEAD.Decrypt(Encrypted2, SessionKey2, Nonce2, Tag2)
+-- Server decrypts with the session key it derived on its own
+local Decrypted1 = AEAD.Decrypt(Encrypted1, ServerKey1, Nonce1, Tag1)
+local Decrypted2 = AEAD.Decrypt(Encrypted2, ServerKey2, Nonce2, Tag2)
 
 assert(Decrypted1 and buffer.tostring(Decrypted1) == "Session 1 data")
 assert(Decrypted2 and buffer.tostring(Decrypted2) == "Session 2 data")
-assert(SignatureValid)
+
+-- A session key can't decrypt another session's data
+assert(AEAD.Decrypt(Encrypted1, ServerKey2, Nonce1, Tag1) == nil)
 
 print("Forward secrecy key exchange completed")

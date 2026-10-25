@@ -14,36 +14,23 @@
 --!optimize 2
 --!native
 
-local Field = require("./Field")
 local NTT = require("./NTT")
-local BitPacking = require("./Pack")
 
-local LOG2N = 8
-local ZETA = 1753
 local Q = 8380417
-
 local N = 256
-local INV_N = Field.Inverse(N)
 
-local ZETA_EXP, ZETA_NEG_EXP = buffer.create(N * 4), buffer.create(N * 4) do
-	for I = 0, N - 1 do
-		local Reversed = 0
-		local Value = I
-
-		for J = 0, LOG2N - 1 do
-			local Bit = bit32.band(bit32.rshift(Value, J), 1)
-			Reversed = bit32.bxor(Reversed, bit32.lshift(Bit, LOG2N - 1 - J))
-		end
-
-		local ZetaExp = Field.Power(ZETA, Reversed)
-		local ZetaNegExp = Field.Negate(ZetaExp)
-
-		buffer.writeu32(ZETA_EXP, I * 4, ZetaExp)
-		buffer.writeu32(ZETA_NEG_EXP, I * 4, ZetaNegExp)
-	end
-end
+local INV_N = NTT.INV_N
+local ZETA_NEG_EXP = NTT.ZETA_NEG_EXP
 
 local PolyVec = {}
+
+local function NonZeroMask(X: number): number
+	return bit32.arshift(bit32.bor(X, -X), 31)
+end
+
+local function WrapNegative(X: number): number
+	return X + bit32.band(Q, bit32.arshift(X, 31))
+end
 
 function PolyVec.ForwardNTT(Vec: buffer, K: number)
 	local Num = N
@@ -54,48 +41,9 @@ function PolyVec.ForwardNTT(Vec: buffer, K: number)
 end
 
 function PolyVec.InverseNTT(Vec: buffer, K: number)
-	local Zeta = ZETA_NEG_EXP
-	local InvN = INV_N
-	local Num = N
-	local Modulus = Q
-	
+	local Inverse = NTT.InverseNTTWithOffset
 	for I = 0, K - 1 do
-		local Offset = I * Num * 4
-
-		for L = 0, 7 do
-			local Len = bit32.lshift(1, L)
-			local LenX2 = bit32.lshift(Len, 1)
-			local KBeg = bit32.rshift(Num, L) - 1
-
-			for Start = 0, Num - 1, LenX2 do
-				local KNow = KBeg - bit32.rshift(Start, L + 1)
-				local NegZetaExpValue = buffer.readu32(Zeta, KNow * 4)
-
-				for J = Start, Start + Len - 1 do
-					local JOffset = Offset + J * 4
-					local JLenOffset = Offset + (J + Len) * 4
-
-					local PolyJ = buffer.readu32(Vec, JOffset)
-					local PolyJLen = buffer.readu32(Vec, JLenOffset)
-
-					local Sum = PolyJ + PolyJLen
-					Sum = if Sum >= Modulus then Sum - Modulus else Sum
-
-					local Diff = if PolyJ >= PolyJLen then PolyJ - PolyJLen else PolyJ - PolyJLen + Modulus
-					local Product = (Diff * NegZetaExpValue) % Modulus
-
-					buffer.writeu32(Vec, JOffset, Sum)
-					buffer.writeu32(Vec, JLenOffset, Product)
-				end
-			end
-		end
-
-		for J = 0, Num - 1 do
-			local JOffset = Offset + J * 4
-			local PolyValue = buffer.readu32(Vec, JOffset)
-			local Result = (PolyValue * InvN) % Modulus
-			buffer.writeu32(Vec, JOffset, Result)
-		end
+		Inverse(Vec, I * N * 4)
 	end
 end
 
@@ -116,7 +64,7 @@ function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K:
 			local T3 = bit32.lshift(T2, D)
 
 			local Hi = T2
-			local Lo = if R >= T3 then R - T3 else R - T3 + Modulus
+			local Lo = (R - T3) % Modulus
 
 			buffer.writeu32(PolyHi, JOffset, Hi)
 			buffer.writeu32(PolyLo, JOffset, Lo)
@@ -124,33 +72,50 @@ function PolyVec.Power2Round(PolyVec: buffer, PolyHi: buffer, PolyLo: buffer, K:
 	end
 end
 
-function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number, BRows: number, BCols: number)
-	local Num = N
+function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, ARows: number, ACols: number)
 	local Modulus = Q
-	
-	buffer.fill(C, 0, 0, ARows * BCols * N * 4)
 
-	for I = 0, ARows - 1 do
-		for J = 0, BCols - 1 do
-			local COffset = (I * BCols + J) * Num * 4
+	if ACols == 4 then
+		for I = 0, ARows - 1 do
+			local R = I * 4096
+			local CO = I * 1024
+			for E = 0, 1020, 4 do
+				local Acc = buffer.readu32(A, R + E) * buffer.readu32(B, E)
+					+ buffer.readu32(A, R + 1024 + E) * buffer.readu32(B, 1024 + E)
+					+ buffer.readu32(A, R + 2048 + E) * buffer.readu32(B, 2048 + E)
+					+ buffer.readu32(A, R + 3072 + E) * buffer.readu32(B, 3072 + E)
 
-			for K = 0, ACols - 1 do
-				local AOffset = (I * ACols + K) * Num * 4
-				local BOffset = (K * BCols + J) * Num * 4
+				buffer.writeu32(C, CO + E, Acc % Modulus)
+			end
+		end
+	elseif ACols == 5 then
+		for I = 0, ARows - 1 do
+			local R = I * 5120
+			local CO = I * 1024
+			for E = 0, 1020, 4 do
+				local Acc = buffer.readu32(A, R + E) * buffer.readu32(B, E)
+					+ buffer.readu32(A, R + 1024 + E) * buffer.readu32(B, 1024 + E)
+					+ buffer.readu32(A, R + 2048 + E) * buffer.readu32(B, 2048 + E)
+					+ buffer.readu32(A, R + 3072 + E) * buffer.readu32(B, 3072 + E)
+					+ buffer.readu32(A, R + 4096 + E) * buffer.readu32(B, 4096 + E)
 
-				for L = 0, Num - 1 do
-					local ElementOffset = L * 4
-					local AValue = buffer.readu32(A, AOffset + ElementOffset)
-					local BValue = buffer.readu32(B, BOffset + ElementOffset)
+				buffer.writeu32(C, CO + E, Acc % Modulus)
+			end
+		end
+	else
+		for I = 0, ARows - 1 do
+			local R = I * 7168
+			local CO = I * 1024
+			for E = 0, 1020, 4 do
+				local Acc = buffer.readu32(A, R + E) * buffer.readu32(B, E)
+					+ buffer.readu32(A, R + 1024 + E) * buffer.readu32(B, 1024 + E)
+					+ buffer.readu32(A, R + 2048 + E) * buffer.readu32(B, 2048 + E)
+					+ buffer.readu32(A, R + 3072 + E) * buffer.readu32(B, 3072 + E)
+					+ buffer.readu32(A, R + 4096 + E) * buffer.readu32(B, 4096 + E)
+					+ buffer.readu32(A, R + 5120 + E) * buffer.readu32(B, 5120 + E)
+					+ buffer.readu32(A, R + 6144 + E) * buffer.readu32(B, 6144 + E)
 
-					local Product = (AValue * BValue) % Modulus
-
-					local CValue = buffer.readu32(C, COffset + ElementOffset)
-					local Sum = CValue + Product
-					Sum = if Sum >= Modulus then Sum - Modulus else Sum
-
-					buffer.writeu32(C, COffset + ElementOffset, Sum)
-				end
+				buffer.writeu32(C, CO + E, Acc % Modulus)
 			end
 		end
 	end
@@ -159,29 +124,23 @@ end
 function PolyVec.AddTo(Src: buffer, Dst: buffer, K: number)
 	local TotalElements = K * N
 	local Modulus = Q
-	
+
 	for I = 0, TotalElements - 1 do
 		local Offset = I * 4
 		local SrcValue = buffer.readu32(Src, Offset)
 		local DstValue = buffer.readu32(Dst, Offset)
-
-		local Sum = DstValue + SrcValue
-		Sum = if Sum >= Modulus then Sum - Modulus else Sum
-
-		buffer.writeu32(Dst, Offset, Sum)
+		buffer.writeu32(Dst, Offset, (DstValue + SrcValue) % Modulus)
 	end
 end
 
-function PolyVec.Negate(Vec: buffer, K: number)
+function PolyVec.SubFromVec(Src: buffer, Dst: buffer, K: number)
 	local TotalElements = K * N
 	local Modulus = Q
-	
 	for I = 0, TotalElements - 1 do
 		local Offset = I * 4
-		local Value = buffer.readu32(Vec, Offset)
-		local Negated = if Value == 0 then 0 else Modulus - Value
-
-		buffer.writeu32(Vec, Offset, Negated)
+		local SrcValue = buffer.readu32(Src, Offset)
+		local DstValue = buffer.readu32(Dst, Offset)
+		buffer.writeu32(Dst, Offset, (SrcValue - DstValue) % Modulus)
 	end
 end
 
@@ -194,10 +153,7 @@ function PolyVec.SubFromX(Vec: buffer, K: number, X: number)
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
-
-			local Result = if X >= PolyValue then X - PolyValue else X - PolyValue + Modulus
-
-			buffer.writeu32(Vec, JOffset, Result)
+			buffer.writeu32(Vec, JOffset, (X - PolyValue) % Modulus)
 		end
 	end
 end
@@ -230,11 +186,23 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.lshift(P7, 5), bit32.lshift(P6, 2), bit32.rshift(P5, 1)))
 			end
 		elseif Sbw == 4 then
-			for J = 0, 127 do
-				local POffset = SrcOffset + J * 8
-				local P0 = bit32.band(buffer.readu32(Src, POffset), 0xF)
+			for J = 0, 31 do
+				local POffset = SrcOffset + J * 32
+				local BOffset = DstOffset + J * 4
+
+				local P0 = bit32.band(buffer.readu32(Src, POffset + 0), 0xF)
 				local P1 = bit32.band(buffer.readu32(Src, POffset + 4), 0xF)
-				buffer.writeu8(Dst, DstOffset + J, bit32.bor(bit32.lshift(P1, 4), P0))
+				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0xF)
+				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0xF)
+				local P4 = bit32.band(buffer.readu32(Src, POffset + 16), 0xF)
+				local P5 = bit32.band(buffer.readu32(Src, POffset + 20), 0xF)
+				local P6 = bit32.band(buffer.readu32(Src, POffset + 24), 0xF)
+				local P7 = bit32.band(buffer.readu32(Src, POffset + 28), 0xF)
+
+				buffer.writeu32(Dst, BOffset, bit32.bor(
+					P0, bit32.lshift(P1, 4), bit32.lshift(P2, 8), bit32.lshift(P3, 12),
+					bit32.lshift(P4, 16), bit32.lshift(P5, 20), bit32.lshift(P6, 24), bit32.lshift(P7, 28)
+				))
 			end
 		elseif Sbw == 6 then
 			for J = 0, 63 do
@@ -260,11 +228,11 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x3FF)
 				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x3FF)
 
-				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
-				buffer.writeu8(Dst, BOffset + 1, bit32.bor(bit32.lshift(bit32.band(P1, 0x3F), 2), bit32.rshift(P0, 8)))
-				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.lshift(bit32.band(P2, 0xF), 4), bit32.rshift(P1, 6)))
-				buffer.writeu8(Dst, BOffset + 3, bit32.bor(bit32.lshift(bit32.band(P3, 0x3), 6), bit32.rshift(P2, 4)))
-				buffer.writeu8(Dst, BOffset + 4, bit32.rshift(P3, 2))
+				local Lo = bit32.bor(P0, bit32.lshift(P1, 10), bit32.lshift(P2, 20), bit32.lshift(bit32.band(P3, 0x3), 30))
+				local Hi = bit32.rshift(P3, 2)
+
+				buffer.writeu32(Dst, BOffset, Lo)
+				buffer.writeu8(Dst, BOffset + 4, Hi)
 			end
 		elseif Sbw == 13 then
 			for J = 0, 31 do
@@ -280,19 +248,15 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				local P6 = bit32.band(buffer.readu32(Src, POffset + 24), 0x1FFF)
 				local P7 = bit32.band(buffer.readu32(Src, POffset + 28), 0x1FFF)
 
-				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
-				buffer.writeu8(Dst, BOffset + 1, bit32.bor(bit32.lshift(bit32.band(P1, 0x7), 5), bit32.rshift(P0, 8)))
-				buffer.writeu8(Dst, BOffset + 2, bit32.rshift(P1, 3))
-				buffer.writeu8(Dst, BOffset + 3, bit32.bor(bit32.lshift(bit32.band(P2, 0x3F), 2), bit32.rshift(P1, 11)))
-				buffer.writeu8(Dst, BOffset + 4, bit32.bor(bit32.lshift(bit32.band(P3, 0x1), 7), bit32.rshift(P2, 6)))
-				buffer.writeu8(Dst, BOffset + 5, bit32.rshift(P3, 1))
-				buffer.writeu8(Dst, BOffset + 6, bit32.bor(bit32.lshift(bit32.band(P4, 0xF), 4), bit32.rshift(P3, 9)))
-				buffer.writeu8(Dst, BOffset + 7, bit32.rshift(P4, 4))
-				buffer.writeu8(Dst, BOffset + 8, bit32.bor(bit32.lshift(bit32.band(P5, 0x7F), 1), bit32.rshift(P4, 12)))
-				buffer.writeu8(Dst, BOffset + 9, bit32.bor(bit32.lshift(bit32.band(P6, 0x3), 6), bit32.rshift(P5, 7)))
-				buffer.writeu8(Dst, BOffset + 10, bit32.rshift(P6, 2))
-				buffer.writeu8(Dst, BOffset + 11, bit32.bor(bit32.lshift(bit32.band(P7, 0x1F), 3), bit32.rshift(P6, 10)))
-				buffer.writeu8(Dst, BOffset + 12, bit32.rshift(P7, 5))
+				local W0 = bit32.bor(P0, bit32.lshift(P1, 13), bit32.lshift(P2, 26))
+				local W1 = bit32.bor(bit32.rshift(P2, 6), bit32.lshift(P3, 7), bit32.lshift(P4, 20))
+				local W2 = bit32.bor(bit32.rshift(P4, 12), bit32.lshift(P5, 1), bit32.lshift(P6, 14), bit32.lshift(P7, 27))
+				local W3 = bit32.rshift(P7, 5)
+
+				buffer.writeu32(Dst, BOffset, W0)
+				buffer.writeu32(Dst, BOffset + 4, W1)
+				buffer.writeu32(Dst, BOffset + 8, W2)
+				buffer.writeu8(Dst, BOffset + 12, W3)
 			end
 		elseif Sbw == 18 then
 			for J = 0, 63 do
@@ -304,17 +268,15 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0x3FFFF)
 				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0x3FFFF)
 
-				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
-				buffer.writeu8(Dst, BOffset + 1, bit32.band(bit32.rshift(P0, 8), 0xFF))
-				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.rshift(P0, 16), bit32.lshift(bit32.band(P1, 0x3F), 2)))
-				buffer.writeu8(Dst, BOffset + 3, bit32.band(bit32.rshift(P1, 6), 0xFF))
-				buffer.writeu8(Dst, BOffset + 4, bit32.bor(bit32.rshift(P1, 14), bit32.lshift(bit32.band(P2, 0xF), 4)))
-				buffer.writeu8(Dst, BOffset + 5, bit32.band(bit32.rshift(P2, 4), 0xFF))
-				buffer.writeu8(Dst, BOffset + 6, bit32.bor(bit32.rshift(P2, 12), bit32.lshift(bit32.band(P3, 0x3), 6)))
-				buffer.writeu8(Dst, BOffset + 7, bit32.band(bit32.rshift(P3, 2), 0xFF))
-				buffer.writeu8(Dst, BOffset + 8, bit32.rshift(P3, 10))
+				local W0 = bit32.bor(P0, bit32.lshift(P1, 18))
+				local W1 = bit32.bor(bit32.rshift(P1, 14), bit32.lshift(P2, 4), bit32.lshift(P3, 22))
+				local W2 = bit32.rshift(P3, 10)
+
+				buffer.writeu32(Dst, BOffset, W0)
+				buffer.writeu32(Dst, BOffset + 4, W1)
+				buffer.writeu8(Dst, BOffset + 8, W2)
 			end
-		elseif Sbw == 20 then
+		else
 			for J = 0, 63 do
 				local POffset = SrcOffset + J * 16
 				local BOffset = DstOffset + J * 10
@@ -324,23 +286,14 @@ function PolyVec.Encode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				local P2 = bit32.band(buffer.readu32(Src, POffset + 8), 0xFFFFF)
 				local P3 = bit32.band(buffer.readu32(Src, POffset + 12), 0xFFFFF)
 
-				buffer.writeu8(Dst, BOffset + 0, bit32.band(P0, 0xFF))
-				buffer.writeu8(Dst, BOffset + 1, bit32.band(bit32.rshift(P0, 8), 0xFF))
-				buffer.writeu8(Dst, BOffset + 2, bit32.bor(bit32.rshift(P0, 16), bit32.lshift(bit32.band(P1, 0xF), 4)))
-				buffer.writeu8(Dst, BOffset + 3, bit32.band(bit32.rshift(P1, 4), 0xFF))
-				buffer.writeu8(Dst, BOffset + 4, bit32.band(bit32.rshift(P1, 12), 0xFF))
-				buffer.writeu8(Dst, BOffset + 5, bit32.band(P2, 0xFF))
-				buffer.writeu8(Dst, BOffset + 6, bit32.band(bit32.rshift(P2, 8), 0xFF))
-				buffer.writeu8(Dst, BOffset + 7, bit32.bor(bit32.rshift(P2, 16), bit32.lshift(bit32.band(P3, 0xF), 4)))
-				buffer.writeu8(Dst, BOffset + 8, bit32.band(bit32.rshift(P3, 4), 0xFF))
-				buffer.writeu8(Dst, BOffset + 9, bit32.rshift(P3, 12))
+				local W0 = bit32.bor(P0, bit32.lshift(P1, 20))
+				local W1 = bit32.bor(bit32.rshift(P1, 12), bit32.lshift(P2, 8), bit32.lshift(P3, 28))
+				local W2 = bit32.rshift(P3, 4)
+
+				buffer.writeu32(Dst, BOffset, W0)
+				buffer.writeu32(Dst, BOffset + 4, W1)
+				buffer.writeu16(Dst, BOffset + 8, W2)
 			end
-		else
-			local PolyBuffer = buffer.create(N * 4)
-			local ByteBuffer = buffer.create(PolyByteLength)
-			buffer.copy(PolyBuffer, 0, Src, SrcOffset, N * 4)
-			BitPacking.Encode(PolyBuffer, ByteBuffer, Sbw)
-			buffer.copy(Dst, DstOffset, ByteBuffer, 0, PolyByteLength)
 		end
 	end
 end
@@ -372,11 +325,20 @@ function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				buffer.writeu32(Dst, POffset + 28, bit32.rshift(B2, 5))
 			end
 		elseif Sbw == 4 then
-			for J = 0, 127 do
-				local B = buffer.readu8(Src, SrcOffset + J)
-				local POffset = DstOffset + J * 8
-				buffer.writeu32(Dst, POffset, bit32.band(B, 0xF))
-				buffer.writeu32(Dst, POffset + 4, bit32.rshift(B, 4))
+			for J = 0, 31 do
+				local BOffset = SrcOffset + J * 4
+				local POffset = DstOffset + J * 32
+
+				local Word = buffer.readu32(Src, BOffset)
+
+				buffer.writeu32(Dst, POffset + 0, bit32.band(Word, 0xF))
+				buffer.writeu32(Dst, POffset + 4, bit32.band(bit32.rshift(Word, 4), 0xF))
+				buffer.writeu32(Dst, POffset + 8, bit32.band(bit32.rshift(Word, 8), 0xF))
+				buffer.writeu32(Dst, POffset + 12, bit32.band(bit32.rshift(Word, 12), 0xF))
+				buffer.writeu32(Dst, POffset + 16, bit32.band(bit32.rshift(Word, 16), 0xF))
+				buffer.writeu32(Dst, POffset + 20, bit32.band(bit32.rshift(Word, 20), 0xF))
+				buffer.writeu32(Dst, POffset + 24, bit32.band(bit32.rshift(Word, 24), 0xF))
+				buffer.writeu32(Dst, POffset + 28, bit32.rshift(Word, 28))
 			end
 		elseif Sbw == 6 then
 			for J = 0, 63 do
@@ -397,149 +359,94 @@ function PolyVec.Decode(Src: buffer, Dst: buffer, K: number, Sbw: number)
 				local BOffset = SrcOffset + J * 5
 				local POffset = DstOffset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
+				local Lo = buffer.readu32(Src, BOffset)
+				local Hi = buffer.readu8(Src, BOffset + 4)
 
-				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x3), 8)))
-				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B1, 2), bit32.lshift(bit32.band(B2, 0xF), 6)))
-				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B2, 4), bit32.lshift(bit32.band(B3, 0x3F), 4)))
-				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B3, 6), bit32.lshift(B4, 2)))
+				buffer.writeu32(Dst, POffset + 0, bit32.band(Lo, 0x3FF))
+				buffer.writeu32(Dst, POffset + 4, bit32.band(bit32.rshift(Lo, 10), 0x3FF))
+				buffer.writeu32(Dst, POffset + 8, bit32.band(bit32.rshift(Lo, 20), 0x3FF))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(Lo, 30), bit32.lshift(Hi, 2)))
 			end
 		elseif Sbw == 13 then
 			for J = 0, 31 do
 				local BOffset = SrcOffset + J * 13
 				local POffset = DstOffset + J * 32
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
-				local B8 = buffer.readu8(Src, BOffset + 8)
-				local B9 = buffer.readu8(Src, BOffset + 9)
-				local B10 = buffer.readu8(Src, BOffset + 10)
-				local B11 = buffer.readu8(Src, BOffset + 11)
-				local B12 = buffer.readu8(Src, BOffset + 12)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
+				local W2 = buffer.readu32(Src, BOffset + 8)
+				local W3 = buffer.readu8(Src, BOffset + 12)
 
-				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x1F), 8)))
-				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B1, 5), bit32.lshift(B2, 3), bit32.lshift(bit32.band(B3, 0x3), 11)))
-				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B3, 2), bit32.lshift(bit32.band(B4, 0x7F), 6)))
-				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B4, 7), bit32.lshift(B5, 1), bit32.lshift(bit32.band(B6, 0xF), 9)))
-				buffer.writeu32(Dst, POffset + 16, bit32.bor(bit32.rshift(B6, 4), bit32.lshift(B7, 4), bit32.lshift(bit32.band(B8, 0x1), 12)))
-				buffer.writeu32(Dst, POffset + 20, bit32.bor(bit32.rshift(B8, 1), bit32.lshift(bit32.band(B9, 0x3F), 7)))
-				buffer.writeu32(Dst, POffset + 24, bit32.bor(bit32.rshift(B9, 6), bit32.lshift(B10, 2), bit32.lshift(bit32.band(B11, 0x7), 10)))
-				buffer.writeu32(Dst, POffset + 28, bit32.bor(bit32.rshift(B11, 3), bit32.lshift(B12, 5)))
+				buffer.writeu32(Dst, POffset + 0, bit32.band(W0, 0x1FFF))
+				buffer.writeu32(Dst, POffset + 4, bit32.band(bit32.rshift(W0, 13), 0x1FFF))
+				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(W0, 26), bit32.lshift(bit32.band(W1, 0x7F), 6)))
+				buffer.writeu32(Dst, POffset + 12, bit32.band(bit32.rshift(W1, 7), 0x1FFF))
+				buffer.writeu32(Dst, POffset + 16, bit32.bor(bit32.rshift(W1, 20), bit32.lshift(bit32.band(W2, 0x1), 12)))
+				buffer.writeu32(Dst, POffset + 20, bit32.band(bit32.rshift(W2, 1), 0x1FFF))
+				buffer.writeu32(Dst, POffset + 24, bit32.band(bit32.rshift(W2, 14), 0x1FFF))
+				buffer.writeu32(Dst, POffset + 28, bit32.bor(bit32.rshift(W2, 27), bit32.lshift(W3, 5)))
 			end
 		elseif Sbw == 18 then
 			for J = 0, 63 do
 				local BOffset = SrcOffset + J * 9
 				local POffset = DstOffset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
-				local B8 = buffer.readu8(Src, BOffset + 8)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
+				local W2 = buffer.readu8(Src, BOffset + 8)
 
-				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0x3), 16)))
-				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B2, 2), bit32.lshift(B3, 6), bit32.lshift(bit32.band(B4, 0xF), 14)))
-				buffer.writeu32(Dst, POffset + 8, bit32.bor(bit32.rshift(B4, 4), bit32.lshift(B5, 4), bit32.lshift(bit32.band(B6, 0x3F), 12)))
-				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B6, 6), bit32.lshift(B7, 2), bit32.lshift(B8, 10)))
+				buffer.writeu32(Dst, POffset + 0, bit32.band(W0, 0x3FFFF))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(W0, 18), bit32.lshift(bit32.band(W1, 0xF), 14)))
+				buffer.writeu32(Dst, POffset + 8, bit32.band(bit32.rshift(W1, 4), 0x3FFFF))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(W1, 22), bit32.lshift(W2, 10)))
 			end
-		elseif Sbw == 20 then
+		else
 			for J = 0, 63 do
 				local BOffset = SrcOffset + J * 10
 				local POffset = DstOffset + J * 16
 
-				local B0 = buffer.readu8(Src, BOffset + 0)
-				local B1 = buffer.readu8(Src, BOffset + 1)
-				local B2 = buffer.readu8(Src, BOffset + 2)
-				local B3 = buffer.readu8(Src, BOffset + 3)
-				local B4 = buffer.readu8(Src, BOffset + 4)
-				local B5 = buffer.readu8(Src, BOffset + 5)
-				local B6 = buffer.readu8(Src, BOffset + 6)
-				local B7 = buffer.readu8(Src, BOffset + 7)
-				local B8 = buffer.readu8(Src, BOffset + 8)
-				local B9 = buffer.readu8(Src, BOffset + 9)
+				local W0 = buffer.readu32(Src, BOffset)
+				local W1 = buffer.readu32(Src, BOffset + 4)
+				local W2 = buffer.readu16(Src, BOffset + 8)
 
-				buffer.writeu32(Dst, POffset + 0, bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(bit32.band(B2, 0xF), 16)))
-				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(B2, 4), bit32.lshift(B3, 4), bit32.lshift(B4, 12)))
-				buffer.writeu32(Dst, POffset + 8, bit32.bor(B5, bit32.lshift(B6, 8), bit32.lshift(bit32.band(B7, 0xF), 16)))
-				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(B7, 4), bit32.lshift(B8, 4), bit32.lshift(B9, 12)))
+				buffer.writeu32(Dst, POffset + 0, bit32.band(W0, 0xFFFFF))
+				buffer.writeu32(Dst, POffset + 4, bit32.bor(bit32.rshift(W0, 20), bit32.lshift(bit32.band(W1, 0xFF), 12)))
+				buffer.writeu32(Dst, POffset + 8, bit32.band(bit32.rshift(W1, 8), 0xFFFFF))
+				buffer.writeu32(Dst, POffset + 12, bit32.bor(bit32.rshift(W1, 28), bit32.lshift(W2, 4)))
 			end
-		else
-			local ByteBuffer = buffer.create(PolyByteLength)
-			local PolyBuffer = buffer.create(N * 4)
-			buffer.copy(ByteBuffer, 0, Src, SrcOffset, PolyByteLength)
-			BitPacking.Decode(ByteBuffer, PolyBuffer, Sbw)
-			buffer.copy(Dst, DstOffset, PolyBuffer, 0, N * 4)
 		end
 	end
 end
 
 function PolyVec.HighBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
-	local T1 = Q - 1
-	local Modulus = Q
+	local M = math.floor((Q - 1) / Alpha)
 	local Num = N
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
-
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(Src, JOffset)
-
-			local T2 = R + T0 - 1
-			local T3 = math.floor(T2 / Alpha)
-			local T4 = T3 * Alpha
-
-			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
-			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
-
-			local Flag = (T5 == T1)
-			local R1 = if Flag then 0 else T3
-
-			buffer.writeu32(Dst, JOffset, R1)
+			local T3 = math.floor((R + T0 - 1) / Alpha)
+			buffer.writeu32(Dst, JOffset, bit32.band(T3, NonZeroMask(T3 - M)))
 		end
 	end
 end
 
 function PolyVec.LowBits(Src: buffer, Dst: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
-	local T1 = Q - 1
-	
-	local Modulus = Q
+	local M = math.floor((Q - 1) / Alpha)
 	local Num = N
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
-
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local R = buffer.readu32(Src, JOffset)
-
-			local T2 = R + T0 - 1
-			local T3 = math.floor(T2 / Alpha)
-			local T4 = T3 * Alpha
-
-			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
-			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
-
-			local Flag = (T5 == T1)
-			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Modulus) else R0
-
-			buffer.writeu32(Dst, JOffset, R0_)
+			local T3 = math.floor((R + T0 - 1) / Alpha)
+			local Flag = 1 - bit32.band(NonZeroMask(T3 - M), 1)
+			buffer.writeu32(Dst, JOffset, WrapNegative(R - T3 * Alpha - Flag))
 		end
 	end
 end
@@ -563,12 +470,23 @@ function PolyVec.MultiplyByPoly(PolyBuffer: buffer, SrcVec: buffer, DstVec: buff
 	end
 end
 
+function PolyVec.NormExceeds(Vec: buffer, K: number, Bound: number): boolean
+	local Modulus = Q
+	for I = 0, K * N - 1 do
+		local Value = buffer.readu32(Vec, I * 4)
+		if math.min(Value, Modulus - Value) >= Bound then
+			return true
+		end
+	end
+
+	return false
+end
+
 function PolyVec.InfinityNorm(Vec: buffer, K: number): number
 	local Result = 0
-	local QBy2 = math.floor(Q / 2)
 	local Modulus = Q
 	local Num = N
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
 
@@ -576,10 +494,8 @@ function PolyVec.InfinityNorm(Vec: buffer, K: number): number
 			local JOffset = Offset + J * 4
 			local PolyValue = buffer.readu32(Vec, JOffset)
 
-			local CurrentValue = if PolyValue > QBy2 then (if PolyValue == 0 then 0 else Modulus - PolyValue) else PolyValue
-			if CurrentValue > Result then
-				Result = CurrentValue
-			end
+			local CenterMag = math.min(PolyValue, Modulus - PolyValue)
+			Result = math.max(Result, CenterMag)
 		end
 	end
 
@@ -588,40 +504,22 @@ end
 
 function PolyVec.MakeHint(PolyA: buffer, PolyB: buffer, PolyC: buffer, K: number, Alpha: number)
 	local T0 = bit32.rshift(Alpha, 1)
-	local T1 = Q - 1
-
+	local M = math.floor((Q - 1) / Alpha)
 	local Num = N
 	local Modulus = Q
-	
+
 	for I = 0, K - 1 do
 		local Offset = I * Num * 4
-
 		for J = 0, Num - 1 do
 			local JOffset = Offset + J * 4
 			local Z = buffer.readu32(PolyA, JOffset)
 			local R = buffer.readu32(PolyB, JOffset)
-
-			local T2_R = R + T0 - 1
-			local T3_R = math.floor(T2_R / Alpha)
-			local T4_R = T3_R * Alpha
-			local R0_R = if R >= T4_R then R - T4_R else R - T4_R + Modulus
-			local T5_R = if R >= R0_R then R - R0_R else R - R0_R + Modulus
-			local Flag_R = (T5_R == T1)
-			local R1 = if Flag_R then 0 else T3_R
-
-			local Sum = R + Z
-			Sum = if Sum >= Modulus then Sum - Modulus else Sum
-
-			local T2_V = Sum + T0 - 1
-			local T3_V = math.floor(T2_V / Alpha)
-			local T4_V = T3_V * Alpha
-			local R0_V = if Sum >= T4_V then Sum - T4_V else Sum - T4_V + Modulus
-			local T5_V = if Sum >= R0_V then Sum - R0_V else Sum - R0_V + Modulus
-			local Flag_V = (T5_V == T1)
-			local V1 = if Flag_V then 0 else T3_V
-
-			local Hint = if R1 ~= V1 then 1 else 0
-			buffer.writeu32(PolyC, JOffset, Hint)
+			local T3R = math.floor((R + T0 - 1) / Alpha)
+			local R1 = bit32.band(T3R, NonZeroMask(T3R - M))
+			local Sum = WrapNegative(R + Z - Modulus)
+			local T3V = math.floor((Sum + T0 - 1) / Alpha)
+			local V1 = bit32.band(T3V, NonZeroMask(T3V - M))
+			buffer.writeu32(PolyC, JOffset, math.min(1, bit32.bxor(R1, V1)))
 		end
 	end
 end
@@ -629,39 +527,36 @@ end
 function PolyVec.UseHint(PolyH: buffer, PolyR: buffer, PolyRZ: buffer, K: number, Alpha: number)
 	local M = math.floor((Q - 1) / Alpha)
 	local T0 = bit32.rshift(Alpha, 1)
-	local T1 = Q - T0
-	local T1_Q = Q - 1
-	local Modulus = Q
 
 	for I = 0, K - 1 do
 		local Offset = I * N * 4
-
 		for J = 0, N - 1 do
 			local JOffset = Offset + J * 4
 			local H = buffer.readu32(PolyH, JOffset)
 			local R = buffer.readu32(PolyR, JOffset)
-
-			local T2 = R + T0 - 1
-			local T3 = math.floor(T2 / Alpha)
-			local T4 = T3 * Alpha
-			
-			local R0 = if R >= T4 then R - T4 else R - T4 + Modulus
-			
-			local T5 = if R >= R0 then R - R0 else R - R0 + Modulus
-			local Flag = (T5 == T1_Q)
-			
-			local R1 = if Flag then 0 else T3
-			local R0_ = if Flag then (if R0 >= 1 then R0 - 1 else R0 - 1 + Modulus) else R0
+			local T3 = math.floor((R + T0 - 1) / Alpha)
+			local R0 = R - T3 * Alpha
+			local R1 = T3
+			if T3 == M then
+				R1 = 0
+				R0 -= 1
+			end
 
 			if H == 1 then
-				if R0_ > 0 and R0_ < T1 then
+				if R0 > 0 then
 					R1 += 1
 				else
 					R1 -= 1
 				end
 			end
 
-			buffer.writeu32(PolyRZ, JOffset, (R1 % M + M) % M)
+			if R1 == M then
+				R1 = 0
+			elseif R1 < 0 then
+				R1 = M - 1
+			end
+
+			buffer.writeu32(PolyRZ, JOffset, R1)
 		end
 	end
 end

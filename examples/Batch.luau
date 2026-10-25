@@ -2,7 +2,7 @@
 	Cryptography library: EdDSA Batch Verification
 	Efficient Verification of Multiple Signatures
 
-	This example shows how u can batch verification of multiple Ed25519 signatures.
+	This example shows how to batch verify multiple Ed25519 signatures.
 	Batch verification is more efficient than verifying signatures individually
 	when you need to validate many signatures at once.
 --]=]
@@ -37,15 +37,15 @@ local Signature3 = EdDSA.Sign(Message3, Signer3Private, Signer3Public)
 local Entries = {
 	{ Message = Message1, PublicKey = Signer1Public, Signature = Signature1 },
 	{ Message = Message2, PublicKey = Signer2Public, Signature = Signature2 },
-	{  Message = Message3, PublicKey = Signer3Public,Signature = Signature3 },
+	{ Message = Message3, PublicKey = Signer3Public, Signature = Signature3 },
 }
 
--- One of the drawbacks is that you do not know which sgnature failed and have to throw out the whole batch
+-- One of the drawbacks is that you do not know which signature failed and have to throw out the whole batch
 local AllValid = EdDSA.VerifyBatch(Entries)
 if AllValid then
 	print("All signatures verified successfully")
 else
-	print("Batch verification failed at least one signature is invalid")
+	print("Batch verification failed, at least one signature is invalid")
 end
 
 -- Show that batch fails if any signature is tampered

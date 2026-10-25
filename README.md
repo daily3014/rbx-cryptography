@@ -109,48 +109,45 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Performance benchmarks conducted in Roblox Studio on AMD Ryzen 5 7600X using Benchmarker by @boatbomber.
+Performance benchmarks conducted in Roblox Studio on AMD Ryzen AI 7 PRO 360 using Benchmarker by @boatbomber.
 
 ### Hashing / Checksum
 
-| Algorithm   | Data Size | This Library | HashLib  | Alternative              | Other Libraries   | Improvement                   |
-| ----------- | --------- | ------------ | -------- | ------------------------ | ----------------- | ----------------------------- |
-| SHA-256     | 20k       | **271 μs**   | 2058 μs  | 493 μs (Old Version)     | 596 μs (Dekkonot) | **7.6x faster** than HashLib  |
-| SHA-512     | 20k       | **421 μs**   | 4348 μs  | 1066 μs (Dekkonot)       | -                 | **10.3x faster** than HashLib |
-| SHA3-512    | 20k       | **826 μs**   | 10.60 ms | -                        | -                 | **12.8x faster** than HashLib |
-| BLAKE3      | 20k       | **133 μs**   | -        | -                        | -                 | -                             |
-| HMAC-BLAKE3 | 20k       | **145 μs**   | -        | -                        | -                 | -                             |
-| KMAC-128    | 20k       | **443 μs**   | -        | -                        | -                 | -                             |
-| KMAC-256    | 20k       | **501 μs**   | -        | -                        | -                 | -                             |
+| Algorithm     | Data Size | This Library | Luau Fallback | HashLib | Dekkonot | Improvement                                                |
+| ------------- | --------- | ------------ | ------------- | ------- | -------- | ---------------------------------------------------------- |
+| SHA-256       | 50 KB     | **121 μs**   | 128 μs        | 933 μs  | 916 μs   | **7.7x faster** than HashLib<br>**7.6x faster** than Dekkonot  |
+| SHA-512       | 50 KB     | **453 μs**   | -             | 1.39 ms | 2.32 ms  | **3.1x faster** than HashLib<br>**5.1x faster** than Dekkonot  |
+| SHA3-512      | 50 KB     | **554 μs**   | -             | 3.46 ms | -        | **6.2x faster** than HashLib                               |
+| BLAKE2b       | 50 KB     | **53 μs**    | 283 μs        | -       | 883 μs   | **16.7x faster** than Dekkonot                             |
+| BLAKE3        | 50 KB     | **8 μs**     | 75 μs         | -       | -        | -                                                          |
+| HMAC-SHA256   | 50 KB     | **142 μs**   | -             | 947 μs  | -        | **6.7x faster** than HashLib                               |
+| HMAC-BLAKE3   | 50 KB     | **26 μs**    | -             | -       | -        | -                                                          |
+| KMAC-128      | 50 KB     | **258 μs**   | -             | -       | -        | -                                                          |
+| KMAC-256      | 50 KB     | **312 μs**   | -             | -       | -        | -                                                          |
 
 ### Encryption
 
-| Algorithm                     | Data Size | This Library | Alternative                                | Other Libraries    | Improvement         |
-| ----------------------------- | --------- | ------------ | ------------------------------------------ | ------------------ | ------------------- |
-| ChaCha20 (Encrypt)            | 20k       | **177 μs**   | 7.87 ms (EncryptedNet)                     | -                  | **44.5x faster**    |
-| ChaCha20 (Roundtrip)          | 20k       | **338 μs**   | ~15 ms (EncryptedNet)                      | -                  | **44.4x faster**    |
-| ChaCha20-Poly1305 (Encrypt)   | 20k       | **232 μs**   | -                                          | -                  | -                   |
-| ChaCha20-Poly1305 (Roundtrip) | 20k       | **448 μs**   | -                                          | -                  | -                   |
-| AES-GCM (Encrypt)             | 20k       | **833 μs**   | 1.877 ms (RobloxGamerPro200007 AES256-CTR) | -                  | **2.3x faster**     |
-| AES-GCM (Roundtrip)           | 20k       | **1.5 ms**   | -                                          | -                  | -                   |
-| XOR (Encrypt)                 | 1 million | **1.10 ms**  | ~49.5 ms (Devfourm)                        | ~171000 ms (daily) | **155,454x faster** |
-| XOR (Roundtrip)               | 1 million | **2.20 ms**  | 98.9 ms (Devfourm)                         | ~342000 ms (daily) | **155,454x faster** |
+| Algorithm               | Data Size | This Library | Alternative                                                       | Improvement                                                       |
+| ----------------------- | --------- | ------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
+| ChaCha20 (Encrypt)      | 50 KB     | **76 μs**    | 696 μs (MrRoblick)<br>12.01 ms (EncryptedNet)                     | **9.2x faster** than MrRoblick<br>**158x faster** than EncryptedNet |
+| AES-256-GCM (Encrypt)   | 50 KB     | **365 μs**   | 926 μs (RobloxGamerPro200007 AES256-CTR, no authentication)       | **2.5x faster**                                                   |
+| XOR (Encrypt)           | 1 MB      | **940 μs**   | -                                                                 | -                                                                 |
 
 ### Digital Signatures & Key Exchange
 
-| Algorithm              | Operation   | Time        | Alternative | Improvement |
-| ---------------------- | ----------- | ----------- | ----------- | ----------- |
-| EdDSA (Roundtrip)      | Sign+Verify | **691 μs**  | -           | -           |
-| ML-DSA-44 (Roundtrip)  | Sign+Verify | **3.65 ms** | -           | -           |
-| ML-KEM-512 (Roundtrip) | Encap+Decap | **754 μs**  | -           | -           |
+| Algorithm  | Operation                                 | Time        | Breakdown                                      |
+| ---------- | ----------------------------------------- | ----------- | ---------------------------------------------- |
+| EdDSA      | Public Key + Sign + Verify (50 KB message) | **1.80 ms** | Sign 1.00 ms, Verify 741 μs                    |
+| ML-DSA-44  | KeyGen + Sign + Verify                    | **TBD**     | -                                              |
+| ML-KEM-512 | KeyGen + Encapsulate + Decapsulate        | **201 μs**  | KeyGen 62 μs, Encapsulate 67 μs, Decapsulate 65 μs |
 
 ### Utilities
 
-| Algorithm          | Data Size | Time       | Alternative                      | Improvement                                               |
-| ------------------ | --------- | ---------- | -------------------------------- | --------------------------------------------------------- |
-| Base64 (Roundtrip) | 1 million | **3.77ms** | Lute: 9.11ms<br>Reselim: 12.08ms | **2.4x faster** than Lute<br>**3.2x faster** than Reselim |
+| Algorithm          | Data Size | This Library | Alternative                                    | Improvement                                                 |
+| ------------------ | --------- | ------------ | ---------------------------------------------- | ----------------------------------------------------------- |
+| Base64 (Roundtrip) | 50 KB     | **128 μs**   | Reselim: 182 μs<br>Lute: 297 μs                | **1.4x faster** than Reselim<br>**2.3x faster** than Lute   |
 
-_Roundtrip: Complete encrypt/decrypt or sign/verify cycle_
+_Roundtrip: Complete encode/decode cycle_
 
 ## Testing
 

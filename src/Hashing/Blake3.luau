@@ -1,21 +1,21 @@
 --[=[
 	Cryptography library: Blake3
-	
+
 	Sizes:
 		Key: 32 bytes
 		Output: variable
-	
+
 	Return type: string (hex)
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
 		local Key = buffer.fromstring(string.rep("k", 32))
-		
+
 		--------Standard Hash--------
 		local Hash = Blake3.Digest(Message, 32)
-		
+
 		--------Keyed Hash--------
 		local KeyedHash = Blake3.DigestKeyed(Message, Key, 32)
-		
+
 		--------Key Derivation--------
 		local Context = buffer.fromstring("my context")
 		local KeyDeriver = Blake3.DeriveKey(Context)
@@ -27,6 +27,8 @@
 --!native
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
+local Conversions = require("../Utilities/Conversions")
+local ToHex = Conversions.ToHex
 
 local Blake3 = {}
 
@@ -58,221 +60,1496 @@ local INITIAL_VECTORS = buffer.create(CV_SIZE) do
 	end
 end
 
-local ENCODE_LOOKUP = buffer.create(256 * 2) do
-	local HexChars = "0123456789abcdef"
-	for Byte = 0, 255 do
-		local HighNibble = bit32.rshift(Byte, 4)
-		local LowNibble = Byte % 16
+local OUTPUT_SCRATCH = buffer.create(EXTENDED_CV_SIZE)
+local STACK_SCRATCH = buffer.create(STACK_BUFFER_SIZE)
+local STATE_CV_SCRATCH = buffer.create(CV_SIZE)
+local MERGE_BLOCK_SCRATCH = buffer.create(EXTENDED_CV_SIZE)
+local MERGE_CV_SCRATCH = buffer.create(CV_SIZE)
+local PADDED_SCRATCH = buffer.create(BLOCK_SIZE)
+local OUTPUT_BLOCK_SCRATCH = buffer.create(EXTENDED_CV_SIZE)
+local LANE_CV_SCRATCH_B = buffer.create(CV_SIZE)
 
-		local HighChar = string.byte(HexChars, HighNibble + 1)
-		local LowChar = string.byte(HexChars, LowNibble + 1)
+local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: number, Counter: number, BlockLength: number, Flags: number, IsFull: boolean?, Storage: buffer?, BlockCount: number?, FirstFlag: number?, LastFlag: number?): buffer
+	local H0 = buffer.readu32(Hash, 0)
+	local H1 = buffer.readu32(Hash, 4)
+	local H2 = buffer.readu32(Hash, 8)
+	local H3 = buffer.readu32(Hash, 12)
+	local H4 = buffer.readu32(Hash, 16)
+	local H5 = buffer.readu32(Hash, 20)
+	local H6 = buffer.readu32(Hash, 24)
+	local H7 = buffer.readu32(Hash, 28)
+	local Count = BlockCount or 1
+	local StartFlag = FirstFlag or 0
+	local EndFlag = LastFlag or 0
+	local CounterLow = Counter % 0x100000000
+	local CounterHigh = (Counter - CounterLow) * (2 ^ -32)
+	local Offset = MessageOffset
+	local MessageData = MessageBlock
 
-		local Combined = HighChar + bit32.lshift(LowChar, 8)
-		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, Combined)
-	end
-end
+	for BlockIndex = 1, Count do
+		local BlockFlags = Flags
+		if BlockIndex == 1 then
+			BlockFlags += StartFlag
+		end
+		if BlockIndex == Count then
+			BlockFlags += EndFlag
+		end
 
-local function Compress(Hash: buffer, MessageBlock: buffer, Counter: number, V14: number, V15: number, IsFull: boolean?): buffer
-	local Hash00 = buffer.readu32(Hash, 0)
-	local Hash01 = buffer.readu32(Hash, 4)
-	local Hash02 = buffer.readu32(Hash, 8)
-	local Hash03 = buffer.readu32(Hash, 12)
-	local Hash04 = buffer.readu32(Hash, 16)
-	local Hash05 = buffer.readu32(Hash, 20)
-	local Hash06 = buffer.readu32(Hash, 24)
-	local Hash07 = buffer.readu32(Hash, 28)
-
-	local V00, V01, V02, V03 = Hash00, Hash01, Hash02, Hash03
-	local V04, V05, V06, V07 = Hash04, Hash05, Hash06, Hash07
-	local V08, V09, V10, V11 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
-
-	local V12 = Counter % (2 ^ 32)
-	local V13 = (Counter - V12) * (2 ^ -32)
-
-	local M00 = buffer.readu32(MessageBlock, 0)
-	local M01 = buffer.readu32(MessageBlock, 4)
-	local M02 = buffer.readu32(MessageBlock, 8)
-	local M03 = buffer.readu32(MessageBlock, 12)
-	local M04 = buffer.readu32(MessageBlock, 16)
-	local M05 = buffer.readu32(MessageBlock, 20)
-	local M06 = buffer.readu32(MessageBlock, 24)
-	local M07 = buffer.readu32(MessageBlock, 28)
-	local M08 = buffer.readu32(MessageBlock, 32)
-	local M09 = buffer.readu32(MessageBlock, 36)
-	local M10 = buffer.readu32(MessageBlock, 40)
-	local M11 = buffer.readu32(MessageBlock, 44)
-	local M12 = buffer.readu32(MessageBlock, 48)
-	local M13 = buffer.readu32(MessageBlock, 52)
-	local M14 = buffer.readu32(MessageBlock, 56)
-	local M15 = buffer.readu32(MessageBlock, 60)
-
-	local Temp
-	for Index = 1, 7 do
-		V00 += V04 + M00; V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
-		V08 += V12; V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
-		V00 += V04 + M01; V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
-		V08 += V12; V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
-
-		V01 += V05 + M02; V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
-		V09 += V13; V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
-		V01 += V05 + M03; V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
-		V09 += V13; V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
-
-		V02 += V06 + M04; V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
-		V10 += V14; V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
-		V02 += V06 + M05; V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
-		V10 += V14; V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
-
-		V03 += V07 + M06; V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
-		V11 += V15; V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
-		V03 += V07 + M07; V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
-		V11 += V15; V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
-
-		V00 += V05 + M08; V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
-		V10 += V15; V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
-		V00 += V05 + M09; V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
-		V10 += V15; V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
-
-		V01 += V06 + M10; V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
-		V11 += V12; V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
-		V01 += V06 + M11; V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
-		V11 += V12; V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
-
-		V02 += V07 + M12; V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
-		V08 += V13; V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
-		V02 += V07 + M13; V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
-		V08 += V13; V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
-
-		V03 += V04 + M14; V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
-		V09 += V14; V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
-		V03 += V04 + M15; V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
-		V09 += V14; V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
-
-		if Index ~= 7 then
-			Temp = M02
-			M02 = M03
-			M03 = M10
-			M10 = M12
-			M12 = M09
-			M09 = M11
-			M11 = M05
-			M05 = M00
-			M00 = Temp
-
-			Temp = M06
-			M06 = M04
-			M04 = M07
-			M07 = M13
-			M13 = M14
-			M14 = M15
-			M15 = M08
-			M08 = M01
-			M01 = Temp
+		local M0 = buffer.readu32(MessageData, Offset + 0)
+		local M1 = buffer.readu32(MessageData, Offset + 4)
+		local M2 = buffer.readu32(MessageData, Offset + 8)
+		local M3 = buffer.readu32(MessageData, Offset + 12)
+		local M4 = buffer.readu32(MessageData, Offset + 16)
+		local M5 = buffer.readu32(MessageData, Offset + 20)
+		local M6 = buffer.readu32(MessageData, Offset + 24)
+		local M7 = buffer.readu32(MessageData, Offset + 28)
+		local M8 = buffer.readu32(MessageData, Offset + 32)
+		local M9 = buffer.readu32(MessageData, Offset + 36)
+		local M10 = buffer.readu32(MessageData, Offset + 40)
+		local M11 = buffer.readu32(MessageData, Offset + 44)
+		local M12 = buffer.readu32(MessageData, Offset + 48)
+		local M13 = buffer.readu32(MessageData, Offset + 52)
+		local M14 = buffer.readu32(MessageData, Offset + 56)
+		local M15 = buffer.readu32(MessageData, Offset + 60)
+		local V00, V01, V02, V03, V04, V05, V06, V07 = H0, H1, H2, H3, H4, H5, H6, H7
+		local V08, V09, V10, V11 = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+		local V12, V13, V14, V15 = CounterLow, CounterHigh, BlockLength, BlockFlags
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M0, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M1, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M2, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M3, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M4, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M5, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M6, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M7, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M8, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M9, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M10, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M11, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M12, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M13, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M14, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M15, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M2, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M6, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M3, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M10, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M7, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M0, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M4, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M13, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M1, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M11, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M12, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M5, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M9, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M14, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M15, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M8, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M3, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M4, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M10, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M12, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M13, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M2, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M7, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M14, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M6, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M5, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M9, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M0, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M11, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M15, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M8, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M1, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M10, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M7, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M12, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M9, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M14, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M3, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M13, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M15, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M4, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M0, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M11, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M2, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M5, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M8, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M1, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M6, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M12, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M13, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M9, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M11, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M15, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M10, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M14, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M8, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M7, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M2, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M5, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M3, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M0, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M1, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M6, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M4, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M9, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M14, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M11, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M5, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M8, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M12, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M15, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M1, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M13, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M3, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M0, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M10, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M2, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M6, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M4, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M7, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		do
+			V00 = bit32.bor(bit32.bor(V00 + M11, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 16)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M15, 0) + V04, 0); V12 = bit32.lrotate(bit32.bxor(V12, V00), 24)
+			V08 = bit32.bor(V08 + V12, 0); V04 = bit32.lrotate(bit32.bxor(V04, V08), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M5, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 16)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M0, 0) + V05, 0); V13 = bit32.lrotate(bit32.bxor(V13, V01), 24)
+			V09 = bit32.bor(V09 + V13, 0); V05 = bit32.lrotate(bit32.bxor(V05, V09), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M1, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 16)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M9, 0) + V06, 0); V14 = bit32.lrotate(bit32.bxor(V14, V02), 24)
+			V10 = bit32.bor(V10 + V14, 0); V06 = bit32.lrotate(bit32.bxor(V06, V10), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M8, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 16)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M6, 0) + V07, 0); V15 = bit32.lrotate(bit32.bxor(V15, V03), 24)
+			V11 = bit32.bor(V11 + V15, 0); V07 = bit32.lrotate(bit32.bxor(V07, V11), 25)
+			V00 = bit32.bor(bit32.bor(V00 + M14, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 16)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 20)
+			V00 = bit32.bor(bit32.bor(V00 + M10, 0) + V05, 0); V15 = bit32.lrotate(bit32.bxor(V15, V00), 24)
+			V10 = bit32.bor(V10 + V15, 0); V05 = bit32.lrotate(bit32.bxor(V05, V10), 25)
+			V01 = bit32.bor(bit32.bor(V01 + M2, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 16)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 20)
+			V01 = bit32.bor(bit32.bor(V01 + M12, 0) + V06, 0); V12 = bit32.lrotate(bit32.bxor(V12, V01), 24)
+			V11 = bit32.bor(V11 + V12, 0); V06 = bit32.lrotate(bit32.bxor(V06, V11), 25)
+			V02 = bit32.bor(bit32.bor(V02 + M3, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 16)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 20)
+			V02 = bit32.bor(bit32.bor(V02 + M4, 0) + V07, 0); V13 = bit32.lrotate(bit32.bxor(V13, V02), 24)
+			V08 = bit32.bor(V08 + V13, 0); V07 = bit32.lrotate(bit32.bxor(V07, V08), 25)
+			V03 = bit32.bor(bit32.bor(V03 + M7, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 16)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 20)
+			V03 = bit32.bor(bit32.bor(V03 + M13, 0) + V04, 0); V14 = bit32.lrotate(bit32.bxor(V14, V03), 24)
+			V09 = bit32.bor(V09 + V14, 0); V04 = bit32.lrotate(bit32.bxor(V04, V09), 25)
+		end
+		if BlockIndex < Count then
+			H0 = bit32.bxor(V00, V08)
+			H1 = bit32.bxor(V01, V09)
+			H2 = bit32.bxor(V02, V10)
+			H3 = bit32.bxor(V03, V11)
+			H4 = bit32.bxor(V04, V12)
+			H5 = bit32.bxor(V05, V13)
+			H6 = bit32.bxor(V06, V14)
+			H7 = bit32.bxor(V07, V15)
+			Offset += BLOCK_SIZE
+		elseif IsFull then
+			local Result = Storage or buffer.create(EXTENDED_CV_SIZE)
+			buffer.writeu32(Result, 60, bit32.bxor(V15, H7))
+			buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
+			buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
+			buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
+			buffer.writeu32(Result, 12, bit32.bxor(V03, V11))
+			buffer.writeu32(Result, 16, bit32.bxor(V04, V12))
+			buffer.writeu32(Result, 20, bit32.bxor(V05, V13))
+			buffer.writeu32(Result, 24, bit32.bxor(V06, V14))
+			buffer.writeu32(Result, 28, bit32.bxor(V07, V15))
+			buffer.writeu32(Result, 32, bit32.bxor(V08, H0))
+			buffer.writeu32(Result, 36, bit32.bxor(V09, H1))
+			buffer.writeu32(Result, 40, bit32.bxor(V10, H2))
+			buffer.writeu32(Result, 44, bit32.bxor(V11, H3))
+			buffer.writeu32(Result, 48, bit32.bxor(V12, H4))
+			buffer.writeu32(Result, 52, bit32.bxor(V13, H5))
+			buffer.writeu32(Result, 56, bit32.bxor(V14, H6))
+			return Result
+		else
+			local Result = Storage or buffer.create(CV_SIZE)
+			buffer.writeu32(Result, 28, bit32.bxor(V07, V15))
+			buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
+			buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
+			buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
+			buffer.writeu32(Result, 12, bit32.bxor(V03, V11))
+			buffer.writeu32(Result, 16, bit32.bxor(V04, V12))
+			buffer.writeu32(Result, 20, bit32.bxor(V05, V13))
+			buffer.writeu32(Result, 24, bit32.bxor(V06, V14))
+			return Result
 		end
 	end
 
-	if IsFull then
-		local Result = buffer.create(EXTENDED_CV_SIZE)
-		buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
-		buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
-		buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
-		buffer.writeu32(Result, 12, bit32.bxor(V03, V11))
-		buffer.writeu32(Result, 16, bit32.bxor(V04, V12))
-		buffer.writeu32(Result, 20, bit32.bxor(V05, V13))
-		buffer.writeu32(Result, 24, bit32.bxor(V06, V14))
-		buffer.writeu32(Result, 28, bit32.bxor(V07, V15))
+	return Storage or buffer.create(CV_SIZE)
+end
 
-		buffer.writeu32(Result, 32, bit32.bxor(V08, Hash00))
-		buffer.writeu32(Result, 36, bit32.bxor(V09, Hash01))
-		buffer.writeu32(Result, 40, bit32.bxor(V10, Hash02))
-		buffer.writeu32(Result, 44, bit32.bxor(V11, Hash03))
-		buffer.writeu32(Result, 48, bit32.bxor(V12, Hash04))
-		buffer.writeu32(Result, 52, bit32.bxor(V13, Hash05))
-		buffer.writeu32(Result, 56, bit32.bxor(V14, Hash06))
-		buffer.writeu32(Result, 60, bit32.bxor(V15, Hash07))
-
-		return Result
-	else
-		local Result = buffer.create(CV_SIZE)
-		buffer.writeu32(Result, 0, bit32.bxor(V00, V08))
-		buffer.writeu32(Result, 4, bit32.bxor(V01, V09))
-		buffer.writeu32(Result, 8, bit32.bxor(V02, V10))
-		buffer.writeu32(Result, 12, bit32.bxor(V03, V11))
-		buffer.writeu32(Result, 16, bit32.bxor(V04, V12))
-		buffer.writeu32(Result, 20, bit32.bxor(V05, V13))
-		buffer.writeu32(Result, 24, bit32.bxor(V06, V14))
-		buffer.writeu32(Result, 28, bit32.bxor(V07, V15))
-
-		return Result
+local function CompressLanes(Hash: buffer, Message: buffer, Offset: number, Counter: number, Flags: number, StorageA: buffer, StorageB: buffer)
+	local HA0 = buffer.readu32(Hash, 0)
+	local HB0 = HA0
+	local HA1 = buffer.readu32(Hash, 4)
+	local HB1 = HA1
+	local HA2 = buffer.readu32(Hash, 8)
+	local HB2 = HA2
+	local HA3 = buffer.readu32(Hash, 12)
+	local HB3 = HA3
+	local HA4 = buffer.readu32(Hash, 16)
+	local HB4 = HA4
+	local HA5 = buffer.readu32(Hash, 20)
+	local HB5 = HA5
+	local HA6 = buffer.readu32(Hash, 24)
+	local HB6 = HA6
+	local HA7 = buffer.readu32(Hash, 28)
+	local HB7 = HA7
+	local CounterLowA = Counter % 0x100000000
+	local CounterHighA = (Counter - CounterLowA) * (2 ^ -32)
+	local CounterLowB = (Counter + 1) % 0x100000000
+	local CounterHighB = ((Counter + 1) - CounterLowB) * (2 ^ -32)
+	for BlockIndex = 0, 15 do
+		local BlockFlags = Flags + (if BlockIndex == 0 then CHUNK_START elseif BlockIndex == 15 then CHUNK_END else 0)
+		local Base = Offset + BlockIndex * 64
+		local M0A = buffer.readu32(Message, Base + 0)
+		local M1A = buffer.readu32(Message, Base + 4)
+		local M2A = buffer.readu32(Message, Base + 8)
+		local M3A = buffer.readu32(Message, Base + 12)
+		local M4A = buffer.readu32(Message, Base + 16)
+		local M5A = buffer.readu32(Message, Base + 20)
+		local M6A = buffer.readu32(Message, Base + 24)
+		local M7A = buffer.readu32(Message, Base + 28)
+		local M8A = buffer.readu32(Message, Base + 32)
+		local M9A = buffer.readu32(Message, Base + 36)
+		local M10A = buffer.readu32(Message, Base + 40)
+		local M11A = buffer.readu32(Message, Base + 44)
+		local M12A = buffer.readu32(Message, Base + 48)
+		local M13A = buffer.readu32(Message, Base + 52)
+		local M14A = buffer.readu32(Message, Base + 56)
+		local M15A = buffer.readu32(Message, Base + 60)
+		local M0B = buffer.readu32(Message, Base + 1024)
+		local M1B = buffer.readu32(Message, Base + 1028)
+		local M2B = buffer.readu32(Message, Base + 1032)
+		local M3B = buffer.readu32(Message, Base + 1036)
+		local M4B = buffer.readu32(Message, Base + 1040)
+		local M5B = buffer.readu32(Message, Base + 1044)
+		local M6B = buffer.readu32(Message, Base + 1048)
+		local M7B = buffer.readu32(Message, Base + 1052)
+		local M8B = buffer.readu32(Message, Base + 1056)
+		local M9B = buffer.readu32(Message, Base + 1060)
+		local M10B = buffer.readu32(Message, Base + 1064)
+		local M11B = buffer.readu32(Message, Base + 1068)
+		local M12B = buffer.readu32(Message, Base + 1072)
+		local M13B = buffer.readu32(Message, Base + 1076)
+		local M14B = buffer.readu32(Message, Base + 1080)
+		local M15B = buffer.readu32(Message, Base + 1084)
+		local V00A, V01A, V02A, V03A, V04A, V05A, V06A, V07A = HA0, HA1, HA2, HA3, HA4, HA5, HA6, HA7
+		local V08A, V09A, V10A, V11A = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+		local V12A, V13A, V14A, V15A = CounterLowA, CounterHighA, BLOCK_SIZE, BlockFlags
+		local V00B, V01B, V02B, V03B, V04B, V05B, V06B, V07B = HB0, HB1, HB2, HB3, HB4, HB5, HB6, HB7
+		local V08B, V09B, V10B, V11B = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+		local V12B, V13B, V14B, V15B = CounterLowB, CounterHighB, BLOCK_SIZE, BlockFlags
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M0A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M0B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M1A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M1B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M2A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M2B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M3A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M3B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M4A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M4B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M5A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M5B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M6A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M6B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M7A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M7B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M8A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M8B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M9A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M9B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M10A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M10B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M11A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M11B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M12A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M12B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M13A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M13B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M14A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M14B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M15A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M15B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M2A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M2B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M6A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M6B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M3A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M3B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M10A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M10B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M7A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M7B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M0A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M0B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M4A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M4B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M13A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M13B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M1A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M1B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M11A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M11B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M12A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M12B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M5A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M5B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M9A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M9B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M14A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M14B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M15A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M15B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M8A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M8B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M3A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M3B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M4A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M4B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M10A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M10B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M12A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M12B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M13A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M13B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M2A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M2B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M7A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M7B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M14A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M14B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M6A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M6B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M5A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M5B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M9A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M9B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M0A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M0B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M11A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M11B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M15A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M15B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M8A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M8B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M1A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M1B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M10A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M10B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M7A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M7B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M12A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M12B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M9A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M9B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M14A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M14B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M3A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M3B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M13A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M13B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M15A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M15B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M4A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M4B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M0A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M0B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M11A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M11B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M2A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M2B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M5A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M5B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M8A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M8B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M1A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M1B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M6A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M6B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M12A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M12B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M13A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M13B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M9A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M9B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M11A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M11B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M15A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M15B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M10A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M10B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M14A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M14B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M8A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M8B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M7A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M7B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M2A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M2B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M5A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M5B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M3A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M3B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M0A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M0B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M1A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M1B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M6A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M6B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M4A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M4B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M9A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M9B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M14A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M14B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M11A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M11B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M5A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M5B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M8A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M8B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M12A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M12B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M15A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M15B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M1A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M1B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M13A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M13B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M3A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M3B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M0A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M0B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M10A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M10B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M2A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M2B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M6A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M6B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M4A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M4B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M7A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M7B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M11A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M11B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M15A, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M15B, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M5A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M5B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M0A, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M0B, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M1A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M1B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M9A, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M9B, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M8A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M8B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M6A, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M6B, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M14A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M14B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M10A, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M10B, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M2A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M2B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M12A, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M12B, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M3A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M3B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M4A, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M4B, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M7A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M7B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M13A, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M13B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		HA0 = bit32.bxor(V00A, V08A)
+		HA1 = bit32.bxor(V01A, V09A)
+		HA2 = bit32.bxor(V02A, V10A)
+		HA3 = bit32.bxor(V03A, V11A)
+		HA4 = bit32.bxor(V04A, V12A)
+		HA5 = bit32.bxor(V05A, V13A)
+		HA6 = bit32.bxor(V06A, V14A)
+		HA7 = bit32.bxor(V07A, V15A)
+		HB0 = bit32.bxor(V00B, V08B)
+		HB1 = bit32.bxor(V01B, V09B)
+		HB2 = bit32.bxor(V02B, V10B)
+		HB3 = bit32.bxor(V03B, V11B)
+		HB4 = bit32.bxor(V04B, V12B)
+		HB5 = bit32.bxor(V05B, V13B)
+		HB6 = bit32.bxor(V06B, V14B)
+		HB7 = bit32.bxor(V07B, V15B)
 	end
+	buffer.writeu32(StorageA, 0, HA0)
+	buffer.writeu32(StorageA, 4, HA1)
+	buffer.writeu32(StorageA, 8, HA2)
+	buffer.writeu32(StorageA, 12, HA3)
+	buffer.writeu32(StorageA, 16, HA4)
+	buffer.writeu32(StorageA, 20, HA5)
+	buffer.writeu32(StorageA, 24, HA6)
+	buffer.writeu32(StorageA, 28, HA7)
+	buffer.writeu32(StorageB, 0, HB0)
+	buffer.writeu32(StorageB, 4, HB1)
+	buffer.writeu32(StorageB, 8, HB2)
+	buffer.writeu32(StorageB, 12, HB3)
+	buffer.writeu32(StorageB, 16, HB4)
+	buffer.writeu32(StorageB, 20, HB5)
+	buffer.writeu32(StorageB, 24, HB6)
+	buffer.writeu32(StorageB, 28, HB7)
+end
+
+local function OutputLanes(Cv: buffer, Block: buffer, Counter: number, BlockLength: number, Flags: number, Output: buffer, OutputOffset: number)
+	local H0 = buffer.readu32(Cv, 0)
+	local H1 = buffer.readu32(Cv, 4)
+	local H2 = buffer.readu32(Cv, 8)
+	local H3 = buffer.readu32(Cv, 12)
+	local H4 = buffer.readu32(Cv, 16)
+	local H5 = buffer.readu32(Cv, 20)
+	local H6 = buffer.readu32(Cv, 24)
+	local H7 = buffer.readu32(Cv, 28)
+	local M0 = buffer.readu32(Block, 0)
+	local M1 = buffer.readu32(Block, 4)
+	local M2 = buffer.readu32(Block, 8)
+	local M3 = buffer.readu32(Block, 12)
+	local M4 = buffer.readu32(Block, 16)
+	local M5 = buffer.readu32(Block, 20)
+	local M6 = buffer.readu32(Block, 24)
+	local M7 = buffer.readu32(Block, 28)
+	local M8 = buffer.readu32(Block, 32)
+	local M9 = buffer.readu32(Block, 36)
+	local M10 = buffer.readu32(Block, 40)
+	local M11 = buffer.readu32(Block, 44)
+	local M12 = buffer.readu32(Block, 48)
+	local M13 = buffer.readu32(Block, 52)
+	local M14 = buffer.readu32(Block, 56)
+	local M15 = buffer.readu32(Block, 60)
+	local CounterLowA = Counter % 0x100000000
+	local CounterHighA = (Counter - CounterLowA) * (2 ^ -32)
+	local CounterLowB = (Counter + 1) % 0x100000000
+	local CounterHighB = ((Counter + 1) - CounterLowB) * (2 ^ -32)
+	local V00A, V01A, V02A, V03A, V04A, V05A, V06A, V07A = H0, H1, H2, H3, H4, H5, H6, H7
+	local V08A, V09A, V10A, V11A = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+	local V12A, V13A, V14A, V15A = CounterLowA, CounterHighA, BlockLength, Flags
+	local V00B, V01B, V02B, V03B, V04B, V05B, V06B, V07B = H0, H1, H2, H3, H4, H5, H6, H7
+	local V08B, V09B, V10B, V11B = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
+	local V12B, V13B, V14B, V15B = CounterLowB, CounterHighB, BlockLength, Flags
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M0, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M0, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M1, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M1, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M2, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M2, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M3, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M3, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M4, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M4, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M5, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M5, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M6, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M6, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M7, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M7, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M8, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M8, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M9, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M9, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M10, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M10, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M11, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M11, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M12, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M12, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M13, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M13, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M14, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M14, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M15, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M15, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M2, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M2, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M6, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M6, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M3, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M3, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M10, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M10, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M7, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M7, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M0, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M0, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M4, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M4, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M13, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M13, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M1, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M1, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M11, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M11, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M12, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M12, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M5, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M5, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M9, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M9, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M14, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M14, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M15, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M15, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M8, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M8, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M3, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M3, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M4, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M4, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M10, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M10, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M12, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M12, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M13, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M13, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M2, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M2, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M7, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M7, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M14, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M14, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M6, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M6, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M5, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M5, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M9, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M9, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M0, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M0, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M11, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M11, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M15, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M15, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M8, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M8, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M1, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M1, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M10, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M10, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M7, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M7, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M12, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M12, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M9, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M9, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M14, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M14, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M3, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M3, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M13, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M13, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M15, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M15, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M4, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M4, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M0, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M0, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M11, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M11, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M2, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M2, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M5, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M5, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M8, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M8, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M1, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M1, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M6, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M6, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M12, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M12, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M13, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M13, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M9, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M9, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M11, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M11, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M15, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M15, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M10, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M10, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M14, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M14, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M8, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M8, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M7, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M7, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M2, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M2, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M5, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M5, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M3, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M3, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M0, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M0, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M1, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M1, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M6, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M6, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M4, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M4, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M9, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M9, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M14, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M14, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M11, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M11, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M5, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M5, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M8, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M8, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M12, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M12, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M15, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M15, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M1, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M1, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M13, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M13, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M3, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M3, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M0, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M0, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M10, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M10, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M2, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M2, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M6, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M6, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M4, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M4, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M7, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M7, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+		do
+			V00A = bit32.bor(bit32.bor(V00A + M11, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 16)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M11, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 16)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M15, 0) + V04A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V00A), 24)
+			V08A = bit32.bor(V08A + V12A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V08A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M15, 0) + V04B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V00B), 24)
+			V08B = bit32.bor(V08B + V12B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V08B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M5, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 16)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M5, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 16)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M0, 0) + V05A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V01A), 24)
+			V09A = bit32.bor(V09A + V13A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V09A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M0, 0) + V05B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V01B), 24)
+			V09B = bit32.bor(V09B + V13B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V09B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M1, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 16)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M1, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 16)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M9, 0) + V06A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V02A), 24)
+			V10A = bit32.bor(V10A + V14A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V10A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M9, 0) + V06B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V02B), 24)
+			V10B = bit32.bor(V10B + V14B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V10B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M8, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 16)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M8, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 16)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M6, 0) + V07A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V03A), 24)
+			V11A = bit32.bor(V11A + V15A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V11A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M6, 0) + V07B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V03B), 24)
+			V11B = bit32.bor(V11B + V15B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V11B), 25)
+			V00A = bit32.bor(bit32.bor(V00A + M14, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 16)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 20)
+			V00B = bit32.bor(bit32.bor(V00B + M14, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 16)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 20)
+			V00A = bit32.bor(bit32.bor(V00A + M10, 0) + V05A, 0); V15A = bit32.lrotate(bit32.bxor(V15A, V00A), 24)
+			V10A = bit32.bor(V10A + V15A, 0); V05A = bit32.lrotate(bit32.bxor(V05A, V10A), 25)
+			V00B = bit32.bor(bit32.bor(V00B + M10, 0) + V05B, 0); V15B = bit32.lrotate(bit32.bxor(V15B, V00B), 24)
+			V10B = bit32.bor(V10B + V15B, 0); V05B = bit32.lrotate(bit32.bxor(V05B, V10B), 25)
+			V01A = bit32.bor(bit32.bor(V01A + M2, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 16)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 20)
+			V01B = bit32.bor(bit32.bor(V01B + M2, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 16)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 20)
+			V01A = bit32.bor(bit32.bor(V01A + M12, 0) + V06A, 0); V12A = bit32.lrotate(bit32.bxor(V12A, V01A), 24)
+			V11A = bit32.bor(V11A + V12A, 0); V06A = bit32.lrotate(bit32.bxor(V06A, V11A), 25)
+			V01B = bit32.bor(bit32.bor(V01B + M12, 0) + V06B, 0); V12B = bit32.lrotate(bit32.bxor(V12B, V01B), 24)
+			V11B = bit32.bor(V11B + V12B, 0); V06B = bit32.lrotate(bit32.bxor(V06B, V11B), 25)
+			V02A = bit32.bor(bit32.bor(V02A + M3, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 16)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 20)
+			V02B = bit32.bor(bit32.bor(V02B + M3, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 16)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 20)
+			V02A = bit32.bor(bit32.bor(V02A + M4, 0) + V07A, 0); V13A = bit32.lrotate(bit32.bxor(V13A, V02A), 24)
+			V08A = bit32.bor(V08A + V13A, 0); V07A = bit32.lrotate(bit32.bxor(V07A, V08A), 25)
+			V02B = bit32.bor(bit32.bor(V02B + M4, 0) + V07B, 0); V13B = bit32.lrotate(bit32.bxor(V13B, V02B), 24)
+			V08B = bit32.bor(V08B + V13B, 0); V07B = bit32.lrotate(bit32.bxor(V07B, V08B), 25)
+			V03A = bit32.bor(bit32.bor(V03A + M7, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 16)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 20)
+			V03B = bit32.bor(bit32.bor(V03B + M7, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 16)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 20)
+			V03A = bit32.bor(bit32.bor(V03A + M13, 0) + V04A, 0); V14A = bit32.lrotate(bit32.bxor(V14A, V03A), 24)
+			V09A = bit32.bor(V09A + V14A, 0); V04A = bit32.lrotate(bit32.bxor(V04A, V09A), 25)
+			V03B = bit32.bor(bit32.bor(V03B + M13, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
+			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
+		end
+	buffer.writeu32(Output, OutputOffset + 60, bit32.bxor(V15A, H7))
+	buffer.writeu32(Output, OutputOffset + 0, bit32.bxor(V00A, V08A))
+	buffer.writeu32(Output, OutputOffset + 4, bit32.bxor(V01A, V09A))
+	buffer.writeu32(Output, OutputOffset + 8, bit32.bxor(V02A, V10A))
+	buffer.writeu32(Output, OutputOffset + 12, bit32.bxor(V03A, V11A))
+	buffer.writeu32(Output, OutputOffset + 16, bit32.bxor(V04A, V12A))
+	buffer.writeu32(Output, OutputOffset + 20, bit32.bxor(V05A, V13A))
+	buffer.writeu32(Output, OutputOffset + 24, bit32.bxor(V06A, V14A))
+	buffer.writeu32(Output, OutputOffset + 28, bit32.bxor(V07A, V15A))
+	buffer.writeu32(Output, OutputOffset + 32, bit32.bxor(V08A, H0))
+	buffer.writeu32(Output, OutputOffset + 36, bit32.bxor(V09A, H1))
+	buffer.writeu32(Output, OutputOffset + 40, bit32.bxor(V10A, H2))
+	buffer.writeu32(Output, OutputOffset + 44, bit32.bxor(V11A, H3))
+	buffer.writeu32(Output, OutputOffset + 48, bit32.bxor(V12A, H4))
+	buffer.writeu32(Output, OutputOffset + 52, bit32.bxor(V13A, H5))
+	buffer.writeu32(Output, OutputOffset + 56, bit32.bxor(V14A, H6))
+	buffer.writeu32(Output, OutputOffset + 64 + 60, bit32.bxor(V15B, H7))
+	buffer.writeu32(Output, OutputOffset + 64 + 0, bit32.bxor(V00B, V08B))
+	buffer.writeu32(Output, OutputOffset + 64 + 4, bit32.bxor(V01B, V09B))
+	buffer.writeu32(Output, OutputOffset + 64 + 8, bit32.bxor(V02B, V10B))
+	buffer.writeu32(Output, OutputOffset + 64 + 12, bit32.bxor(V03B, V11B))
+	buffer.writeu32(Output, OutputOffset + 64 + 16, bit32.bxor(V04B, V12B))
+	buffer.writeu32(Output, OutputOffset + 64 + 20, bit32.bxor(V05B, V13B))
+	buffer.writeu32(Output, OutputOffset + 64 + 24, bit32.bxor(V06B, V14B))
+	buffer.writeu32(Output, OutputOffset + 64 + 28, bit32.bxor(V07B, V15B))
+	buffer.writeu32(Output, OutputOffset + 64 + 32, bit32.bxor(V08B, H0))
+	buffer.writeu32(Output, OutputOffset + 64 + 36, bit32.bxor(V09B, H1))
+	buffer.writeu32(Output, OutputOffset + 64 + 40, bit32.bxor(V10B, H2))
+	buffer.writeu32(Output, OutputOffset + 64 + 44, bit32.bxor(V11B, H3))
+	buffer.writeu32(Output, OutputOffset + 64 + 48, bit32.bxor(V12B, H4))
+	buffer.writeu32(Output, OutputOffset + 64 + 52, bit32.bxor(V13B, H5))
+	buffer.writeu32(Output, OutputOffset + 64 + 56, bit32.bxor(V14B, H6))
 end
 
 local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message: buffer, Length: number): buffer
 	local MessageLength = buffer.len(Message)
-	local StateCvs = buffer.create(STACK_BUFFER_SIZE)
-	local StateCv = buffer.create(CV_SIZE)
+	local StateCvs = STACK_SCRATCH
+	local StateCv = STATE_CV_SCRATCH
 
 	local StackSize = 0
 	local StateCounter = 0
 
-	local StateChunkNumber = 0
-	local StateEndFlag = 0
-
-	local BlockSize = BLOCK_SIZE
-	local CvSize = CV_SIZE
-	local ExtendedCvSize = EXTENDED_CV_SIZE
-
+	local ChunkBytes = 16 * BLOCK_SIZE
 	local StateStartFlag = CHUNK_START
-	local ChunkStart = CHUNK_START
-	local ChunkEnd = CHUNK_END
+	local FlagsParent = Flags + PARENT_FLAG
 
-	local ParentFlag = PARENT_FLAG
-	local RootFlag = ROOT_FLAG
-	local FlagsParent = Flags + ParentFlag
+	local MergeBlock = MERGE_BLOCK_SCRATCH
+	local MergeCvScratch = MERGE_CV_SCRATCH
 
-	local BlockBuffer = buffer.create(BlockSize)
-	local PopCv = buffer.create(CvSize)
-	local MergeBlock = buffer.create(ExtendedCvSize)
-	local StackCv = buffer.create(CvSize)
-	local Block = buffer.create(ExtendedCvSize)
+	buffer.copy(StateCv, 0, InitialHashVector, 0, CV_SIZE)
 
-	buffer.copy(StateCv, 0, InitialHashVector, 0, CvSize)
+	local function PushChunk(ChunkCv: buffer, ChunkCount: number)
+		local MergeCv = ChunkCv
+		local MergeAmount = ChunkCount
 
-	for BlockOffset = 0, MessageLength - BlockSize - 1, BlockSize do
-		buffer.copy(BlockBuffer, 0, Message, BlockOffset, BlockSize)
-		local StateFlags = Flags + StateStartFlag + StateEndFlag
-		StateCv = Compress(StateCv, BlockBuffer, StateCounter, BlockSize, StateFlags)
-		StateStartFlag = 0
-		StateChunkNumber += 1
+		while MergeAmount % 2 == 0 do
+			StackSize -= 1
+			buffer.copy(MergeBlock, 0, StateCvs, StackSize * CV_SIZE, CV_SIZE)
+			buffer.copy(MergeBlock, CV_SIZE, MergeCv, 0, CV_SIZE)
+			MergeCv = Compress(InitialHashVector, MergeBlock, 0, 0, BLOCK_SIZE, FlagsParent, false, MergeCvScratch)
+			MergeAmount /= 2
+		end
 
-		if StateChunkNumber == 15 then
-			StateEndFlag = ChunkEnd
-		elseif StateChunkNumber == 16 then
-			local MergeCv = StateCv
-			local MergeAmount = StateCounter + 1
+		buffer.copy(StateCvs, StackSize * CV_SIZE, MergeCv, 0, CV_SIZE)
+		StackSize += 1
+	end
 
-			while MergeAmount % 2 == 0 do
-				StackSize -= 1
-				buffer.copy(PopCv, 0, StateCvs, StackSize * CvSize, CvSize)
-				buffer.copy(MergeBlock, 0, PopCv, 0, CvSize)
-				buffer.copy(MergeBlock, CvSize, MergeCv, 0, CvSize)
-				MergeCv = Compress(InitialHashVector, MergeBlock, 0, BlockSize, FlagsParent)
-				MergeAmount /= 2
-			end
-
-			buffer.copy(StateCvs, StackSize * CvSize, MergeCv, 0, CvSize)
-			StackSize += 1
-
-			buffer.copy(StateCv, 0, InitialHashVector, 0, CvSize)
-			StateStartFlag = ChunkStart
+	local BlockOffset = 0
+	while BlockOffset < MessageLength - BLOCK_SIZE do
+		local Remaining = MessageLength - BlockOffset
+		if Remaining > 2 * ChunkBytes then
+			CompressLanes(InitialHashVector, Message, BlockOffset, StateCounter, Flags, StateCv, LANE_CV_SCRATCH_B)
+			BlockOffset += 2 * ChunkBytes
+			PushChunk(StateCv, StateCounter + 1)
+			PushChunk(LANE_CV_SCRATCH_B, StateCounter + 2)
+			StateCounter += 2
+		elseif Remaining <= ChunkBytes then
+			local Count = (Remaining - 1) // BLOCK_SIZE
+			Compress(InitialHashVector, Message, BlockOffset, StateCounter, BLOCK_SIZE, Flags, false, StateCv, Count, CHUNK_START, 0)
+			BlockOffset += Count * BLOCK_SIZE
+			StateStartFlag = 0
+		else
+			Compress(InitialHashVector, Message, BlockOffset, StateCounter, BLOCK_SIZE, Flags, false, StateCv, 16, CHUNK_START, CHUNK_END)
+			BlockOffset += ChunkBytes
+			PushChunk(StateCv, StateCounter + 1)
 			StateCounter += 1
-			StateChunkNumber = 0
-			StateEndFlag = 0
 		end
 	end
 
-	local LastLength = MessageLength == 0 and 0 or ((MessageLength - 1) % BlockSize + 1)
-	local PaddedMessage = buffer.create(BlockSize)
+	if StateStartFlag == CHUNK_START then
+		buffer.copy(StateCv, 0, InitialHashVector, 0, CV_SIZE)
+	end
+
+	local LastLength = if MessageLength == 0 then 0 else (MessageLength - 1) % BLOCK_SIZE + 1
+	local PaddedMessage = PADDED_SCRATCH
+	buffer.fill(PaddedMessage, 0, 0, BLOCK_SIZE)
 	if LastLength > 0 then
 		buffer.copy(PaddedMessage, 0, Message, MessageLength - LastLength, LastLength)
 	end
@@ -283,85 +1560,67 @@ local function ProcessMessage(InitialHashVector: buffer, Flags: number, Message:
 	local OutputFlags: number
 
 	if StateCounter > 0 then
-		local StateFlags = Flags + StateStartFlag + ChunkEnd
-		local MergeCv = Compress(StateCv, PaddedMessage, StateCounter, LastLength, StateFlags)
+		local StateFlags = Flags + StateStartFlag + CHUNK_END
+		local MergeCv = Compress(StateCv, PaddedMessage, 0, StateCounter, LastLength, StateFlags, false, MergeCvScratch)
 		for Index = StackSize, 2, -1 do
-			buffer.copy(StackCv, 0, StateCvs, (Index - 1) * CvSize, CvSize)
-			buffer.copy(Block, 0, StackCv, 0, CvSize)
-			buffer.copy(Block, CvSize, MergeCv, 0, CvSize)
-			MergeCv = Compress(InitialHashVector, Block, 0, BlockSize, FlagsParent)
+			buffer.copy(MergeBlock, 0, StateCvs, (Index - 1) * CV_SIZE, CV_SIZE)
+			buffer.copy(MergeBlock, CV_SIZE, MergeCv, 0, CV_SIZE)
+			MergeCv = Compress(InitialHashVector, MergeBlock, 0, 0, BLOCK_SIZE, FlagsParent, false, MergeCvScratch)
 		end
 
 		OutputCv = InitialHashVector
-		local FirstStackCv = buffer.create(CvSize)
-		buffer.copy(FirstStackCv, 0, StateCvs, 0, CvSize)
-		OutputBlock = buffer.create(ExtendedCvSize)
+		OutputBlock = OUTPUT_BLOCK_SCRATCH
+		buffer.copy(OutputBlock, 0, StateCvs, 0, CV_SIZE)
+		buffer.copy(OutputBlock, CV_SIZE, MergeCv, 0, CV_SIZE)
 
-		buffer.copy(OutputBlock, 0, FirstStackCv, 0, CvSize)
-		buffer.copy(OutputBlock, CvSize, MergeCv, 0, CvSize)
-
-		OutputLength = BlockSize
-		OutputFlags = Flags + RootFlag + ParentFlag
+		OutputLength = BLOCK_SIZE
+		OutputFlags = Flags + ROOT_FLAG + PARENT_FLAG
 	else
 		OutputCv = StateCv
 		OutputBlock = PaddedMessage
 		OutputLength = LastLength
-		OutputFlags = Flags + StateStartFlag + ChunkEnd + RootFlag
+		OutputFlags = Flags + StateStartFlag + CHUNK_END + ROOT_FLAG
 	end
 
 	local Output = buffer.create(Length)
-	local OutputOffset = 0
-	for Index = 0, Length // BlockSize do
-		local MessageDigest = Compress(OutputCv, OutputBlock, Index, OutputLength, OutputFlags, true)
-		local BytesToCopy = math.min(BlockSize, Length - OutputOffset)
-		buffer.copy(Output, OutputOffset, MessageDigest, 0, BytesToCopy)
+	local OutputScratch = OUTPUT_SCRATCH
+	local Groups = Length // (2 * BLOCK_SIZE)
+
+	for Group = 0, Groups - 1 do
+		OutputLanes(OutputCv, OutputBlock, Group * 2, OutputLength, OutputFlags, Output, Group * 2 * BLOCK_SIZE)
+	end
+
+	local Index = Groups * 2
+	local OutputOffset = Index * BLOCK_SIZE
+	while OutputOffset < Length do
+		Compress(OutputCv, OutputBlock, 0, Index, OutputLength, OutputFlags, true, OutputScratch)
+		local BytesToCopy = math.min(BLOCK_SIZE, Length - OutputOffset)
+		buffer.copy(Output, OutputOffset, OutputScratch, 0, BytesToCopy)
 		OutputOffset += BytesToCopy
-		if OutputOffset >= Length then
-			break
-		end
+		Index += 1
 	end
 
 	return Output
 end
 
-local function ToHex(Buffer: buffer): string
-	local Length = buffer.len(Buffer)
-	local Hex = buffer.create(Length * 2)
+local function ValidateLength(Length: number?)
+	if Length then
+		if typeof(Length) ~= "number" then
+			error(`Length must be a number, got {typeof(Length)}`, 3)
+		end
 
-	local Lookup = ENCODE_LOOKUP
+		if Length ~= math.floor(Length) then
+			error(`Length must be an integer, got {Length}`, 3)
+		end
 
-	local Leftover = Length % 8
-	local HexCursor = 0
+		if Length < BLAKE3_MIN_OUTPUT_BYTES then
+			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 3)
+		end
 
-	for Index = 0, Length - Leftover - 1, 8 do
-		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
-		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2)
-		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2)
-		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2)
-		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2)
-		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2)
-		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2)
-		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2)
-
-		buffer.writeu16(Hex, HexCursor, Hex1)
-		buffer.writeu16(Hex, HexCursor + 2, Hex2)
-		buffer.writeu16(Hex, HexCursor + 4, Hex3)
-		buffer.writeu16(Hex, HexCursor + 6, Hex4)
-		buffer.writeu16(Hex, HexCursor + 8, Hex5)
-		buffer.writeu16(Hex, HexCursor + 10, Hex6)
-		buffer.writeu16(Hex, HexCursor + 12, Hex7)
-		buffer.writeu16(Hex, HexCursor + 14, Hex8)
-
-		HexCursor += 16
+		if Length > BLAKE3_MAX_OUTPUT_BYTES then
+			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 3)
+		end
 	end
-
-	for Index = Length - Leftover, Length - 1 do
-		local HexPair = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
-		buffer.writeu16(Hex, HexCursor, HexPair)
-		HexCursor += 2
-	end
-
-	return buffer.tostring(Hex)
 end
 
 function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
@@ -373,23 +1632,7 @@ function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	if Length then
-		if typeof(Length) ~= "number" then
-			error(`Length must be a number, got {typeof(Length)}`, 2)
-		end
-
-		if Length ~= math.floor(Length) then
-			error(`Length must be an integer, got {Length}`, 2)
-		end
-
-		if Length < BLAKE3_MIN_OUTPUT_BYTES then
-			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-		end
-
-		if Length > BLAKE3_MAX_OUTPUT_BYTES then
-			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-		end
-	end
+	ValidateLength(Length)
 
 	if EncodingService and (Length == nil or Length == 32) then
 		local Result = EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Blake3)
@@ -410,23 +1653,7 @@ function Blake3.DigestBuffer(Message: buffer, Length: number?): buffer
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	if Length then
-		if typeof(Length) ~= "number" then
-			error(`Length must be a number, got {typeof(Length)}`, 2)
-		end
-
-		if Length ~= math.floor(Length) then
-			error(`Length must be an integer, got {Length}`, 2)
-		end
-
-		if Length < BLAKE3_MIN_OUTPUT_BYTES then
-			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-		end
-
-		if Length > BLAKE3_MAX_OUTPUT_BYTES then
-			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-		end
-	end
+	ValidateLength(Length)
 
 	if EncodingService and (Length == nil or Length == 32) then
 		return EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Blake3)
@@ -456,20 +1683,7 @@ function Blake3.DigestKeyed(Message: buffer, Key: buffer, Length: number?): (str
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	if Length then
-		if typeof(Length) ~= "number" then
-			error(`Length must be a number, got {typeof(Length)}`, 2)
-		end
-		if Length ~= math.floor(Length) then
-			error(`Length must be an integer, got {Length}`, 2)
-		end
-		if Length < BLAKE3_MIN_OUTPUT_BYTES then
-			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-		end
-		if Length > BLAKE3_MAX_OUTPUT_BYTES then
-			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-		end
-	end
+	ValidateLength(Length)
 
 	local Result = ProcessMessage(Key, HASH_FLAG, Message, Length or 32)
 
@@ -496,23 +1710,7 @@ function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer
 			error(`Material must be a buffer, got {typeof(Material)}`, 2)
 		end
 
-		if Length then
-			if typeof(Length) ~= "number" then
-				error(`Length must be a number, got {typeof(Length)}`, 2)
-			end
-
-			if Length ~= math.floor(Length) then
-				error(`Length must be an integer, got {Length}`, 2)
-			end
-
-			if Length < BLAKE3_MIN_OUTPUT_BYTES then
-				error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 2)
-			end
-
-			if Length > BLAKE3_MAX_OUTPUT_BYTES then
-				error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 2)
-			end
-		end
+		ValidateLength(Length)
 
 		local Result = ProcessMessage(ContextHash, DERIVE_MATERIAL_FLAG, Material, Length or 32)
 

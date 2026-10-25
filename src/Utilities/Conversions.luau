@@ -1,6 +1,6 @@
 --[=[
 	Cryptography library: Conversions
-	
+
 	Return type: string / buffer
 	Example Usage:
 		local HexString = Conversions.ToHex(buffer.fromstring("Hello World"))
@@ -11,49 +11,39 @@
 --!optimize 2
 --!native
 
+local ENCODE_PAIR = buffer.create(65536 * 4)
 local ENCODE_LOOKUP = buffer.create(256 * 2) do
 	local HexChars = "0123456789abcdef"
 	for Byte = 0, 255 do
-		local HighNibble = bit32.rshift(Byte, 4)
-		local LowNibble = Byte % 16
+		local HighChar = string.byte(HexChars, bit32.rshift(Byte, 4) + 1)
+		local LowChar = string.byte(HexChars, bit32.band(Byte, 15) + 1)
+		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, bit32.bor(HighChar, bit32.lshift(LowChar, 8)))
+	end
 
-		local HighChar = string.byte(HexChars, HighNibble + 1)
-		local LowChar = string.byte(HexChars, LowNibble + 1)
-
-		local Combined = HighChar + bit32.lshift(LowChar, 8)
-		buffer.writeu16(ENCODE_LOOKUP, Byte * 2, Combined)
+	for High = 0, 255 do
+		local HighPair = bit32.lshift(buffer.readu16(ENCODE_LOOKUP, High * 2), 16)
+		for Low = 0, 255 do
+			buffer.writeu32(ENCODE_PAIR, (High * 256 + Low) * 4, bit32.bor(buffer.readu16(ENCODE_LOOKUP, Low * 2), HighPair))
+		end
 	end
 end
 
-local DECODE_LOOKUP = buffer.create(65536 * 2) do
-	for High = 0, 255 do
-		for Low = 0, 255 do
-			local HighNibble = 0
-			local LowNibble = 0
+local DECODE_LOOKUP = buffer.create(65536) do
+	local Nibbles = buffer.create(256)
+	for Char = 48, 57 do
+		buffer.writeu8(Nibbles, Char, Char - 48)
+	end
+	for Char = 65, 70 do
+		buffer.writeu8(Nibbles, Char, Char - 55)
+	end
+	for Char = 97, 102 do
+		buffer.writeu8(Nibbles, Char, Char - 87)
+	end
 
-			if High >= 48 and High <= 57 then
-				HighNibble = High - 48
-			elseif High >= 65 and High <= 70 then
-				HighNibble = High - 55
-			elseif High >= 97 and High <= 102 then
-				HighNibble = High - 87
-			else
-				HighNibble = 0
-			end
-
-			if Low >= 48 and Low <= 57 then
-				LowNibble = Low - 48
-			elseif Low >= 65 and Low <= 70 then
-				LowNibble = Low - 55
-			elseif Low >= 97 and Low <= 102 then
-				LowNibble = Low - 87
-			else
-				LowNibble = 0
-			end
-
-			local Combined = bit32.lshift(HighNibble, 4) + LowNibble
-			local Index = bit32.lshift(Low, 8) + High
-			buffer.writeu16(DECODE_LOOKUP, Index * 2, Combined)
+	for Second = 0, 255 do
+		local Low = buffer.readu8(Nibbles, Second)
+		for First = 0, 255 do
+			buffer.writeu8(DECODE_LOOKUP, Second * 256 + First, buffer.readu8(Nibbles, First) * 16 + Low)
 		end
 	end
 end
@@ -63,38 +53,31 @@ local Conversions = {}
 function Conversions.ToHex(Buffer: buffer): string
 	local Length = buffer.len(Buffer)
 	local Hex = buffer.create(Length * 2)
+	local Pairs = ENCODE_PAIR
 
-	local Lookup = ENCODE_LOOKUP
+	local Leftover = Length % 16
+	local Body = Length - Leftover
 
-	local Leftover = Length % 8
-	local HexCursor = 0
+	for Index = 0, Body - 16, 16 do
+		local Word0 = buffer.readu32(Buffer, Index)
+		local Word1 = buffer.readu32(Buffer, Index + 4)
+		local Word2 = buffer.readu32(Buffer, Index + 8)
+		local Word3 = buffer.readu32(Buffer, Index + 12)
+		local Cursor = Index * 2
 
-	for Index = 0, Length - Leftover - 1, 8 do
-		local Hex1 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
-		local Hex2 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 1) * 2)
-		local Hex3 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 2) * 2)
-		local Hex4 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 3) * 2)
-		local Hex5 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 4) * 2)
-		local Hex6 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 5) * 2)
-		local Hex7 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 6) * 2)
-		local Hex8 = buffer.readu16(Lookup, buffer.readu8(Buffer, Index + 7) * 2)
-
-		buffer.writeu16(Hex, HexCursor, Hex1)
-		buffer.writeu16(Hex, HexCursor + 2, Hex2)
-		buffer.writeu16(Hex, HexCursor + 4, Hex3)
-		buffer.writeu16(Hex, HexCursor + 6, Hex4)
-		buffer.writeu16(Hex, HexCursor + 8, Hex5)
-		buffer.writeu16(Hex, HexCursor + 10, Hex6)
-		buffer.writeu16(Hex, HexCursor + 12, Hex7)
-		buffer.writeu16(Hex, HexCursor + 14, Hex8)
-
-		HexCursor += 16
+		buffer.writeu32(Hex, Cursor, buffer.readu32(Pairs, bit32.lshift(bit32.band(Word0, 0xffff), 2)))
+		buffer.writeu32(Hex, Cursor + 4, buffer.readu32(Pairs, bit32.band(bit32.rshift(Word0, 14), 0x3fffc)))
+		buffer.writeu32(Hex, Cursor + 8, buffer.readu32(Pairs, bit32.lshift(bit32.band(Word1, 0xffff), 2)))
+		buffer.writeu32(Hex, Cursor + 12, buffer.readu32(Pairs, bit32.band(bit32.rshift(Word1, 14), 0x3fffc)))
+		buffer.writeu32(Hex, Cursor + 16, buffer.readu32(Pairs, bit32.lshift(bit32.band(Word2, 0xffff), 2)))
+		buffer.writeu32(Hex, Cursor + 20, buffer.readu32(Pairs, bit32.band(bit32.rshift(Word2, 14), 0x3fffc)))
+		buffer.writeu32(Hex, Cursor + 24, buffer.readu32(Pairs, bit32.lshift(bit32.band(Word3, 0xffff), 2)))
+		buffer.writeu32(Hex, Cursor + 28, buffer.readu32(Pairs, bit32.band(bit32.rshift(Word3, 14), 0x3fffc)))
 	end
 
-	for Index = Length - Leftover, Length - 1 do
-		local HexPair = buffer.readu16(Lookup, buffer.readu8(Buffer, Index) * 2)
-		buffer.writeu16(Hex, HexCursor, HexPair)
-		HexCursor += 2
+	local Lookup = ENCODE_LOOKUP
+	for Index = Body, Length - 1 do
+		buffer.writeu16(Hex, Index * 2, buffer.readu16(Lookup, bit32.lshift(buffer.readu8(Buffer, Index), 1)))
 	end
 
 	return buffer.tostring(Hex)
@@ -109,43 +92,32 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 
 	local Buffer = buffer.create(bit32.rshift(Length, 1))
 	local Leftover = Length % 16
-	local BufferCursor = 0
+	local Body = Length - Leftover
 	local Lookup = DECODE_LOOKUP
 
-	for Index = 0, Length - Leftover - 1, 16 do
-		local Pair1 = buffer.readu16(BufferHex, Index)
-		local Pair2 = buffer.readu16(BufferHex, Index + 2)
-		local Pair3 = buffer.readu16(BufferHex, Index + 4)
-		local Pair4 = buffer.readu16(BufferHex, Index + 6)
-		local Pair5 = buffer.readu16(BufferHex, Index + 8)
-		local Pair6 = buffer.readu16(BufferHex, Index + 10)
-		local Pair7 = buffer.readu16(BufferHex, Index + 12)
-		local Pair8 = buffer.readu16(BufferHex, Index + 14)
+	for Index = 0, Body - 16, 16 do
+		local Word0 = buffer.readu32(BufferHex, Index)
+		local Word1 = buffer.readu32(BufferHex, Index + 4)
+		local Word2 = buffer.readu32(BufferHex, Index + 8)
+		local Word3 = buffer.readu32(BufferHex, Index + 12)
+		local Cursor = bit32.rshift(Index, 1)
 
-		local Byte1 = buffer.readu16(Lookup, Pair1 * 2)
-		local Byte2 = buffer.readu16(Lookup, Pair2 * 2)
-		local Byte3 = buffer.readu16(Lookup, Pair3 * 2)
-		local Byte4 = buffer.readu16(Lookup, Pair4 * 2)
-		local Byte5 = buffer.readu16(Lookup, Pair5 * 2)
-		local Byte6 = buffer.readu16(Lookup, Pair6 * 2)
-		local Byte7 = buffer.readu16(Lookup, Pair7 * 2)
-		local Byte8 = buffer.readu16(Lookup, Pair8 * 2)
-
-		local Chunk1 = bit32.lshift(Byte4, 24) + bit32.lshift(Byte3, 16) + 
-			bit32.lshift(Byte2, 8) + Byte1
-		local Chunk2 = bit32.lshift(Byte8, 24) + bit32.lshift(Byte7, 16) + 
-			bit32.lshift(Byte6, 8) + Byte5
-
-		buffer.writeu32(Buffer, BufferCursor, Chunk1)
-		buffer.writeu32(Buffer, BufferCursor + 4, Chunk2)
-		BufferCursor += 8
+		buffer.writeu32(Buffer, Cursor, bit32.bor(
+			buffer.readu8(Lookup, bit32.band(Word0, 0xffff)),
+			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word0, 16)), 8),
+			bit32.lshift(buffer.readu8(Lookup, bit32.band(Word1, 0xffff)), 16),
+			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word1, 16)), 24)
+		))
+		buffer.writeu32(Buffer, Cursor + 4, bit32.bor(
+			buffer.readu8(Lookup, bit32.band(Word2, 0xffff)),
+			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word2, 16)), 8),
+			bit32.lshift(buffer.readu8(Lookup, bit32.band(Word3, 0xffff)), 16),
+			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word3, 16)), 24)
+		))
 	end
 
-	for Index = Length - Leftover, Length - 1, 2 do
-		local Pair = buffer.readu16(BufferHex, Index)
-		local Byte = buffer.readu16(Lookup, Pair * 2)
-		buffer.writeu8(Buffer, BufferCursor, Byte)
-		BufferCursor += 1
+	for Index = Body, Length - 2, 2 do
+		buffer.writeu8(Buffer, bit32.rshift(Index, 1), buffer.readu8(Lookup, buffer.readu16(BufferHex, Index)))
 	end
 
 	return Buffer

@@ -2,6 +2,7 @@
 	HMAC Tadashi Test Suite
 
 	Test Vector Sources:
+		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hmac_sha256_test.json
 		https://raw.githubusercontent.com/XoifaiI/Tadashi/main/testvectors/hmac_sha512_test.json
 --]=]
 
@@ -41,6 +42,12 @@ type HmacData = {
 }
 
 local HMAC_VARIANTS = {
+	{
+		Name = "HMAC-SHA256",
+		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hmac_sha256_test.json",
+		HashFn = SHA2.SHA256,
+		BlockSize = 64,
+	},
 	{
 		Name = "HMAC-SHA512",
 		Url = "https://raw.githubusercontent.com/XoifaiI/Tadashi/refs/heads/main/testvectors/hmac_sha512_test.json",
