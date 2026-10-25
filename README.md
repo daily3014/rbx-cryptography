@@ -35,7 +35,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@3.1.4"
+cryptography = "daily3014/cryptography@4.0.0"
 ```
 
 ### Pesde
@@ -74,7 +74,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 **Hash Functions**
 
-- **SHA-2 Family**: SHA-224, SHA-256, SHA-384, SHA-512, SHA-512/224, SHA-512/256 with optional salt support
+- **SHA-2 Family**: SHA-224, SHA-256, SHA-384, SHA-512
 - **SHA-3 Family**: SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE-128, SHAKE-256 ([FIPS 202](https://doi.org/10.6028/NIST.FIPS.202))
 - **BLAKE Family**: [BLAKE3](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake3.luau) (fastest available), BLAKE3-Keyed, BLAKE3-DeriveKey, [BLAKE2b](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/Blake2b.luau)
 

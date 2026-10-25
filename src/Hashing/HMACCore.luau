@@ -11,35 +11,53 @@
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
 local SHA2 = require("./SHA2")
-local SHA256Core = require("./SHA2/SHA256Core")
-local SHA512Core = require("./SHA2/SHA512")
 
 export type HashFunction = (...any) -> (string, buffer)
+type DigestOnly = (Message: buffer) -> buffer
 
 local INNER_PAD = 0x36363636
 local OUTER_PAD = 0x5c5c5c5c
 
-local Digest256 = SHA256Core.Digest_Internal
-local Digest512 = SHA512Core.Digest_Internal
-local IV_224, IV_256 = SHA256Core.IV_224, SHA256Core.IV_256
-local IV_384 = SHA512Core.IV_384
+local DIGEST_ONLY: {[HashFunction]: DigestOnly | false} = setmetatable({}, {__mode = "k"}) :: any
 
-local DIGEST_ONLY: {[HashFunction]: (buffer) -> buffer} = {
-	[SHA2.SHA224] = function(Message: buffer): buffer
-		return Digest256(Message, IV_224, 28)
-	end,
-	[SHA2.SHA256] = function(Message: buffer): buffer
+local function ResolveDigestOnly(HashFunction: HashFunction): DigestOnly | false
+	if HashFunction == rawget(SHA2, "SHA256") then
 		if EncodingService then
-			return EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Sha256)
+			local Service = EncodingService
+			return function(Message: buffer): buffer
+				return Service:ComputeBufferHash(Message, Enum.HashAlgorithm.Sha256)
+			end
 		end
 
-		return Digest256(Message, IV_256, 32)
-	end,
-	[SHA2.SHA384] = function(Message: buffer): buffer
-		return Digest512(Message, IV_384, 48)
-	end,
-	[SHA2.SHA512] = SHA512Core.SHA512_Internal,
-}
+		local SHA256Core = require("./SHA2/SHA256Core")
+		local Digest256, IV_256 = SHA256Core.Digest_Internal, SHA256Core.IV_256
+		return function(Message: buffer): buffer
+			return Digest256(Message, IV_256, 32)
+		end
+	end
+
+	if HashFunction == rawget(SHA2, "SHA224") then
+		local SHA256Core = require("./SHA2/SHA256Core")
+		local Digest256, IV_224 = SHA256Core.Digest_Internal, SHA256Core.IV_224
+		return function(Message: buffer): buffer
+			return Digest256(Message, IV_224, 28)
+		end
+	end
+
+	if HashFunction == rawget(SHA2, "SHA384") then
+		local SHA512Core = require("./SHA2/SHA512")
+		local Digest512, IV_384 = SHA512Core.Digest_Internal, SHA512Core.IV_384
+		return function(Message: buffer): buffer
+			return Digest512(Message, IV_384, 48)
+		end
+	end
+
+	if HashFunction == rawget(SHA2, "SHA512") then
+		return require("./SHA2/SHA512").SHA512_Internal
+	end
+
+	return false
+end
 
 local function WritePaddedKey(Target: buffer, Key: buffer, KeyLength: number, BlockSizeBytes: number, Pad: number)
 	if KeyLength > 0 then
@@ -59,6 +77,11 @@ end
 
 local function Compute(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): (buffer, string?)
 	local DigestOnly = DIGEST_ONLY[HashFunction]
+	if DigestOnly == nil then
+		DigestOnly = ResolveDigestOnly(HashFunction)
+		DIGEST_ONLY[HashFunction] = DigestOnly
+	end
+
 	local BlockKey = Key
 	local KeyLength = buffer.len(Key)
 	if KeyLength > BlockSizeBytes then

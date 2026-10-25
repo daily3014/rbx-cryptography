@@ -16,18 +16,25 @@
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
 local Conversions = require("../../Utilities/Conversions")
-local SHA256Core = require("./SHA256Core")
 local ToHex = Conversions.ToHex
-local Digest = SHA256Core.Digest_Internal
-local IV_256 = SHA256Core.IV_256
+
+local Digest: (Message: buffer) -> buffer
+if EncodingService then
+	local Service = EncodingService
+	Digest = function(Message: buffer): buffer
+		return Service:ComputeBufferHash(Message, Enum.HashAlgorithm.Sha256)
+	end
+else
+	local SHA256Core = require("./SHA256Core")
+	local Digest256 = SHA256Core.Digest_Internal
+	local IV_256 = SHA256Core.IV_256
+	Digest = function(Message: buffer): buffer
+		return Digest256(Message, IV_256, 32)
+	end
+end
 
 local function SHA256(Message: buffer): (string, buffer)
-	if EncodingService then
-		local Result = EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Sha256)
-		return ToHex(Result), Result
-	end
-
-	local Result = Digest(Message, IV_256, 32)
+	local Result = Digest(Message)
 	return ToHex(Result), Result
 end
 

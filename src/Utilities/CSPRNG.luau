@@ -27,7 +27,7 @@
 --!native
 
 local Blake3 = require("../Hashing/Blake3")
-local ChaCha = require("../Encryption/AEAD/ChaCha")
+local Blake3Core = require("../Hashing/Blake3Core")
 local Conversions = require("./Conversions")
 local ToHex = Conversions.ToHex
 
@@ -49,7 +49,6 @@ type CSPRNGModule = {
 }
 
 local KEY_SIZE = 32
-local NONCE_SIZE = 12
 local MAX_UINT32 = 0xFFFFFFFF
 
 local POOL_SIZE = 2048
@@ -60,10 +59,11 @@ local SOURCE_LIMIT = 1024
 
 local CSPRNG = {} :: CSPRNGModule
 
-local ZERO_SOURCE = buffer.create(KEY_SIZE + POOL_SIZE)
+local ProcessMessage = Blake3Core.ProcessMessage
+local HASH_FLAG = Blake3Core.HASH_FLAG
+local EMPTY = buffer.create(0)
 
 local Key = buffer.create(0)
-local Nonce = buffer.create(0)
 local StreamBuffer = buffer.create(0)
 
 local Counter = 0
@@ -130,30 +130,26 @@ local function GatherEntropy(UserEntropy: buffer?)
 		WriteToBuffer(buffer.fromstring(Pointers))
 	end
 
-	local PreviousLength = buffer.len(Key) + buffer.len(Nonce)
+	local PreviousLength = buffer.len(Key)
 	local UserLength = if UserEntropy then buffer.len(UserEntropy) else 0
 	local Material = buffer.create(PreviousLength + Offset + UserLength)
 
-	buffer.copy(Material, 0, Key, 0, buffer.len(Key))
-	buffer.copy(Material, buffer.len(Key), Nonce, 0, buffer.len(Nonce))
+	buffer.copy(Material, 0, Key, 0, PreviousLength)
 	buffer.copy(Material, PreviousLength, Sources, 0, Offset)
 	if UserEntropy then
 		buffer.copy(Material, PreviousLength + Offset, UserEntropy, 0, UserLength)
 	end
 
-	local KeyMaterial = Blake3.DigestBuffer(Material, KEY_SIZE + NONCE_SIZE)
+	local KeyMaterial = Blake3.DigestBuffer(Material, KEY_SIZE)
 
 	Key = buffer.create(KEY_SIZE)
 	buffer.copy(Key, 0, KeyMaterial, 0, KEY_SIZE)
-
-	Nonce = buffer.create(NONCE_SIZE)
-	buffer.copy(Nonce, 0, KeyMaterial, KEY_SIZE, NONCE_SIZE)
 
 	Counter = 0
 end
 
 local function GenerateBlock()
-	local Stream = ChaCha.ChaCha20(ZERO_SOURCE, Key, Nonce, 0)
+	local Stream = ProcessMessage(Key, HASH_FLAG, EMPTY, KEY_SIZE + POOL_SIZE)
 
 	buffer.copy(Key, 0, Stream, 0, KEY_SIZE)
 	buffer.fill(Stream, 0, 0, KEY_SIZE)
