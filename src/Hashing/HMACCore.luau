@@ -10,7 +10,7 @@
 --!native
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
-local SHA2 = require("./SHA2")
+local SHA2: {[string]: unknown} = require("./SHA2") :: any
 
 export type HashFunction = (...any) -> (string, buffer)
 type DigestOnly = (Message: buffer) -> buffer

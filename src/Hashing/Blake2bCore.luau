@@ -70,14 +70,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML1, 0)
@@ -85,15 +85,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML2, 0)
@@ -101,14 +101,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML3, 0)
@@ -116,15 +116,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML4, 0)
@@ -132,14 +132,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML5, 0)
@@ -147,15 +147,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML6, 0)
@@ -163,14 +163,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML7, 0)
@@ -178,15 +178,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML8, 0)
@@ -194,14 +194,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML9, 0)
@@ -209,15 +209,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML10, 0)
@@ -225,14 +225,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML11, 0)
@@ -240,15 +240,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML12, 0)
@@ -256,14 +256,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML13, 0)
@@ -271,15 +271,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML14, 0)
@@ -287,14 +287,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML15, 0)
@@ -302,15 +302,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -320,14 +320,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML10, 0)
@@ -335,15 +335,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML4, 0)
@@ -351,14 +351,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML8, 0)
@@ -366,15 +366,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML9, 0)
@@ -382,14 +382,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML15, 0)
@@ -397,15 +397,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML13, 0)
@@ -413,14 +413,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML6, 0)
@@ -428,15 +428,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML1, 0)
@@ -444,14 +444,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML12, 0)
@@ -459,15 +459,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML0, 0)
@@ -475,14 +475,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML2, 0)
@@ -490,15 +490,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML11, 0)
@@ -506,14 +506,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML7, 0)
@@ -521,15 +521,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML5, 0)
@@ -537,14 +537,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML3, 0)
@@ -552,15 +552,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -570,14 +570,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML8, 0)
@@ -585,15 +585,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML12, 0)
@@ -601,14 +601,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML0, 0)
@@ -616,15 +616,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML5, 0)
@@ -632,14 +632,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML2, 0)
@@ -647,15 +647,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML15, 0)
@@ -663,14 +663,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML13, 0)
@@ -678,15 +678,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML10, 0)
@@ -694,14 +694,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML14, 0)
@@ -709,15 +709,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML3, 0)
@@ -725,14 +725,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML6, 0)
@@ -740,15 +740,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML7, 0)
@@ -756,14 +756,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML1, 0)
@@ -771,15 +771,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML9, 0)
@@ -787,14 +787,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML4, 0)
@@ -802,15 +802,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -820,14 +820,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML9, 0)
@@ -835,15 +835,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML3, 0)
@@ -851,14 +851,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML1, 0)
@@ -866,15 +866,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML13, 0)
@@ -882,14 +882,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML12, 0)
@@ -897,15 +897,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML11, 0)
@@ -913,14 +913,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML14, 0)
@@ -928,15 +928,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML2, 0)
@@ -944,14 +944,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML6, 0)
@@ -959,15 +959,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML5, 0)
@@ -975,14 +975,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML10, 0)
@@ -990,15 +990,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML4, 0)
@@ -1006,14 +1006,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML0, 0)
@@ -1021,15 +1021,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML15, 0)
@@ -1037,14 +1037,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML8, 0)
@@ -1052,15 +1052,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -1070,14 +1070,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML0, 0)
@@ -1085,15 +1085,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML5, 0)
@@ -1101,14 +1101,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML7, 0)
@@ -1116,15 +1116,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML2, 0)
@@ -1132,14 +1132,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML4, 0)
@@ -1147,15 +1147,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML10, 0)
@@ -1163,14 +1163,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML15, 0)
@@ -1178,15 +1178,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML14, 0)
@@ -1194,14 +1194,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML1, 0)
@@ -1209,15 +1209,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML11, 0)
@@ -1225,14 +1225,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML12, 0)
@@ -1240,15 +1240,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML6, 0)
@@ -1256,14 +1256,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML8, 0)
@@ -1271,15 +1271,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML3, 0)
@@ -1287,14 +1287,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML13, 0)
@@ -1302,15 +1302,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -1320,14 +1320,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML12, 0)
@@ -1335,15 +1335,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML6, 0)
@@ -1351,14 +1351,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML10, 0)
@@ -1366,15 +1366,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML0, 0)
@@ -1382,14 +1382,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML11, 0)
@@ -1397,15 +1397,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML8, 0)
@@ -1413,14 +1413,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML3, 0)
@@ -1428,15 +1428,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML4, 0)
@@ -1444,14 +1444,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML13, 0)
@@ -1459,15 +1459,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML7, 0)
@@ -1475,14 +1475,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML5, 0)
@@ -1490,15 +1490,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML15, 0)
@@ -1506,14 +1506,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML14, 0)
@@ -1521,15 +1521,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML1, 0)
@@ -1537,14 +1537,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML9, 0)
@@ -1552,15 +1552,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		if Position < 0 then break end
@@ -1571,14 +1571,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML5, 0)
@@ -1586,15 +1586,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML1, 0)
@@ -1602,14 +1602,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML15, 0)
@@ -1617,15 +1617,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML14, 0)
@@ -1633,14 +1633,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML13, 0)
@@ -1648,15 +1648,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML4, 0)
@@ -1664,14 +1664,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML10, 0)
@@ -1679,15 +1679,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML0, 0)
@@ -1695,14 +1695,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML7, 0)
@@ -1710,15 +1710,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML6, 0)
@@ -1726,14 +1726,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML3, 0)
@@ -1741,15 +1741,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML9, 0)
@@ -1757,14 +1757,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML2, 0)
@@ -1772,15 +1772,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML8, 0)
@@ -1788,14 +1788,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML11, 0)
@@ -1803,15 +1803,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -1821,14 +1821,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML11, 0)
@@ -1836,15 +1836,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML7, 0)
@@ -1852,14 +1852,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML14, 0)
@@ -1867,15 +1867,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML12, 0)
@@ -1883,14 +1883,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML1, 0)
@@ -1898,15 +1898,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML3, 0)
@@ -1914,14 +1914,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML9, 0)
@@ -1929,15 +1929,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML5, 0)
@@ -1945,14 +1945,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML0, 0)
@@ -1960,15 +1960,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML15, 0)
@@ -1976,14 +1976,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML4, 0)
@@ -1991,15 +1991,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML8, 0)
@@ -2007,14 +2007,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML6, 0)
@@ -2022,15 +2022,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML2, 0)
@@ -2038,14 +2038,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML10, 0)
@@ -2053,15 +2053,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -2071,14 +2071,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML15, 0)
@@ -2086,15 +2086,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML14, 0)
@@ -2102,14 +2102,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML9, 0)
@@ -2117,15 +2117,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML11, 0)
@@ -2133,14 +2133,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML3, 0)
@@ -2148,15 +2148,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML0, 0)
@@ -2164,14 +2164,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML8, 0)
@@ -2179,15 +2179,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML12, 0)
@@ -2195,14 +2195,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML2, 0)
@@ -2210,15 +2210,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML13, 0)
@@ -2226,14 +2226,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML7, 0)
@@ -2241,15 +2241,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML1, 0)
@@ -2257,14 +2257,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML4, 0)
@@ -2272,15 +2272,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML10, 0)
@@ -2288,14 +2288,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML5, 0)
@@ -2303,15 +2303,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -2321,14 +2321,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML2, 0)
@@ -2336,15 +2336,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML8, 0)
@@ -2352,14 +2352,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML4, 0)
@@ -2367,15 +2367,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML7, 0)
@@ -2383,14 +2383,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML6, 0)
@@ -2398,15 +2398,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML1, 0)
@@ -2414,14 +2414,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML5, 0)
@@ -2429,15 +2429,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML15, 0)
@@ -2445,14 +2445,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML11, 0)
@@ -2460,15 +2460,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML9, 0)
@@ -2476,14 +2476,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML14, 0)
@@ -2491,15 +2491,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML3, 0)
@@ -2507,14 +2507,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML12, 0)
@@ -2522,15 +2522,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML13, 0)
@@ -2538,14 +2538,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML0, 0)
@@ -2553,15 +2553,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -2571,14 +2571,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML1, 0)
@@ -2586,15 +2586,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML2, 0)
@@ -2602,14 +2602,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML3, 0)
@@ -2617,15 +2617,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML4, 0)
@@ -2633,14 +2633,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML5, 0)
@@ -2648,15 +2648,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML6, 0)
@@ -2664,14 +2664,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML7, 0)
@@ -2679,15 +2679,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML8, 0)
@@ -2695,14 +2695,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML9, 0)
@@ -2710,15 +2710,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML10, 0)
@@ -2726,14 +2726,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML11, 0)
@@ -2741,15 +2741,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML12, 0)
@@ -2757,14 +2757,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML13, 0)
@@ -2772,15 +2772,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML14, 0)
@@ -2788,14 +2788,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML15, 0)
@@ -2803,15 +2803,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		do
@@ -2821,14 +2821,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML10, 0)
@@ -2836,15 +2836,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V00H), bit32.bxor(V12L, V00L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V12L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V12L), bit32.band(bit32.bor(V08L, V12L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V08H), bit32.bxor(V04L, V08L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML4, 0)
@@ -2852,14 +2852,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML8, 0)
@@ -2867,15 +2867,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V01H), bit32.bxor(V13L, V01L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V13L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V13L), bit32.band(bit32.bor(V09L, V13L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V09H), bit32.bxor(V05L, V09L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML9, 0)
@@ -2883,14 +2883,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML15, 0)
@@ -2898,15 +2898,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V02H), bit32.bxor(V14L, V02L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V14L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V14L), bit32.band(bit32.bor(V10L, V14L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V10H), bit32.bxor(V06L, V10L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML13, 0)
@@ -2914,14 +2914,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML6, 0)
@@ -2929,15 +2929,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V03H), bit32.bxor(V15L, V03L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V15L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V15L), bit32.band(bit32.bor(V11L, V15L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V11H), bit32.bxor(V07L, V11L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML1, 0)
@@ -2945,14 +2945,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H, V15L = XL, XH
+			local XH32, XL32 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H, V15L = XL32, XH32
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V05L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V05L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V00L + ML12, 0)
@@ -2960,15 +2960,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V05L, 0)
 			V00H = bit32.bor(bit32.bor(H1 + V05H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V05L), bit32.band(bit32.bor(S1, V05L), bit32.bnot(S2))), 31), 0)
 			V00L = S2
-			local XH, XL = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
-			V15H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V15L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V15H, V00H), bit32.bxor(V15L, V00L)
+			V15H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V15L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V10L + V15L, 0)
 			V10H = bit32.bor(bit32.bor(V10H + V15H, 0) + bit32.rshift(bit32.bor(bit32.band(V10L, V15L), bit32.band(bit32.bor(V10L, V15L), bit32.bnot(T))), 31), 0)
 			V10L = T
-			local XH, XL = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
-			V05H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V05L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V05H, V10H), bit32.bxor(V05L, V10L)
+			V05H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V05L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML0, 0)
@@ -2976,14 +2976,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H, V12L = XL, XH
+			local XH32, XL32 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H, V12L = XL32, XH32
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V06L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V06L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V01L + ML2, 0)
@@ -2991,15 +2991,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V06L, 0)
 			V01H = bit32.bor(bit32.bor(H1 + V06H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V06L), bit32.band(bit32.bor(S1, V06L), bit32.bnot(S2))), 31), 0)
 			V01L = S2
-			local XH, XL = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
-			V12H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V12L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V12H, V01H), bit32.bxor(V12L, V01L)
+			V12H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V12L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V11L + V12L, 0)
 			V11H = bit32.bor(bit32.bor(V11H + V12H, 0) + bit32.rshift(bit32.bor(bit32.band(V11L, V12L), bit32.band(bit32.bor(V11L, V12L), bit32.bnot(T))), 31), 0)
 			V11L = T
-			local XH, XL = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
-			V06H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V06L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V06H, V11H), bit32.bxor(V06L, V11L)
+			V06H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V06L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML11, 0)
@@ -3007,14 +3007,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H, V13L = XL, XH
+			local XH32, XL32 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H, V13L = XL32, XH32
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V07L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V07L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V02L + ML7, 0)
@@ -3022,15 +3022,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V07L, 0)
 			V02H = bit32.bor(bit32.bor(H1 + V07H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V07L), bit32.band(bit32.bor(S1, V07L), bit32.bnot(S2))), 31), 0)
 			V02L = S2
-			local XH, XL = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
-			V13H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V13L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V13H, V02H), bit32.bxor(V13L, V02L)
+			V13H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V13L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V08L + V13L, 0)
 			V08H = bit32.bor(bit32.bor(V08H + V13H, 0) + bit32.rshift(bit32.bor(bit32.band(V08L, V13L), bit32.band(bit32.bor(V08L, V13L), bit32.bnot(T))), 31), 0)
 			V08L = T
-			local XH, XL = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
-			V07H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V07L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V07H, V08H), bit32.bxor(V07L, V08L)
+			V07H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V07L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML5, 0)
@@ -3038,14 +3038,14 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H, V14L = XL, XH
+			local XH32, XL32 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H, V14L = XL32, XH32
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.rshift(XH, 24), bit32.lshift(XL, 8))
-			V04L = bit32.bor(bit32.rshift(XL, 24), bit32.lshift(XH, 8))
+			local XH24, XL24 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.rshift(XH24, 24), bit32.lshift(XL24, 8))
+			V04L = bit32.bor(bit32.rshift(XL24, 24), bit32.lshift(XH24, 8))
 			end
 			do
 			local S1 = bit32.bor(V03L + ML3, 0)
@@ -3053,15 +3053,15 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			local S2 = bit32.bor(S1 + V04L, 0)
 			V03H = bit32.bor(bit32.bor(H1 + V04H, 0) + bit32.rshift(bit32.bor(bit32.band(S1, V04L), bit32.band(bit32.bor(S1, V04L), bit32.bnot(S2))), 31), 0)
 			V03L = S2
-			local XH, XL = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
-			V14H = bit32.bor(bit32.rshift(XH, 16), bit32.lshift(XL, 16))
-			V14L = bit32.bor(bit32.rshift(XL, 16), bit32.lshift(XH, 16))
+			local XH16, XL16 = bit32.bxor(V14H, V03H), bit32.bxor(V14L, V03L)
+			V14H = bit32.bor(bit32.rshift(XH16, 16), bit32.lshift(XL16, 16))
+			V14L = bit32.bor(bit32.rshift(XL16, 16), bit32.lshift(XH16, 16))
 			local T = bit32.bor(V09L + V14L, 0)
 			V09H = bit32.bor(bit32.bor(V09H + V14H, 0) + bit32.rshift(bit32.bor(bit32.band(V09L, V14L), bit32.band(bit32.bor(V09L, V14L), bit32.bnot(T))), 31), 0)
 			V09L = T
-			local XH, XL = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
-			V04H = bit32.bor(bit32.lshift(XH, 1), bit32.rshift(XL, 31))
-			V04L = bit32.bor(bit32.lshift(XL, 1), bit32.rshift(XH, 31))
+			local XH63, XL63 = bit32.bxor(V04H, V09H), bit32.bxor(V04L, V09L)
+			V04H = bit32.bor(bit32.lshift(XH63, 1), bit32.rshift(XL63, 31))
+			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
 		H0H = bit32.bxor(H0H, V00H, V08H)

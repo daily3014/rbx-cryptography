@@ -101,122 +101,122 @@ local function Permute(StateA: buffer, StateB: buffer)
 			local PA16, PB16
 			do
 				local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-				PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+				PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 			end
 			local PA7, PB7
 			do
 				local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-				PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+				PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 			end
 			local PA23, PB23
 			do
 				local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-				PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+				PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 			end
 			local PA14, PB14
 			do
 				local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-				PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+				PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 			end
 			local PA10, PB10
 			do
 				local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-				PA10, PB10 = bit32.lrotate(TB, 1), TA
+				PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 			end
 			local PA1, PB1
 			do
 				local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-				PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+				PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 			end
 			local PA17, PB17
 			do
 				local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-				PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+				PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 			end
 			local PA8, PB8
 			do
 				local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-				PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+				PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 			end
 			local PA24, PB24
 			do
 				local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-				PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+				PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 			end
 			local PA20, PB20
 			do
 				local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-				PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+				PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 			end
 			local PA11, PB11
 			do
 				local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-				PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+				PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 			end
 			local PA2, PB2
 			do
 				local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-				PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+				PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 			end
 			local PA18, PB18
 			do
 				local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-				PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+				PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 			end
 			local PA9, PB9
 			do
 				local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-				PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+				PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 			end
 			local PA5, PB5
 			do
 				local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-				PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+				PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 			end
 			local PA21, PB21
 			do
 				local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-				PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+				PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 			end
 			local PA12, PB12
 			do
 				local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-				PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+				PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 			end
 			local PA3, PB3
 			do
 				local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-				PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+				PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 			end
 			local PA19, PB19
 			do
 				local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-				PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+				PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 			end
 			local PA15, PB15
 			do
 				local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-				PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+				PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 			end
 			local PA6, PB6
 			do
 				local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-				PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+				PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 			end
 			local PA22, PB22
 			do
 				local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-				PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+				PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 			end
 			local PA13, PB13
 			do
 				local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-				PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+				PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 			end
 			local PA4, PB4
 			do
 				local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-				PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+				PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 			end
 			A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 			B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -286,122 +286,122 @@ local function Permute(StateA: buffer, StateB: buffer)
 			local PA16, PB16
 			do
 				local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-				PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+				PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 			end
 			local PA7, PB7
 			do
 				local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-				PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+				PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 			end
 			local PA23, PB23
 			do
 				local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-				PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+				PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 			end
 			local PA14, PB14
 			do
 				local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-				PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+				PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 			end
 			local PA10, PB10
 			do
 				local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-				PA10, PB10 = bit32.lrotate(TB, 1), TA
+				PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 			end
 			local PA1, PB1
 			do
 				local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-				PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+				PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 			end
 			local PA17, PB17
 			do
 				local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-				PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+				PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 			end
 			local PA8, PB8
 			do
 				local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-				PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+				PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 			end
 			local PA24, PB24
 			do
 				local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-				PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+				PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 			end
 			local PA20, PB20
 			do
 				local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-				PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+				PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 			end
 			local PA11, PB11
 			do
 				local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-				PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+				PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 			end
 			local PA2, PB2
 			do
 				local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-				PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+				PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 			end
 			local PA18, PB18
 			do
 				local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-				PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+				PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 			end
 			local PA9, PB9
 			do
 				local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-				PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+				PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 			end
 			local PA5, PB5
 			do
 				local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-				PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+				PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 			end
 			local PA21, PB21
 			do
 				local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-				PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+				PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 			end
 			local PA12, PB12
 			do
 				local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-				PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+				PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 			end
 			local PA3, PB3
 			do
 				local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-				PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+				PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 			end
 			local PA19, PB19
 			do
 				local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-				PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+				PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 			end
 			local PA15, PB15
 			do
 				local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-				PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+				PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 			end
 			local PA6, PB6
 			do
 				local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-				PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+				PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 			end
 			local PA22, PB22
 			do
 				local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-				PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+				PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 			end
 			local PA13, PB13
 			do
 				local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-				PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+				PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 			end
 			local PA4, PB4
 			do
 				local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-				PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+				PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 			end
 			A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 			B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -471,122 +471,122 @@ local function Permute(StateA: buffer, StateB: buffer)
 			local PA16, PB16
 			do
 				local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-				PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+				PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 			end
 			local PA7, PB7
 			do
 				local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-				PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+				PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 			end
 			local PA23, PB23
 			do
 				local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-				PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+				PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 			end
 			local PA14, PB14
 			do
 				local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-				PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+				PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 			end
 			local PA10, PB10
 			do
 				local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-				PA10, PB10 = bit32.lrotate(TB, 1), TA
+				PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 			end
 			local PA1, PB1
 			do
 				local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-				PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+				PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 			end
 			local PA17, PB17
 			do
 				local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-				PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+				PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 			end
 			local PA8, PB8
 			do
 				local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-				PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+				PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 			end
 			local PA24, PB24
 			do
 				local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-				PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+				PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 			end
 			local PA20, PB20
 			do
 				local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-				PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+				PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 			end
 			local PA11, PB11
 			do
 				local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-				PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+				PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 			end
 			local PA2, PB2
 			do
 				local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-				PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+				PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 			end
 			local PA18, PB18
 			do
 				local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-				PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+				PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 			end
 			local PA9, PB9
 			do
 				local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-				PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+				PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 			end
 			local PA5, PB5
 			do
 				local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-				PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+				PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 			end
 			local PA21, PB21
 			do
 				local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-				PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+				PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 			end
 			local PA12, PB12
 			do
 				local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-				PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+				PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 			end
 			local PA3, PB3
 			do
 				local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-				PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+				PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 			end
 			local PA19, PB19
 			do
 				local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-				PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+				PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 			end
 			local PA15, PB15
 			do
 				local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-				PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+				PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 			end
 			local PA6, PB6
 			do
 				local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-				PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+				PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 			end
 			local PA22, PB22
 			do
 				local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-				PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+				PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 			end
 			local PA13, PB13
 			do
 				local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-				PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+				PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 			end
 			local PA4, PB4
 			do
 				local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-				PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+				PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 			end
 			A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 			B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -656,122 +656,122 @@ local function Permute(StateA: buffer, StateB: buffer)
 			local PA16, PB16
 			do
 				local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-				PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+				PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 			end
 			local PA7, PB7
 			do
 				local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-				PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+				PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 			end
 			local PA23, PB23
 			do
 				local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-				PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+				PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 			end
 			local PA14, PB14
 			do
 				local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-				PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+				PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 			end
 			local PA10, PB10
 			do
 				local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-				PA10, PB10 = bit32.lrotate(TB, 1), TA
+				PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 			end
 			local PA1, PB1
 			do
 				local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-				PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+				PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 			end
 			local PA17, PB17
 			do
 				local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-				PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+				PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 			end
 			local PA8, PB8
 			do
 				local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-				PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+				PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 			end
 			local PA24, PB24
 			do
 				local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-				PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+				PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 			end
 			local PA20, PB20
 			do
 				local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-				PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+				PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 			end
 			local PA11, PB11
 			do
 				local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-				PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+				PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 			end
 			local PA2, PB2
 			do
 				local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-				PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+				PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 			end
 			local PA18, PB18
 			do
 				local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-				PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+				PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 			end
 			local PA9, PB9
 			do
 				local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-				PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+				PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 			end
 			local PA5, PB5
 			do
 				local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-				PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+				PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 			end
 			local PA21, PB21
 			do
 				local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-				PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+				PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 			end
 			local PA12, PB12
 			do
 				local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-				PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+				PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 			end
 			local PA3, PB3
 			do
 				local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-				PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+				PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 			end
 			local PA19, PB19
 			do
 				local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-				PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+				PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 			end
 			local PA15, PB15
 			do
 				local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-				PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+				PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 			end
 			local PA6, PB6
 			do
 				local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-				PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+				PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 			end
 			local PA22, PB22
 			do
 				local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-				PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+				PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 			end
 			local PA13, PB13
 			do
 				local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-				PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+				PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 			end
 			local PA4, PB4
 			do
 				local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-				PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+				PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 			end
 			A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 			B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -881,37 +881,37 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		A23, B23 = 0, 0
 		A24, B24 = 0, 0
 	else
-		A0, B0 = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
-		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), bit32.bnot(buffer.readu32(StateB, 4))
-		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), bit32.bnot(buffer.readu32(StateB, 8))
-		A3, B3 = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
-		A4, B4 = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
-		A5, B5 = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
-		A6, B6 = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
-		A7, B7 = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
-		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), bit32.bnot(buffer.readu32(StateB, 32))
-		A9, B9 = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
-		A10, B10 = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
-		A11, B11 = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
-		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), bit32.bnot(buffer.readu32(StateB, 48))
-		A13, B13 = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
-		A14, B14 = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
-		A15, B15 = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
-		A16, B16 = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
-		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), bit32.bnot(buffer.readu32(StateB, 68))
-		A18, B18 = buffer.readu32(StateA, 72), buffer.readu32(StateB, 72)
-		A19, B19 = buffer.readu32(StateA, 76), buffer.readu32(StateB, 76)
-		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), bit32.bnot(buffer.readu32(StateB, 80))
-		A21, B21 = buffer.readu32(StateA, 84), buffer.readu32(StateB, 84)
-		A22, B22 = buffer.readu32(StateA, 88), buffer.readu32(StateB, 88)
-		A23, B23 = buffer.readu32(StateA, 92), buffer.readu32(StateB, 92)
-		A24, B24 = buffer.readu32(StateA, 96), buffer.readu32(StateB, 96)
+		A0, B0 = buffer.readu32(StateA, 0), (buffer.readu32(StateB, 0))
+		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), (bit32.bnot(buffer.readu32(StateB, 4)))
+		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), (bit32.bnot(buffer.readu32(StateB, 8)))
+		A3, B3 = buffer.readu32(StateA, 12), (buffer.readu32(StateB, 12))
+		A4, B4 = buffer.readu32(StateA, 16), (buffer.readu32(StateB, 16))
+		A5, B5 = buffer.readu32(StateA, 20), (buffer.readu32(StateB, 20))
+		A6, B6 = buffer.readu32(StateA, 24), (buffer.readu32(StateB, 24))
+		A7, B7 = buffer.readu32(StateA, 28), (buffer.readu32(StateB, 28))
+		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), (bit32.bnot(buffer.readu32(StateB, 32)))
+		A9, B9 = buffer.readu32(StateA, 36), (buffer.readu32(StateB, 36))
+		A10, B10 = buffer.readu32(StateA, 40), (buffer.readu32(StateB, 40))
+		A11, B11 = buffer.readu32(StateA, 44), (buffer.readu32(StateB, 44))
+		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), (bit32.bnot(buffer.readu32(StateB, 48)))
+		A13, B13 = buffer.readu32(StateA, 52), (buffer.readu32(StateB, 52))
+		A14, B14 = buffer.readu32(StateA, 56), (buffer.readu32(StateB, 56))
+		A15, B15 = buffer.readu32(StateA, 60), (buffer.readu32(StateB, 60))
+		A16, B16 = buffer.readu32(StateA, 64), (buffer.readu32(StateB, 64))
+		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), (bit32.bnot(buffer.readu32(StateB, 68)))
+		A18, B18 = buffer.readu32(StateA, 72), (buffer.readu32(StateB, 72))
+		A19, B19 = buffer.readu32(StateA, 76), (buffer.readu32(StateB, 76))
+		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), (bit32.bnot(buffer.readu32(StateB, 80)))
+		A21, B21 = buffer.readu32(StateA, 84), (buffer.readu32(StateB, 84))
+		A22, B22 = buffer.readu32(StateA, 88), (buffer.readu32(StateB, 88))
+		A23, B23 = buffer.readu32(StateA, 92), (buffer.readu32(StateB, 92))
+		A24, B24 = buffer.readu32(StateA, 96), (buffer.readu32(StateB, 96))
 	end
 	local RoundConstantsA, RoundConstantsB = ROUND_A, ROUND_B
 	for Position = Offset, Offset + Size - 1, 136 do
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 0), buffer.readu32(Input, Position + 4)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -925,7 +925,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 8), buffer.readu32(Input, Position + 12)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -939,7 +939,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 16), buffer.readu32(Input, Position + 20)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -953,7 +953,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 24), buffer.readu32(Input, Position + 28)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -967,7 +967,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 32), buffer.readu32(Input, Position + 36)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -981,7 +981,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 40), buffer.readu32(Input, Position + 44)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -995,7 +995,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 48), buffer.readu32(Input, Position + 52)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1009,7 +1009,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 56), buffer.readu32(Input, Position + 60)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1023,7 +1023,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 64), buffer.readu32(Input, Position + 68)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1037,7 +1037,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 72), buffer.readu32(Input, Position + 76)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1051,7 +1051,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 80), buffer.readu32(Input, Position + 84)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1065,7 +1065,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 88), buffer.readu32(Input, Position + 92)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1079,7 +1079,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 96), buffer.readu32(Input, Position + 100)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1093,7 +1093,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 104), buffer.readu32(Input, Position + 108)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1107,7 +1107,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 112), buffer.readu32(Input, Position + 116)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1121,7 +1121,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 120), buffer.readu32(Input, Position + 124)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1135,7 +1135,7 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 128), buffer.readu32(Input, Position + 132)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1164,122 +1164,122 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -1349,122 +1349,122 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -1534,122 +1534,122 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -1719,122 +1719,122 @@ local function Absorb17(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -1945,37 +1945,37 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		A23, B23 = 0, 0
 		A24, B24 = 0, 0
 	else
-		A0, B0 = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
-		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), bit32.bnot(buffer.readu32(StateB, 4))
-		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), bit32.bnot(buffer.readu32(StateB, 8))
-		A3, B3 = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
-		A4, B4 = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
-		A5, B5 = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
-		A6, B6 = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
-		A7, B7 = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
-		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), bit32.bnot(buffer.readu32(StateB, 32))
-		A9, B9 = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
-		A10, B10 = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
-		A11, B11 = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
-		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), bit32.bnot(buffer.readu32(StateB, 48))
-		A13, B13 = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
-		A14, B14 = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
-		A15, B15 = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
-		A16, B16 = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
-		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), bit32.bnot(buffer.readu32(StateB, 68))
-		A18, B18 = buffer.readu32(StateA, 72), buffer.readu32(StateB, 72)
-		A19, B19 = buffer.readu32(StateA, 76), buffer.readu32(StateB, 76)
-		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), bit32.bnot(buffer.readu32(StateB, 80))
-		A21, B21 = buffer.readu32(StateA, 84), buffer.readu32(StateB, 84)
-		A22, B22 = buffer.readu32(StateA, 88), buffer.readu32(StateB, 88)
-		A23, B23 = buffer.readu32(StateA, 92), buffer.readu32(StateB, 92)
-		A24, B24 = buffer.readu32(StateA, 96), buffer.readu32(StateB, 96)
+		A0, B0 = buffer.readu32(StateA, 0), (buffer.readu32(StateB, 0))
+		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), (bit32.bnot(buffer.readu32(StateB, 4)))
+		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), (bit32.bnot(buffer.readu32(StateB, 8)))
+		A3, B3 = buffer.readu32(StateA, 12), (buffer.readu32(StateB, 12))
+		A4, B4 = buffer.readu32(StateA, 16), (buffer.readu32(StateB, 16))
+		A5, B5 = buffer.readu32(StateA, 20), (buffer.readu32(StateB, 20))
+		A6, B6 = buffer.readu32(StateA, 24), (buffer.readu32(StateB, 24))
+		A7, B7 = buffer.readu32(StateA, 28), (buffer.readu32(StateB, 28))
+		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), (bit32.bnot(buffer.readu32(StateB, 32)))
+		A9, B9 = buffer.readu32(StateA, 36), (buffer.readu32(StateB, 36))
+		A10, B10 = buffer.readu32(StateA, 40), (buffer.readu32(StateB, 40))
+		A11, B11 = buffer.readu32(StateA, 44), (buffer.readu32(StateB, 44))
+		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), (bit32.bnot(buffer.readu32(StateB, 48)))
+		A13, B13 = buffer.readu32(StateA, 52), (buffer.readu32(StateB, 52))
+		A14, B14 = buffer.readu32(StateA, 56), (buffer.readu32(StateB, 56))
+		A15, B15 = buffer.readu32(StateA, 60), (buffer.readu32(StateB, 60))
+		A16, B16 = buffer.readu32(StateA, 64), (buffer.readu32(StateB, 64))
+		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), (bit32.bnot(buffer.readu32(StateB, 68)))
+		A18, B18 = buffer.readu32(StateA, 72), (buffer.readu32(StateB, 72))
+		A19, B19 = buffer.readu32(StateA, 76), (buffer.readu32(StateB, 76))
+		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), (bit32.bnot(buffer.readu32(StateB, 80)))
+		A21, B21 = buffer.readu32(StateA, 84), (buffer.readu32(StateB, 84))
+		A22, B22 = buffer.readu32(StateA, 88), (buffer.readu32(StateB, 88))
+		A23, B23 = buffer.readu32(StateA, 92), (buffer.readu32(StateB, 92))
+		A24, B24 = buffer.readu32(StateA, 96), (buffer.readu32(StateB, 96))
 	end
 	local RoundConstantsA, RoundConstantsB = ROUND_A, ROUND_B
 	for Position = Offset, Offset + Size - 1, 168 do
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 0), buffer.readu32(Input, Position + 4)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -1989,7 +1989,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 8), buffer.readu32(Input, Position + 12)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2003,7 +2003,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 16), buffer.readu32(Input, Position + 20)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2017,7 +2017,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 24), buffer.readu32(Input, Position + 28)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2031,7 +2031,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 32), buffer.readu32(Input, Position + 36)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2045,7 +2045,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 40), buffer.readu32(Input, Position + 44)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2059,7 +2059,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 48), buffer.readu32(Input, Position + 52)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2073,7 +2073,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 56), buffer.readu32(Input, Position + 60)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2087,7 +2087,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 64), buffer.readu32(Input, Position + 68)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2101,7 +2101,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 72), buffer.readu32(Input, Position + 76)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2115,7 +2115,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 80), buffer.readu32(Input, Position + 84)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2129,7 +2129,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 88), buffer.readu32(Input, Position + 92)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2143,7 +2143,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 96), buffer.readu32(Input, Position + 100)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2157,7 +2157,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 104), buffer.readu32(Input, Position + 108)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2171,7 +2171,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 112), buffer.readu32(Input, Position + 116)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2185,7 +2185,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 120), buffer.readu32(Input, Position + 124)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2199,7 +2199,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 128), buffer.readu32(Input, Position + 132)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2213,7 +2213,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 136), buffer.readu32(Input, Position + 140)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2227,7 +2227,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 144), buffer.readu32(Input, Position + 148)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2241,7 +2241,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 152), buffer.readu32(Input, Position + 156)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2255,7 +2255,7 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 160), buffer.readu32(Input, Position + 164)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -2284,122 +2284,122 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -2469,122 +2469,122 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -2654,122 +2654,122 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -2839,122 +2839,122 @@ local function Absorb21(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -3065,37 +3065,37 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		A23, B23 = 0, 0
 		A24, B24 = 0, 0
 	else
-		A0, B0 = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
-		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), bit32.bnot(buffer.readu32(StateB, 4))
-		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), bit32.bnot(buffer.readu32(StateB, 8))
-		A3, B3 = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
-		A4, B4 = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
-		A5, B5 = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
-		A6, B6 = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
-		A7, B7 = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
-		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), bit32.bnot(buffer.readu32(StateB, 32))
-		A9, B9 = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
-		A10, B10 = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
-		A11, B11 = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
-		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), bit32.bnot(buffer.readu32(StateB, 48))
-		A13, B13 = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
-		A14, B14 = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
-		A15, B15 = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
-		A16, B16 = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
-		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), bit32.bnot(buffer.readu32(StateB, 68))
-		A18, B18 = buffer.readu32(StateA, 72), buffer.readu32(StateB, 72)
-		A19, B19 = buffer.readu32(StateA, 76), buffer.readu32(StateB, 76)
-		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), bit32.bnot(buffer.readu32(StateB, 80))
-		A21, B21 = buffer.readu32(StateA, 84), buffer.readu32(StateB, 84)
-		A22, B22 = buffer.readu32(StateA, 88), buffer.readu32(StateB, 88)
-		A23, B23 = buffer.readu32(StateA, 92), buffer.readu32(StateB, 92)
-		A24, B24 = buffer.readu32(StateA, 96), buffer.readu32(StateB, 96)
+		A0, B0 = buffer.readu32(StateA, 0), (buffer.readu32(StateB, 0))
+		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), (bit32.bnot(buffer.readu32(StateB, 4)))
+		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), (bit32.bnot(buffer.readu32(StateB, 8)))
+		A3, B3 = buffer.readu32(StateA, 12), (buffer.readu32(StateB, 12))
+		A4, B4 = buffer.readu32(StateA, 16), (buffer.readu32(StateB, 16))
+		A5, B5 = buffer.readu32(StateA, 20), (buffer.readu32(StateB, 20))
+		A6, B6 = buffer.readu32(StateA, 24), (buffer.readu32(StateB, 24))
+		A7, B7 = buffer.readu32(StateA, 28), (buffer.readu32(StateB, 28))
+		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), (bit32.bnot(buffer.readu32(StateB, 32)))
+		A9, B9 = buffer.readu32(StateA, 36), (buffer.readu32(StateB, 36))
+		A10, B10 = buffer.readu32(StateA, 40), (buffer.readu32(StateB, 40))
+		A11, B11 = buffer.readu32(StateA, 44), (buffer.readu32(StateB, 44))
+		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), (bit32.bnot(buffer.readu32(StateB, 48)))
+		A13, B13 = buffer.readu32(StateA, 52), (buffer.readu32(StateB, 52))
+		A14, B14 = buffer.readu32(StateA, 56), (buffer.readu32(StateB, 56))
+		A15, B15 = buffer.readu32(StateA, 60), (buffer.readu32(StateB, 60))
+		A16, B16 = buffer.readu32(StateA, 64), (buffer.readu32(StateB, 64))
+		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), (bit32.bnot(buffer.readu32(StateB, 68)))
+		A18, B18 = buffer.readu32(StateA, 72), (buffer.readu32(StateB, 72))
+		A19, B19 = buffer.readu32(StateA, 76), (buffer.readu32(StateB, 76))
+		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), (bit32.bnot(buffer.readu32(StateB, 80)))
+		A21, B21 = buffer.readu32(StateA, 84), (buffer.readu32(StateB, 84))
+		A22, B22 = buffer.readu32(StateA, 88), (buffer.readu32(StateB, 88))
+		A23, B23 = buffer.readu32(StateA, 92), (buffer.readu32(StateB, 92))
+		A24, B24 = buffer.readu32(StateA, 96), (buffer.readu32(StateB, 96))
 	end
 	local RoundConstantsA, RoundConstantsB = ROUND_A, ROUND_B
 	for Position = Offset, Offset + Size - 1, 72 do
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 0), buffer.readu32(Input, Position + 4)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3109,7 +3109,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 8), buffer.readu32(Input, Position + 12)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3123,7 +3123,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 16), buffer.readu32(Input, Position + 20)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3137,7 +3137,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 24), buffer.readu32(Input, Position + 28)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3151,7 +3151,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 32), buffer.readu32(Input, Position + 36)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3165,7 +3165,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 40), buffer.readu32(Input, Position + 44)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3179,7 +3179,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 48), buffer.readu32(Input, Position + 52)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3193,7 +3193,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 56), buffer.readu32(Input, Position + 60)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3207,7 +3207,7 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 64), buffer.readu32(Input, Position + 68)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -3236,122 +3236,122 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -3421,122 +3421,122 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -3606,122 +3606,122 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -3791,122 +3791,122 @@ local function Absorb9(StateA: buffer, StateB: buffer, Input: buffer, Offset: nu
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -4017,37 +4017,37 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		A23, B23 = 0, 0
 		A24, B24 = 0, 0
 	else
-		A0, B0 = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
-		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), bit32.bnot(buffer.readu32(StateB, 4))
-		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), bit32.bnot(buffer.readu32(StateB, 8))
-		A3, B3 = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
-		A4, B4 = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
-		A5, B5 = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
-		A6, B6 = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
-		A7, B7 = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
-		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), bit32.bnot(buffer.readu32(StateB, 32))
-		A9, B9 = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
-		A10, B10 = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
-		A11, B11 = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
-		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), bit32.bnot(buffer.readu32(StateB, 48))
-		A13, B13 = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
-		A14, B14 = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
-		A15, B15 = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
-		A16, B16 = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
-		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), bit32.bnot(buffer.readu32(StateB, 68))
-		A18, B18 = buffer.readu32(StateA, 72), buffer.readu32(StateB, 72)
-		A19, B19 = buffer.readu32(StateA, 76), buffer.readu32(StateB, 76)
-		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), bit32.bnot(buffer.readu32(StateB, 80))
-		A21, B21 = buffer.readu32(StateA, 84), buffer.readu32(StateB, 84)
-		A22, B22 = buffer.readu32(StateA, 88), buffer.readu32(StateB, 88)
-		A23, B23 = buffer.readu32(StateA, 92), buffer.readu32(StateB, 92)
-		A24, B24 = buffer.readu32(StateA, 96), buffer.readu32(StateB, 96)
+		A0, B0 = buffer.readu32(StateA, 0), (buffer.readu32(StateB, 0))
+		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), (bit32.bnot(buffer.readu32(StateB, 4)))
+		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), (bit32.bnot(buffer.readu32(StateB, 8)))
+		A3, B3 = buffer.readu32(StateA, 12), (buffer.readu32(StateB, 12))
+		A4, B4 = buffer.readu32(StateA, 16), (buffer.readu32(StateB, 16))
+		A5, B5 = buffer.readu32(StateA, 20), (buffer.readu32(StateB, 20))
+		A6, B6 = buffer.readu32(StateA, 24), (buffer.readu32(StateB, 24))
+		A7, B7 = buffer.readu32(StateA, 28), (buffer.readu32(StateB, 28))
+		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), (bit32.bnot(buffer.readu32(StateB, 32)))
+		A9, B9 = buffer.readu32(StateA, 36), (buffer.readu32(StateB, 36))
+		A10, B10 = buffer.readu32(StateA, 40), (buffer.readu32(StateB, 40))
+		A11, B11 = buffer.readu32(StateA, 44), (buffer.readu32(StateB, 44))
+		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), (bit32.bnot(buffer.readu32(StateB, 48)))
+		A13, B13 = buffer.readu32(StateA, 52), (buffer.readu32(StateB, 52))
+		A14, B14 = buffer.readu32(StateA, 56), (buffer.readu32(StateB, 56))
+		A15, B15 = buffer.readu32(StateA, 60), (buffer.readu32(StateB, 60))
+		A16, B16 = buffer.readu32(StateA, 64), (buffer.readu32(StateB, 64))
+		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), (bit32.bnot(buffer.readu32(StateB, 68)))
+		A18, B18 = buffer.readu32(StateA, 72), (buffer.readu32(StateB, 72))
+		A19, B19 = buffer.readu32(StateA, 76), (buffer.readu32(StateB, 76))
+		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), (bit32.bnot(buffer.readu32(StateB, 80)))
+		A21, B21 = buffer.readu32(StateA, 84), (buffer.readu32(StateB, 84))
+		A22, B22 = buffer.readu32(StateA, 88), (buffer.readu32(StateB, 88))
+		A23, B23 = buffer.readu32(StateA, 92), (buffer.readu32(StateB, 92))
+		A24, B24 = buffer.readu32(StateA, 96), (buffer.readu32(StateB, 96))
 	end
 	local RoundConstantsA, RoundConstantsB = ROUND_A, ROUND_B
 	for Position = Offset, Offset + Size - 1, 104 do
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 0), buffer.readu32(Input, Position + 4)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4061,7 +4061,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 8), buffer.readu32(Input, Position + 12)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4075,7 +4075,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 16), buffer.readu32(Input, Position + 20)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4089,7 +4089,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 24), buffer.readu32(Input, Position + 28)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4103,7 +4103,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 32), buffer.readu32(Input, Position + 36)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4117,7 +4117,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 40), buffer.readu32(Input, Position + 44)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4131,7 +4131,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 48), buffer.readu32(Input, Position + 52)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4145,7 +4145,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 56), buffer.readu32(Input, Position + 60)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4159,7 +4159,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 64), buffer.readu32(Input, Position + 68)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4173,7 +4173,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 72), buffer.readu32(Input, Position + 76)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4187,7 +4187,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 80), buffer.readu32(Input, Position + 84)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4201,7 +4201,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 88), buffer.readu32(Input, Position + 92)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4215,7 +4215,7 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 96), buffer.readu32(Input, Position + 100)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -4244,122 +4244,122 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -4429,122 +4429,122 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -4614,122 +4614,122 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -4799,122 +4799,122 @@ local function Absorb13(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -5025,37 +5025,37 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		A23, B23 = 0, 0
 		A24, B24 = 0, 0
 	else
-		A0, B0 = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
-		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), bit32.bnot(buffer.readu32(StateB, 4))
-		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), bit32.bnot(buffer.readu32(StateB, 8))
-		A3, B3 = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
-		A4, B4 = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
-		A5, B5 = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
-		A6, B6 = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
-		A7, B7 = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
-		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), bit32.bnot(buffer.readu32(StateB, 32))
-		A9, B9 = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
-		A10, B10 = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
-		A11, B11 = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
-		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), bit32.bnot(buffer.readu32(StateB, 48))
-		A13, B13 = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
-		A14, B14 = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
-		A15, B15 = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
-		A16, B16 = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
-		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), bit32.bnot(buffer.readu32(StateB, 68))
-		A18, B18 = buffer.readu32(StateA, 72), buffer.readu32(StateB, 72)
-		A19, B19 = buffer.readu32(StateA, 76), buffer.readu32(StateB, 76)
-		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), bit32.bnot(buffer.readu32(StateB, 80))
-		A21, B21 = buffer.readu32(StateA, 84), buffer.readu32(StateB, 84)
-		A22, B22 = buffer.readu32(StateA, 88), buffer.readu32(StateB, 88)
-		A23, B23 = buffer.readu32(StateA, 92), buffer.readu32(StateB, 92)
-		A24, B24 = buffer.readu32(StateA, 96), buffer.readu32(StateB, 96)
+		A0, B0 = buffer.readu32(StateA, 0), (buffer.readu32(StateB, 0))
+		A1, B1 = bit32.bnot(buffer.readu32(StateA, 4)), (bit32.bnot(buffer.readu32(StateB, 4)))
+		A2, B2 = bit32.bnot(buffer.readu32(StateA, 8)), (bit32.bnot(buffer.readu32(StateB, 8)))
+		A3, B3 = buffer.readu32(StateA, 12), (buffer.readu32(StateB, 12))
+		A4, B4 = buffer.readu32(StateA, 16), (buffer.readu32(StateB, 16))
+		A5, B5 = buffer.readu32(StateA, 20), (buffer.readu32(StateB, 20))
+		A6, B6 = buffer.readu32(StateA, 24), (buffer.readu32(StateB, 24))
+		A7, B7 = buffer.readu32(StateA, 28), (buffer.readu32(StateB, 28))
+		A8, B8 = bit32.bnot(buffer.readu32(StateA, 32)), (bit32.bnot(buffer.readu32(StateB, 32)))
+		A9, B9 = buffer.readu32(StateA, 36), (buffer.readu32(StateB, 36))
+		A10, B10 = buffer.readu32(StateA, 40), (buffer.readu32(StateB, 40))
+		A11, B11 = buffer.readu32(StateA, 44), (buffer.readu32(StateB, 44))
+		A12, B12 = bit32.bnot(buffer.readu32(StateA, 48)), (bit32.bnot(buffer.readu32(StateB, 48)))
+		A13, B13 = buffer.readu32(StateA, 52), (buffer.readu32(StateB, 52))
+		A14, B14 = buffer.readu32(StateA, 56), (buffer.readu32(StateB, 56))
+		A15, B15 = buffer.readu32(StateA, 60), (buffer.readu32(StateB, 60))
+		A16, B16 = buffer.readu32(StateA, 64), (buffer.readu32(StateB, 64))
+		A17, B17 = bit32.bnot(buffer.readu32(StateA, 68)), (bit32.bnot(buffer.readu32(StateB, 68)))
+		A18, B18 = buffer.readu32(StateA, 72), (buffer.readu32(StateB, 72))
+		A19, B19 = buffer.readu32(StateA, 76), (buffer.readu32(StateB, 76))
+		A20, B20 = bit32.bnot(buffer.readu32(StateA, 80)), (bit32.bnot(buffer.readu32(StateB, 80)))
+		A21, B21 = buffer.readu32(StateA, 84), (buffer.readu32(StateB, 84))
+		A22, B22 = buffer.readu32(StateA, 88), (buffer.readu32(StateB, 88))
+		A23, B23 = buffer.readu32(StateA, 92), (buffer.readu32(StateB, 92))
+		A24, B24 = buffer.readu32(StateA, 96), (buffer.readu32(StateB, 96))
 	end
 	local RoundConstantsA, RoundConstantsB = ROUND_A, ROUND_B
 	for Position = Offset, Offset + Size - 1, 144 do
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 0), buffer.readu32(Input, Position + 4)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5069,7 +5069,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 8), buffer.readu32(Input, Position + 12)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5083,7 +5083,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 16), buffer.readu32(Input, Position + 20)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5097,7 +5097,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 24), buffer.readu32(Input, Position + 28)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5111,7 +5111,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 32), buffer.readu32(Input, Position + 36)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5125,7 +5125,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 40), buffer.readu32(Input, Position + 44)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5139,7 +5139,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 48), buffer.readu32(Input, Position + 52)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5153,7 +5153,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 56), buffer.readu32(Input, Position + 60)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5167,7 +5167,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 64), buffer.readu32(Input, Position + 68)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5181,7 +5181,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 72), buffer.readu32(Input, Position + 76)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5195,7 +5195,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 80), buffer.readu32(Input, Position + 84)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5209,7 +5209,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 88), buffer.readu32(Input, Position + 92)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5223,7 +5223,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 96), buffer.readu32(Input, Position + 100)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5237,7 +5237,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 104), buffer.readu32(Input, Position + 108)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5251,7 +5251,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 112), buffer.readu32(Input, Position + 116)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5265,7 +5265,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 120), buffer.readu32(Input, Position + 124)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5279,7 +5279,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 128), buffer.readu32(Input, Position + 132)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5293,7 +5293,7 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 		end
 		do
 			local Lo, Hi = buffer.readu32(Input, Position + 136), buffer.readu32(Input, Position + 140)
-			local T
+			local T: number
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
 			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
@@ -5322,122 +5322,122 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -5507,122 +5507,122 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -5692,122 +5692,122 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)
@@ -5877,122 +5877,122 @@ local function Absorb18(StateA: buffer, StateB: buffer, Input: buffer, Offset: n
 				local PA16, PB16
 				do
 					local TA, TB = bit32.bxor(A5, DA0), bit32.bxor(B5, DB0)
-					PA16, PB16 = bit32.lrotate(TA, 18), bit32.lrotate(TB, 18)
+					PA16, PB16 = bit32.lrotate(TA, 18), (bit32.lrotate(TB, 18))
 				end
 				local PA7, PB7
 				do
 					local TA, TB = bit32.bxor(A10, DA0), bit32.bxor(B10, DB0)
-					PA7, PB7 = bit32.lrotate(TB, 2), bit32.lrotate(TA, 1)
+					PA7, PB7 = bit32.lrotate(TB, 2), (bit32.lrotate(TA, 1))
 				end
 				local PA23, PB23
 				do
 					local TA, TB = bit32.bxor(A15, DA0), bit32.bxor(B15, DB0)
-					PA23, PB23 = bit32.lrotate(TB, 21), bit32.lrotate(TA, 20)
+					PA23, PB23 = bit32.lrotate(TB, 21), (bit32.lrotate(TA, 20))
 				end
 				local PA14, PB14
 				do
 					local TA, TB = bit32.bxor(A20, DA0), bit32.bxor(B20, DB0)
-					PA14, PB14 = bit32.lrotate(TA, 9), bit32.lrotate(TB, 9)
+					PA14, PB14 = bit32.lrotate(TA, 9), (bit32.lrotate(TB, 9))
 				end
 				local PA10, PB10
 				do
 					local TA, TB = bit32.bxor(A1, DA1), bit32.bxor(B1, DB1)
-					PA10, PB10 = bit32.lrotate(TB, 1), TA
+					PA10, PB10 = bit32.lrotate(TB, 1), (TA)
 				end
 				local PA1, PB1
 				do
 					local TA, TB = bit32.bxor(A6, DA1), bit32.bxor(B6, DB1)
-					PA1, PB1 = bit32.lrotate(TA, 22), bit32.lrotate(TB, 22)
+					PA1, PB1 = bit32.lrotate(TA, 22), (bit32.lrotate(TB, 22))
 				end
 				local PA17, PB17
 				do
 					local TA, TB = bit32.bxor(A11, DA1), bit32.bxor(B11, DB1)
-					PA17, PB17 = bit32.lrotate(TA, 5), bit32.lrotate(TB, 5)
+					PA17, PB17 = bit32.lrotate(TA, 5), (bit32.lrotate(TB, 5))
 				end
 				local PA8, PB8
 				do
 					local TA, TB = bit32.bxor(A16, DA1), bit32.bxor(B16, DB1)
-					PA8, PB8 = bit32.lrotate(TB, 23), bit32.lrotate(TA, 22)
+					PA8, PB8 = bit32.lrotate(TB, 23), (bit32.lrotate(TA, 22))
 				end
 				local PA24, PB24
 				do
 					local TA, TB = bit32.bxor(A21, DA1), bit32.bxor(B21, DB1)
-					PA24, PB24 = bit32.lrotate(TA, 1), bit32.lrotate(TB, 1)
+					PA24, PB24 = bit32.lrotate(TA, 1), (bit32.lrotate(TB, 1))
 				end
 				local PA20, PB20
 				do
 					local TA, TB = bit32.bxor(A2, DA2), bit32.bxor(B2, DB2)
-					PA20, PB20 = bit32.lrotate(TA, 31), bit32.lrotate(TB, 31)
+					PA20, PB20 = bit32.lrotate(TA, 31), (bit32.lrotate(TB, 31))
 				end
 				local PA11, PB11
 				do
 					local TA, TB = bit32.bxor(A7, DA2), bit32.bxor(B7, DB2)
-					PA11, PB11 = bit32.lrotate(TA, 3), bit32.lrotate(TB, 3)
+					PA11, PB11 = bit32.lrotate(TA, 3), (bit32.lrotate(TB, 3))
 				end
 				local PA2, PB2
 				do
 					local TA, TB = bit32.bxor(A12, DA2), bit32.bxor(B12, DB2)
-					PA2, PB2 = bit32.lrotate(TB, 22), bit32.lrotate(TA, 21)
+					PA2, PB2 = bit32.lrotate(TB, 22), (bit32.lrotate(TA, 21))
 				end
 				local PA18, PB18
 				do
 					local TA, TB = bit32.bxor(A17, DA2), bit32.bxor(B17, DB2)
-					PA18, PB18 = bit32.lrotate(TB, 8), bit32.lrotate(TA, 7)
+					PA18, PB18 = bit32.lrotate(TB, 8), (bit32.lrotate(TA, 7))
 				end
 				local PA9, PB9
 				do
 					local TA, TB = bit32.bxor(A22, DA2), bit32.bxor(B22, DB2)
-					PA9, PB9 = bit32.lrotate(TB, 31), bit32.lrotate(TA, 30)
+					PA9, PB9 = bit32.lrotate(TB, 31), (bit32.lrotate(TA, 30))
 				end
 				local PA5, PB5
 				do
 					local TA, TB = bit32.bxor(A3, DA3), bit32.bxor(B3, DB3)
-					PA5, PB5 = bit32.lrotate(TA, 14), bit32.lrotate(TB, 14)
+					PA5, PB5 = bit32.lrotate(TA, 14), (bit32.lrotate(TB, 14))
 				end
 				local PA21, PB21
 				do
 					local TA, TB = bit32.bxor(A8, DA3), bit32.bxor(B8, DB3)
-					PA21, PB21 = bit32.lrotate(TB, 28), bit32.lrotate(TA, 27)
+					PA21, PB21 = bit32.lrotate(TB, 28), (bit32.lrotate(TA, 27))
 				end
 				local PA12, PB12
 				do
 					local TA, TB = bit32.bxor(A13, DA3), bit32.bxor(B13, DB3)
-					PA12, PB12 = bit32.lrotate(TB, 13), bit32.lrotate(TA, 12)
+					PA12, PB12 = bit32.lrotate(TB, 13), (bit32.lrotate(TA, 12))
 				end
 				local PA3, PB3
 				do
 					local TA, TB = bit32.bxor(A18, DA3), bit32.bxor(B18, DB3)
-					PA3, PB3 = bit32.lrotate(TB, 11), bit32.lrotate(TA, 10)
+					PA3, PB3 = bit32.lrotate(TB, 11), (bit32.lrotate(TA, 10))
 				end
 				local PA19, PB19
 				do
 					local TA, TB = bit32.bxor(A23, DA3), bit32.bxor(B23, DB3)
-					PA19, PB19 = bit32.lrotate(TA, 28), bit32.lrotate(TB, 28)
+					PA19, PB19 = bit32.lrotate(TA, 28), (bit32.lrotate(TB, 28))
 				end
 				local PA15, PB15
 				do
 					local TA, TB = bit32.bxor(A4, DA4), bit32.bxor(B4, DB4)
-					PA15, PB15 = bit32.lrotate(TB, 14), bit32.lrotate(TA, 13)
+					PA15, PB15 = bit32.lrotate(TB, 14), (bit32.lrotate(TA, 13))
 				end
 				local PA6, PB6
 				do
 					local TA, TB = bit32.bxor(A9, DA4), bit32.bxor(B9, DB4)
-					PA6, PB6 = bit32.lrotate(TA, 10), bit32.lrotate(TB, 10)
+					PA6, PB6 = bit32.lrotate(TA, 10), (bit32.lrotate(TB, 10))
 				end
 				local PA22, PB22
 				do
 					local TA, TB = bit32.bxor(A14, DA4), bit32.bxor(B14, DB4)
-					PA22, PB22 = bit32.lrotate(TB, 20), bit32.lrotate(TA, 19)
+					PA22, PB22 = bit32.lrotate(TB, 20), (bit32.lrotate(TA, 19))
 				end
 				local PA13, PB13
 				do
 					local TA, TB = bit32.bxor(A19, DA4), bit32.bxor(B19, DB4)
-					PA13, PB13 = bit32.lrotate(TA, 4), bit32.lrotate(TB, 4)
+					PA13, PB13 = bit32.lrotate(TA, 4), (bit32.lrotate(TB, 4))
 				end
 				local PA4, PB4
 				do
 					local TA, TB = bit32.bxor(A24, DA4), bit32.bxor(B24, DB4)
-					PA4, PB4 = bit32.lrotate(TA, 7), bit32.lrotate(TB, 7)
+					PA4, PB4 = bit32.lrotate(TA, 7), (bit32.lrotate(TB, 7))
 				end
 				A0 = bit32.bxor(PA0, bit32.bor(PA1, PA2), RoundA)
 				B0 = bit32.bxor(PB0, bit32.bor(PB1, PB2), RoundB)

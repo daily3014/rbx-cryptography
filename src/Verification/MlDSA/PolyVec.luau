@@ -19,9 +19,6 @@ local NTT = require("./NTT")
 local Q = 8380417
 local N = 256
 
-local INV_N = NTT.INV_N
-local ZETA_NEG_EXP = NTT.ZETA_NEG_EXP
-
 local PolyVec = {}
 
 local function NonZeroMask(X: number): number

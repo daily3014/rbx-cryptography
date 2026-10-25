@@ -19,7 +19,6 @@
 --!native
 
 local SIZE = 104
-local COMPOUND_V = (19 / 2 ^ 255)
 local SQUARES = buffer.create(SIZE) do
 	local Tbl = {
 		0958640 * 2 ^ 0,
@@ -173,42 +172,42 @@ function FieldPrime.Carry(ElementA: buffer, Storage: buffer?): buffer
 	local K09 = A09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	local K10 = A10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	local K11 = A11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	local B00 = (A00 - K00) + K11 * (19 / 2 ^ 255)
-	local B01 = (A01 - K01) + K00
-	local B02 = (A02 - K02) + K01
-	local B03 = (A03 - K03) + K02
-	local B04 = (A04 - K04) + K03
-	local B05 = (A05 - K05) + K04
-	local B06 = (A06 - K06) + K05
-	local B07 = (A07 - K07) + K06
-	local B08 = (A08 - K08) + K07
-	local B09 = (A09 - K09) + K08
-	local B10 = (A10 - K10) + K09
-	local B11 = (A11 - K11) + K10
-	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	buffer.writef64(Buf, 0, (B00 - J00) + J11 * (19 / 2 ^ 255))
-	buffer.writef64(Buf, 8, (B01 - J01) + J00)
-	buffer.writef64(Buf, 16, (B02 - J02) + J01)
-	buffer.writef64(Buf, 24, (B03 - J03) + J02)
-	buffer.writef64(Buf, 32, (B04 - J04) + J03)
-	buffer.writef64(Buf, 40, (B05 - J05) + J04)
-	buffer.writef64(Buf, 48, (B06 - J06) + J05)
-	buffer.writef64(Buf, 56, (B07 - J07) + J06)
-	buffer.writef64(Buf, 64, (B08 - J08) + J07)
-	buffer.writef64(Buf, 72, (B09 - J09) + J08)
-	buffer.writef64(Buf, 80, (B10 - J10) + J09)
-	buffer.writef64(Buf, 88, (B11 - J11) + J10)
+	local R00 = (A00 - K00) + K11 * (19 / 2 ^ 255)
+	local R01 = (A01 - K01) + K00
+	local R02 = (A02 - K02) + K01
+	local R03 = (A03 - K03) + K02
+	local R04 = (A04 - K04) + K03
+	local R05 = (A05 - K05) + K04
+	local R06 = (A06 - K06) + K05
+	local R07 = (A07 - K07) + K06
+	local R08 = (A08 - K08) + K07
+	local R09 = (A09 - K09) + K08
+	local R10 = (A10 - K10) + K09
+	local R11 = (A11 - K11) + K10
+	local J00 = R00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = R01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = R02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = R03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = R04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = R05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = R06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = R07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = R08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = R09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = R10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = R11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	buffer.writef64(Buf, 0, (R00 - J00) + J11 * (19 / 2 ^ 255))
+	buffer.writef64(Buf, 8, (R01 - J01) + J00)
+	buffer.writef64(Buf, 16, (R02 - J02) + J01)
+	buffer.writef64(Buf, 24, (R03 - J03) + J02)
+	buffer.writef64(Buf, 32, (R04 - J04) + J03)
+	buffer.writef64(Buf, 40, (R05 - J05) + J04)
+	buffer.writef64(Buf, 48, (R06 - J06) + J05)
+	buffer.writef64(Buf, 56, (R07 - J07) + J06)
+	buffer.writef64(Buf, 64, (R08 - J08) + J07)
+	buffer.writef64(Buf, 72, (R09 - J09) + J08)
+	buffer.writef64(Buf, 80, (R10 - J10) + J09)
+	buffer.writef64(Buf, 88, (R11 - J11) + J10)
 	return Buf
 end
 
@@ -262,42 +261,42 @@ function FieldPrime.Mul(ElementA: buffer, ElementB: buffer, Storage: buffer?): b
 	local K09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	local K10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	local K11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	local B00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
-	local B01 = (C01 - K01) + K00
-	local B02 = (C02 - K02) + K01
-	local B03 = (C03 - K03) + K02
-	local B04 = (C04 - K04) + K03
-	local B05 = (C05 - K05) + K04
-	local B06 = (C06 - K06) + K05
-	local B07 = (C07 - K07) + K06
-	local B08 = (C08 - K08) + K07
-	local B09 = (C09 - K09) + K08
-	local B10 = (C10 - K10) + K09
-	local B11 = (C11 - K11) + K10
-	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	buffer.writef64(Buf, 0, (B00 - J00) + J11 * (19 / 2 ^ 255))
-	buffer.writef64(Buf, 8, (B01 - J01) + J00)
-	buffer.writef64(Buf, 16, (B02 - J02) + J01)
-	buffer.writef64(Buf, 24, (B03 - J03) + J02)
-	buffer.writef64(Buf, 32, (B04 - J04) + J03)
-	buffer.writef64(Buf, 40, (B05 - J05) + J04)
-	buffer.writef64(Buf, 48, (B06 - J06) + J05)
-	buffer.writef64(Buf, 56, (B07 - J07) + J06)
-	buffer.writef64(Buf, 64, (B08 - J08) + J07)
-	buffer.writef64(Buf, 72, (B09 - J09) + J08)
-	buffer.writef64(Buf, 80, (B10 - J10) + J09)
-	buffer.writef64(Buf, 88, (B11 - J11) + J10)
+	local R00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
+	local R01 = (C01 - K01) + K00
+	local R02 = (C02 - K02) + K01
+	local R03 = (C03 - K03) + K02
+	local R04 = (C04 - K04) + K03
+	local R05 = (C05 - K05) + K04
+	local R06 = (C06 - K06) + K05
+	local R07 = (C07 - K07) + K06
+	local R08 = (C08 - K08) + K07
+	local R09 = (C09 - K09) + K08
+	local R10 = (C10 - K10) + K09
+	local R11 = (C11 - K11) + K10
+	local J00 = R00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = R01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = R02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = R03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = R04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = R05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = R06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = R07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = R08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = R09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = R10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = R11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	buffer.writef64(Buf, 0, (R00 - J00) + J11 * (19 / 2 ^ 255))
+	buffer.writef64(Buf, 8, (R01 - J01) + J00)
+	buffer.writef64(Buf, 16, (R02 - J02) + J01)
+	buffer.writef64(Buf, 24, (R03 - J03) + J02)
+	buffer.writef64(Buf, 32, (R04 - J04) + J03)
+	buffer.writef64(Buf, 40, (R05 - J05) + J04)
+	buffer.writef64(Buf, 48, (R06 - J06) + J05)
+	buffer.writef64(Buf, 56, (R07 - J07) + J06)
+	buffer.writef64(Buf, 64, (R08 - J08) + J07)
+	buffer.writef64(Buf, 72, (R09 - J09) + J08)
+	buffer.writef64(Buf, 80, (R10 - J10) + J09)
+	buffer.writef64(Buf, 88, (R11 - J11) + J10)
 	return Buf
 end
 
@@ -350,42 +349,42 @@ function FieldPrime.Square(ElementA: buffer, Storage: buffer?): buffer
 	local K09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	local K10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	local K11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	local B00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
-	local B01 = (C01 - K01) + K00
-	local B02 = (C02 - K02) + K01
-	local B03 = (C03 - K03) + K02
-	local B04 = (C04 - K04) + K03
-	local B05 = (C05 - K05) + K04
-	local B06 = (C06 - K06) + K05
-	local B07 = (C07 - K07) + K06
-	local B08 = (C08 - K08) + K07
-	local B09 = (C09 - K09) + K08
-	local B10 = (C10 - K10) + K09
-	local B11 = (C11 - K11) + K10
-	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	buffer.writef64(Buf, 0, (B00 - J00) + J11 * (19 / 2 ^ 255))
-	buffer.writef64(Buf, 8, (B01 - J01) + J00)
-	buffer.writef64(Buf, 16, (B02 - J02) + J01)
-	buffer.writef64(Buf, 24, (B03 - J03) + J02)
-	buffer.writef64(Buf, 32, (B04 - J04) + J03)
-	buffer.writef64(Buf, 40, (B05 - J05) + J04)
-	buffer.writef64(Buf, 48, (B06 - J06) + J05)
-	buffer.writef64(Buf, 56, (B07 - J07) + J06)
-	buffer.writef64(Buf, 64, (B08 - J08) + J07)
-	buffer.writef64(Buf, 72, (B09 - J09) + J08)
-	buffer.writef64(Buf, 80, (B10 - J10) + J09)
-	buffer.writef64(Buf, 88, (B11 - J11) + J10)
+	local R00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
+	local R01 = (C01 - K01) + K00
+	local R02 = (C02 - K02) + K01
+	local R03 = (C03 - K03) + K02
+	local R04 = (C04 - K04) + K03
+	local R05 = (C05 - K05) + K04
+	local R06 = (C06 - K06) + K05
+	local R07 = (C07 - K07) + K06
+	local R08 = (C08 - K08) + K07
+	local R09 = (C09 - K09) + K08
+	local R10 = (C10 - K10) + K09
+	local R11 = (C11 - K11) + K10
+	local J00 = R00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = R01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = R02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = R03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = R04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = R05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = R06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = R07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = R08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = R09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = R10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = R11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	buffer.writef64(Buf, 0, (R00 - J00) + J11 * (19 / 2 ^ 255))
+	buffer.writef64(Buf, 8, (R01 - J01) + J00)
+	buffer.writef64(Buf, 16, (R02 - J02) + J01)
+	buffer.writef64(Buf, 24, (R03 - J03) + J02)
+	buffer.writef64(Buf, 32, (R04 - J04) + J03)
+	buffer.writef64(Buf, 40, (R05 - J05) + J04)
+	buffer.writef64(Buf, 48, (R06 - J06) + J05)
+	buffer.writef64(Buf, 56, (R07 - J07) + J06)
+	buffer.writef64(Buf, 64, (R08 - J08) + J07)
+	buffer.writef64(Buf, 72, (R09 - J09) + J08)
+	buffer.writef64(Buf, 80, (R10 - J10) + J09)
+	buffer.writef64(Buf, 88, (R11 - J11) + J10)
 	return Buf
 end
 
@@ -441,42 +440,42 @@ function FieldPrime.NSquare(ElementA: buffer, SquareCount: number, StoreInBuffer
 	local K09 = C09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
 	local K10 = C10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
 	local K11 = C11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	local B00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
-	local B01 = (C01 - K01) + K00
-	local B02 = (C02 - K02) + K01
-	local B03 = (C03 - K03) + K02
-	local B04 = (C04 - K04) + K03
-	local B05 = (C05 - K05) + K04
-	local B06 = (C06 - K06) + K05
-	local B07 = (C07 - K07) + K06
-	local B08 = (C08 - K08) + K07
-	local B09 = (C09 - K09) + K08
-	local B10 = (C10 - K10) + K09
-	local B11 = (C11 - K11) + K10
-	local J00 = B00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-	local J01 = B01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-	local J02 = B02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-	local J03 = B03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-	local J04 = B04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-	local J05 = B05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-	local J06 = B06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-	local J07 = B07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-	local J08 = B08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-	local J09 = B09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-	local J10 = B10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-	local J11 = B11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-	A00 = (B00 - J00) + J11 * (19 / 2 ^ 255)
-	A01 = (B01 - J01) + J00
-	A02 = (B02 - J02) + J01
-	A03 = (B03 - J03) + J02
-	A04 = (B04 - J04) + J03
-	A05 = (B05 - J05) + J04
-	A06 = (B06 - J06) + J05
-	A07 = (B07 - J07) + J06
-	A08 = (B08 - J08) + J07
-	A09 = (B09 - J09) + J08
-	A10 = (B10 - J10) + J09
-	A11 = (B11 - J11) + J10
+	local R00 = (C00 - K00) + K11 * (19 / 2 ^ 255)
+	local R01 = (C01 - K01) + K00
+	local R02 = (C02 - K02) + K01
+	local R03 = (C03 - K03) + K02
+	local R04 = (C04 - K04) + K03
+	local R05 = (C05 - K05) + K04
+	local R06 = (C06 - K06) + K05
+	local R07 = (C07 - K07) + K06
+	local R08 = (C08 - K08) + K07
+	local R09 = (C09 - K09) + K08
+	local R10 = (C10 - K10) + K09
+	local R11 = (C11 - K11) + K10
+	local J00 = R00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+	local J01 = R01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+	local J02 = R02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+	local J03 = R03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+	local J04 = R04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+	local J05 = R05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+	local J06 = R06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+	local J07 = R07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+	local J08 = R08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+	local J09 = R09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+	local J10 = R10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+	local J11 = R11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+	A00 = (R00 - J00) + J11 * (19 / 2 ^ 255)
+	A01 = (R01 - J01) + J00
+	A02 = (R02 - J02) + J01
+	A03 = (R03 - J03) + J02
+	A04 = (R04 - J04) + J03
+	A05 = (R05 - J05) + J04
+	A06 = (R06 - J06) + J05
+	A07 = (R07 - J07) + J06
+	A08 = (R08 - J08) + J07
+	A09 = (R09 - J09) + J08
+	A10 = (R10 - J10) + J09
+	A11 = (R11 - J11) + J10
 	end
 	local Buf = if StoreInBuffer then ElementA else buffer.create(SIZE)
 	buffer.writef64(Buf, 0, A00)

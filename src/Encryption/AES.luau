@@ -41,7 +41,6 @@ local GHASH_STATE = buffer.create(16)
 local GHASH_BLOCK = buffer.create(16)
 local KEYSTREAM = buffer.create(64)
 local ZERO_BLOCK = buffer.create(16)
-local TAG_BLOCK = buffer.create(16)
 local EMPTY = buffer.create(0)
 
 local CacheLength = 0

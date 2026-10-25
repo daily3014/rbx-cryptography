@@ -231,7 +231,7 @@ function EDDSA.VerifyBatch(Entries: {SignatureEntry}): boolean
 		return EDDSA.Verify(Entry.Message, Entry.PublicKey, Entry.Signature)
 	end
 
-	local TranscriptData = {}
+	local TranscriptData: {buffer} = {}
 	local ParsedData = {}
 
 	for Index, Entry in Entries do
