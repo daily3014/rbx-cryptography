@@ -20,10 +20,6 @@
 	keystream pool. The buffer may be any length, and passing nothing simply
 	refreshes from the built-in sources. Entropy is only ever mixed in, never
 	replaced, so injecting weak bytes can never lower the existing strength.
-
-	The pool position lives in a buffer, not an upvalue: a mutable upvalue made Random about 5 ns
-	slower natively. RandomInt and RandomNumber validate through one inline test first and only
-	call ArgumentError to build the message, which halved them.
 --]=]
 
 --!strict
