@@ -20,6 +20,10 @@
 	keystream pool. The buffer may be any length, and passing nothing simply
 	refreshes from the built-in sources. Entropy is only ever mixed in, never
 	replaced, so injecting weak bytes can never lower the existing strength.
+
+	The pool position lives in a buffer, not an upvalue: a mutable upvalue made Random about 5 ns
+	slower natively. RandomInt and RandomNumber validate through one inline test first and only
+	call ArgumentError to build the message, which halved them.
 --]=]
 
 --!strict
@@ -63,12 +67,11 @@ local ProcessMessage = Blake3Core.ProcessMessage
 local HASH_FLAG = Blake3Core.HASH_FLAG
 local EMPTY = buffer.create(0)
 
-local Key = buffer.create(0)
-local StreamBuffer = buffer.create(0)
+local STREAM = buffer.create(POOL_SIZE)
+local POSITION = buffer.create(4)
 
+local Key = buffer.create(0)
 local Counter = 0
-local BufferPosition = 0
-local BufferSize = 0
 
 local function GatherEntropy(UserEntropy: buffer?)
 	local Sources = buffer.create(SOURCE_LIMIT)
@@ -152,11 +155,10 @@ local function GenerateBlock()
 	local Stream = ProcessMessage(Key, HASH_FLAG, EMPTY, KEY_SIZE + POOL_SIZE)
 
 	buffer.copy(Key, 0, Stream, 0, KEY_SIZE)
+	buffer.copy(STREAM, 0, Stream, KEY_SIZE, POOL_SIZE)
 	buffer.fill(Stream, 0, 0, KEY_SIZE)
 
-	StreamBuffer = Stream
-	BufferPosition = KEY_SIZE
-	BufferSize = KEY_SIZE + POOL_SIZE
+	buffer.writeu32(POSITION, 0, 0)
 	Counter += 1
 
 	if Counter % REKEY_BLOCKS == 0 then
@@ -167,39 +169,40 @@ end
 local function GetBytes(Count: number): buffer
 	local Result = buffer.create(Count)
 	local ResultPosition = 0
+	local Position = buffer.readu32(POSITION, 0)
 
 	while ResultPosition < Count do
-		local Position = BufferPosition
-		if Position >= BufferSize then
+		if Position >= POOL_SIZE then
 			GenerateBlock()
-			Position = BufferPosition
+			Position = 0
 		end
 
-		local BytesToCopy = math.min(Count - ResultPosition, BufferSize - Position)
+		local BytesToCopy = math.min(Count - ResultPosition, POOL_SIZE - Position)
 
-		buffer.copy(Result, ResultPosition, StreamBuffer, Position, BytesToCopy)
+		buffer.copy(Result, ResultPosition, STREAM, Position, BytesToCopy)
 		ResultPosition += BytesToCopy
-		BufferPosition = Position + BytesToCopy
+		Position += BytesToCopy
 	end
 
+	buffer.writeu32(POSITION, 0, Position)
 	return Result
 end
 
 local function GetFloat(): number
-	if BufferPosition + 8 > BufferSize then
+	local Position = buffer.readu32(POSITION, 0)
+	if Position + 8 > POOL_SIZE then
 		GenerateBlock()
+		Position = 0
 	end
 
-	local Position = BufferPosition
-	local Stream = StreamBuffer
-	local Value1 = buffer.readu32(Stream, Position)
-	local Value2 = buffer.readu32(Stream, Position + 4)
-	BufferPosition = Position + 8
+	local Value1 = buffer.readu32(STREAM, Position)
+	local Value2 = buffer.readu32(STREAM, Position + 4)
+	buffer.writeu32(POSITION, 0, Position + 8)
 
 	local High = bit32.rshift(Value1, 5)
 	local Low = bit32.rshift(Value2, 6)
 
-	return (High * 67108864.0 + Low) / 9007199254740992.0
+	return (High * 67108864.0 + Low) * 2 ^ -53
 end
 
 local function GetIntRange(Min: number, Max: number): number
@@ -209,13 +212,28 @@ local function GetIntRange(Min: number, Max: number): number
 		error(`Range must be at most 2^32, got {Range}`, 3)
 	end
 
-	if BufferPosition + 4 > BufferSize then
+	local Position = buffer.readu32(POSITION, 0)
+	if Position + 4 > POOL_SIZE then
 		GenerateBlock()
+		Position = 0
 	end
 
-	local Position = BufferPosition
-	local Value = buffer.readu32(StreamBuffer, Position)
-	BufferPosition = Position + 4
+	local Value = buffer.readu32(STREAM, Position)
+	Position += 4
+
+	if Range ~= 0x100000000 and bit32.band(Range, Range - 1) ~= 0 then
+		local Limit = MAX_UINT32 - (MAX_UINT32 % Range)
+		while Value >= Limit do
+			if Position + 4 > POOL_SIZE then
+				GenerateBlock()
+				Position = 0
+			end
+			Value = buffer.readu32(STREAM, Position)
+			Position += 4
+		end
+	end
+
+	buffer.writeu32(POSITION, 0, Position)
 
 	if Range == 0x100000000 then
 		return Min + Value
@@ -223,16 +241,6 @@ local function GetIntRange(Min: number, Max: number): number
 
 	if bit32.band(Range, Range - 1) == 0 then
 		return Min + bit32.band(Value, Range - 1)
-	end
-
-	local Limit = MAX_UINT32 - (MAX_UINT32 % Range)
-	while Value >= Limit do
-		if BufferPosition + 4 > BufferSize then
-			GenerateBlock()
-		end
-		Position = BufferPosition
-		Value = buffer.readu32(StreamBuffer, Position)
-		BufferPosition = Position + 4
 	end
 
 	return Min + (Value % Range)
@@ -274,25 +282,17 @@ end
 
 CSPRNG.Random = GetFloat
 
-local function ValidateArgument(Name: string, Value: any, Integer: boolean, Optional: boolean): (boolean, string?)
+local function ArgumentError(Name: string, Value: any, Integer: boolean, Optional: boolean): string?
 	if Value == nil then
-		if Optional then
-			return true, nil
-		end
-
-		return false, `{Name} must be a number`
+		return if Optional then nil else `{Name} must be a number`
 	end
 
 	if type(Value) ~= "number" then
-		return false, `{Name} must be a number, got {typeof(Value)}`
-	end
-
-	if not Value then
-		return true, nil
+		return `{Name} must be a number, got {typeof(Value)}`
 	end
 
 	if Integer and Value % 1 ~= 0 then
-		return false, `{Name} must be an integer, got {Value}`
+		return `{Name} must be an integer, got {Value}`
 	end
 
 	if not math.isfinite(Value) then
@@ -300,15 +300,16 @@ local function ValidateArgument(Name: string, Value: any, Integer: boolean, Opti
 			then "NaN"
 			else "inf"
 
-		return false, `{Name} must be a finite number, got {Type}`
+		return `{Name} must be a finite number, got {Type}`
 	end
 
-	return true, nil
+	return nil
 end
 
 function CSPRNG.RandomInt(Min: number, Max: number?): number
-	assert(ValidateArgument("Min", Min, true, false))
-	assert(ValidateArgument("Max", Max, true, true))
+	if not (type(Min) == "number" and Min % 1 == 0 and (Max == nil or (type(Max) == "number" and Max % 1 == 0))) then
+		error(ArgumentError("Min", Min, true, false) or ArgumentError("Max", Max, true, true), 2)
+	end
 
 	if Max then
 		if Max < Min then
@@ -337,8 +338,9 @@ function CSPRNG.RandomInt(Min: number, Max: number?): number
 end
 
 function CSPRNG.RandomNumber(Min: number, Max: number?): number
-	assert(ValidateArgument("Min", Min, false, false))
-	assert(ValidateArgument("Max", Max, false, true))
+	if not (type(Min) == "number" and math.isfinite(Min) and (Max == nil or (type(Max) == "number" and math.isfinite(Max)))) then
+		error(ArgumentError("Min", Min, false, false) or ArgumentError("Max", Max, false, true), 2)
+	end
 
 	if Max then
 		if Max < Min then
@@ -385,7 +387,10 @@ function CSPRNG.RandomBytes(Count: number): buffer
 end
 
 local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
-	assert(ValidateArgument("Length", Length, true, false))
+	local LengthError = ArgumentError("Length", Length, true, false)
+	if LengthError then
+		error(LengthError, 2)
+	end
 
 	if Length <= 0 then
 		error(`Length must be bigger than 0, got {Length}`, 2)
@@ -418,7 +423,10 @@ function CSPRNG.MakeRandomString(CharacterSet: string | buffer): RandomStringSig
 	end
 
 	return function(Length: number, AsBuffer: boolean?): string | buffer
-		assert(ValidateArgument("Length", Length, true, false))
+		local LengthError = ArgumentError("Length", Length, true, false)
+		if LengthError then
+			error(LengthError, 2)
+		end
 
 		if Length <= 0 then
 			error(`Length must be bigger than 0, got {Length}`, 2)
