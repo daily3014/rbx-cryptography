@@ -82,6 +82,8 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 - [HMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/HMAC.luau): Hash-based Message Authentication Code (works with any hash function)
 
+- [KeyedHMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/KeyedHMAC.luau): HMAC with the key prepared once, for many messages under one key (about twice as fast on short messages with SHA-2's Luau path)
+
 - [KMAC](https://github.com/daily3014/rbx-cryptography/blob/main/src/Hashing/KMAC.luau): Hash-based Message Authentication Code (uses Keccak)
 
 **Authenticated Encryption**

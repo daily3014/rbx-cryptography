@@ -602,7 +602,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 	buffer.writeu32(State, 56, S7H); buffer.writeu32(State, 60, S7L)
 end
 
-local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number): buffer
+local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number, PrefixBytes: number?): buffer
 	local State = STATE
 	buffer.copy(State, 0, InitialState, 0, 64)
 
@@ -622,7 +622,7 @@ local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number
 	end
 	buffer.writeu8(Tail, TailLength, 0x80)
 
-	local BitLength = MessageLength * 8
+	local BitLength = (MessageLength + (PrefixBytes or 0)) * 8
 	buffer.writeu32(Tail, TailBytes - 8, bit32.byteswap(math.floor(BitLength * CARRY)))
 	buffer.writeu32(Tail, TailBytes - 4, bit32.byteswap(BitLength))
 	Compress(Tail, 0, TailBytes, State)
@@ -649,5 +649,7 @@ return {
 	SHA512 = SHA512,
 	SHA512_Internal = SHA512_Internal,
 	Digest_Internal = Digest,
+	Compress_Internal = Compress,
 	IV_384 = IV_384,
+	IV_512 = IV_512,
 }

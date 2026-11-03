@@ -4,6 +4,7 @@ local Lazy = require("./Lazy")
 
 export type Algorithms = {
 	HMAC: typeof(require("@self/HMAC")),
+	KeyedHMAC: typeof(require("@self/KeyedHMAC")),
 	HKDF: typeof(require("@self/HKDF")),
 	KMAC: typeof(require("@self/KMAC")),
 	MD5: typeof(require("@self/MD5")),
@@ -16,6 +17,7 @@ export type Algorithms = {
 
 local Algorithms: Algorithms = Lazy.Group("Hashing", {
 	HMAC = function() return require("@self/HMAC") end,
+	KeyedHMAC = function() return require("@self/KeyedHMAC") end,
 	HKDF = function() return require("@self/HKDF") end,
 	KMAC = function() return require("@self/KMAC") end,
 	MD5 = function() return require("@self/MD5") end,

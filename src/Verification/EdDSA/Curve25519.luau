@@ -25,6 +25,151 @@ local DIFF_X = buffer.create(COORD_SIZE)
 local DIFF_Z = buffer.create(COORD_SIZE)
 local ONE = FieldPrime.Num(1)
 
+local function FieldMul(A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number, A07: number, A08: number, A09: number, A10: number, A11: number, B00: number, B01: number, B02: number, B03: number, B04: number, B05: number, B06: number, B07: number, B08: number, B09: number, B10: number, B11: number): (number, number, number, number, number, number, number, number, number, number, number, number)
+	local R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+	do
+		local c00 = (A01 * B11 + A02 * B10 + A03 * B09 + A04 * B08 + A05 * B07 + A06 * B06 + A07 * B05 + A08 * B04 + A09 * B03 + A10 * B02 + A11 * B01) * (19 / 2 ^ 255) + (A00 * B00)
+		local c01 = (A02 * B11 + A03 * B10 + A04 * B09 + A05 * B08 + A06 * B07 + A07 * B06 + A08 * B05 + A09 * B04 + A10 * B03 + A11 * B02) * (19 / 2 ^ 255) + (A00 * B01 + A01 * B00)
+		local c02 = (A03 * B11 + A04 * B10 + A05 * B09 + A06 * B08 + A07 * B07 + A08 * B06 + A09 * B05 + A10 * B04 + A11 * B03) * (19 / 2 ^ 255) + (A00 * B02 + A01 * B01 + A02 * B00)
+		local c03 = (A04 * B11 + A05 * B10 + A06 * B09 + A07 * B08 + A08 * B07 + A09 * B06 + A10 * B05 + A11 * B04) * (19 / 2 ^ 255) + (A00 * B03 + A01 * B02 + A02 * B01 + A03 * B00)
+		local c04 = (A05 * B11 + A06 * B10 + A07 * B09 + A08 * B08 + A09 * B07 + A10 * B06 + A11 * B05) * (19 / 2 ^ 255) + (A00 * B04 + A01 * B03 + A02 * B02 + A03 * B01 + A04 * B00)
+		local c05 = (A06 * B11 + A07 * B10 + A08 * B09 + A09 * B08 + A10 * B07 + A11 * B06) * (19 / 2 ^ 255) + (A00 * B05 + A01 * B04 + A02 * B03 + A03 * B02 + A04 * B01 + A05 * B00)
+		local c06 = (A07 * B11 + A08 * B10 + A09 * B09 + A10 * B08 + A11 * B07) * (19 / 2 ^ 255) + (A00 * B06 + A01 * B05 + A02 * B04 + A03 * B03 + A04 * B02 + A05 * B01 + A06 * B00)
+		local c07 = (A08 * B11 + A09 * B10 + A10 * B09 + A11 * B08) * (19 / 2 ^ 255) + (A00 * B07 + A01 * B06 + A02 * B05 + A03 * B04 + A04 * B03 + A05 * B02 + A06 * B01 + A07 * B00)
+		local c08 = (A09 * B11 + A10 * B10 + A11 * B09) * (19 / 2 ^ 255) + (A00 * B08 + A01 * B07 + A02 * B06 + A03 * B05 + A04 * B04 + A05 * B03 + A06 * B02 + A07 * B01 + A08 * B00)
+		local c09 = (A10 * B11 + A11 * B10) * (19 / 2 ^ 255) + (A00 * B09 + A01 * B08 + A02 * B07 + A03 * B06 + A04 * B05 + A05 * B04 + A06 * B03 + A07 * B02 + A08 * B01 + A09 * B00)
+		local c10 = (A11 * B11) * (19 / 2 ^ 255) + (A00 * B10 + A01 * B09 + A02 * B08 + A03 * B07 + A04 * B06 + A05 * B05 + A06 * B04 + A07 * B03 + A08 * B02 + A09 * B01 + A10 * B00)
+		local c11 = A00 * B11 + A01 * B10 + A02 * B09 + A03 * B08 + A04 * B07 + A05 * B06 + A06 * B05 + A07 * B04 + A08 * B03 + A09 * B02 + A10 * B01 + A11 * B00
+		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
+		local b01 = (c01 - k01) + k00
+		local b02 = (c02 - k02) + k01
+		local b03 = (c03 - k03) + k02
+		local b04 = (c04 - k04) + k03
+		local b05 = (c05 - k05) + k04
+		local b06 = (c06 - k06) + k05
+		local b07 = (c07 - k07) + k06
+		local b08 = (c08 - k08) + k07
+		local b09 = (c09 - k09) + k08
+		local b10 = (c10 - k10) + k09
+		local b11 = (c11 - k11) + k10
+		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		R00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
+		R01 = (b01 - j01) + j00
+		R02 = (b02 - j02) + j01
+		R03 = (b03 - j03) + j02
+		R04 = (b04 - j04) + j03
+		R05 = (b05 - j05) + j04
+		R06 = (b06 - j06) + j05
+		R07 = (b07 - j07) + j06
+		R08 = (b08 - j08) + j07
+		R09 = (b09 - j09) + j08
+		R10 = (b10 - j10) + j09
+		R11 = (b11 - j11) + j10
+	end
+	return R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+end
+
+local function FieldSquare(A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number, A07: number, A08: number, A09: number, A10: number, A11: number): (number, number, number, number, number, number, number, number, number, number, number, number)
+	local R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+	do
+		local d00 = A00 * 2
+		local d01 = A01 * 2
+		local d02 = A02 * 2
+		local d03 = A03 * 2
+		local d04 = A04 * 2
+		local d05 = A05 * 2
+		local d06 = A06 * 2
+		local d07 = A07 * 2
+		local d08 = A08 * 2
+		local d09 = A09 * 2
+		local d10 = A10 * 2
+		local c00 = (A11 * d01 + A10 * d02 + A09 * d03 + A08 * d04 + A07 * d05 + A06 * A06) * (19 / 2 ^ 255) + (A00 * A00)
+		local c01 = (A11 * d02 + A10 * d03 + A09 * d04 + A08 * d05 + A07 * d06) * (19 / 2 ^ 255) + (A01 * d00)
+		local c02 = (A11 * d03 + A10 * d04 + A09 * d05 + A08 * d06 + A07 * A07) * (19 / 2 ^ 255) + (A02 * d00 + A01 * A01)
+		local c03 = (A11 * d04 + A10 * d05 + A09 * d06 + A08 * d07) * (19 / 2 ^ 255) + (A03 * d00 + A02 * d01)
+		local c04 = (A11 * d05 + A10 * d06 + A09 * d07 + A08 * A08) * (19 / 2 ^ 255) + (A04 * d00 + A03 * d01 + A02 * A02)
+		local c05 = (A11 * d06 + A10 * d07 + A09 * d08) * (19 / 2 ^ 255) + (A05 * d00 + A04 * d01 + A03 * d02)
+		local c06 = (A11 * d07 + A10 * d08 + A09 * A09) * (19 / 2 ^ 255) + (A06 * d00 + A05 * d01 + A04 * d02 + A03 * A03)
+		local c07 = (A11 * d08 + A10 * d09) * (19 / 2 ^ 255) + (A07 * d00 + A06 * d01 + A05 * d02 + A04 * d03)
+		local c08 = (A11 * d09 + A10 * A10) * (19 / 2 ^ 255) + (A08 * d00 + A07 * d01 + A06 * d02 + A05 * d03 + A04 * A04)
+		local c09 = (A11 * d10) * (19 / 2 ^ 255) + (A09 * d00 + A08 * d01 + A07 * d02 + A06 * d03 + A05 * d04)
+		local c10 = (A11 * A11) * (19 / 2 ^ 255) + (A10 * d00 + A09 * d01 + A08 * d02 + A07 * d03 + A06 * d04 + A05 * A05)
+		local c11 = A11 * d00 + A10 * d01 + A09 * d02 + A08 * d03 + A07 * d04 + A06 * d05
+		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
+		local b01 = (c01 - k01) + k00
+		local b02 = (c02 - k02) + k01
+		local b03 = (c03 - k03) + k02
+		local b04 = (c04 - k04) + k03
+		local b05 = (c05 - k05) + k04
+		local b06 = (c06 - k06) + k05
+		local b07 = (c07 - k07) + k06
+		local b08 = (c08 - k08) + k07
+		local b09 = (c09 - k09) + k08
+		local b10 = (c10 - k10) + k09
+		local b11 = (c11 - k11) + k10
+		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		R00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
+		R01 = (b01 - j01) + j00
+		R02 = (b02 - j02) + j01
+		R03 = (b03 - j03) + j02
+		R04 = (b04 - j04) + j03
+		R05 = (b05 - j05) + j04
+		R06 = (b06 - j06) + j05
+		R07 = (b07 - j07) + j06
+		R08 = (b08 - j08) + j07
+		R09 = (b09 - j09) + j08
+		R10 = (b10 - j10) + j09
+		R11 = (b11 - j11) + j10
+	end
+	return R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+end
+
 local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: number, UnitZ: boolean)
 	local P00 = buffer.readf64(State, 0)
 	local Q00 = buffer.readf64(State, 208)
@@ -170,155 +315,9 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 	local B09 = P09 - R09
 	local B10 = P10 - R10
 	local B11 = P11 - R11
-	local AA00, AA01, AA02, AA03, AA04, AA05, AA06, AA07, AA08, AA09, AA10, AA11
-	do
-		local d00 = A00 * 2
-		local d01 = A01 * 2
-		local d02 = A02 * 2
-		local d03 = A03 * 2
-		local d04 = A04 * 2
-		local d05 = A05 * 2
-		local d06 = A06 * 2
-		local d07 = A07 * 2
-		local d08 = A08 * 2
-		local d09 = A09 * 2
-		local d10 = A10 * 2
-		local c00 = (A11 * d01 + A10 * d02 + A09 * d03 + A08 * d04 + A07 * d05 + A06 * A06) * (19 / 2 ^ 255) + (A00 * A00)
-		local c01 = (A11 * d02 + A10 * d03 + A09 * d04 + A08 * d05 + A07 * d06) * (19 / 2 ^ 255) + (A01 * d00)
-		local c02 = (A11 * d03 + A10 * d04 + A09 * d05 + A08 * d06 + A07 * A07) * (19 / 2 ^ 255) + (A02 * d00 + A01 * A01)
-		local c03 = (A11 * d04 + A10 * d05 + A09 * d06 + A08 * d07) * (19 / 2 ^ 255) + (A03 * d00 + A02 * d01)
-		local c04 = (A11 * d05 + A10 * d06 + A09 * d07 + A08 * A08) * (19 / 2 ^ 255) + (A04 * d00 + A03 * d01 + A02 * A02)
-		local c05 = (A11 * d06 + A10 * d07 + A09 * d08) * (19 / 2 ^ 255) + (A05 * d00 + A04 * d01 + A03 * d02)
-		local c06 = (A11 * d07 + A10 * d08 + A09 * A09) * (19 / 2 ^ 255) + (A06 * d00 + A05 * d01 + A04 * d02 + A03 * A03)
-		local c07 = (A11 * d08 + A10 * d09) * (19 / 2 ^ 255) + (A07 * d00 + A06 * d01 + A05 * d02 + A04 * d03)
-		local c08 = (A11 * d09 + A10 * A10) * (19 / 2 ^ 255) + (A08 * d00 + A07 * d01 + A06 * d02 + A05 * d03 + A04 * A04)
-		local c09 = (A11 * d10) * (19 / 2 ^ 255) + (A09 * d00 + A08 * d01 + A07 * d02 + A06 * d03 + A05 * d04)
-		local c10 = (A11 * A11) * (19 / 2 ^ 255) + (A10 * d00 + A09 * d01 + A08 * d02 + A07 * d03 + A06 * d04 + A05 * A05)
-		local c11 = A11 * d00 + A10 * d01 + A09 * d02 + A08 * d03 + A07 * d04 + A06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		AA00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		AA01 = (b01 - j01) + j00
-		AA02 = (b02 - j02) + j01
-		AA03 = (b03 - j03) + j02
-		AA04 = (b04 - j04) + j03
-		AA05 = (b05 - j05) + j04
-		AA06 = (b06 - j06) + j05
-		AA07 = (b07 - j07) + j06
-		AA08 = (b08 - j08) + j07
-		AA09 = (b09 - j09) + j08
-		AA10 = (b10 - j10) + j09
-		AA11 = (b11 - j11) + j10
-	end
+	local AA00, AA01, AA02, AA03, AA04, AA05, AA06, AA07, AA08, AA09, AA10, AA11 = FieldSquare(A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11)
 	if Swap < 0 then return end
-	local BB00, BB01, BB02, BB03, BB04, BB05, BB06, BB07, BB08, BB09, BB10, BB11
-	do
-		local d00 = B00 * 2
-		local d01 = B01 * 2
-		local d02 = B02 * 2
-		local d03 = B03 * 2
-		local d04 = B04 * 2
-		local d05 = B05 * 2
-		local d06 = B06 * 2
-		local d07 = B07 * 2
-		local d08 = B08 * 2
-		local d09 = B09 * 2
-		local d10 = B10 * 2
-		local c00 = (B11 * d01 + B10 * d02 + B09 * d03 + B08 * d04 + B07 * d05 + B06 * B06) * (19 / 2 ^ 255) + (B00 * B00)
-		local c01 = (B11 * d02 + B10 * d03 + B09 * d04 + B08 * d05 + B07 * d06) * (19 / 2 ^ 255) + (B01 * d00)
-		local c02 = (B11 * d03 + B10 * d04 + B09 * d05 + B08 * d06 + B07 * B07) * (19 / 2 ^ 255) + (B02 * d00 + B01 * B01)
-		local c03 = (B11 * d04 + B10 * d05 + B09 * d06 + B08 * d07) * (19 / 2 ^ 255) + (B03 * d00 + B02 * d01)
-		local c04 = (B11 * d05 + B10 * d06 + B09 * d07 + B08 * B08) * (19 / 2 ^ 255) + (B04 * d00 + B03 * d01 + B02 * B02)
-		local c05 = (B11 * d06 + B10 * d07 + B09 * d08) * (19 / 2 ^ 255) + (B05 * d00 + B04 * d01 + B03 * d02)
-		local c06 = (B11 * d07 + B10 * d08 + B09 * B09) * (19 / 2 ^ 255) + (B06 * d00 + B05 * d01 + B04 * d02 + B03 * B03)
-		local c07 = (B11 * d08 + B10 * d09) * (19 / 2 ^ 255) + (B07 * d00 + B06 * d01 + B05 * d02 + B04 * d03)
-		local c08 = (B11 * d09 + B10 * B10) * (19 / 2 ^ 255) + (B08 * d00 + B07 * d01 + B06 * d02 + B05 * d03 + B04 * B04)
-		local c09 = (B11 * d10) * (19 / 2 ^ 255) + (B09 * d00 + B08 * d01 + B07 * d02 + B06 * d03 + B05 * d04)
-		local c10 = (B11 * B11) * (19 / 2 ^ 255) + (B10 * d00 + B09 * d01 + B08 * d02 + B07 * d03 + B06 * d04 + B05 * B05)
-		local c11 = B11 * d00 + B10 * d01 + B09 * d02 + B08 * d03 + B07 * d04 + B06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		BB00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		BB01 = (b01 - j01) + j00
-		BB02 = (b02 - j02) + j01
-		BB03 = (b03 - j03) + j02
-		BB04 = (b04 - j04) + j03
-		BB05 = (b05 - j05) + j04
-		BB06 = (b06 - j06) + j05
-		BB07 = (b07 - j07) + j06
-		BB08 = (b08 - j08) + j07
-		BB09 = (b09 - j09) + j08
-		BB10 = (b10 - j10) + j09
-		BB11 = (b11 - j11) + j10
-	end
+	local BB00, BB01, BB02, BB03, BB04, BB05, BB06, BB07, BB08, BB09, BB10, BB11 = FieldSquare(B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11)
 	if Swap < 0 then return end
 	local C00 = Q00 + U00
 	local C01 = Q01 + U01
@@ -344,131 +343,9 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 	local D09 = Q09 - U09
 	local D10 = Q10 - U10
 	local D11 = Q11 - U11
-	do
-		local c00 = (D01 * A11 + D02 * A10 + D03 * A09 + D04 * A08 + D05 * A07 + D06 * A06 + D07 * A05 + D08 * A04 + D09 * A03 + D10 * A02 + D11 * A01) * (19 / 2 ^ 255) + (D00 * A00)
-		local c01 = (D02 * A11 + D03 * A10 + D04 * A09 + D05 * A08 + D06 * A07 + D07 * A06 + D08 * A05 + D09 * A04 + D10 * A03 + D11 * A02) * (19 / 2 ^ 255) + (D00 * A01 + D01 * A00)
-		local c02 = (D03 * A11 + D04 * A10 + D05 * A09 + D06 * A08 + D07 * A07 + D08 * A06 + D09 * A05 + D10 * A04 + D11 * A03) * (19 / 2 ^ 255) + (D00 * A02 + D01 * A01 + D02 * A00)
-		local c03 = (D04 * A11 + D05 * A10 + D06 * A09 + D07 * A08 + D08 * A07 + D09 * A06 + D10 * A05 + D11 * A04) * (19 / 2 ^ 255) + (D00 * A03 + D01 * A02 + D02 * A01 + D03 * A00)
-		local c04 = (D05 * A11 + D06 * A10 + D07 * A09 + D08 * A08 + D09 * A07 + D10 * A06 + D11 * A05) * (19 / 2 ^ 255) + (D00 * A04 + D01 * A03 + D02 * A02 + D03 * A01 + D04 * A00)
-		local c05 = (D06 * A11 + D07 * A10 + D08 * A09 + D09 * A08 + D10 * A07 + D11 * A06) * (19 / 2 ^ 255) + (D00 * A05 + D01 * A04 + D02 * A03 + D03 * A02 + D04 * A01 + D05 * A00)
-		local c06 = (D07 * A11 + D08 * A10 + D09 * A09 + D10 * A08 + D11 * A07) * (19 / 2 ^ 255) + (D00 * A06 + D01 * A05 + D02 * A04 + D03 * A03 + D04 * A02 + D05 * A01 + D06 * A00)
-		local c07 = (D08 * A11 + D09 * A10 + D10 * A09 + D11 * A08) * (19 / 2 ^ 255) + (D00 * A07 + D01 * A06 + D02 * A05 + D03 * A04 + D04 * A03 + D05 * A02 + D06 * A01 + D07 * A00)
-		local c08 = (D09 * A11 + D10 * A10 + D11 * A09) * (19 / 2 ^ 255) + (D00 * A08 + D01 * A07 + D02 * A06 + D03 * A05 + D04 * A04 + D05 * A03 + D06 * A02 + D07 * A01 + D08 * A00)
-		local c09 = (D10 * A11 + D11 * A10) * (19 / 2 ^ 255) + (D00 * A09 + D01 * A08 + D02 * A07 + D03 * A06 + D04 * A05 + D05 * A04 + D06 * A03 + D07 * A02 + D08 * A01 + D09 * A00)
-		local c10 = (D11 * A11) * (19 / 2 ^ 255) + (D00 * A10 + D01 * A09 + D02 * A08 + D03 * A07 + D04 * A06 + D05 * A05 + D06 * A04 + D07 * A03 + D08 * A02 + D09 * A01 + D10 * A00)
-		local c11 = D00 * A11 + D01 * A10 + D02 * A09 + D03 * A08 + D04 * A07 + D05 * A06 + D06 * A05 + D07 * A04 + D08 * A03 + D09 * A02 + D10 * A01 + D11 * A00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		D00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		D01 = (b01 - j01) + j00
-		D02 = (b02 - j02) + j01
-		D03 = (b03 - j03) + j02
-		D04 = (b04 - j04) + j03
-		D05 = (b05 - j05) + j04
-		D06 = (b06 - j06) + j05
-		D07 = (b07 - j07) + j06
-		D08 = (b08 - j08) + j07
-		D09 = (b09 - j09) + j08
-		D10 = (b10 - j10) + j09
-		D11 = (b11 - j11) + j10
-	end
+	D00, D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11 = FieldMul(D00, D01, D02, D03, D04, D05, D06, D07, D08, D09, D10, D11, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11)
 	if Swap < 0 then return end
-	do
-		local c00 = (C01 * B11 + C02 * B10 + C03 * B09 + C04 * B08 + C05 * B07 + C06 * B06 + C07 * B05 + C08 * B04 + C09 * B03 + C10 * B02 + C11 * B01) * (19 / 2 ^ 255) + (C00 * B00)
-		local c01 = (C02 * B11 + C03 * B10 + C04 * B09 + C05 * B08 + C06 * B07 + C07 * B06 + C08 * B05 + C09 * B04 + C10 * B03 + C11 * B02) * (19 / 2 ^ 255) + (C00 * B01 + C01 * B00)
-		local c02 = (C03 * B11 + C04 * B10 + C05 * B09 + C06 * B08 + C07 * B07 + C08 * B06 + C09 * B05 + C10 * B04 + C11 * B03) * (19 / 2 ^ 255) + (C00 * B02 + C01 * B01 + C02 * B00)
-		local c03 = (C04 * B11 + C05 * B10 + C06 * B09 + C07 * B08 + C08 * B07 + C09 * B06 + C10 * B05 + C11 * B04) * (19 / 2 ^ 255) + (C00 * B03 + C01 * B02 + C02 * B01 + C03 * B00)
-		local c04 = (C05 * B11 + C06 * B10 + C07 * B09 + C08 * B08 + C09 * B07 + C10 * B06 + C11 * B05) * (19 / 2 ^ 255) + (C00 * B04 + C01 * B03 + C02 * B02 + C03 * B01 + C04 * B00)
-		local c05 = (C06 * B11 + C07 * B10 + C08 * B09 + C09 * B08 + C10 * B07 + C11 * B06) * (19 / 2 ^ 255) + (C00 * B05 + C01 * B04 + C02 * B03 + C03 * B02 + C04 * B01 + C05 * B00)
-		local c06 = (C07 * B11 + C08 * B10 + C09 * B09 + C10 * B08 + C11 * B07) * (19 / 2 ^ 255) + (C00 * B06 + C01 * B05 + C02 * B04 + C03 * B03 + C04 * B02 + C05 * B01 + C06 * B00)
-		local c07 = (C08 * B11 + C09 * B10 + C10 * B09 + C11 * B08) * (19 / 2 ^ 255) + (C00 * B07 + C01 * B06 + C02 * B05 + C03 * B04 + C04 * B03 + C05 * B02 + C06 * B01 + C07 * B00)
-		local c08 = (C09 * B11 + C10 * B10 + C11 * B09) * (19 / 2 ^ 255) + (C00 * B08 + C01 * B07 + C02 * B06 + C03 * B05 + C04 * B04 + C05 * B03 + C06 * B02 + C07 * B01 + C08 * B00)
-		local c09 = (C10 * B11 + C11 * B10) * (19 / 2 ^ 255) + (C00 * B09 + C01 * B08 + C02 * B07 + C03 * B06 + C04 * B05 + C05 * B04 + C06 * B03 + C07 * B02 + C08 * B01 + C09 * B00)
-		local c10 = (C11 * B11) * (19 / 2 ^ 255) + (C00 * B10 + C01 * B09 + C02 * B08 + C03 * B07 + C04 * B06 + C05 * B05 + C06 * B04 + C07 * B03 + C08 * B02 + C09 * B01 + C10 * B00)
-		local c11 = C00 * B11 + C01 * B10 + C02 * B09 + C03 * B08 + C04 * B07 + C05 * B06 + C06 * B05 + C07 * B04 + C08 * B03 + C09 * B02 + C10 * B01 + C11 * B00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		C00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		C01 = (b01 - j01) + j00
-		C02 = (b02 - j02) + j01
-		C03 = (b03 - j03) + j02
-		C04 = (b04 - j04) + j03
-		C05 = (b05 - j05) + j04
-		C06 = (b06 - j06) + j05
-		C07 = (b07 - j07) + j06
-		C08 = (b08 - j08) + j07
-		C09 = (b09 - j09) + j08
-		C10 = (b10 - j10) + j09
-		C11 = (b11 - j11) + j10
-	end
+	C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11 = FieldMul(C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11, B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11)
 	if Swap < 0 then return end
 	local E00 = AA00 - BB00
 	local E01 = AA01 - BB01
@@ -496,153 +373,23 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 	local S11 = D11 + C11
 	if UnitZ then
 		do
-			local d00 = S00 * 2
-			local d01 = S01 * 2
-			local d02 = S02 * 2
-			local d03 = S03 * 2
-			local d04 = S04 * 2
-			local d05 = S05 * 2
-			local d06 = S06 * 2
-			local d07 = S07 * 2
-			local d08 = S08 * 2
-			local d09 = S09 * 2
-			local d10 = S10 * 2
-			local c00 = (S11 * d01 + S10 * d02 + S09 * d03 + S08 * d04 + S07 * d05 + S06 * S06) * (19 / 2 ^ 255) + (S00 * S00)
-			local c01 = (S11 * d02 + S10 * d03 + S09 * d04 + S08 * d05 + S07 * d06) * (19 / 2 ^ 255) + (S01 * d00)
-			local c02 = (S11 * d03 + S10 * d04 + S09 * d05 + S08 * d06 + S07 * S07) * (19 / 2 ^ 255) + (S02 * d00 + S01 * S01)
-			local c03 = (S11 * d04 + S10 * d05 + S09 * d06 + S08 * d07) * (19 / 2 ^ 255) + (S03 * d00 + S02 * d01)
-			local c04 = (S11 * d05 + S10 * d06 + S09 * d07 + S08 * S08) * (19 / 2 ^ 255) + (S04 * d00 + S03 * d01 + S02 * S02)
-			local c05 = (S11 * d06 + S10 * d07 + S09 * d08) * (19 / 2 ^ 255) + (S05 * d00 + S04 * d01 + S03 * d02)
-			local c06 = (S11 * d07 + S10 * d08 + S09 * S09) * (19 / 2 ^ 255) + (S06 * d00 + S05 * d01 + S04 * d02 + S03 * S03)
-			local c07 = (S11 * d08 + S10 * d09) * (19 / 2 ^ 255) + (S07 * d00 + S06 * d01 + S05 * d02 + S04 * d03)
-			local c08 = (S11 * d09 + S10 * S10) * (19 / 2 ^ 255) + (S08 * d00 + S07 * d01 + S06 * d02 + S05 * d03 + S04 * S04)
-			local c09 = (S11 * d10) * (19 / 2 ^ 255) + (S09 * d00 + S08 * d01 + S07 * d02 + S06 * d03 + S05 * d04)
-			local c10 = (S11 * S11) * (19 / 2 ^ 255) + (S10 * d00 + S09 * d01 + S08 * d02 + S07 * d03 + S06 * d04 + S05 * S05)
-			local c11 = S11 * d00 + S10 * d01 + S09 * d02 + S08 * d03 + S07 * d04 + S06 * d05
-			local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-			local b01 = (c01 - k01) + k00
-			local b02 = (c02 - k02) + k01
-			local b03 = (c03 - k03) + k02
-			local b04 = (c04 - k04) + k03
-			local b05 = (c05 - k05) + k04
-			local b06 = (c06 - k06) + k05
-			local b07 = (c07 - k07) + k06
-			local b08 = (c08 - k08) + k07
-			local b09 = (c09 - k09) + k08
-			local b10 = (c10 - k10) + k09
-			local b11 = (c11 - k11) + k10
-			local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			buffer.writef64(State, 208 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-			buffer.writef64(State, 208 + 8, (b01 - j01) + j00)
-			buffer.writef64(State, 208 + 16, (b02 - j02) + j01)
-			buffer.writef64(State, 208 + 24, (b03 - j03) + j02)
-			buffer.writef64(State, 208 + 32, (b04 - j04) + j03)
-			buffer.writef64(State, 208 + 40, (b05 - j05) + j04)
-			buffer.writef64(State, 208 + 48, (b06 - j06) + j05)
-			buffer.writef64(State, 208 + 56, (b07 - j07) + j06)
-			buffer.writef64(State, 208 + 64, (b08 - j08) + j07)
-			buffer.writef64(State, 208 + 72, (b09 - j09) + j08)
-			buffer.writef64(State, 208 + 80, (b10 - j10) + j09)
-			buffer.writef64(State, 208 + 88, (b11 - j11) + j10)
+			local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldSquare(S00, S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11)
+			buffer.writef64(State, 208 + 0, O00)
+			buffer.writef64(State, 208 + 8, O01)
+			buffer.writef64(State, 208 + 16, O02)
+			buffer.writef64(State, 208 + 24, O03)
+			buffer.writef64(State, 208 + 32, O04)
+			buffer.writef64(State, 208 + 40, O05)
+			buffer.writef64(State, 208 + 48, O06)
+			buffer.writef64(State, 208 + 56, O07)
+			buffer.writef64(State, 208 + 64, O08)
+			buffer.writef64(State, 208 + 72, O09)
+			buffer.writef64(State, 208 + 80, O10)
+			buffer.writef64(State, 208 + 88, O11)
 		end
 		if Swap < 0 then return end
 	else
-		do
-			local d00 = S00 * 2
-			local d01 = S01 * 2
-			local d02 = S02 * 2
-			local d03 = S03 * 2
-			local d04 = S04 * 2
-			local d05 = S05 * 2
-			local d06 = S06 * 2
-			local d07 = S07 * 2
-			local d08 = S08 * 2
-			local d09 = S09 * 2
-			local d10 = S10 * 2
-			local c00 = (S11 * d01 + S10 * d02 + S09 * d03 + S08 * d04 + S07 * d05 + S06 * S06) * (19 / 2 ^ 255) + (S00 * S00)
-			local c01 = (S11 * d02 + S10 * d03 + S09 * d04 + S08 * d05 + S07 * d06) * (19 / 2 ^ 255) + (S01 * d00)
-			local c02 = (S11 * d03 + S10 * d04 + S09 * d05 + S08 * d06 + S07 * S07) * (19 / 2 ^ 255) + (S02 * d00 + S01 * S01)
-			local c03 = (S11 * d04 + S10 * d05 + S09 * d06 + S08 * d07) * (19 / 2 ^ 255) + (S03 * d00 + S02 * d01)
-			local c04 = (S11 * d05 + S10 * d06 + S09 * d07 + S08 * S08) * (19 / 2 ^ 255) + (S04 * d00 + S03 * d01 + S02 * S02)
-			local c05 = (S11 * d06 + S10 * d07 + S09 * d08) * (19 / 2 ^ 255) + (S05 * d00 + S04 * d01 + S03 * d02)
-			local c06 = (S11 * d07 + S10 * d08 + S09 * S09) * (19 / 2 ^ 255) + (S06 * d00 + S05 * d01 + S04 * d02 + S03 * S03)
-			local c07 = (S11 * d08 + S10 * d09) * (19 / 2 ^ 255) + (S07 * d00 + S06 * d01 + S05 * d02 + S04 * d03)
-			local c08 = (S11 * d09 + S10 * S10) * (19 / 2 ^ 255) + (S08 * d00 + S07 * d01 + S06 * d02 + S05 * d03 + S04 * S04)
-			local c09 = (S11 * d10) * (19 / 2 ^ 255) + (S09 * d00 + S08 * d01 + S07 * d02 + S06 * d03 + S05 * d04)
-			local c10 = (S11 * S11) * (19 / 2 ^ 255) + (S10 * d00 + S09 * d01 + S08 * d02 + S07 * d03 + S06 * d04 + S05 * S05)
-			local c11 = S11 * d00 + S10 * d01 + S09 * d02 + S08 * d03 + S07 * d04 + S06 * d05
-			local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-			local b01 = (c01 - k01) + k00
-			local b02 = (c02 - k02) + k01
-			local b03 = (c03 - k03) + k02
-			local b04 = (c04 - k04) + k03
-			local b05 = (c05 - k05) + k04
-			local b06 = (c06 - k06) + k05
-			local b07 = (c07 - k07) + k06
-			local b08 = (c08 - k08) + k07
-			local b09 = (c09 - k09) + k08
-			local b10 = (c10 - k10) + k09
-			local b11 = (c11 - k11) + k10
-			local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			S00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-			S01 = (b01 - j01) + j00
-			S02 = (b02 - j02) + j01
-			S03 = (b03 - j03) + j02
-			S04 = (b04 - j04) + j03
-			S05 = (b05 - j05) + j04
-			S06 = (b06 - j06) + j05
-			S07 = (b07 - j07) + j06
-			S08 = (b08 - j08) + j07
-			S09 = (b09 - j09) + j08
-			S10 = (b10 - j10) + j09
-			S11 = (b11 - j11) + j10
-		end
+		S00, S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11 = FieldSquare(S00, S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11)
 		if Swap < 0 then return end
 		local Y00 = buffer.readf64(DiffZ, 0 + 0)
 		local Y01 = buffer.readf64(DiffZ, 0 + 8)
@@ -657,66 +404,19 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 		local Y10 = buffer.readf64(DiffZ, 0 + 80)
 		local Y11 = buffer.readf64(DiffZ, 0 + 88)
 		do
-			local c00 = (Y01 * S11 + Y02 * S10 + Y03 * S09 + Y04 * S08 + Y05 * S07 + Y06 * S06 + Y07 * S05 + Y08 * S04 + Y09 * S03 + Y10 * S02 + Y11 * S01) * (19 / 2 ^ 255) + (Y00 * S00)
-			local c01 = (Y02 * S11 + Y03 * S10 + Y04 * S09 + Y05 * S08 + Y06 * S07 + Y07 * S06 + Y08 * S05 + Y09 * S04 + Y10 * S03 + Y11 * S02) * (19 / 2 ^ 255) + (Y00 * S01 + Y01 * S00)
-			local c02 = (Y03 * S11 + Y04 * S10 + Y05 * S09 + Y06 * S08 + Y07 * S07 + Y08 * S06 + Y09 * S05 + Y10 * S04 + Y11 * S03) * (19 / 2 ^ 255) + (Y00 * S02 + Y01 * S01 + Y02 * S00)
-			local c03 = (Y04 * S11 + Y05 * S10 + Y06 * S09 + Y07 * S08 + Y08 * S07 + Y09 * S06 + Y10 * S05 + Y11 * S04) * (19 / 2 ^ 255) + (Y00 * S03 + Y01 * S02 + Y02 * S01 + Y03 * S00)
-			local c04 = (Y05 * S11 + Y06 * S10 + Y07 * S09 + Y08 * S08 + Y09 * S07 + Y10 * S06 + Y11 * S05) * (19 / 2 ^ 255) + (Y00 * S04 + Y01 * S03 + Y02 * S02 + Y03 * S01 + Y04 * S00)
-			local c05 = (Y06 * S11 + Y07 * S10 + Y08 * S09 + Y09 * S08 + Y10 * S07 + Y11 * S06) * (19 / 2 ^ 255) + (Y00 * S05 + Y01 * S04 + Y02 * S03 + Y03 * S02 + Y04 * S01 + Y05 * S00)
-			local c06 = (Y07 * S11 + Y08 * S10 + Y09 * S09 + Y10 * S08 + Y11 * S07) * (19 / 2 ^ 255) + (Y00 * S06 + Y01 * S05 + Y02 * S04 + Y03 * S03 + Y04 * S02 + Y05 * S01 + Y06 * S00)
-			local c07 = (Y08 * S11 + Y09 * S10 + Y10 * S09 + Y11 * S08) * (19 / 2 ^ 255) + (Y00 * S07 + Y01 * S06 + Y02 * S05 + Y03 * S04 + Y04 * S03 + Y05 * S02 + Y06 * S01 + Y07 * S00)
-			local c08 = (Y09 * S11 + Y10 * S10 + Y11 * S09) * (19 / 2 ^ 255) + (Y00 * S08 + Y01 * S07 + Y02 * S06 + Y03 * S05 + Y04 * S04 + Y05 * S03 + Y06 * S02 + Y07 * S01 + Y08 * S00)
-			local c09 = (Y10 * S11 + Y11 * S10) * (19 / 2 ^ 255) + (Y00 * S09 + Y01 * S08 + Y02 * S07 + Y03 * S06 + Y04 * S05 + Y05 * S04 + Y06 * S03 + Y07 * S02 + Y08 * S01 + Y09 * S00)
-			local c10 = (Y11 * S11) * (19 / 2 ^ 255) + (Y00 * S10 + Y01 * S09 + Y02 * S08 + Y03 * S07 + Y04 * S06 + Y05 * S05 + Y06 * S04 + Y07 * S03 + Y08 * S02 + Y09 * S01 + Y10 * S00)
-			local c11 = Y00 * S11 + Y01 * S10 + Y02 * S09 + Y03 * S08 + Y04 * S07 + Y05 * S06 + Y06 * S05 + Y07 * S04 + Y08 * S03 + Y09 * S02 + Y10 * S01 + Y11 * S00
-			local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-			local b01 = (c01 - k01) + k00
-			local b02 = (c02 - k02) + k01
-			local b03 = (c03 - k03) + k02
-			local b04 = (c04 - k04) + k03
-			local b05 = (c05 - k05) + k04
-			local b06 = (c06 - k06) + k05
-			local b07 = (c07 - k07) + k06
-			local b08 = (c08 - k08) + k07
-			local b09 = (c09 - k09) + k08
-			local b10 = (c10 - k10) + k09
-			local b11 = (c11 - k11) + k10
-			local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			buffer.writef64(State, 208 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-			buffer.writef64(State, 208 + 8, (b01 - j01) + j00)
-			buffer.writef64(State, 208 + 16, (b02 - j02) + j01)
-			buffer.writef64(State, 208 + 24, (b03 - j03) + j02)
-			buffer.writef64(State, 208 + 32, (b04 - j04) + j03)
-			buffer.writef64(State, 208 + 40, (b05 - j05) + j04)
-			buffer.writef64(State, 208 + 48, (b06 - j06) + j05)
-			buffer.writef64(State, 208 + 56, (b07 - j07) + j06)
-			buffer.writef64(State, 208 + 64, (b08 - j08) + j07)
-			buffer.writef64(State, 208 + 72, (b09 - j09) + j08)
-			buffer.writef64(State, 208 + 80, (b10 - j10) + j09)
-			buffer.writef64(State, 208 + 88, (b11 - j11) + j10)
+			local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11, S00, S01, S02, S03, S04, S05, S06, S07, S08, S09, S10, S11)
+			buffer.writef64(State, 208 + 0, O00)
+			buffer.writef64(State, 208 + 8, O01)
+			buffer.writef64(State, 208 + 16, O02)
+			buffer.writef64(State, 208 + 24, O03)
+			buffer.writef64(State, 208 + 32, O04)
+			buffer.writef64(State, 208 + 40, O05)
+			buffer.writef64(State, 208 + 48, O06)
+			buffer.writef64(State, 208 + 56, O07)
+			buffer.writef64(State, 208 + 64, O08)
+			buffer.writef64(State, 208 + 72, O09)
+			buffer.writef64(State, 208 + 80, O10)
+			buffer.writef64(State, 208 + 88, O11)
 		end
 		if Swap < 0 then return end
 	end
@@ -732,79 +432,7 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 	local M09 = D09 - C09
 	local M10 = D10 - C10
 	local M11 = D11 - C11
-	do
-		local d00 = M00 * 2
-		local d01 = M01 * 2
-		local d02 = M02 * 2
-		local d03 = M03 * 2
-		local d04 = M04 * 2
-		local d05 = M05 * 2
-		local d06 = M06 * 2
-		local d07 = M07 * 2
-		local d08 = M08 * 2
-		local d09 = M09 * 2
-		local d10 = M10 * 2
-		local c00 = (M11 * d01 + M10 * d02 + M09 * d03 + M08 * d04 + M07 * d05 + M06 * M06) * (19 / 2 ^ 255) + (M00 * M00)
-		local c01 = (M11 * d02 + M10 * d03 + M09 * d04 + M08 * d05 + M07 * d06) * (19 / 2 ^ 255) + (M01 * d00)
-		local c02 = (M11 * d03 + M10 * d04 + M09 * d05 + M08 * d06 + M07 * M07) * (19 / 2 ^ 255) + (M02 * d00 + M01 * M01)
-		local c03 = (M11 * d04 + M10 * d05 + M09 * d06 + M08 * d07) * (19 / 2 ^ 255) + (M03 * d00 + M02 * d01)
-		local c04 = (M11 * d05 + M10 * d06 + M09 * d07 + M08 * M08) * (19 / 2 ^ 255) + (M04 * d00 + M03 * d01 + M02 * M02)
-		local c05 = (M11 * d06 + M10 * d07 + M09 * d08) * (19 / 2 ^ 255) + (M05 * d00 + M04 * d01 + M03 * d02)
-		local c06 = (M11 * d07 + M10 * d08 + M09 * M09) * (19 / 2 ^ 255) + (M06 * d00 + M05 * d01 + M04 * d02 + M03 * M03)
-		local c07 = (M11 * d08 + M10 * d09) * (19 / 2 ^ 255) + (M07 * d00 + M06 * d01 + M05 * d02 + M04 * d03)
-		local c08 = (M11 * d09 + M10 * M10) * (19 / 2 ^ 255) + (M08 * d00 + M07 * d01 + M06 * d02 + M05 * d03 + M04 * M04)
-		local c09 = (M11 * d10) * (19 / 2 ^ 255) + (M09 * d00 + M08 * d01 + M07 * d02 + M06 * d03 + M05 * d04)
-		local c10 = (M11 * M11) * (19 / 2 ^ 255) + (M10 * d00 + M09 * d01 + M08 * d02 + M07 * d03 + M06 * d04 + M05 * M05)
-		local c11 = M11 * d00 + M10 * d01 + M09 * d02 + M08 * d03 + M07 * d04 + M06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		M00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		M01 = (b01 - j01) + j00
-		M02 = (b02 - j02) + j01
-		M03 = (b03 - j03) + j02
-		M04 = (b04 - j04) + j03
-		M05 = (b05 - j05) + j04
-		M06 = (b06 - j06) + j05
-		M07 = (b07 - j07) + j06
-		M08 = (b08 - j08) + j07
-		M09 = (b09 - j09) + j08
-		M10 = (b10 - j10) + j09
-		M11 = (b11 - j11) + j10
-	end
+	M00, M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11 = FieldSquare(M00, M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11)
 	if Swap < 0 then return end
 	local X00 = buffer.readf64(DiffX, 0 + 0)
 	local X01 = buffer.readf64(DiffX, 0 + 8)
@@ -819,129 +447,35 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 	local X10 = buffer.readf64(DiffX, 0 + 80)
 	local X11 = buffer.readf64(DiffX, 0 + 88)
 	do
-		local c00 = (X01 * M11 + X02 * M10 + X03 * M09 + X04 * M08 + X05 * M07 + X06 * M06 + X07 * M05 + X08 * M04 + X09 * M03 + X10 * M02 + X11 * M01) * (19 / 2 ^ 255) + (X00 * M00)
-		local c01 = (X02 * M11 + X03 * M10 + X04 * M09 + X05 * M08 + X06 * M07 + X07 * M06 + X08 * M05 + X09 * M04 + X10 * M03 + X11 * M02) * (19 / 2 ^ 255) + (X00 * M01 + X01 * M00)
-		local c02 = (X03 * M11 + X04 * M10 + X05 * M09 + X06 * M08 + X07 * M07 + X08 * M06 + X09 * M05 + X10 * M04 + X11 * M03) * (19 / 2 ^ 255) + (X00 * M02 + X01 * M01 + X02 * M00)
-		local c03 = (X04 * M11 + X05 * M10 + X06 * M09 + X07 * M08 + X08 * M07 + X09 * M06 + X10 * M05 + X11 * M04) * (19 / 2 ^ 255) + (X00 * M03 + X01 * M02 + X02 * M01 + X03 * M00)
-		local c04 = (X05 * M11 + X06 * M10 + X07 * M09 + X08 * M08 + X09 * M07 + X10 * M06 + X11 * M05) * (19 / 2 ^ 255) + (X00 * M04 + X01 * M03 + X02 * M02 + X03 * M01 + X04 * M00)
-		local c05 = (X06 * M11 + X07 * M10 + X08 * M09 + X09 * M08 + X10 * M07 + X11 * M06) * (19 / 2 ^ 255) + (X00 * M05 + X01 * M04 + X02 * M03 + X03 * M02 + X04 * M01 + X05 * M00)
-		local c06 = (X07 * M11 + X08 * M10 + X09 * M09 + X10 * M08 + X11 * M07) * (19 / 2 ^ 255) + (X00 * M06 + X01 * M05 + X02 * M04 + X03 * M03 + X04 * M02 + X05 * M01 + X06 * M00)
-		local c07 = (X08 * M11 + X09 * M10 + X10 * M09 + X11 * M08) * (19 / 2 ^ 255) + (X00 * M07 + X01 * M06 + X02 * M05 + X03 * M04 + X04 * M03 + X05 * M02 + X06 * M01 + X07 * M00)
-		local c08 = (X09 * M11 + X10 * M10 + X11 * M09) * (19 / 2 ^ 255) + (X00 * M08 + X01 * M07 + X02 * M06 + X03 * M05 + X04 * M04 + X05 * M03 + X06 * M02 + X07 * M01 + X08 * M00)
-		local c09 = (X10 * M11 + X11 * M10) * (19 / 2 ^ 255) + (X00 * M09 + X01 * M08 + X02 * M07 + X03 * M06 + X04 * M05 + X05 * M04 + X06 * M03 + X07 * M02 + X08 * M01 + X09 * M00)
-		local c10 = (X11 * M11) * (19 / 2 ^ 255) + (X00 * M10 + X01 * M09 + X02 * M08 + X03 * M07 + X04 * M06 + X05 * M05 + X06 * M04 + X07 * M03 + X08 * M02 + X09 * M01 + X10 * M00)
-		local c11 = X00 * M11 + X01 * M10 + X02 * M09 + X03 * M08 + X04 * M07 + X05 * M06 + X06 * M05 + X07 * M04 + X08 * M03 + X09 * M02 + X10 * M01 + X11 * M00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(State, 312 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(State, 312 + 8, (b01 - j01) + j00)
-		buffer.writef64(State, 312 + 16, (b02 - j02) + j01)
-		buffer.writef64(State, 312 + 24, (b03 - j03) + j02)
-		buffer.writef64(State, 312 + 32, (b04 - j04) + j03)
-		buffer.writef64(State, 312 + 40, (b05 - j05) + j04)
-		buffer.writef64(State, 312 + 48, (b06 - j06) + j05)
-		buffer.writef64(State, 312 + 56, (b07 - j07) + j06)
-		buffer.writef64(State, 312 + 64, (b08 - j08) + j07)
-		buffer.writef64(State, 312 + 72, (b09 - j09) + j08)
-		buffer.writef64(State, 312 + 80, (b10 - j10) + j09)
-		buffer.writef64(State, 312 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11, M00, M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11)
+		buffer.writef64(State, 312 + 0, O00)
+		buffer.writef64(State, 312 + 8, O01)
+		buffer.writef64(State, 312 + 16, O02)
+		buffer.writef64(State, 312 + 24, O03)
+		buffer.writef64(State, 312 + 32, O04)
+		buffer.writef64(State, 312 + 40, O05)
+		buffer.writef64(State, 312 + 48, O06)
+		buffer.writef64(State, 312 + 56, O07)
+		buffer.writef64(State, 312 + 64, O08)
+		buffer.writef64(State, 312 + 72, O09)
+		buffer.writef64(State, 312 + 80, O10)
+		buffer.writef64(State, 312 + 88, O11)
 	end
 	if Swap < 0 then return end
 	do
-		local c00 = (AA01 * BB11 + AA02 * BB10 + AA03 * BB09 + AA04 * BB08 + AA05 * BB07 + AA06 * BB06 + AA07 * BB05 + AA08 * BB04 + AA09 * BB03 + AA10 * BB02 + AA11 * BB01) * (19 / 2 ^ 255) + (AA00 * BB00)
-		local c01 = (AA02 * BB11 + AA03 * BB10 + AA04 * BB09 + AA05 * BB08 + AA06 * BB07 + AA07 * BB06 + AA08 * BB05 + AA09 * BB04 + AA10 * BB03 + AA11 * BB02) * (19 / 2 ^ 255) + (AA00 * BB01 + AA01 * BB00)
-		local c02 = (AA03 * BB11 + AA04 * BB10 + AA05 * BB09 + AA06 * BB08 + AA07 * BB07 + AA08 * BB06 + AA09 * BB05 + AA10 * BB04 + AA11 * BB03) * (19 / 2 ^ 255) + (AA00 * BB02 + AA01 * BB01 + AA02 * BB00)
-		local c03 = (AA04 * BB11 + AA05 * BB10 + AA06 * BB09 + AA07 * BB08 + AA08 * BB07 + AA09 * BB06 + AA10 * BB05 + AA11 * BB04) * (19 / 2 ^ 255) + (AA00 * BB03 + AA01 * BB02 + AA02 * BB01 + AA03 * BB00)
-		local c04 = (AA05 * BB11 + AA06 * BB10 + AA07 * BB09 + AA08 * BB08 + AA09 * BB07 + AA10 * BB06 + AA11 * BB05) * (19 / 2 ^ 255) + (AA00 * BB04 + AA01 * BB03 + AA02 * BB02 + AA03 * BB01 + AA04 * BB00)
-		local c05 = (AA06 * BB11 + AA07 * BB10 + AA08 * BB09 + AA09 * BB08 + AA10 * BB07 + AA11 * BB06) * (19 / 2 ^ 255) + (AA00 * BB05 + AA01 * BB04 + AA02 * BB03 + AA03 * BB02 + AA04 * BB01 + AA05 * BB00)
-		local c06 = (AA07 * BB11 + AA08 * BB10 + AA09 * BB09 + AA10 * BB08 + AA11 * BB07) * (19 / 2 ^ 255) + (AA00 * BB06 + AA01 * BB05 + AA02 * BB04 + AA03 * BB03 + AA04 * BB02 + AA05 * BB01 + AA06 * BB00)
-		local c07 = (AA08 * BB11 + AA09 * BB10 + AA10 * BB09 + AA11 * BB08) * (19 / 2 ^ 255) + (AA00 * BB07 + AA01 * BB06 + AA02 * BB05 + AA03 * BB04 + AA04 * BB03 + AA05 * BB02 + AA06 * BB01 + AA07 * BB00)
-		local c08 = (AA09 * BB11 + AA10 * BB10 + AA11 * BB09) * (19 / 2 ^ 255) + (AA00 * BB08 + AA01 * BB07 + AA02 * BB06 + AA03 * BB05 + AA04 * BB04 + AA05 * BB03 + AA06 * BB02 + AA07 * BB01 + AA08 * BB00)
-		local c09 = (AA10 * BB11 + AA11 * BB10) * (19 / 2 ^ 255) + (AA00 * BB09 + AA01 * BB08 + AA02 * BB07 + AA03 * BB06 + AA04 * BB05 + AA05 * BB04 + AA06 * BB03 + AA07 * BB02 + AA08 * BB01 + AA09 * BB00)
-		local c10 = (AA11 * BB11) * (19 / 2 ^ 255) + (AA00 * BB10 + AA01 * BB09 + AA02 * BB08 + AA03 * BB07 + AA04 * BB06 + AA05 * BB05 + AA06 * BB04 + AA07 * BB03 + AA08 * BB02 + AA09 * BB01 + AA10 * BB00)
-		local c11 = AA00 * BB11 + AA01 * BB10 + AA02 * BB09 + AA03 * BB08 + AA04 * BB07 + AA05 * BB06 + AA06 * BB05 + AA07 * BB04 + AA08 * BB03 + AA09 * BB02 + AA10 * BB01 + AA11 * BB00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(State, 0 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(State, 0 + 8, (b01 - j01) + j00)
-		buffer.writef64(State, 0 + 16, (b02 - j02) + j01)
-		buffer.writef64(State, 0 + 24, (b03 - j03) + j02)
-		buffer.writef64(State, 0 + 32, (b04 - j04) + j03)
-		buffer.writef64(State, 0 + 40, (b05 - j05) + j04)
-		buffer.writef64(State, 0 + 48, (b06 - j06) + j05)
-		buffer.writef64(State, 0 + 56, (b07 - j07) + j06)
-		buffer.writef64(State, 0 + 64, (b08 - j08) + j07)
-		buffer.writef64(State, 0 + 72, (b09 - j09) + j08)
-		buffer.writef64(State, 0 + 80, (b10 - j10) + j09)
-		buffer.writef64(State, 0 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(AA00, AA01, AA02, AA03, AA04, AA05, AA06, AA07, AA08, AA09, AA10, AA11, BB00, BB01, BB02, BB03, BB04, BB05, BB06, BB07, BB08, BB09, BB10, BB11)
+		buffer.writef64(State, 0 + 0, O00)
+		buffer.writef64(State, 0 + 8, O01)
+		buffer.writef64(State, 0 + 16, O02)
+		buffer.writef64(State, 0 + 24, O03)
+		buffer.writef64(State, 0 + 32, O04)
+		buffer.writef64(State, 0 + 40, O05)
+		buffer.writef64(State, 0 + 48, O06)
+		buffer.writef64(State, 0 + 56, O07)
+		buffer.writef64(State, 0 + 64, O08)
+		buffer.writef64(State, 0 + 72, O09)
+		buffer.writef64(State, 0 + 80, O10)
+		buffer.writef64(State, 0 + 88, O11)
 	end
 	if Swap < 0 then return end
 	local K00 = E00 * 121666
@@ -1019,66 +553,19 @@ local function LadderStep(State: buffer, DiffX: buffer, DiffZ: buffer, Swap: num
 	K10 = BB10 + K10
 	K11 = BB11 + K11
 	do
-		local c00 = (E01 * K11 + E02 * K10 + E03 * K09 + E04 * K08 + E05 * K07 + E06 * K06 + E07 * K05 + E08 * K04 + E09 * K03 + E10 * K02 + E11 * K01) * (19 / 2 ^ 255) + (E00 * K00)
-		local c01 = (E02 * K11 + E03 * K10 + E04 * K09 + E05 * K08 + E06 * K07 + E07 * K06 + E08 * K05 + E09 * K04 + E10 * K03 + E11 * K02) * (19 / 2 ^ 255) + (E00 * K01 + E01 * K00)
-		local c02 = (E03 * K11 + E04 * K10 + E05 * K09 + E06 * K08 + E07 * K07 + E08 * K06 + E09 * K05 + E10 * K04 + E11 * K03) * (19 / 2 ^ 255) + (E00 * K02 + E01 * K01 + E02 * K00)
-		local c03 = (E04 * K11 + E05 * K10 + E06 * K09 + E07 * K08 + E08 * K07 + E09 * K06 + E10 * K05 + E11 * K04) * (19 / 2 ^ 255) + (E00 * K03 + E01 * K02 + E02 * K01 + E03 * K00)
-		local c04 = (E05 * K11 + E06 * K10 + E07 * K09 + E08 * K08 + E09 * K07 + E10 * K06 + E11 * K05) * (19 / 2 ^ 255) + (E00 * K04 + E01 * K03 + E02 * K02 + E03 * K01 + E04 * K00)
-		local c05 = (E06 * K11 + E07 * K10 + E08 * K09 + E09 * K08 + E10 * K07 + E11 * K06) * (19 / 2 ^ 255) + (E00 * K05 + E01 * K04 + E02 * K03 + E03 * K02 + E04 * K01 + E05 * K00)
-		local c06 = (E07 * K11 + E08 * K10 + E09 * K09 + E10 * K08 + E11 * K07) * (19 / 2 ^ 255) + (E00 * K06 + E01 * K05 + E02 * K04 + E03 * K03 + E04 * K02 + E05 * K01 + E06 * K00)
-		local c07 = (E08 * K11 + E09 * K10 + E10 * K09 + E11 * K08) * (19 / 2 ^ 255) + (E00 * K07 + E01 * K06 + E02 * K05 + E03 * K04 + E04 * K03 + E05 * K02 + E06 * K01 + E07 * K00)
-		local c08 = (E09 * K11 + E10 * K10 + E11 * K09) * (19 / 2 ^ 255) + (E00 * K08 + E01 * K07 + E02 * K06 + E03 * K05 + E04 * K04 + E05 * K03 + E06 * K02 + E07 * K01 + E08 * K00)
-		local c09 = (E10 * K11 + E11 * K10) * (19 / 2 ^ 255) + (E00 * K09 + E01 * K08 + E02 * K07 + E03 * K06 + E04 * K05 + E05 * K04 + E06 * K03 + E07 * K02 + E08 * K01 + E09 * K00)
-		local c10 = (E11 * K11) * (19 / 2 ^ 255) + (E00 * K10 + E01 * K09 + E02 * K08 + E03 * K07 + E04 * K06 + E05 * K05 + E06 * K04 + E07 * K03 + E08 * K02 + E09 * K01 + E10 * K00)
-		local c11 = E00 * K11 + E01 * K10 + E02 * K09 + E03 * K08 + E04 * K07 + E05 * K06 + E06 * K05 + E07 * K04 + E08 * K03 + E09 * K02 + E10 * K01 + E11 * K00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(State, 104 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(State, 104 + 8, (b01 - j01) + j00)
-		buffer.writef64(State, 104 + 16, (b02 - j02) + j01)
-		buffer.writef64(State, 104 + 24, (b03 - j03) + j02)
-		buffer.writef64(State, 104 + 32, (b04 - j04) + j03)
-		buffer.writef64(State, 104 + 40, (b05 - j05) + j04)
-		buffer.writef64(State, 104 + 48, (b06 - j06) + j05)
-		buffer.writef64(State, 104 + 56, (b07 - j07) + j06)
-		buffer.writef64(State, 104 + 64, (b08 - j08) + j07)
-		buffer.writef64(State, 104 + 72, (b09 - j09) + j08)
-		buffer.writef64(State, 104 + 80, (b10 - j10) + j09)
-		buffer.writef64(State, 104 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(E00, E01, E02, E03, E04, E05, E06, E07, E08, E09, E10, E11, K00, K01, K02, K03, K04, K05, K06, K07, K08, K09, K10, K11)
+		buffer.writef64(State, 104 + 0, O00)
+		buffer.writef64(State, 104 + 8, O01)
+		buffer.writef64(State, 104 + 16, O02)
+		buffer.writef64(State, 104 + 24, O03)
+		buffer.writef64(State, 104 + 32, O04)
+		buffer.writef64(State, 104 + 40, O05)
+		buffer.writef64(State, 104 + 48, O06)
+		buffer.writef64(State, 104 + 56, O07)
+		buffer.writef64(State, 104 + 64, O08)
+		buffer.writef64(State, 104 + 72, O09)
+		buffer.writef64(State, 104 + 80, O10)
+		buffer.writef64(State, 104 + 88, O11)
 	end
 	if Swap < 0 then return end
 end
