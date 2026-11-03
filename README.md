@@ -111,43 +111,43 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Performance benchmarks conducted in Roblox Studio on AMD Ryzen AI 7 PRO 360 using Benchmarker by @boatbomber.
+Performance benchmarks conducted on a RedMagic 11 Pro in the Roblox mobile client with `tests/RunBench.client.luau` (best of five batches), against the other libraries on the same device and inputs.
 
 ### Hashing / Checksum
 
-| Algorithm     | Data Size | This Library | Luau Fallback | HashLib | Dekkonot | Improvement                                                |
-| ------------- | --------- | ------------ | ------------- | ------- | -------- | ---------------------------------------------------------- |
-| SHA-256       | 50 KB     | **121 μs**   | 128 μs        | 933 μs  | 916 μs   | **7.7x faster** than HashLib<br>**7.6x faster** than Dekkonot  |
-| SHA-512       | 50 KB     | **453 μs**   | -             | 1.39 ms | 2.32 ms  | **3.1x faster** than HashLib<br>**5.1x faster** than Dekkonot  |
-| SHA3-512      | 50 KB     | **554 μs**   | -             | 3.46 ms | -        | **6.2x faster** than HashLib                               |
-| BLAKE2b       | 50 KB     | **53 μs**    | 283 μs        | -       | 883 μs   | **16.7x faster** than Dekkonot                             |
-| BLAKE3        | 50 KB     | **8 μs**     | 75 μs         | -       | -        | -                                                          |
-| HMAC-SHA256   | 50 KB     | **142 μs**   | -             | 947 μs  | -        | **6.7x faster** than HashLib                               |
-| HMAC-BLAKE3   | 50 KB     | **26 μs**    | -             | -       | -        | -                                                          |
-| KMAC-128      | 50 KB     | **258 μs**   | -             | -       | -        | -                                                          |
-| KMAC-256      | 50 KB     | **312 μs**   | -             | -       | -        | -                                                          |
+| Algorithm     | Data Size | This Library | Luau Fallback | HashLib | Gamer   | CryptographyService | Improvement |
+| ------------- | --------- | ------------ | ------------- | ------- | ------- | ------------------- | ----------- |
+| SHA-256       | 50 KB     | **102 μs** | 135 μs | 777 μs | 4.99 ms | 1.24 ms | **7.6x faster** than HashLib<br>**48.8x faster** than Gamer<br>**12.1x faster** than CryptographyService |
+| SHA-512       | 50 KB     | **363 μs** | - | 1.17 ms | - | 1.12 ms | **3.2x faster** than HashLib<br>**3.1x faster** than CryptographyService |
+| SHA3-512      | 50 KB     | **468 μs** | - | 2.17 ms | - | 14.87 ms | **4.6x faster** than HashLib<br>**31.8x faster** than CryptographyService |
+| BLAKE2b       | 50 KB     | **41 μs** | 191 μs | - | - | 2.38 ms | **58.6x faster** than CryptographyService |
+| BLAKE3        | 50 KB     | **21 μs** | 52 μs | - | - | - | - |
+| HMAC-SHA256   | 50 KB     | **116 μs** | - | 793 μs | 5.06 ms | 1.25 ms | **6.8x faster** than HashLib<br>**43.5x faster** than Gamer<br>**10.8x faster** than CryptographyService |
+| HMAC-BLAKE3   | 50 KB     | **33 μs** | - | - | - | - | - |
+| KMAC-128      | 50 KB     | **215 μs** | - | - | - | - | - |
+| KMAC-256      | 50 KB     | **261 μs** | - | - | - | - | - |
 
 ### Encryption
 
-| Algorithm               | Data Size | This Library | Alternative                                                       | Improvement                                                       |
-| ----------------------- | --------- | ------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ChaCha20 (Encrypt)      | 50 KB     | **76 μs**    | 696 μs (MrRoblick)<br>12.01 ms (EncryptedNet)                     | **9.2x faster** than MrRoblick<br>**158x faster** than EncryptedNet |
-| AES-256-GCM (Encrypt)   | 50 KB     | **365 μs**   | 926 μs (RobloxGamerPro200007 AES256-CTR, no authentication)       | **2.5x faster**                                                   |
-| XOR (Encrypt)           | 1 MB      | **940 μs**   | -                                                                 | -                                                                 |
+| Algorithm               | Data Size | This Library | Alternative | Improvement |
+| ----------------------- | --------- | ------------ | ----------- | ----------- |
+| ChaCha20 (Encrypt)      | 50 KB     | **69 μs** | 586 μs (CryptographyService)<br>145 μs (Orbit) | **8.5x faster** than CryptographyService<br>**2.1x faster** than Orbit |
+| AES-256-GCM (Encrypt)   | 50 KB     | **350 μs** | - | - |
+| XOR (Encrypt)           | 1 MB      | **406 μs** | 12.71 ms (Gamer) | **31.3x faster** than Gamer |
 
 ### Digital Signatures & Key Exchange
 
 | Algorithm  | Operation                                 | Time        | Breakdown                                      |
 | ---------- | ----------------------------------------- | ----------- | ---------------------------------------------- |
-| EdDSA      | Public Key + Sign + Verify				 | **369 μs**  | Public Key 43 μs, Sign 58 μs, Verify 266 μs    |
-| ML-DSA-44  | KeyGen + Sign + Verify                    | **794 μs**  | KeyGen 237 μs, Sign 413 μs, Verify 102 μs      |
-| ML-KEM-512 | KeyGen + Encapsulate + Decapsulate        | **201 μs**  | KeyGen 62 μs, Encapsulate 67 μs, Decapsulate 65 μs |
+| EdDSA      | Public Key + Sign + Verify                | **227 μs** | Public Key 28 μs, Sign 39 μs, Verify 160 μs |
+| ML-DSA-44  | KeyGen + Sign + Verify                    | **291 μs** | KeyGen 79 μs, Sign 145 μs, Verify 67 μs |
+| ML-KEM-512 | KeyGen + Encapsulate + Decapsulate        | **118 μs** | KeyGen 31 μs, Encapsulate 36 μs, Decapsulate 52 μs |
 
 ### Utilities
 
-| Algorithm          | Data Size | This Library | Alternative                                    | Improvement                                                 |
-| ------------------ | --------- | ------------ | ---------------------------------------------- | ----------------------------------------------------------- |
-| Base64 (Roundtrip) | 50 KB     | **128 μs**   | Reselim: 182 μs<br>Lute: 297 μs                | **1.4x faster** than Reselim<br>**2.3x faster** than Lute   |
+| Algorithm          | Data Size | This Library | Alternative | Improvement |
+| ------------------ | --------- | ------------ | ----------- | ----------- |
+| Base64 (Roundtrip) | 50 KB     | **68 μs** | HashLib: 4.27 ms<br>Gamer: 2.82 ms | **62.4x faster** than HashLib<br>**41.1x faster** than Gamer |
 
 _Roundtrip: Complete encode/decode cycle_
 

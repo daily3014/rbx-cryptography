@@ -6,6 +6,15 @@
 			"$ignoreUnknownInstances": true,
 			"Cryptography": {
 				"$path": "src"
+			},
+			"CryptographyTests": {
+				"$className": "Folder",
+				"src": {
+					"$path": "src"
+				},
+				"tests": {
+					"$path": "tests"
+				}
 			}
 		},
 		"ServerStorage": {
@@ -13,6 +22,19 @@
 		},
 		"ServerScriptService": {
 			"$ignoreUnknownInstances": true
+		},
+		"StarterPlayer": {
+			"$ignoreUnknownInstances": true,
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"$ignoreUnknownInstances": true,
+				"RunCryptographyTests": {
+					"$path": "tests/RunTests.client.luau"
+				},
+				"RunCryptographyBench": {
+					"$path": "tests/RunBench.client.luau"
+				}
+			}
 		}
 	}
 }

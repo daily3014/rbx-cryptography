@@ -81,6 +81,151 @@ end
 
 local Edwards25519 = {}
 
+local function FieldMul(A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number, A07: number, A08: number, A09: number, A10: number, A11: number, B00: number, B01: number, B02: number, B03: number, B04: number, B05: number, B06: number, B07: number, B08: number, B09: number, B10: number, B11: number): (number, number, number, number, number, number, number, number, number, number, number, number)
+	local R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+	do
+		local c00 = (A01 * B11 + A02 * B10 + A03 * B09 + A04 * B08 + A05 * B07 + A06 * B06 + A07 * B05 + A08 * B04 + A09 * B03 + A10 * B02 + A11 * B01) * (19 / 2 ^ 255) + (A00 * B00)
+		local c01 = (A02 * B11 + A03 * B10 + A04 * B09 + A05 * B08 + A06 * B07 + A07 * B06 + A08 * B05 + A09 * B04 + A10 * B03 + A11 * B02) * (19 / 2 ^ 255) + (A00 * B01 + A01 * B00)
+		local c02 = (A03 * B11 + A04 * B10 + A05 * B09 + A06 * B08 + A07 * B07 + A08 * B06 + A09 * B05 + A10 * B04 + A11 * B03) * (19 / 2 ^ 255) + (A00 * B02 + A01 * B01 + A02 * B00)
+		local c03 = (A04 * B11 + A05 * B10 + A06 * B09 + A07 * B08 + A08 * B07 + A09 * B06 + A10 * B05 + A11 * B04) * (19 / 2 ^ 255) + (A00 * B03 + A01 * B02 + A02 * B01 + A03 * B00)
+		local c04 = (A05 * B11 + A06 * B10 + A07 * B09 + A08 * B08 + A09 * B07 + A10 * B06 + A11 * B05) * (19 / 2 ^ 255) + (A00 * B04 + A01 * B03 + A02 * B02 + A03 * B01 + A04 * B00)
+		local c05 = (A06 * B11 + A07 * B10 + A08 * B09 + A09 * B08 + A10 * B07 + A11 * B06) * (19 / 2 ^ 255) + (A00 * B05 + A01 * B04 + A02 * B03 + A03 * B02 + A04 * B01 + A05 * B00)
+		local c06 = (A07 * B11 + A08 * B10 + A09 * B09 + A10 * B08 + A11 * B07) * (19 / 2 ^ 255) + (A00 * B06 + A01 * B05 + A02 * B04 + A03 * B03 + A04 * B02 + A05 * B01 + A06 * B00)
+		local c07 = (A08 * B11 + A09 * B10 + A10 * B09 + A11 * B08) * (19 / 2 ^ 255) + (A00 * B07 + A01 * B06 + A02 * B05 + A03 * B04 + A04 * B03 + A05 * B02 + A06 * B01 + A07 * B00)
+		local c08 = (A09 * B11 + A10 * B10 + A11 * B09) * (19 / 2 ^ 255) + (A00 * B08 + A01 * B07 + A02 * B06 + A03 * B05 + A04 * B04 + A05 * B03 + A06 * B02 + A07 * B01 + A08 * B00)
+		local c09 = (A10 * B11 + A11 * B10) * (19 / 2 ^ 255) + (A00 * B09 + A01 * B08 + A02 * B07 + A03 * B06 + A04 * B05 + A05 * B04 + A06 * B03 + A07 * B02 + A08 * B01 + A09 * B00)
+		local c10 = (A11 * B11) * (19 / 2 ^ 255) + (A00 * B10 + A01 * B09 + A02 * B08 + A03 * B07 + A04 * B06 + A05 * B05 + A06 * B04 + A07 * B03 + A08 * B02 + A09 * B01 + A10 * B00)
+		local c11 = A00 * B11 + A01 * B10 + A02 * B09 + A03 * B08 + A04 * B07 + A05 * B06 + A06 * B05 + A07 * B04 + A08 * B03 + A09 * B02 + A10 * B01 + A11 * B00
+		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
+		local b01 = (c01 - k01) + k00
+		local b02 = (c02 - k02) + k01
+		local b03 = (c03 - k03) + k02
+		local b04 = (c04 - k04) + k03
+		local b05 = (c05 - k05) + k04
+		local b06 = (c06 - k06) + k05
+		local b07 = (c07 - k07) + k06
+		local b08 = (c08 - k08) + k07
+		local b09 = (c09 - k09) + k08
+		local b10 = (c10 - k10) + k09
+		local b11 = (c11 - k11) + k10
+		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		R00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
+		R01 = (b01 - j01) + j00
+		R02 = (b02 - j02) + j01
+		R03 = (b03 - j03) + j02
+		R04 = (b04 - j04) + j03
+		R05 = (b05 - j05) + j04
+		R06 = (b06 - j06) + j05
+		R07 = (b07 - j07) + j06
+		R08 = (b08 - j08) + j07
+		R09 = (b09 - j09) + j08
+		R10 = (b10 - j10) + j09
+		R11 = (b11 - j11) + j10
+	end
+	return R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+end
+
+local function FieldSquare(A00: number, A01: number, A02: number, A03: number, A04: number, A05: number, A06: number, A07: number, A08: number, A09: number, A10: number, A11: number): (number, number, number, number, number, number, number, number, number, number, number, number)
+	local R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+	do
+		local d00 = A00 * 2
+		local d01 = A01 * 2
+		local d02 = A02 * 2
+		local d03 = A03 * 2
+		local d04 = A04 * 2
+		local d05 = A05 * 2
+		local d06 = A06 * 2
+		local d07 = A07 * 2
+		local d08 = A08 * 2
+		local d09 = A09 * 2
+		local d10 = A10 * 2
+		local c00 = (A11 * d01 + A10 * d02 + A09 * d03 + A08 * d04 + A07 * d05 + A06 * A06) * (19 / 2 ^ 255) + (A00 * A00)
+		local c01 = (A11 * d02 + A10 * d03 + A09 * d04 + A08 * d05 + A07 * d06) * (19 / 2 ^ 255) + (A01 * d00)
+		local c02 = (A11 * d03 + A10 * d04 + A09 * d05 + A08 * d06 + A07 * A07) * (19 / 2 ^ 255) + (A02 * d00 + A01 * A01)
+		local c03 = (A11 * d04 + A10 * d05 + A09 * d06 + A08 * d07) * (19 / 2 ^ 255) + (A03 * d00 + A02 * d01)
+		local c04 = (A11 * d05 + A10 * d06 + A09 * d07 + A08 * A08) * (19 / 2 ^ 255) + (A04 * d00 + A03 * d01 + A02 * A02)
+		local c05 = (A11 * d06 + A10 * d07 + A09 * d08) * (19 / 2 ^ 255) + (A05 * d00 + A04 * d01 + A03 * d02)
+		local c06 = (A11 * d07 + A10 * d08 + A09 * A09) * (19 / 2 ^ 255) + (A06 * d00 + A05 * d01 + A04 * d02 + A03 * A03)
+		local c07 = (A11 * d08 + A10 * d09) * (19 / 2 ^ 255) + (A07 * d00 + A06 * d01 + A05 * d02 + A04 * d03)
+		local c08 = (A11 * d09 + A10 * A10) * (19 / 2 ^ 255) + (A08 * d00 + A07 * d01 + A06 * d02 + A05 * d03 + A04 * A04)
+		local c09 = (A11 * d10) * (19 / 2 ^ 255) + (A09 * d00 + A08 * d01 + A07 * d02 + A06 * d03 + A05 * d04)
+		local c10 = (A11 * A11) * (19 / 2 ^ 255) + (A10 * d00 + A09 * d01 + A08 * d02 + A07 * d03 + A06 * d04 + A05 * A05)
+		local c11 = A11 * d00 + A10 * d01 + A09 * d02 + A08 * d03 + A07 * d04 + A06 * d05
+		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
+		local b01 = (c01 - k01) + k00
+		local b02 = (c02 - k02) + k01
+		local b03 = (c03 - k03) + k02
+		local b04 = (c04 - k04) + k03
+		local b05 = (c05 - k05) + k04
+		local b06 = (c06 - k06) + k05
+		local b07 = (c07 - k07) + k06
+		local b08 = (c08 - k08) + k07
+		local b09 = (c09 - k09) + k08
+		local b10 = (c10 - k10) + k09
+		local b11 = (c11 - k11) + k10
+		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
+		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
+		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
+		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
+		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
+		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
+		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
+		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
+		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
+		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
+		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
+		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
+		R00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
+		R01 = (b01 - j01) + j00
+		R02 = (b02 - j02) + j01
+		R03 = (b03 - j03) + j02
+		R04 = (b04 - j04) + j03
+		R05 = (b05 - j05) + j04
+		R06 = (b06 - j06) + j05
+		R07 = (b07 - j07) + j06
+		R08 = (b08 - j08) + j07
+		R09 = (b09 - j09) + j08
+		R10 = (b10 - j10) + j09
+		R11 = (b11 - j11) + j10
+	end
+	return R00, R01, R02, R03, R04, R05, R06, R07, R08, R09, R10, R11
+end
+
 function Edwards25519.DoubleInPlace(Point: buffer, WithT: boolean)
 	local X00 = buffer.readf64(Point, 0 + 0)
 	local X01 = buffer.readf64(Point, 0 + 8)
@@ -118,229 +263,11 @@ function Edwards25519.DoubleInPlace(Point: buffer, WithT: boolean)
 	local Z09 = buffer.readf64(Point, 208 + 72)
 	local Z10 = buffer.readf64(Point, 208 + 80)
 	local Z11 = buffer.readf64(Point, 208 + 88)
-	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11
-	do
-		local d00 = X00 * 2
-		local d01 = X01 * 2
-		local d02 = X02 * 2
-		local d03 = X03 * 2
-		local d04 = X04 * 2
-		local d05 = X05 * 2
-		local d06 = X06 * 2
-		local d07 = X07 * 2
-		local d08 = X08 * 2
-		local d09 = X09 * 2
-		local d10 = X10 * 2
-		local c00 = (X11 * d01 + X10 * d02 + X09 * d03 + X08 * d04 + X07 * d05 + X06 * X06) * (19 / 2 ^ 255) + (X00 * X00)
-		local c01 = (X11 * d02 + X10 * d03 + X09 * d04 + X08 * d05 + X07 * d06) * (19 / 2 ^ 255) + (X01 * d00)
-		local c02 = (X11 * d03 + X10 * d04 + X09 * d05 + X08 * d06 + X07 * X07) * (19 / 2 ^ 255) + (X02 * d00 + X01 * X01)
-		local c03 = (X11 * d04 + X10 * d05 + X09 * d06 + X08 * d07) * (19 / 2 ^ 255) + (X03 * d00 + X02 * d01)
-		local c04 = (X11 * d05 + X10 * d06 + X09 * d07 + X08 * X08) * (19 / 2 ^ 255) + (X04 * d00 + X03 * d01 + X02 * X02)
-		local c05 = (X11 * d06 + X10 * d07 + X09 * d08) * (19 / 2 ^ 255) + (X05 * d00 + X04 * d01 + X03 * d02)
-		local c06 = (X11 * d07 + X10 * d08 + X09 * X09) * (19 / 2 ^ 255) + (X06 * d00 + X05 * d01 + X04 * d02 + X03 * X03)
-		local c07 = (X11 * d08 + X10 * d09) * (19 / 2 ^ 255) + (X07 * d00 + X06 * d01 + X05 * d02 + X04 * d03)
-		local c08 = (X11 * d09 + X10 * X10) * (19 / 2 ^ 255) + (X08 * d00 + X07 * d01 + X06 * d02 + X05 * d03 + X04 * X04)
-		local c09 = (X11 * d10) * (19 / 2 ^ 255) + (X09 * d00 + X08 * d01 + X07 * d02 + X06 * d03 + X05 * d04)
-		local c10 = (X11 * X11) * (19 / 2 ^ 255) + (X10 * d00 + X09 * d01 + X08 * d02 + X07 * d03 + X06 * d04 + X05 * X05)
-		local c11 = X11 * d00 + X10 * d01 + X09 * d02 + X08 * d03 + X07 * d04 + X06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		A00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		A01 = (b01 - j01) + j00
-		A02 = (b02 - j02) + j01
-		A03 = (b03 - j03) + j02
-		A04 = (b04 - j04) + j03
-		A05 = (b05 - j05) + j04
-		A06 = (b06 - j06) + j05
-		A07 = (b07 - j07) + j06
-		A08 = (b08 - j08) + j07
-		A09 = (b09 - j09) + j08
-		A10 = (b10 - j10) + j09
-		A11 = (b11 - j11) + j10
-	end
+	local A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 = FieldSquare(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11)
 	if not Point then return end
-	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11
-	do
-		local d00 = Y00 * 2
-		local d01 = Y01 * 2
-		local d02 = Y02 * 2
-		local d03 = Y03 * 2
-		local d04 = Y04 * 2
-		local d05 = Y05 * 2
-		local d06 = Y06 * 2
-		local d07 = Y07 * 2
-		local d08 = Y08 * 2
-		local d09 = Y09 * 2
-		local d10 = Y10 * 2
-		local c00 = (Y11 * d01 + Y10 * d02 + Y09 * d03 + Y08 * d04 + Y07 * d05 + Y06 * Y06) * (19 / 2 ^ 255) + (Y00 * Y00)
-		local c01 = (Y11 * d02 + Y10 * d03 + Y09 * d04 + Y08 * d05 + Y07 * d06) * (19 / 2 ^ 255) + (Y01 * d00)
-		local c02 = (Y11 * d03 + Y10 * d04 + Y09 * d05 + Y08 * d06 + Y07 * Y07) * (19 / 2 ^ 255) + (Y02 * d00 + Y01 * Y01)
-		local c03 = (Y11 * d04 + Y10 * d05 + Y09 * d06 + Y08 * d07) * (19 / 2 ^ 255) + (Y03 * d00 + Y02 * d01)
-		local c04 = (Y11 * d05 + Y10 * d06 + Y09 * d07 + Y08 * Y08) * (19 / 2 ^ 255) + (Y04 * d00 + Y03 * d01 + Y02 * Y02)
-		local c05 = (Y11 * d06 + Y10 * d07 + Y09 * d08) * (19 / 2 ^ 255) + (Y05 * d00 + Y04 * d01 + Y03 * d02)
-		local c06 = (Y11 * d07 + Y10 * d08 + Y09 * Y09) * (19 / 2 ^ 255) + (Y06 * d00 + Y05 * d01 + Y04 * d02 + Y03 * Y03)
-		local c07 = (Y11 * d08 + Y10 * d09) * (19 / 2 ^ 255) + (Y07 * d00 + Y06 * d01 + Y05 * d02 + Y04 * d03)
-		local c08 = (Y11 * d09 + Y10 * Y10) * (19 / 2 ^ 255) + (Y08 * d00 + Y07 * d01 + Y06 * d02 + Y05 * d03 + Y04 * Y04)
-		local c09 = (Y11 * d10) * (19 / 2 ^ 255) + (Y09 * d00 + Y08 * d01 + Y07 * d02 + Y06 * d03 + Y05 * d04)
-		local c10 = (Y11 * Y11) * (19 / 2 ^ 255) + (Y10 * d00 + Y09 * d01 + Y08 * d02 + Y07 * d03 + Y06 * d04 + Y05 * Y05)
-		local c11 = Y11 * d00 + Y10 * d01 + Y09 * d02 + Y08 * d03 + Y07 * d04 + Y06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		B00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		B01 = (b01 - j01) + j00
-		B02 = (b02 - j02) + j01
-		B03 = (b03 - j03) + j02
-		B04 = (b04 - j04) + j03
-		B05 = (b05 - j05) + j04
-		B06 = (b06 - j06) + j05
-		B07 = (b07 - j07) + j06
-		B08 = (b08 - j08) + j07
-		B09 = (b09 - j09) + j08
-		B10 = (b10 - j10) + j09
-		B11 = (b11 - j11) + j10
-	end
+	local B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11 = FieldSquare(Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11)
 	if not Point then return end
-	do
-		local d00 = Z00 * 2
-		local d01 = Z01 * 2
-		local d02 = Z02 * 2
-		local d03 = Z03 * 2
-		local d04 = Z04 * 2
-		local d05 = Z05 * 2
-		local d06 = Z06 * 2
-		local d07 = Z07 * 2
-		local d08 = Z08 * 2
-		local d09 = Z09 * 2
-		local d10 = Z10 * 2
-		local c00 = (Z11 * d01 + Z10 * d02 + Z09 * d03 + Z08 * d04 + Z07 * d05 + Z06 * Z06) * (19 / 2 ^ 255) + (Z00 * Z00)
-		local c01 = (Z11 * d02 + Z10 * d03 + Z09 * d04 + Z08 * d05 + Z07 * d06) * (19 / 2 ^ 255) + (Z01 * d00)
-		local c02 = (Z11 * d03 + Z10 * d04 + Z09 * d05 + Z08 * d06 + Z07 * Z07) * (19 / 2 ^ 255) + (Z02 * d00 + Z01 * Z01)
-		local c03 = (Z11 * d04 + Z10 * d05 + Z09 * d06 + Z08 * d07) * (19 / 2 ^ 255) + (Z03 * d00 + Z02 * d01)
-		local c04 = (Z11 * d05 + Z10 * d06 + Z09 * d07 + Z08 * Z08) * (19 / 2 ^ 255) + (Z04 * d00 + Z03 * d01 + Z02 * Z02)
-		local c05 = (Z11 * d06 + Z10 * d07 + Z09 * d08) * (19 / 2 ^ 255) + (Z05 * d00 + Z04 * d01 + Z03 * d02)
-		local c06 = (Z11 * d07 + Z10 * d08 + Z09 * Z09) * (19 / 2 ^ 255) + (Z06 * d00 + Z05 * d01 + Z04 * d02 + Z03 * Z03)
-		local c07 = (Z11 * d08 + Z10 * d09) * (19 / 2 ^ 255) + (Z07 * d00 + Z06 * d01 + Z05 * d02 + Z04 * d03)
-		local c08 = (Z11 * d09 + Z10 * Z10) * (19 / 2 ^ 255) + (Z08 * d00 + Z07 * d01 + Z06 * d02 + Z05 * d03 + Z04 * Z04)
-		local c09 = (Z11 * d10) * (19 / 2 ^ 255) + (Z09 * d00 + Z08 * d01 + Z07 * d02 + Z06 * d03 + Z05 * d04)
-		local c10 = (Z11 * Z11) * (19 / 2 ^ 255) + (Z10 * d00 + Z09 * d01 + Z08 * d02 + Z07 * d03 + Z06 * d04 + Z05 * Z05)
-		local c11 = Z11 * d00 + Z10 * d01 + Z09 * d02 + Z08 * d03 + Z07 * d04 + Z06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		Z00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		Z01 = (b01 - j01) + j00
-		Z02 = (b02 - j02) + j01
-		Z03 = (b03 - j03) + j02
-		Z04 = (b04 - j04) + j03
-		Z05 = (b05 - j05) + j04
-		Z06 = (b06 - j06) + j05
-		Z07 = (b07 - j07) + j06
-		Z08 = (b08 - j08) + j07
-		Z09 = (b09 - j09) + j08
-		Z10 = (b10 - j10) + j09
-		Z11 = (b11 - j11) + j10
-	end
+	Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11 = FieldSquare(Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11)
 	if not Point then return end
 	Z00 = Z00 + Z00
 	Z01 = Z01 + Z01
@@ -378,79 +305,7 @@ function Edwards25519.DoubleInPlace(Point: buffer, WithT: boolean)
 	Y09 = A09 + B09
 	Y10 = A10 + B10
 	Y11 = A11 + B11
-	do
-		local d00 = X00 * 2
-		local d01 = X01 * 2
-		local d02 = X02 * 2
-		local d03 = X03 * 2
-		local d04 = X04 * 2
-		local d05 = X05 * 2
-		local d06 = X06 * 2
-		local d07 = X07 * 2
-		local d08 = X08 * 2
-		local d09 = X09 * 2
-		local d10 = X10 * 2
-		local c00 = (X11 * d01 + X10 * d02 + X09 * d03 + X08 * d04 + X07 * d05 + X06 * X06) * (19 / 2 ^ 255) + (X00 * X00)
-		local c01 = (X11 * d02 + X10 * d03 + X09 * d04 + X08 * d05 + X07 * d06) * (19 / 2 ^ 255) + (X01 * d00)
-		local c02 = (X11 * d03 + X10 * d04 + X09 * d05 + X08 * d06 + X07 * X07) * (19 / 2 ^ 255) + (X02 * d00 + X01 * X01)
-		local c03 = (X11 * d04 + X10 * d05 + X09 * d06 + X08 * d07) * (19 / 2 ^ 255) + (X03 * d00 + X02 * d01)
-		local c04 = (X11 * d05 + X10 * d06 + X09 * d07 + X08 * X08) * (19 / 2 ^ 255) + (X04 * d00 + X03 * d01 + X02 * X02)
-		local c05 = (X11 * d06 + X10 * d07 + X09 * d08) * (19 / 2 ^ 255) + (X05 * d00 + X04 * d01 + X03 * d02)
-		local c06 = (X11 * d07 + X10 * d08 + X09 * X09) * (19 / 2 ^ 255) + (X06 * d00 + X05 * d01 + X04 * d02 + X03 * X03)
-		local c07 = (X11 * d08 + X10 * d09) * (19 / 2 ^ 255) + (X07 * d00 + X06 * d01 + X05 * d02 + X04 * d03)
-		local c08 = (X11 * d09 + X10 * X10) * (19 / 2 ^ 255) + (X08 * d00 + X07 * d01 + X06 * d02 + X05 * d03 + X04 * X04)
-		local c09 = (X11 * d10) * (19 / 2 ^ 255) + (X09 * d00 + X08 * d01 + X07 * d02 + X06 * d03 + X05 * d04)
-		local c10 = (X11 * X11) * (19 / 2 ^ 255) + (X10 * d00 + X09 * d01 + X08 * d02 + X07 * d03 + X06 * d04 + X05 * X05)
-		local c11 = X11 * d00 + X10 * d01 + X09 * d02 + X08 * d03 + X07 * d04 + X06 * d05
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		X00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		X01 = (b01 - j01) + j00
-		X02 = (b02 - j02) + j01
-		X03 = (b03 - j03) + j02
-		X04 = (b04 - j04) + j03
-		X05 = (b05 - j05) + j04
-		X06 = (b06 - j06) + j05
-		X07 = (b07 - j07) + j06
-		X08 = (b08 - j08) + j07
-		X09 = (b09 - j09) + j08
-		X10 = (b10 - j10) + j09
-		X11 = (b11 - j11) + j10
-	end
+	X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11 = FieldSquare(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11)
 	if not Point then return end
 	X00 = X00 - Y00
 	X01 = X01 - Y01
@@ -589,256 +444,68 @@ function Edwards25519.DoubleInPlace(Point: buffer, WithT: boolean)
 		Z11 = (b11 - j11) + j10
 	end
 	do
-		local c00 = (X01 * Z11 + X02 * Z10 + X03 * Z09 + X04 * Z08 + X05 * Z07 + X06 * Z06 + X07 * Z05 + X08 * Z04 + X09 * Z03 + X10 * Z02 + X11 * Z01) * (19 / 2 ^ 255) + (X00 * Z00)
-		local c01 = (X02 * Z11 + X03 * Z10 + X04 * Z09 + X05 * Z08 + X06 * Z07 + X07 * Z06 + X08 * Z05 + X09 * Z04 + X10 * Z03 + X11 * Z02) * (19 / 2 ^ 255) + (X00 * Z01 + X01 * Z00)
-		local c02 = (X03 * Z11 + X04 * Z10 + X05 * Z09 + X06 * Z08 + X07 * Z07 + X08 * Z06 + X09 * Z05 + X10 * Z04 + X11 * Z03) * (19 / 2 ^ 255) + (X00 * Z02 + X01 * Z01 + X02 * Z00)
-		local c03 = (X04 * Z11 + X05 * Z10 + X06 * Z09 + X07 * Z08 + X08 * Z07 + X09 * Z06 + X10 * Z05 + X11 * Z04) * (19 / 2 ^ 255) + (X00 * Z03 + X01 * Z02 + X02 * Z01 + X03 * Z00)
-		local c04 = (X05 * Z11 + X06 * Z10 + X07 * Z09 + X08 * Z08 + X09 * Z07 + X10 * Z06 + X11 * Z05) * (19 / 2 ^ 255) + (X00 * Z04 + X01 * Z03 + X02 * Z02 + X03 * Z01 + X04 * Z00)
-		local c05 = (X06 * Z11 + X07 * Z10 + X08 * Z09 + X09 * Z08 + X10 * Z07 + X11 * Z06) * (19 / 2 ^ 255) + (X00 * Z05 + X01 * Z04 + X02 * Z03 + X03 * Z02 + X04 * Z01 + X05 * Z00)
-		local c06 = (X07 * Z11 + X08 * Z10 + X09 * Z09 + X10 * Z08 + X11 * Z07) * (19 / 2 ^ 255) + (X00 * Z06 + X01 * Z05 + X02 * Z04 + X03 * Z03 + X04 * Z02 + X05 * Z01 + X06 * Z00)
-		local c07 = (X08 * Z11 + X09 * Z10 + X10 * Z09 + X11 * Z08) * (19 / 2 ^ 255) + (X00 * Z07 + X01 * Z06 + X02 * Z05 + X03 * Z04 + X04 * Z03 + X05 * Z02 + X06 * Z01 + X07 * Z00)
-		local c08 = (X09 * Z11 + X10 * Z10 + X11 * Z09) * (19 / 2 ^ 255) + (X00 * Z08 + X01 * Z07 + X02 * Z06 + X03 * Z05 + X04 * Z04 + X05 * Z03 + X06 * Z02 + X07 * Z01 + X08 * Z00)
-		local c09 = (X10 * Z11 + X11 * Z10) * (19 / 2 ^ 255) + (X00 * Z09 + X01 * Z08 + X02 * Z07 + X03 * Z06 + X04 * Z05 + X05 * Z04 + X06 * Z03 + X07 * Z02 + X08 * Z01 + X09 * Z00)
-		local c10 = (X11 * Z11) * (19 / 2 ^ 255) + (X00 * Z10 + X01 * Z09 + X02 * Z08 + X03 * Z07 + X04 * Z06 + X05 * Z05 + X06 * Z04 + X07 * Z03 + X08 * Z02 + X09 * Z01 + X10 * Z00)
-		local c11 = X00 * Z11 + X01 * Z10 + X02 * Z09 + X03 * Z08 + X04 * Z07 + X05 * Z06 + X06 * Z05 + X07 * Z04 + X08 * Z03 + X09 * Z02 + X10 * Z01 + X11 * Z00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 0 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 0 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 0 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 0 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 0 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 0 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 0 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 0 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 0 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 0 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 0 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 0 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11, Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11)
+		buffer.writef64(Point, 0 + 0, O00)
+		buffer.writef64(Point, 0 + 8, O01)
+		buffer.writef64(Point, 0 + 16, O02)
+		buffer.writef64(Point, 0 + 24, O03)
+		buffer.writef64(Point, 0 + 32, O04)
+		buffer.writef64(Point, 0 + 40, O05)
+		buffer.writef64(Point, 0 + 48, O06)
+		buffer.writef64(Point, 0 + 56, O07)
+		buffer.writef64(Point, 0 + 64, O08)
+		buffer.writef64(Point, 0 + 72, O09)
+		buffer.writef64(Point, 0 + 80, O10)
+		buffer.writef64(Point, 0 + 88, O11)
 	end
 	if not Point then return end
 	do
-		local c00 = (B01 * Y11 + B02 * Y10 + B03 * Y09 + B04 * Y08 + B05 * Y07 + B06 * Y06 + B07 * Y05 + B08 * Y04 + B09 * Y03 + B10 * Y02 + B11 * Y01) * (19 / 2 ^ 255) + (B00 * Y00)
-		local c01 = (B02 * Y11 + B03 * Y10 + B04 * Y09 + B05 * Y08 + B06 * Y07 + B07 * Y06 + B08 * Y05 + B09 * Y04 + B10 * Y03 + B11 * Y02) * (19 / 2 ^ 255) + (B00 * Y01 + B01 * Y00)
-		local c02 = (B03 * Y11 + B04 * Y10 + B05 * Y09 + B06 * Y08 + B07 * Y07 + B08 * Y06 + B09 * Y05 + B10 * Y04 + B11 * Y03) * (19 / 2 ^ 255) + (B00 * Y02 + B01 * Y01 + B02 * Y00)
-		local c03 = (B04 * Y11 + B05 * Y10 + B06 * Y09 + B07 * Y08 + B08 * Y07 + B09 * Y06 + B10 * Y05 + B11 * Y04) * (19 / 2 ^ 255) + (B00 * Y03 + B01 * Y02 + B02 * Y01 + B03 * Y00)
-		local c04 = (B05 * Y11 + B06 * Y10 + B07 * Y09 + B08 * Y08 + B09 * Y07 + B10 * Y06 + B11 * Y05) * (19 / 2 ^ 255) + (B00 * Y04 + B01 * Y03 + B02 * Y02 + B03 * Y01 + B04 * Y00)
-		local c05 = (B06 * Y11 + B07 * Y10 + B08 * Y09 + B09 * Y08 + B10 * Y07 + B11 * Y06) * (19 / 2 ^ 255) + (B00 * Y05 + B01 * Y04 + B02 * Y03 + B03 * Y02 + B04 * Y01 + B05 * Y00)
-		local c06 = (B07 * Y11 + B08 * Y10 + B09 * Y09 + B10 * Y08 + B11 * Y07) * (19 / 2 ^ 255) + (B00 * Y06 + B01 * Y05 + B02 * Y04 + B03 * Y03 + B04 * Y02 + B05 * Y01 + B06 * Y00)
-		local c07 = (B08 * Y11 + B09 * Y10 + B10 * Y09 + B11 * Y08) * (19 / 2 ^ 255) + (B00 * Y07 + B01 * Y06 + B02 * Y05 + B03 * Y04 + B04 * Y03 + B05 * Y02 + B06 * Y01 + B07 * Y00)
-		local c08 = (B09 * Y11 + B10 * Y10 + B11 * Y09) * (19 / 2 ^ 255) + (B00 * Y08 + B01 * Y07 + B02 * Y06 + B03 * Y05 + B04 * Y04 + B05 * Y03 + B06 * Y02 + B07 * Y01 + B08 * Y00)
-		local c09 = (B10 * Y11 + B11 * Y10) * (19 / 2 ^ 255) + (B00 * Y09 + B01 * Y08 + B02 * Y07 + B03 * Y06 + B04 * Y05 + B05 * Y04 + B06 * Y03 + B07 * Y02 + B08 * Y01 + B09 * Y00)
-		local c10 = (B11 * Y11) * (19 / 2 ^ 255) + (B00 * Y10 + B01 * Y09 + B02 * Y08 + B03 * Y07 + B04 * Y06 + B05 * Y05 + B06 * Y04 + B07 * Y03 + B08 * Y02 + B09 * Y01 + B10 * Y00)
-		local c11 = B00 * Y11 + B01 * Y10 + B02 * Y09 + B03 * Y08 + B04 * Y07 + B05 * Y06 + B06 * Y05 + B07 * Y04 + B08 * Y03 + B09 * Y02 + B10 * Y01 + B11 * Y00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 104 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 104 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 104 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 104 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 104 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 104 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 104 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 104 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 104 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 104 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 104 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 104 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11, Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11)
+		buffer.writef64(Point, 104 + 0, O00)
+		buffer.writef64(Point, 104 + 8, O01)
+		buffer.writef64(Point, 104 + 16, O02)
+		buffer.writef64(Point, 104 + 24, O03)
+		buffer.writef64(Point, 104 + 32, O04)
+		buffer.writef64(Point, 104 + 40, O05)
+		buffer.writef64(Point, 104 + 48, O06)
+		buffer.writef64(Point, 104 + 56, O07)
+		buffer.writef64(Point, 104 + 64, O08)
+		buffer.writef64(Point, 104 + 72, O09)
+		buffer.writef64(Point, 104 + 80, O10)
+		buffer.writef64(Point, 104 + 88, O11)
 	end
 	if not Point then return end
 	do
-		local c00 = (Z01 * B11 + Z02 * B10 + Z03 * B09 + Z04 * B08 + Z05 * B07 + Z06 * B06 + Z07 * B05 + Z08 * B04 + Z09 * B03 + Z10 * B02 + Z11 * B01) * (19 / 2 ^ 255) + (Z00 * B00)
-		local c01 = (Z02 * B11 + Z03 * B10 + Z04 * B09 + Z05 * B08 + Z06 * B07 + Z07 * B06 + Z08 * B05 + Z09 * B04 + Z10 * B03 + Z11 * B02) * (19 / 2 ^ 255) + (Z00 * B01 + Z01 * B00)
-		local c02 = (Z03 * B11 + Z04 * B10 + Z05 * B09 + Z06 * B08 + Z07 * B07 + Z08 * B06 + Z09 * B05 + Z10 * B04 + Z11 * B03) * (19 / 2 ^ 255) + (Z00 * B02 + Z01 * B01 + Z02 * B00)
-		local c03 = (Z04 * B11 + Z05 * B10 + Z06 * B09 + Z07 * B08 + Z08 * B07 + Z09 * B06 + Z10 * B05 + Z11 * B04) * (19 / 2 ^ 255) + (Z00 * B03 + Z01 * B02 + Z02 * B01 + Z03 * B00)
-		local c04 = (Z05 * B11 + Z06 * B10 + Z07 * B09 + Z08 * B08 + Z09 * B07 + Z10 * B06 + Z11 * B05) * (19 / 2 ^ 255) + (Z00 * B04 + Z01 * B03 + Z02 * B02 + Z03 * B01 + Z04 * B00)
-		local c05 = (Z06 * B11 + Z07 * B10 + Z08 * B09 + Z09 * B08 + Z10 * B07 + Z11 * B06) * (19 / 2 ^ 255) + (Z00 * B05 + Z01 * B04 + Z02 * B03 + Z03 * B02 + Z04 * B01 + Z05 * B00)
-		local c06 = (Z07 * B11 + Z08 * B10 + Z09 * B09 + Z10 * B08 + Z11 * B07) * (19 / 2 ^ 255) + (Z00 * B06 + Z01 * B05 + Z02 * B04 + Z03 * B03 + Z04 * B02 + Z05 * B01 + Z06 * B00)
-		local c07 = (Z08 * B11 + Z09 * B10 + Z10 * B09 + Z11 * B08) * (19 / 2 ^ 255) + (Z00 * B07 + Z01 * B06 + Z02 * B05 + Z03 * B04 + Z04 * B03 + Z05 * B02 + Z06 * B01 + Z07 * B00)
-		local c08 = (Z09 * B11 + Z10 * B10 + Z11 * B09) * (19 / 2 ^ 255) + (Z00 * B08 + Z01 * B07 + Z02 * B06 + Z03 * B05 + Z04 * B04 + Z05 * B03 + Z06 * B02 + Z07 * B01 + Z08 * B00)
-		local c09 = (Z10 * B11 + Z11 * B10) * (19 / 2 ^ 255) + (Z00 * B09 + Z01 * B08 + Z02 * B07 + Z03 * B06 + Z04 * B05 + Z05 * B04 + Z06 * B03 + Z07 * B02 + Z08 * B01 + Z09 * B00)
-		local c10 = (Z11 * B11) * (19 / 2 ^ 255) + (Z00 * B10 + Z01 * B09 + Z02 * B08 + Z03 * B07 + Z04 * B06 + Z05 * B05 + Z06 * B04 + Z07 * B03 + Z08 * B02 + Z09 * B01 + Z10 * B00)
-		local c11 = Z00 * B11 + Z01 * B10 + Z02 * B09 + Z03 * B08 + Z04 * B07 + Z05 * B06 + Z06 * B05 + Z07 * B04 + Z08 * B03 + Z09 * B02 + Z10 * B01 + Z11 * B00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 208 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 208 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 208 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 208 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 208 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 208 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 208 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 208 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 208 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 208 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 208 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 208 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11, B00, B01, B02, B03, B04, B05, B06, B07, B08, B09, B10, B11)
+		buffer.writef64(Point, 208 + 0, O00)
+		buffer.writef64(Point, 208 + 8, O01)
+		buffer.writef64(Point, 208 + 16, O02)
+		buffer.writef64(Point, 208 + 24, O03)
+		buffer.writef64(Point, 208 + 32, O04)
+		buffer.writef64(Point, 208 + 40, O05)
+		buffer.writef64(Point, 208 + 48, O06)
+		buffer.writef64(Point, 208 + 56, O07)
+		buffer.writef64(Point, 208 + 64, O08)
+		buffer.writef64(Point, 208 + 72, O09)
+		buffer.writef64(Point, 208 + 80, O10)
+		buffer.writef64(Point, 208 + 88, O11)
 	end
 	if not Point then return end
 	if WithT then
 		do
-			local c00 = (X01 * Y11 + X02 * Y10 + X03 * Y09 + X04 * Y08 + X05 * Y07 + X06 * Y06 + X07 * Y05 + X08 * Y04 + X09 * Y03 + X10 * Y02 + X11 * Y01) * (19 / 2 ^ 255) + (X00 * Y00)
-			local c01 = (X02 * Y11 + X03 * Y10 + X04 * Y09 + X05 * Y08 + X06 * Y07 + X07 * Y06 + X08 * Y05 + X09 * Y04 + X10 * Y03 + X11 * Y02) * (19 / 2 ^ 255) + (X00 * Y01 + X01 * Y00)
-			local c02 = (X03 * Y11 + X04 * Y10 + X05 * Y09 + X06 * Y08 + X07 * Y07 + X08 * Y06 + X09 * Y05 + X10 * Y04 + X11 * Y03) * (19 / 2 ^ 255) + (X00 * Y02 + X01 * Y01 + X02 * Y00)
-			local c03 = (X04 * Y11 + X05 * Y10 + X06 * Y09 + X07 * Y08 + X08 * Y07 + X09 * Y06 + X10 * Y05 + X11 * Y04) * (19 / 2 ^ 255) + (X00 * Y03 + X01 * Y02 + X02 * Y01 + X03 * Y00)
-			local c04 = (X05 * Y11 + X06 * Y10 + X07 * Y09 + X08 * Y08 + X09 * Y07 + X10 * Y06 + X11 * Y05) * (19 / 2 ^ 255) + (X00 * Y04 + X01 * Y03 + X02 * Y02 + X03 * Y01 + X04 * Y00)
-			local c05 = (X06 * Y11 + X07 * Y10 + X08 * Y09 + X09 * Y08 + X10 * Y07 + X11 * Y06) * (19 / 2 ^ 255) + (X00 * Y05 + X01 * Y04 + X02 * Y03 + X03 * Y02 + X04 * Y01 + X05 * Y00)
-			local c06 = (X07 * Y11 + X08 * Y10 + X09 * Y09 + X10 * Y08 + X11 * Y07) * (19 / 2 ^ 255) + (X00 * Y06 + X01 * Y05 + X02 * Y04 + X03 * Y03 + X04 * Y02 + X05 * Y01 + X06 * Y00)
-			local c07 = (X08 * Y11 + X09 * Y10 + X10 * Y09 + X11 * Y08) * (19 / 2 ^ 255) + (X00 * Y07 + X01 * Y06 + X02 * Y05 + X03 * Y04 + X04 * Y03 + X05 * Y02 + X06 * Y01 + X07 * Y00)
-			local c08 = (X09 * Y11 + X10 * Y10 + X11 * Y09) * (19 / 2 ^ 255) + (X00 * Y08 + X01 * Y07 + X02 * Y06 + X03 * Y05 + X04 * Y04 + X05 * Y03 + X06 * Y02 + X07 * Y01 + X08 * Y00)
-			local c09 = (X10 * Y11 + X11 * Y10) * (19 / 2 ^ 255) + (X00 * Y09 + X01 * Y08 + X02 * Y07 + X03 * Y06 + X04 * Y05 + X05 * Y04 + X06 * Y03 + X07 * Y02 + X08 * Y01 + X09 * Y00)
-			local c10 = (X11 * Y11) * (19 / 2 ^ 255) + (X00 * Y10 + X01 * Y09 + X02 * Y08 + X03 * Y07 + X04 * Y06 + X05 * Y05 + X06 * Y04 + X07 * Y03 + X08 * Y02 + X09 * Y01 + X10 * Y00)
-			local c11 = X00 * Y11 + X01 * Y10 + X02 * Y09 + X03 * Y08 + X04 * Y07 + X05 * Y06 + X06 * Y05 + X07 * Y04 + X08 * Y03 + X09 * Y02 + X10 * Y01 + X11 * Y00
-			local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-			local b01 = (c01 - k01) + k00
-			local b02 = (c02 - k02) + k01
-			local b03 = (c03 - k03) + k02
-			local b04 = (c04 - k04) + k03
-			local b05 = (c05 - k05) + k04
-			local b06 = (c06 - k06) + k05
-			local b07 = (c07 - k07) + k06
-			local b08 = (c08 - k08) + k07
-			local b09 = (c09 - k09) + k08
-			local b10 = (c10 - k10) + k09
-			local b11 = (c11 - k11) + k10
-			local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			buffer.writef64(Point, 312 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-			buffer.writef64(Point, 312 + 8, (b01 - j01) + j00)
-			buffer.writef64(Point, 312 + 16, (b02 - j02) + j01)
-			buffer.writef64(Point, 312 + 24, (b03 - j03) + j02)
-			buffer.writef64(Point, 312 + 32, (b04 - j04) + j03)
-			buffer.writef64(Point, 312 + 40, (b05 - j05) + j04)
-			buffer.writef64(Point, 312 + 48, (b06 - j06) + j05)
-			buffer.writef64(Point, 312 + 56, (b07 - j07) + j06)
-			buffer.writef64(Point, 312 + 64, (b08 - j08) + j07)
-			buffer.writef64(Point, 312 + 72, (b09 - j09) + j08)
-			buffer.writef64(Point, 312 + 80, (b10 - j10) + j09)
-			buffer.writef64(Point, 312 + 88, (b11 - j11) + j10)
+			local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11, Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11)
+			buffer.writef64(Point, 312 + 0, O00)
+			buffer.writef64(Point, 312 + 8, O01)
+			buffer.writef64(Point, 312 + 16, O02)
+			buffer.writef64(Point, 312 + 24, O03)
+			buffer.writef64(Point, 312 + 32, O04)
+			buffer.writef64(Point, 312 + 40, O05)
+			buffer.writef64(Point, 312 + 48, O06)
+			buffer.writef64(Point, 312 + 56, O07)
+			buffer.writef64(Point, 312 + 64, O08)
+			buffer.writef64(Point, 312 + 72, O09)
+			buffer.writef64(Point, 312 + 80, O10)
+			buffer.writef64(Point, 312 + 88, O11)
 		end
 		if not Point then return end
 	end
@@ -917,68 +584,7 @@ function Edwards25519.AddInPlace(Point: buffer, Table: buffer, PlusOffset: numbe
 	local N09 = buffer.readf64(Table, MinusOffset + 72)
 	local N10 = buffer.readf64(Table, MinusOffset + 80)
 	local N11 = buffer.readf64(Table, MinusOffset + 88)
-	do
-		local c00 = (A01 * N11 + A02 * N10 + A03 * N09 + A04 * N08 + A05 * N07 + A06 * N06 + A07 * N05 + A08 * N04 + A09 * N03 + A10 * N02 + A11 * N01) * (19 / 2 ^ 255) + (A00 * N00)
-		local c01 = (A02 * N11 + A03 * N10 + A04 * N09 + A05 * N08 + A06 * N07 + A07 * N06 + A08 * N05 + A09 * N04 + A10 * N03 + A11 * N02) * (19 / 2 ^ 255) + (A00 * N01 + A01 * N00)
-		local c02 = (A03 * N11 + A04 * N10 + A05 * N09 + A06 * N08 + A07 * N07 + A08 * N06 + A09 * N05 + A10 * N04 + A11 * N03) * (19 / 2 ^ 255) + (A00 * N02 + A01 * N01 + A02 * N00)
-		local c03 = (A04 * N11 + A05 * N10 + A06 * N09 + A07 * N08 + A08 * N07 + A09 * N06 + A10 * N05 + A11 * N04) * (19 / 2 ^ 255) + (A00 * N03 + A01 * N02 + A02 * N01 + A03 * N00)
-		local c04 = (A05 * N11 + A06 * N10 + A07 * N09 + A08 * N08 + A09 * N07 + A10 * N06 + A11 * N05) * (19 / 2 ^ 255) + (A00 * N04 + A01 * N03 + A02 * N02 + A03 * N01 + A04 * N00)
-		local c05 = (A06 * N11 + A07 * N10 + A08 * N09 + A09 * N08 + A10 * N07 + A11 * N06) * (19 / 2 ^ 255) + (A00 * N05 + A01 * N04 + A02 * N03 + A03 * N02 + A04 * N01 + A05 * N00)
-		local c06 = (A07 * N11 + A08 * N10 + A09 * N09 + A10 * N08 + A11 * N07) * (19 / 2 ^ 255) + (A00 * N06 + A01 * N05 + A02 * N04 + A03 * N03 + A04 * N02 + A05 * N01 + A06 * N00)
-		local c07 = (A08 * N11 + A09 * N10 + A10 * N09 + A11 * N08) * (19 / 2 ^ 255) + (A00 * N07 + A01 * N06 + A02 * N05 + A03 * N04 + A04 * N03 + A05 * N02 + A06 * N01 + A07 * N00)
-		local c08 = (A09 * N11 + A10 * N10 + A11 * N09) * (19 / 2 ^ 255) + (A00 * N08 + A01 * N07 + A02 * N06 + A03 * N05 + A04 * N04 + A05 * N03 + A06 * N02 + A07 * N01 + A08 * N00)
-		local c09 = (A10 * N11 + A11 * N10) * (19 / 2 ^ 255) + (A00 * N09 + A01 * N08 + A02 * N07 + A03 * N06 + A04 * N05 + A05 * N04 + A06 * N03 + A07 * N02 + A08 * N01 + A09 * N00)
-		local c10 = (A11 * N11) * (19 / 2 ^ 255) + (A00 * N10 + A01 * N09 + A02 * N08 + A03 * N07 + A04 * N06 + A05 * N05 + A06 * N04 + A07 * N03 + A08 * N02 + A09 * N01 + A10 * N00)
-		local c11 = A00 * N11 + A01 * N10 + A02 * N09 + A03 * N08 + A04 * N07 + A05 * N06 + A06 * N05 + A07 * N04 + A08 * N03 + A09 * N02 + A10 * N01 + A11 * N00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		A00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		A01 = (b01 - j01) + j00
-		A02 = (b02 - j02) + j01
-		A03 = (b03 - j03) + j02
-		A04 = (b04 - j04) + j03
-		A05 = (b05 - j05) + j04
-		A06 = (b06 - j06) + j05
-		A07 = (b07 - j07) + j06
-		A08 = (b08 - j08) + j07
-		A09 = (b09 - j09) + j08
-		A10 = (b10 - j10) + j09
-		A11 = (b11 - j11) + j10
-	end
+	A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 = FieldMul(A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, N00, N01, N02, N03, N04, N05, N06, N07, N08, N09, N10, N11)
 	if PlusOffset < 0 then return end
 	Y00 = Y00 + X00
 	Y01 = Y01 + X01
@@ -1004,68 +610,7 @@ function Edwards25519.AddInPlace(Point: buffer, Table: buffer, PlusOffset: numbe
 	N09 = buffer.readf64(Table, PlusOffset + 72)
 	N10 = buffer.readf64(Table, PlusOffset + 80)
 	N11 = buffer.readf64(Table, PlusOffset + 88)
-	do
-		local c00 = (Y01 * N11 + Y02 * N10 + Y03 * N09 + Y04 * N08 + Y05 * N07 + Y06 * N06 + Y07 * N05 + Y08 * N04 + Y09 * N03 + Y10 * N02 + Y11 * N01) * (19 / 2 ^ 255) + (Y00 * N00)
-		local c01 = (Y02 * N11 + Y03 * N10 + Y04 * N09 + Y05 * N08 + Y06 * N07 + Y07 * N06 + Y08 * N05 + Y09 * N04 + Y10 * N03 + Y11 * N02) * (19 / 2 ^ 255) + (Y00 * N01 + Y01 * N00)
-		local c02 = (Y03 * N11 + Y04 * N10 + Y05 * N09 + Y06 * N08 + Y07 * N07 + Y08 * N06 + Y09 * N05 + Y10 * N04 + Y11 * N03) * (19 / 2 ^ 255) + (Y00 * N02 + Y01 * N01 + Y02 * N00)
-		local c03 = (Y04 * N11 + Y05 * N10 + Y06 * N09 + Y07 * N08 + Y08 * N07 + Y09 * N06 + Y10 * N05 + Y11 * N04) * (19 / 2 ^ 255) + (Y00 * N03 + Y01 * N02 + Y02 * N01 + Y03 * N00)
-		local c04 = (Y05 * N11 + Y06 * N10 + Y07 * N09 + Y08 * N08 + Y09 * N07 + Y10 * N06 + Y11 * N05) * (19 / 2 ^ 255) + (Y00 * N04 + Y01 * N03 + Y02 * N02 + Y03 * N01 + Y04 * N00)
-		local c05 = (Y06 * N11 + Y07 * N10 + Y08 * N09 + Y09 * N08 + Y10 * N07 + Y11 * N06) * (19 / 2 ^ 255) + (Y00 * N05 + Y01 * N04 + Y02 * N03 + Y03 * N02 + Y04 * N01 + Y05 * N00)
-		local c06 = (Y07 * N11 + Y08 * N10 + Y09 * N09 + Y10 * N08 + Y11 * N07) * (19 / 2 ^ 255) + (Y00 * N06 + Y01 * N05 + Y02 * N04 + Y03 * N03 + Y04 * N02 + Y05 * N01 + Y06 * N00)
-		local c07 = (Y08 * N11 + Y09 * N10 + Y10 * N09 + Y11 * N08) * (19 / 2 ^ 255) + (Y00 * N07 + Y01 * N06 + Y02 * N05 + Y03 * N04 + Y04 * N03 + Y05 * N02 + Y06 * N01 + Y07 * N00)
-		local c08 = (Y09 * N11 + Y10 * N10 + Y11 * N09) * (19 / 2 ^ 255) + (Y00 * N08 + Y01 * N07 + Y02 * N06 + Y03 * N05 + Y04 * N04 + Y05 * N03 + Y06 * N02 + Y07 * N01 + Y08 * N00)
-		local c09 = (Y10 * N11 + Y11 * N10) * (19 / 2 ^ 255) + (Y00 * N09 + Y01 * N08 + Y02 * N07 + Y03 * N06 + Y04 * N05 + Y05 * N04 + Y06 * N03 + Y07 * N02 + Y08 * N01 + Y09 * N00)
-		local c10 = (Y11 * N11) * (19 / 2 ^ 255) + (Y00 * N10 + Y01 * N09 + Y02 * N08 + Y03 * N07 + Y04 * N06 + Y05 * N05 + Y06 * N04 + Y07 * N03 + Y08 * N02 + Y09 * N01 + Y10 * N00)
-		local c11 = Y00 * N11 + Y01 * N10 + Y02 * N09 + Y03 * N08 + Y04 * N07 + Y05 * N06 + Y06 * N05 + Y07 * N04 + Y08 * N03 + Y09 * N02 + Y10 * N01 + Y11 * N00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		Y00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		Y01 = (b01 - j01) + j00
-		Y02 = (b02 - j02) + j01
-		Y03 = (b03 - j03) + j02
-		Y04 = (b04 - j04) + j03
-		Y05 = (b05 - j05) + j04
-		Y06 = (b06 - j06) + j05
-		Y07 = (b07 - j07) + j06
-		Y08 = (b08 - j08) + j07
-		Y09 = (b09 - j09) + j08
-		Y10 = (b10 - j10) + j09
-		Y11 = (b11 - j11) + j10
-	end
+	Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11 = FieldMul(Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11, N00, N01, N02, N03, N04, N05, N06, N07, N08, N09, N10, N11)
 	if PlusOffset < 0 then return end
 	N00 = buffer.readf64(Table, TOffset + 0)
 	N01 = buffer.readf64(Table, TOffset + 8)
@@ -1079,68 +624,7 @@ function Edwards25519.AddInPlace(Point: buffer, Table: buffer, PlusOffset: numbe
 	N09 = buffer.readf64(Table, TOffset + 72)
 	N10 = buffer.readf64(Table, TOffset + 80)
 	N11 = buffer.readf64(Table, TOffset + 88)
-	do
-		local c00 = (T01 * N11 + T02 * N10 + T03 * N09 + T04 * N08 + T05 * N07 + T06 * N06 + T07 * N05 + T08 * N04 + T09 * N03 + T10 * N02 + T11 * N01) * (19 / 2 ^ 255) + (T00 * N00)
-		local c01 = (T02 * N11 + T03 * N10 + T04 * N09 + T05 * N08 + T06 * N07 + T07 * N06 + T08 * N05 + T09 * N04 + T10 * N03 + T11 * N02) * (19 / 2 ^ 255) + (T00 * N01 + T01 * N00)
-		local c02 = (T03 * N11 + T04 * N10 + T05 * N09 + T06 * N08 + T07 * N07 + T08 * N06 + T09 * N05 + T10 * N04 + T11 * N03) * (19 / 2 ^ 255) + (T00 * N02 + T01 * N01 + T02 * N00)
-		local c03 = (T04 * N11 + T05 * N10 + T06 * N09 + T07 * N08 + T08 * N07 + T09 * N06 + T10 * N05 + T11 * N04) * (19 / 2 ^ 255) + (T00 * N03 + T01 * N02 + T02 * N01 + T03 * N00)
-		local c04 = (T05 * N11 + T06 * N10 + T07 * N09 + T08 * N08 + T09 * N07 + T10 * N06 + T11 * N05) * (19 / 2 ^ 255) + (T00 * N04 + T01 * N03 + T02 * N02 + T03 * N01 + T04 * N00)
-		local c05 = (T06 * N11 + T07 * N10 + T08 * N09 + T09 * N08 + T10 * N07 + T11 * N06) * (19 / 2 ^ 255) + (T00 * N05 + T01 * N04 + T02 * N03 + T03 * N02 + T04 * N01 + T05 * N00)
-		local c06 = (T07 * N11 + T08 * N10 + T09 * N09 + T10 * N08 + T11 * N07) * (19 / 2 ^ 255) + (T00 * N06 + T01 * N05 + T02 * N04 + T03 * N03 + T04 * N02 + T05 * N01 + T06 * N00)
-		local c07 = (T08 * N11 + T09 * N10 + T10 * N09 + T11 * N08) * (19 / 2 ^ 255) + (T00 * N07 + T01 * N06 + T02 * N05 + T03 * N04 + T04 * N03 + T05 * N02 + T06 * N01 + T07 * N00)
-		local c08 = (T09 * N11 + T10 * N10 + T11 * N09) * (19 / 2 ^ 255) + (T00 * N08 + T01 * N07 + T02 * N06 + T03 * N05 + T04 * N04 + T05 * N03 + T06 * N02 + T07 * N01 + T08 * N00)
-		local c09 = (T10 * N11 + T11 * N10) * (19 / 2 ^ 255) + (T00 * N09 + T01 * N08 + T02 * N07 + T03 * N06 + T04 * N05 + T05 * N04 + T06 * N03 + T07 * N02 + T08 * N01 + T09 * N00)
-		local c10 = (T11 * N11) * (19 / 2 ^ 255) + (T00 * N10 + T01 * N09 + T02 * N08 + T03 * N07 + T04 * N06 + T05 * N05 + T06 * N04 + T07 * N03 + T08 * N02 + T09 * N01 + T10 * N00)
-		local c11 = T00 * N11 + T01 * N10 + T02 * N09 + T03 * N08 + T04 * N07 + T05 * N06 + T06 * N05 + T07 * N04 + T08 * N03 + T09 * N02 + T10 * N01 + T11 * N00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		T00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-		T01 = (b01 - j01) + j00
-		T02 = (b02 - j02) + j01
-		T03 = (b03 - j03) + j02
-		T04 = (b04 - j04) + j03
-		T05 = (b05 - j05) + j04
-		T06 = (b06 - j06) + j05
-		T07 = (b07 - j07) + j06
-		T08 = (b08 - j08) + j07
-		T09 = (b09 - j09) + j08
-		T10 = (b10 - j10) + j09
-		T11 = (b11 - j11) + j10
-	end
+	T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T10, T11 = FieldMul(T00, T01, T02, T03, T04, T05, T06, T07, T08, T09, T10, T11, N00, N01, N02, N03, N04, N05, N06, N07, N08, N09, N10, N11)
 	if PlusOffset < 0 then return end
 	if ZOffset < 0 then
 		Z00 = Z00 + Z00
@@ -1168,68 +652,7 @@ function Edwards25519.AddInPlace(Point: buffer, Table: buffer, PlusOffset: numbe
 		N09 = buffer.readf64(Table, ZOffset + 72)
 		N10 = buffer.readf64(Table, ZOffset + 80)
 		N11 = buffer.readf64(Table, ZOffset + 88)
-		do
-			local c00 = (Z01 * N11 + Z02 * N10 + Z03 * N09 + Z04 * N08 + Z05 * N07 + Z06 * N06 + Z07 * N05 + Z08 * N04 + Z09 * N03 + Z10 * N02 + Z11 * N01) * (19 / 2 ^ 255) + (Z00 * N00)
-			local c01 = (Z02 * N11 + Z03 * N10 + Z04 * N09 + Z05 * N08 + Z06 * N07 + Z07 * N06 + Z08 * N05 + Z09 * N04 + Z10 * N03 + Z11 * N02) * (19 / 2 ^ 255) + (Z00 * N01 + Z01 * N00)
-			local c02 = (Z03 * N11 + Z04 * N10 + Z05 * N09 + Z06 * N08 + Z07 * N07 + Z08 * N06 + Z09 * N05 + Z10 * N04 + Z11 * N03) * (19 / 2 ^ 255) + (Z00 * N02 + Z01 * N01 + Z02 * N00)
-			local c03 = (Z04 * N11 + Z05 * N10 + Z06 * N09 + Z07 * N08 + Z08 * N07 + Z09 * N06 + Z10 * N05 + Z11 * N04) * (19 / 2 ^ 255) + (Z00 * N03 + Z01 * N02 + Z02 * N01 + Z03 * N00)
-			local c04 = (Z05 * N11 + Z06 * N10 + Z07 * N09 + Z08 * N08 + Z09 * N07 + Z10 * N06 + Z11 * N05) * (19 / 2 ^ 255) + (Z00 * N04 + Z01 * N03 + Z02 * N02 + Z03 * N01 + Z04 * N00)
-			local c05 = (Z06 * N11 + Z07 * N10 + Z08 * N09 + Z09 * N08 + Z10 * N07 + Z11 * N06) * (19 / 2 ^ 255) + (Z00 * N05 + Z01 * N04 + Z02 * N03 + Z03 * N02 + Z04 * N01 + Z05 * N00)
-			local c06 = (Z07 * N11 + Z08 * N10 + Z09 * N09 + Z10 * N08 + Z11 * N07) * (19 / 2 ^ 255) + (Z00 * N06 + Z01 * N05 + Z02 * N04 + Z03 * N03 + Z04 * N02 + Z05 * N01 + Z06 * N00)
-			local c07 = (Z08 * N11 + Z09 * N10 + Z10 * N09 + Z11 * N08) * (19 / 2 ^ 255) + (Z00 * N07 + Z01 * N06 + Z02 * N05 + Z03 * N04 + Z04 * N03 + Z05 * N02 + Z06 * N01 + Z07 * N00)
-			local c08 = (Z09 * N11 + Z10 * N10 + Z11 * N09) * (19 / 2 ^ 255) + (Z00 * N08 + Z01 * N07 + Z02 * N06 + Z03 * N05 + Z04 * N04 + Z05 * N03 + Z06 * N02 + Z07 * N01 + Z08 * N00)
-			local c09 = (Z10 * N11 + Z11 * N10) * (19 / 2 ^ 255) + (Z00 * N09 + Z01 * N08 + Z02 * N07 + Z03 * N06 + Z04 * N05 + Z05 * N04 + Z06 * N03 + Z07 * N02 + Z08 * N01 + Z09 * N00)
-			local c10 = (Z11 * N11) * (19 / 2 ^ 255) + (Z00 * N10 + Z01 * N09 + Z02 * N08 + Z03 * N07 + Z04 * N06 + Z05 * N05 + Z06 * N04 + Z07 * N03 + Z08 * N02 + Z09 * N01 + Z10 * N00)
-			local c11 = Z00 * N11 + Z01 * N10 + Z02 * N09 + Z03 * N08 + Z04 * N07 + Z05 * N06 + Z06 * N05 + Z07 * N04 + Z08 * N03 + Z09 * N02 + Z10 * N01 + Z11 * N00
-			local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-			local b01 = (c01 - k01) + k00
-			local b02 = (c02 - k02) + k01
-			local b03 = (c03 - k03) + k02
-			local b04 = (c04 - k04) + k03
-			local b05 = (c05 - k05) + k04
-			local b06 = (c06 - k06) + k05
-			local b07 = (c07 - k07) + k06
-			local b08 = (c08 - k08) + k07
-			local b09 = (c09 - k09) + k08
-			local b10 = (c10 - k10) + k09
-			local b11 = (c11 - k11) + k10
-			local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-			local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-			local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-			local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-			local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-			local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-			local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-			local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-			local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-			local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-			local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-			local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-			Z00 = (b00 - j00) + j11 * (19 / 2 ^ 255)
-			Z01 = (b01 - j01) + j00
-			Z02 = (b02 - j02) + j01
-			Z03 = (b03 - j03) + j02
-			Z04 = (b04 - j04) + j03
-			Z05 = (b05 - j05) + j04
-			Z06 = (b06 - j06) + j05
-			Z07 = (b07 - j07) + j06
-			Z08 = (b08 - j08) + j07
-			Z09 = (b09 - j09) + j08
-			Z10 = (b10 - j10) + j09
-			Z11 = (b11 - j11) + j10
-		end
+		Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11 = FieldMul(Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11, N00, N01, N02, N03, N04, N05, N06, N07, N08, N09, N10, N11)
 		if PlusOffset < 0 then return end
 	end
 	X00 = Y00 - A00
@@ -1293,255 +716,67 @@ function Edwards25519.AddInPlace(Point: buffer, Table: buffer, PlusOffset: numbe
 	Y10 = Y10 + A10
 	Y11 = Y11 + A11
 	do
-		local c00 = (X01 * N11 + X02 * N10 + X03 * N09 + X04 * N08 + X05 * N07 + X06 * N06 + X07 * N05 + X08 * N04 + X09 * N03 + X10 * N02 + X11 * N01) * (19 / 2 ^ 255) + (X00 * N00)
-		local c01 = (X02 * N11 + X03 * N10 + X04 * N09 + X05 * N08 + X06 * N07 + X07 * N06 + X08 * N05 + X09 * N04 + X10 * N03 + X11 * N02) * (19 / 2 ^ 255) + (X00 * N01 + X01 * N00)
-		local c02 = (X03 * N11 + X04 * N10 + X05 * N09 + X06 * N08 + X07 * N07 + X08 * N06 + X09 * N05 + X10 * N04 + X11 * N03) * (19 / 2 ^ 255) + (X00 * N02 + X01 * N01 + X02 * N00)
-		local c03 = (X04 * N11 + X05 * N10 + X06 * N09 + X07 * N08 + X08 * N07 + X09 * N06 + X10 * N05 + X11 * N04) * (19 / 2 ^ 255) + (X00 * N03 + X01 * N02 + X02 * N01 + X03 * N00)
-		local c04 = (X05 * N11 + X06 * N10 + X07 * N09 + X08 * N08 + X09 * N07 + X10 * N06 + X11 * N05) * (19 / 2 ^ 255) + (X00 * N04 + X01 * N03 + X02 * N02 + X03 * N01 + X04 * N00)
-		local c05 = (X06 * N11 + X07 * N10 + X08 * N09 + X09 * N08 + X10 * N07 + X11 * N06) * (19 / 2 ^ 255) + (X00 * N05 + X01 * N04 + X02 * N03 + X03 * N02 + X04 * N01 + X05 * N00)
-		local c06 = (X07 * N11 + X08 * N10 + X09 * N09 + X10 * N08 + X11 * N07) * (19 / 2 ^ 255) + (X00 * N06 + X01 * N05 + X02 * N04 + X03 * N03 + X04 * N02 + X05 * N01 + X06 * N00)
-		local c07 = (X08 * N11 + X09 * N10 + X10 * N09 + X11 * N08) * (19 / 2 ^ 255) + (X00 * N07 + X01 * N06 + X02 * N05 + X03 * N04 + X04 * N03 + X05 * N02 + X06 * N01 + X07 * N00)
-		local c08 = (X09 * N11 + X10 * N10 + X11 * N09) * (19 / 2 ^ 255) + (X00 * N08 + X01 * N07 + X02 * N06 + X03 * N05 + X04 * N04 + X05 * N03 + X06 * N02 + X07 * N01 + X08 * N00)
-		local c09 = (X10 * N11 + X11 * N10) * (19 / 2 ^ 255) + (X00 * N09 + X01 * N08 + X02 * N07 + X03 * N06 + X04 * N05 + X05 * N04 + X06 * N03 + X07 * N02 + X08 * N01 + X09 * N00)
-		local c10 = (X11 * N11) * (19 / 2 ^ 255) + (X00 * N10 + X01 * N09 + X02 * N08 + X03 * N07 + X04 * N06 + X05 * N05 + X06 * N04 + X07 * N03 + X08 * N02 + X09 * N01 + X10 * N00)
-		local c11 = X00 * N11 + X01 * N10 + X02 * N09 + X03 * N08 + X04 * N07 + X05 * N06 + X06 * N05 + X07 * N04 + X08 * N03 + X09 * N02 + X10 * N01 + X11 * N00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 0 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 0 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 0 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 0 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 0 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 0 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 0 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 0 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 0 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 0 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 0 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 0 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11, N00, N01, N02, N03, N04, N05, N06, N07, N08, N09, N10, N11)
+		buffer.writef64(Point, 0 + 0, O00)
+		buffer.writef64(Point, 0 + 8, O01)
+		buffer.writef64(Point, 0 + 16, O02)
+		buffer.writef64(Point, 0 + 24, O03)
+		buffer.writef64(Point, 0 + 32, O04)
+		buffer.writef64(Point, 0 + 40, O05)
+		buffer.writef64(Point, 0 + 48, O06)
+		buffer.writef64(Point, 0 + 56, O07)
+		buffer.writef64(Point, 0 + 64, O08)
+		buffer.writef64(Point, 0 + 72, O09)
+		buffer.writef64(Point, 0 + 80, O10)
+		buffer.writef64(Point, 0 + 88, O11)
 	end
 	if PlusOffset < 0 then return end
 	do
-		local c00 = (Z01 * Y11 + Z02 * Y10 + Z03 * Y09 + Z04 * Y08 + Z05 * Y07 + Z06 * Y06 + Z07 * Y05 + Z08 * Y04 + Z09 * Y03 + Z10 * Y02 + Z11 * Y01) * (19 / 2 ^ 255) + (Z00 * Y00)
-		local c01 = (Z02 * Y11 + Z03 * Y10 + Z04 * Y09 + Z05 * Y08 + Z06 * Y07 + Z07 * Y06 + Z08 * Y05 + Z09 * Y04 + Z10 * Y03 + Z11 * Y02) * (19 / 2 ^ 255) + (Z00 * Y01 + Z01 * Y00)
-		local c02 = (Z03 * Y11 + Z04 * Y10 + Z05 * Y09 + Z06 * Y08 + Z07 * Y07 + Z08 * Y06 + Z09 * Y05 + Z10 * Y04 + Z11 * Y03) * (19 / 2 ^ 255) + (Z00 * Y02 + Z01 * Y01 + Z02 * Y00)
-		local c03 = (Z04 * Y11 + Z05 * Y10 + Z06 * Y09 + Z07 * Y08 + Z08 * Y07 + Z09 * Y06 + Z10 * Y05 + Z11 * Y04) * (19 / 2 ^ 255) + (Z00 * Y03 + Z01 * Y02 + Z02 * Y01 + Z03 * Y00)
-		local c04 = (Z05 * Y11 + Z06 * Y10 + Z07 * Y09 + Z08 * Y08 + Z09 * Y07 + Z10 * Y06 + Z11 * Y05) * (19 / 2 ^ 255) + (Z00 * Y04 + Z01 * Y03 + Z02 * Y02 + Z03 * Y01 + Z04 * Y00)
-		local c05 = (Z06 * Y11 + Z07 * Y10 + Z08 * Y09 + Z09 * Y08 + Z10 * Y07 + Z11 * Y06) * (19 / 2 ^ 255) + (Z00 * Y05 + Z01 * Y04 + Z02 * Y03 + Z03 * Y02 + Z04 * Y01 + Z05 * Y00)
-		local c06 = (Z07 * Y11 + Z08 * Y10 + Z09 * Y09 + Z10 * Y08 + Z11 * Y07) * (19 / 2 ^ 255) + (Z00 * Y06 + Z01 * Y05 + Z02 * Y04 + Z03 * Y03 + Z04 * Y02 + Z05 * Y01 + Z06 * Y00)
-		local c07 = (Z08 * Y11 + Z09 * Y10 + Z10 * Y09 + Z11 * Y08) * (19 / 2 ^ 255) + (Z00 * Y07 + Z01 * Y06 + Z02 * Y05 + Z03 * Y04 + Z04 * Y03 + Z05 * Y02 + Z06 * Y01 + Z07 * Y00)
-		local c08 = (Z09 * Y11 + Z10 * Y10 + Z11 * Y09) * (19 / 2 ^ 255) + (Z00 * Y08 + Z01 * Y07 + Z02 * Y06 + Z03 * Y05 + Z04 * Y04 + Z05 * Y03 + Z06 * Y02 + Z07 * Y01 + Z08 * Y00)
-		local c09 = (Z10 * Y11 + Z11 * Y10) * (19 / 2 ^ 255) + (Z00 * Y09 + Z01 * Y08 + Z02 * Y07 + Z03 * Y06 + Z04 * Y05 + Z05 * Y04 + Z06 * Y03 + Z07 * Y02 + Z08 * Y01 + Z09 * Y00)
-		local c10 = (Z11 * Y11) * (19 / 2 ^ 255) + (Z00 * Y10 + Z01 * Y09 + Z02 * Y08 + Z03 * Y07 + Z04 * Y06 + Z05 * Y05 + Z06 * Y04 + Z07 * Y03 + Z08 * Y02 + Z09 * Y01 + Z10 * Y00)
-		local c11 = Z00 * Y11 + Z01 * Y10 + Z02 * Y09 + Z03 * Y08 + Z04 * Y07 + Z05 * Y06 + Z06 * Y05 + Z07 * Y04 + Z08 * Y03 + Z09 * Y02 + Z10 * Y01 + Z11 * Y00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 104 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 104 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 104 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 104 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 104 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 104 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 104 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 104 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 104 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 104 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 104 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 104 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11, Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11)
+		buffer.writef64(Point, 104 + 0, O00)
+		buffer.writef64(Point, 104 + 8, O01)
+		buffer.writef64(Point, 104 + 16, O02)
+		buffer.writef64(Point, 104 + 24, O03)
+		buffer.writef64(Point, 104 + 32, O04)
+		buffer.writef64(Point, 104 + 40, O05)
+		buffer.writef64(Point, 104 + 48, O06)
+		buffer.writef64(Point, 104 + 56, O07)
+		buffer.writef64(Point, 104 + 64, O08)
+		buffer.writef64(Point, 104 + 72, O09)
+		buffer.writef64(Point, 104 + 80, O10)
+		buffer.writef64(Point, 104 + 88, O11)
 	end
 	if PlusOffset < 0 then return end
 	do
-		local c00 = (N01 * Z11 + N02 * Z10 + N03 * Z09 + N04 * Z08 + N05 * Z07 + N06 * Z06 + N07 * Z05 + N08 * Z04 + N09 * Z03 + N10 * Z02 + N11 * Z01) * (19 / 2 ^ 255) + (N00 * Z00)
-		local c01 = (N02 * Z11 + N03 * Z10 + N04 * Z09 + N05 * Z08 + N06 * Z07 + N07 * Z06 + N08 * Z05 + N09 * Z04 + N10 * Z03 + N11 * Z02) * (19 / 2 ^ 255) + (N00 * Z01 + N01 * Z00)
-		local c02 = (N03 * Z11 + N04 * Z10 + N05 * Z09 + N06 * Z08 + N07 * Z07 + N08 * Z06 + N09 * Z05 + N10 * Z04 + N11 * Z03) * (19 / 2 ^ 255) + (N00 * Z02 + N01 * Z01 + N02 * Z00)
-		local c03 = (N04 * Z11 + N05 * Z10 + N06 * Z09 + N07 * Z08 + N08 * Z07 + N09 * Z06 + N10 * Z05 + N11 * Z04) * (19 / 2 ^ 255) + (N00 * Z03 + N01 * Z02 + N02 * Z01 + N03 * Z00)
-		local c04 = (N05 * Z11 + N06 * Z10 + N07 * Z09 + N08 * Z08 + N09 * Z07 + N10 * Z06 + N11 * Z05) * (19 / 2 ^ 255) + (N00 * Z04 + N01 * Z03 + N02 * Z02 + N03 * Z01 + N04 * Z00)
-		local c05 = (N06 * Z11 + N07 * Z10 + N08 * Z09 + N09 * Z08 + N10 * Z07 + N11 * Z06) * (19 / 2 ^ 255) + (N00 * Z05 + N01 * Z04 + N02 * Z03 + N03 * Z02 + N04 * Z01 + N05 * Z00)
-		local c06 = (N07 * Z11 + N08 * Z10 + N09 * Z09 + N10 * Z08 + N11 * Z07) * (19 / 2 ^ 255) + (N00 * Z06 + N01 * Z05 + N02 * Z04 + N03 * Z03 + N04 * Z02 + N05 * Z01 + N06 * Z00)
-		local c07 = (N08 * Z11 + N09 * Z10 + N10 * Z09 + N11 * Z08) * (19 / 2 ^ 255) + (N00 * Z07 + N01 * Z06 + N02 * Z05 + N03 * Z04 + N04 * Z03 + N05 * Z02 + N06 * Z01 + N07 * Z00)
-		local c08 = (N09 * Z11 + N10 * Z10 + N11 * Z09) * (19 / 2 ^ 255) + (N00 * Z08 + N01 * Z07 + N02 * Z06 + N03 * Z05 + N04 * Z04 + N05 * Z03 + N06 * Z02 + N07 * Z01 + N08 * Z00)
-		local c09 = (N10 * Z11 + N11 * Z10) * (19 / 2 ^ 255) + (N00 * Z09 + N01 * Z08 + N02 * Z07 + N03 * Z06 + N04 * Z05 + N05 * Z04 + N06 * Z03 + N07 * Z02 + N08 * Z01 + N09 * Z00)
-		local c10 = (N11 * Z11) * (19 / 2 ^ 255) + (N00 * Z10 + N01 * Z09 + N02 * Z08 + N03 * Z07 + N04 * Z06 + N05 * Z05 + N06 * Z04 + N07 * Z03 + N08 * Z02 + N09 * Z01 + N10 * Z00)
-		local c11 = N00 * Z11 + N01 * Z10 + N02 * Z09 + N03 * Z08 + N04 * Z07 + N05 * Z06 + N06 * Z05 + N07 * Z04 + N08 * Z03 + N09 * Z02 + N10 * Z01 + N11 * Z00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 208 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 208 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 208 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 208 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 208 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 208 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 208 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 208 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 208 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 208 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 208 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 208 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(N00, N01, N02, N03, N04, N05, N06, N07, N08, N09, N10, N11, Z00, Z01, Z02, Z03, Z04, Z05, Z06, Z07, Z08, Z09, Z10, Z11)
+		buffer.writef64(Point, 208 + 0, O00)
+		buffer.writef64(Point, 208 + 8, O01)
+		buffer.writef64(Point, 208 + 16, O02)
+		buffer.writef64(Point, 208 + 24, O03)
+		buffer.writef64(Point, 208 + 32, O04)
+		buffer.writef64(Point, 208 + 40, O05)
+		buffer.writef64(Point, 208 + 48, O06)
+		buffer.writef64(Point, 208 + 56, O07)
+		buffer.writef64(Point, 208 + 64, O08)
+		buffer.writef64(Point, 208 + 72, O09)
+		buffer.writef64(Point, 208 + 80, O10)
+		buffer.writef64(Point, 208 + 88, O11)
 	end
 	if PlusOffset < 0 then return end
 	do
-		local c00 = (X01 * Y11 + X02 * Y10 + X03 * Y09 + X04 * Y08 + X05 * Y07 + X06 * Y06 + X07 * Y05 + X08 * Y04 + X09 * Y03 + X10 * Y02 + X11 * Y01) * (19 / 2 ^ 255) + (X00 * Y00)
-		local c01 = (X02 * Y11 + X03 * Y10 + X04 * Y09 + X05 * Y08 + X06 * Y07 + X07 * Y06 + X08 * Y05 + X09 * Y04 + X10 * Y03 + X11 * Y02) * (19 / 2 ^ 255) + (X00 * Y01 + X01 * Y00)
-		local c02 = (X03 * Y11 + X04 * Y10 + X05 * Y09 + X06 * Y08 + X07 * Y07 + X08 * Y06 + X09 * Y05 + X10 * Y04 + X11 * Y03) * (19 / 2 ^ 255) + (X00 * Y02 + X01 * Y01 + X02 * Y00)
-		local c03 = (X04 * Y11 + X05 * Y10 + X06 * Y09 + X07 * Y08 + X08 * Y07 + X09 * Y06 + X10 * Y05 + X11 * Y04) * (19 / 2 ^ 255) + (X00 * Y03 + X01 * Y02 + X02 * Y01 + X03 * Y00)
-		local c04 = (X05 * Y11 + X06 * Y10 + X07 * Y09 + X08 * Y08 + X09 * Y07 + X10 * Y06 + X11 * Y05) * (19 / 2 ^ 255) + (X00 * Y04 + X01 * Y03 + X02 * Y02 + X03 * Y01 + X04 * Y00)
-		local c05 = (X06 * Y11 + X07 * Y10 + X08 * Y09 + X09 * Y08 + X10 * Y07 + X11 * Y06) * (19 / 2 ^ 255) + (X00 * Y05 + X01 * Y04 + X02 * Y03 + X03 * Y02 + X04 * Y01 + X05 * Y00)
-		local c06 = (X07 * Y11 + X08 * Y10 + X09 * Y09 + X10 * Y08 + X11 * Y07) * (19 / 2 ^ 255) + (X00 * Y06 + X01 * Y05 + X02 * Y04 + X03 * Y03 + X04 * Y02 + X05 * Y01 + X06 * Y00)
-		local c07 = (X08 * Y11 + X09 * Y10 + X10 * Y09 + X11 * Y08) * (19 / 2 ^ 255) + (X00 * Y07 + X01 * Y06 + X02 * Y05 + X03 * Y04 + X04 * Y03 + X05 * Y02 + X06 * Y01 + X07 * Y00)
-		local c08 = (X09 * Y11 + X10 * Y10 + X11 * Y09) * (19 / 2 ^ 255) + (X00 * Y08 + X01 * Y07 + X02 * Y06 + X03 * Y05 + X04 * Y04 + X05 * Y03 + X06 * Y02 + X07 * Y01 + X08 * Y00)
-		local c09 = (X10 * Y11 + X11 * Y10) * (19 / 2 ^ 255) + (X00 * Y09 + X01 * Y08 + X02 * Y07 + X03 * Y06 + X04 * Y05 + X05 * Y04 + X06 * Y03 + X07 * Y02 + X08 * Y01 + X09 * Y00)
-		local c10 = (X11 * Y11) * (19 / 2 ^ 255) + (X00 * Y10 + X01 * Y09 + X02 * Y08 + X03 * Y07 + X04 * Y06 + X05 * Y05 + X06 * Y04 + X07 * Y03 + X08 * Y02 + X09 * Y01 + X10 * Y00)
-		local c11 = X00 * Y11 + X01 * Y10 + X02 * Y09 + X03 * Y08 + X04 * Y07 + X05 * Y06 + X06 * Y05 + X07 * Y04 + X08 * Y03 + X09 * Y02 + X10 * Y01 + X11 * Y00
-		local k00 = c00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local k01 = c01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local k02 = c02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local k03 = c03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local k04 = c04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local k05 = c05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local k06 = c06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local k07 = c07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local k08 = c08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local k09 = c09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local k10 = c10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local k11 = c11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		local b00 = (c00 - k00) + k11 * (19 / 2 ^ 255)
-		local b01 = (c01 - k01) + k00
-		local b02 = (c02 - k02) + k01
-		local b03 = (c03 - k03) + k02
-		local b04 = (c04 - k04) + k03
-		local b05 = (c05 - k05) + k04
-		local b06 = (c06 - k06) + k05
-		local b07 = (c07 - k07) + k06
-		local b08 = (c08 - k08) + k07
-		local b09 = (c09 - k09) + k08
-		local b10 = (c10 - k10) + k09
-		local b11 = (c11 - k11) + k10
-		local j00 = b00 + 3 * 2 ^ 73 - 3 * 2 ^ 73
-		local j01 = b01 + 3 * 2 ^ 94 - 3 * 2 ^ 94
-		local j02 = b02 + 3 * 2 ^ 115 - 3 * 2 ^ 115
-		local j03 = b03 + 3 * 2 ^ 136 - 3 * 2 ^ 136
-		local j04 = b04 + 3 * 2 ^ 158 - 3 * 2 ^ 158
-		local j05 = b05 + 3 * 2 ^ 179 - 3 * 2 ^ 179
-		local j06 = b06 + 3 * 2 ^ 200 - 3 * 2 ^ 200
-		local j07 = b07 + 3 * 2 ^ 221 - 3 * 2 ^ 221
-		local j08 = b08 + 3 * 2 ^ 243 - 3 * 2 ^ 243
-		local j09 = b09 + 3 * 2 ^ 264 - 3 * 2 ^ 264
-		local j10 = b10 + 3 * 2 ^ 285 - 3 * 2 ^ 285
-		local j11 = b11 + 3 * 2 ^ 306 - 3 * 2 ^ 306
-		buffer.writef64(Point, 312 + 0, (b00 - j00) + j11 * (19 / 2 ^ 255))
-		buffer.writef64(Point, 312 + 8, (b01 - j01) + j00)
-		buffer.writef64(Point, 312 + 16, (b02 - j02) + j01)
-		buffer.writef64(Point, 312 + 24, (b03 - j03) + j02)
-		buffer.writef64(Point, 312 + 32, (b04 - j04) + j03)
-		buffer.writef64(Point, 312 + 40, (b05 - j05) + j04)
-		buffer.writef64(Point, 312 + 48, (b06 - j06) + j05)
-		buffer.writef64(Point, 312 + 56, (b07 - j07) + j06)
-		buffer.writef64(Point, 312 + 64, (b08 - j08) + j07)
-		buffer.writef64(Point, 312 + 72, (b09 - j09) + j08)
-		buffer.writef64(Point, 312 + 80, (b10 - j10) + j09)
-		buffer.writef64(Point, 312 + 88, (b11 - j11) + j10)
+		local O00, O01, O02, O03, O04, O05, O06, O07, O08, O09, O10, O11 = FieldMul(X00, X01, X02, X03, X04, X05, X06, X07, X08, X09, X10, X11, Y00, Y01, Y02, Y03, Y04, Y05, Y06, Y07, Y08, Y09, Y10, Y11)
+		buffer.writef64(Point, 312 + 0, O00)
+		buffer.writef64(Point, 312 + 8, O01)
+		buffer.writef64(Point, 312 + 16, O02)
+		buffer.writef64(Point, 312 + 24, O03)
+		buffer.writef64(Point, 312 + 32, O04)
+		buffer.writef64(Point, 312 + 40, O05)
+		buffer.writef64(Point, 312 + 48, O06)
+		buffer.writef64(Point, 312 + 56, O07)
+		buffer.writef64(Point, 312 + 64, O08)
+		buffer.writef64(Point, 312 + 72, O09)
+		buffer.writef64(Point, 312 + 80, O10)
+		buffer.writef64(Point, 312 + 88, O11)
 	end
 	if PlusOffset < 0 then return end
 end

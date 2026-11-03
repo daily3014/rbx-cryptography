@@ -30,3 +30,5 @@ require("./suites/X25519")
 require("./suites/XOR")
 
 Testing.Complete()
+
+return Testing
