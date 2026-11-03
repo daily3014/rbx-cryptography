@@ -35,7 +35,7 @@ While this library has extensive testing, it's always recommended that you do yo
 
 ```toml
 [dependencies]
-cryptography = "daily3014/cryptography@4.0.1"
+cryptography = "daily3014/cryptography@4.1.0"
 ```
 
 ### Pesde
@@ -111,45 +111,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Performance benchmarks done on a RedMagic 11 Pro in the Roblox mobile client with [RunBench.client.luau](https://github.com/daily3014/rbx-cryptography/blob/legacy/tests/RunBench.client.luau)
-
-### Hashing / Checksum
-
-| Algorithm     | Data Size | This Library | Luau Fallback | HashLib | Gamer   | CryptographyService | Improvement |
-| ------------- | --------- | ------------ | ------------- | ------- | ------- | ------------------- | ----------- |
-| SHA-256       | 50 KB     | **102 μs** | 135 μs | 777 μs | 4.99 ms | 1.24 ms | **7.6x faster** than HashLib<br>**48.8x faster** than Gamer<br>**12.1x faster** than CryptographyService |
-| SHA-512       | 50 KB     | **363 μs** | - | 1.17 ms | - | 1.12 ms | **3.2x faster** than HashLib<br>**3.1x faster** than CryptographyService |
-| SHA3-512      | 50 KB     | **468 μs** | - | 2.17 ms | - | 14.87 ms | **4.6x faster** than HashLib<br>**31.8x faster** than CryptographyService |
-| BLAKE2b       | 50 KB     | **41 μs** | 191 μs | - | - | 2.38 ms | **58.6x faster** than CryptographyService |
-| BLAKE3        | 50 KB     | **21 μs** | 52 μs | - | - | - | - |
-| HMAC-SHA256   | 50 KB     | **116 μs** | - | 793 μs | 5.06 ms | 1.25 ms | **6.8x faster** than HashLib<br>**43.5x faster** than Gamer<br>**10.8x faster** than CryptographyService |
-| HMAC-BLAKE3   | 50 KB     | **33 μs** | - | - | - | - | - |
-| KMAC-128      | 50 KB     | **215 μs** | - | - | - | - | - |
-| KMAC-256      | 50 KB     | **261 μs** | - | - | - | - | - |
-
-### Encryption
-
-| Algorithm               | Data Size | This Library | Alternative | Improvement |
-| ----------------------- | --------- | ------------ | ----------- | ----------- |
-| ChaCha20 (Encrypt)      | 50 KB     | **69 μs** | 586 μs (CryptographyService)<br>145 μs (Orbit) | **8.5x faster** than CryptographyService<br>**2.1x faster** than Orbit |
-| AES-256-GCM (Encrypt)   | 50 KB     | **350 μs** | - | - |
-| XOR (Encrypt)           | 1 MB      | **406 μs** | 12.71 ms (Gamer) | **31.3x faster** than Gamer |
-
-### Digital Signatures & Key Exchange
-
-| Algorithm  | Operation                                 | Time        | Breakdown                                      |
-| ---------- | ----------------------------------------- | ----------- | ---------------------------------------------- |
-| EdDSA      | Public Key + Sign + Verify                | **227 μs** | Public Key 28 μs, Sign 39 μs, Verify 160 μs |
-| ML-DSA-44  | KeyGen + Sign + Verify                    | **291 μs** | KeyGen 79 μs, Sign 145 μs, Verify 67 μs |
-| ML-KEM-512 | KeyGen + Encapsulate + Decapsulate        | **118 μs** | KeyGen 31 μs, Encapsulate 36 μs, Decapsulate 52 μs |
-
-### Utilities
-
-| Algorithm          | Data Size | This Library | Alternative | Improvement |
-| ------------------ | --------- | ------------ | ----------- | ----------- |
-| Base64 (Roundtrip) | 50 KB     | **68 μs** | HashLib: 4.27 ms<br>Gamer: 2.82 ms | **62.4x faster** than HashLib<br>**41.1x faster** than Gamer |
-
-_Roundtrip: Complete encode/decode cycle_
+Benchmarks against other Roblox cryptography libraries are on the [Benchmarks page](https://xoifaii.github.io/docs/benchmarks) of the documentation.
 
 ## Testing
 
