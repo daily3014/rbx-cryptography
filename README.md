@@ -111,7 +111,7 @@ Download the latest release from GitHub and place it in your Roblox Studio proje
 
 ## Performance
 
-Performance benchmarks conducted on a RedMagic 11 Pro in the Roblox mobile client with `tests/RunBench.client.luau` (best of five batches), against the other libraries on the same device and inputs.
+Performance benchmarks done on a RedMagic 11 Pro in the Roblox mobile client with [RunBench.client.luau](https://github.com/daily3014/rbx-cryptography/blob/legacy/tests/RunBench.client.luau)
 
 ### Hashing / Checksum
 
