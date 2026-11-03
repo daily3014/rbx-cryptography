@@ -28,9 +28,6 @@
 			"StarterPlayerScripts": {
 				"$className": "StarterPlayerScripts",
 				"$ignoreUnknownInstances": true,
-				"RunCryptographyTests": {
-					"$path": "tests/RunTests.client.luau"
-				},
 				"RunCryptographyBench": {
 					"$path": "tests/RunBench.client.luau"
 				}

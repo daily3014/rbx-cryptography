@@ -72,6 +72,16 @@ local Orbit = {
 	ChaCha = Load({ "Crypto", "ChaChaBor" }),
 	Poly1305 = Load({ "Crypto", "Poly1305" }),
 }
+local Dekkonot = {
+	SHA256 = Load({ "Dekkonot", "SHA256" }),
+	SHA512 = Load({ "Dekkonot", "SHA512" }),
+	Blake2b = Load({ "Dekkonot", "Blake2b" }),
+}
+local MrRoblick = Load({ "MrRoblick" })
+local EncryptedNet = Load({ "EncryptedNet", "chacha20" })
+local RobloxGamerPro = Load({ "AES" })
+local Reselim = Load({ "Reselim" })
+local Lute = Load({ "Lute" })
 
 local Hashing, Encryption, Verification, Utilities =
 	Cryptography.Hashing, Cryptography.Encryption, Cryptography.Verification, Cryptography.Utilities
@@ -81,6 +91,13 @@ local Data, Large = Bytes(51200, 7), Bytes(1048576, 3)
 local Message, Key, Nonce = Bytes(64, 11), Bytes(32, 13), Bytes(12, 17)
 local DataString, KeyString = buffer.tostring(Data), buffer.tostring(Key)
 local Output = buffer.create(32)
+local KeyBytes, NonceBytes = table.create(32, 0), table.create(12, 0)
+for Index = 0, 31 do
+	KeyBytes[Index + 1] = buffer.readu8(Key, Index)
+end
+for Index = 0, 11 do
+	NonceBytes[Index + 1] = buffer.readu8(Nonce, Index)
+end
 
 print("Cryptography bench, best of five batches")
 
@@ -90,10 +107,12 @@ Run("SHA-256 50 KB", "rbx-cryptography Luau", function() SHA256Core.Digest_Inter
 Run("SHA-256 50 KB", "HashLib", function() HashLib.sha256(DataString) end)
 Run("SHA-256 50 KB", "Gamer", function() Gamer.SHA256.hash(DataString) end)
 Run("SHA-256 50 KB", "CryptographyService", function() Service.Sha2.SHA256.Hash(Data) end)
+Run("SHA-256 50 KB", "Dekkonot", function() Dekkonot.SHA256(DataString) end)
 
 Run("SHA-512 50 KB", "rbx-cryptography", function() SHA512(Data) end)
 Run("SHA-512 50 KB", "HashLib", function() HashLib.sha512(DataString) end)
 Run("SHA-512 50 KB", "CryptographyService", function() Service.Sha2.SHA512.Hash(Data) end)
+Run("SHA-512 50 KB", "Dekkonot", function() Dekkonot.SHA512(DataString) end)
 
 Run("SHA3-512 50 KB", "rbx-cryptography", function() Hashing.SHA3.SHA3_512(Data) end)
 Run("SHA3-512 50 KB", "HashLib", function() HashLib.sha3x512(DataString) end)
@@ -102,6 +121,7 @@ Run("SHA3-512 50 KB", "CryptographyService", function() Service.Sha3.SHA3_512.Ha
 Run("BLAKE2b 50 KB", "rbx-cryptography", function() Hashing.Blake2b.Digest(Data, 32) end)
 Run("BLAKE2b 50 KB", "rbx-cryptography Luau", function() Hashing.Blake2b.Digest(Data, 64) end)
 Run("BLAKE2b 50 KB", "CryptographyService", function() Service.Blake2.Blake2bSpec().Hash(Data) end)
+Run("BLAKE2b 50 KB", "Dekkonot", function() Dekkonot.Blake2b(DataString, 64) end)
 
 Run("BLAKE3 50 KB", "rbx-cryptography", function() Hashing.Blake3.Digest(Data) end)
 Run("BLAKE3 50 KB", "rbx-cryptography Luau", function() Hashing.Blake3.Digest(Data, 64) end)
@@ -121,10 +141,15 @@ Run("ChaCha20 50 KB", "Orbit", function()
 	local Result = buffer.create(Length)
 	Orbit.ChaCha.Xor(Key, 0, 1, buffer.readu32(Nonce, 0), buffer.readu32(Nonce, 4), buffer.readu32(Nonce, 8), Data, 0, Result, 0, Length, 20)
 end)
+Run("ChaCha20 50 KB", "MrRoblick", function() MrRoblick.ChaCha20(Data, Key, Nonce) end)
+Run("ChaCha20 50 KB", "EncryptedNet", function() EncryptedNet.crypt(DataString, KeyBytes, NonceBytes) end)
 Run("Poly1305 50 KB", "rbx-cryptography", function() Encryption.AEAD.Poly1305(Data, Key) end)
 Run("Poly1305 50 KB", "CryptographyService", function() Service.Poly1305.Mac(Key, Data) end)
 Run("Poly1305 50 KB", "Orbit", function() Orbit.Poly1305.Bor.Tag(Key, 0, nil, 0, 0, Data, 0, buffer.len(Data), false) end)
 Run("AES-256-GCM 50 KB", "rbx-cryptography", function() Encryption.AES.Encrypt(Data, Key, Nonce) end)
+Run("AES-256-GCM 50 KB", "RobloxGamerPro200007 CTR", function()
+	RobloxGamerPro.new(Key, RobloxGamerPro.modes.CTR, RobloxGamerPro.pads.None):Encrypt(Data)
+end)
 Run("XOR 1 MB", "rbx-cryptography", function() Utilities.XOR(Large, Key) end)
 Run("XOR 1 MB", "Gamer", function() Gamer.XOR.crypt(Large, Key) end)
 
@@ -155,5 +180,7 @@ local Base64 = Utilities.Base64
 Run("Base64 round trip 50 KB", "rbx-cryptography", function() Base64.Decode(Base64.Encode(Data)) end)
 Run("Base64 round trip 50 KB", "HashLib", function() HashLib.base64Decode(HashLib.base64Encode(DataString)) end)
 Run("Base64 round trip 50 KB", "Gamer", function() Gamer.Base64.Decode(Gamer.Base64.Encode(Data)) end)
+Run("Base64 round trip 50 KB", "Reselim", function() Reselim.decode(Reselim.encode(Data)) end)
+Run("Base64 round trip 50 KB", "Lute", function() Lute.decode(Lute.encode(Data)) end)
 
 print("Cryptography bench done")
