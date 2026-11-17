@@ -37,8 +37,8 @@ function Field.Negate(A: number): number
 end
 
 function Field.Power(Base: number, Exponent: number): number
-	local Result = if bit32.band(Exponent, 1) == 1 then Base else 1
-	local CurrentBase = Base
+	local CurrentBase = Base % Q
+	local Result = if bit32.band(Exponent, 1) == 1 then CurrentBase else 1
 
 	local Exp = Exponent
 	while Exp > 1 do

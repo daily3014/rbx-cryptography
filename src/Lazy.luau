@@ -18,6 +18,15 @@ function Lazy.Group(Name: string, Loaders: {[string]: () -> any}): any
 		end
 
 		local Value = Loader()
+		local Existing = rawget(Self, Key)
+		if Existing ~= nil then
+			return Existing
+		end
+
+		if Value == nil then
+			error(`{Name}.{tostring(Key)} loaded as nil`, 3)
+		end
+
 		rawset(Self, Key, Value)
 
 		Remaining -= 1

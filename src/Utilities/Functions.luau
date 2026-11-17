@@ -162,7 +162,7 @@ local function CtLtMask(A: number, B: number): number
 end
 
 local function CtSelect(Mask: number, A: number, B: number): number
-	return bit32.bxor(B, bit32.band(Mask, bit32.bxor(A, B)))
+	return bit32.bxor(B, bit32.band(CtNonZeroMask(Mask), bit32.bxor(A, B)))
 end
 
 local function CtSwap(ConditionBit: number, A: number, B: number): (number, number)

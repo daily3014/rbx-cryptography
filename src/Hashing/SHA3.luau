@@ -4118,11 +4118,19 @@ function SHA3.SHA3_512(Message: buffer): (string, buffer)
 end
 
 function SHA3.SHAKE128(Message: buffer, OutputBytes: number): (string, buffer)
+	if type(OutputBytes) ~= "number" or OutputBytes < 0 or OutputBytes ~= math.floor(OutputBytes) then
+		error(`OutputBytes must be a non-negative integer, got {OutputBytes}`, 2)
+	end
+
 	local Buf = ProcessSponge(Message, 256, OutputBytes, 0x1F)
 	return ToHex(Buf), Buf
 end
 
 function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
+	if type(OutputBytes) ~= "number" or OutputBytes < 0 or OutputBytes ~= math.floor(OutputBytes) then
+		error(`OutputBytes must be a non-negative integer, got {OutputBytes}`, 2)
+	end
+
 	local Buf = ProcessSponge(Message, 512, OutputBytes, 0x1F)
 	return ToHex(Buf), Buf
 end

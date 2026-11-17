@@ -50,6 +50,7 @@ type CSPRNGModule = {
 
 local KEY_SIZE = 32
 local MAX_UINT32 = 0xFFFFFFFF
+local MAX_SAFE_INTEGER = 2 ^ 53
 
 local POOL_SIZE = 2048
 local REKEY_BLOCKS = 1024
@@ -141,13 +142,22 @@ local function GatherEntropy(UserEntropy: buffer?)
 
 	local KeyMaterial = Blake3.DigestBuffer(Material, KEY_SIZE)
 
+	buffer.fill(Key, 0, 0)
 	Key = buffer.create(KEY_SIZE)
 	buffer.copy(Key, 0, KeyMaterial, 0, KEY_SIZE)
+
+	buffer.fill(KeyMaterial, 0, 0)
+	buffer.fill(Material, 0, 0)
+	buffer.fill(Sources, 0, 0)
 
 	Counter = 0
 end
 
 local function GenerateBlock()
+	if Counter >= REKEY_BLOCKS then
+		GatherEntropy()
+	end
+
 	local Stream = ProcessMessage(Key, HASH_FLAG, EMPTY, KEY_SIZE + POOL_SIZE)
 
 	buffer.copy(Key, 0, Stream, 0, KEY_SIZE)
@@ -156,10 +166,6 @@ local function GenerateBlock()
 
 	buffer.writeu32(POSITION, 0, 0)
 	Counter += 1
-
-	if Counter % REKEY_BLOCKS == 0 then
-		GatherEntropy()
-	end
 end
 
 local function GetBytes(Count: number): buffer
@@ -242,6 +248,24 @@ local function GetIntRange(Min: number, Max: number): number
 	return Min + (Value % Range)
 end
 
+local function RetryNumberRange(Min: number, Max: number, Range: number): number
+	local Value: number
+
+	if Range == math.huge then
+		local HalfMin = Min * 0.5
+		local HalfRange = Max * 0.5 - HalfMin
+		repeat
+			Value = (HalfMin + GetFloat() * HalfRange) * 2
+		until Value < Max
+	else
+		repeat
+			Value = Min + (GetFloat() * Range)
+		until Value < Max
+	end
+
+	return Value
+end
+
 local function GetNumberRange(Min: number, Max: number): number
 	if Min > Max then
 		Min, Max = Max, Min
@@ -252,7 +276,14 @@ local function GetNumberRange(Min: number, Max: number): number
 		return Min
 	end
 
-	return Min + (GetFloat() * Range)
+	if Range < math.huge then
+		local Value = Min + (GetFloat() * Range)
+		if Value < Max then
+			return Value
+		end
+	end
+
+	return RetryNumberRange(Min, Max, Range)
 end
 
 local function GetRandomString(Length: number, CharacterSet: buffer?, AsBuffer: boolean?): string | buffer
@@ -287,10 +318,6 @@ local function ArgumentError(Name: string, Value: any, Integer: boolean, Optiona
 		return `{Name} must be a number, got {typeof(Value)}`
 	end
 
-	if Integer and Value % 1 ~= 0 then
-		return `{Name} must be an integer, got {Value}`
-	end
-
 	if not math.isfinite(Value) then
 		local Type = if math.isnan(Value)
 			then "NaN"
@@ -299,12 +326,20 @@ local function ArgumentError(Name: string, Value: any, Integer: boolean, Optiona
 		return `{Name} must be a finite number, got {Type}`
 	end
 
+	if Integer and Value % 1 ~= 0 then
+		return `{Name} must be an integer, got {Value}`
+	end
+
 	return nil
 end
 
 function CSPRNG.RandomInt(Min: number, Max: number?): number
 	if not (type(Min) == "number" and Min % 1 == 0 and (Max == nil or (type(Max) == "number" and Max % 1 == 0))) then
 		error(ArgumentError("Min", Min, true, false) or ArgumentError("Max", Max, true, true), 2)
+	end
+
+	if math.abs(Min) > MAX_SAFE_INTEGER or (Max ~= nil and math.abs(Max) > MAX_SAFE_INTEGER) then
+		error("Min and Max must be between -2^53 and 2^53", 2)
 	end
 
 	if Max then

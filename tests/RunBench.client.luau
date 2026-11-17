@@ -4,6 +4,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local BATCH_SECONDS = 0.02
 local BATCHES = 5
+local ONLY: { [string]: boolean }? = nil
 
 local function Load(Path: { string }): any
 	local Ok, Result = pcall(function(): any
@@ -25,6 +26,10 @@ local function Bytes(Size: number, Salt: number): buffer
 end
 
 local function Run(Case: string, Library: string, Callback: () -> ())
+	if ONLY and not ONLY[Library] then
+		return
+	end
+
 	local Ok = pcall(Callback)
 	if not Ok then
 		print(string.format("%-28s %-24s %s", Case, Library, "unavailable"))

@@ -163,6 +163,8 @@ function Serialize.EncodeAt(Poly: buffer, PolyOffset: number, Output: buffer, Ou
 			buffer.writeu32(Output, ByteIdx, Lo)
 			buffer.writeu16(Output, ByteIdx + 4, Hi)
 		end
+	else
+		error(`EncodeAt only packs 12 bit coefficients, got {L}`, 2)
 	end
 end
 
@@ -338,6 +340,8 @@ function Serialize.DecodeAt(Data: buffer, DataOffset: number, Poly: buffer, Poly
 			buffer.writeu16(Poly, PolyIdx + 4, T2)
 			buffer.writeu16(Poly, PolyIdx + 6, T3)
 		end
+	else
+		error(`DecodeAt only unpacks 12 bit coefficients, got {L}`, 2)
 	end
 
 	return true

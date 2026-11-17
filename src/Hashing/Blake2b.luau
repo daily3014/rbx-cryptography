@@ -3,7 +3,7 @@
 
 	Sizes:
 		Output: 1 to 64 bytes (default 64)
-		Key: 0 to 64 bytes (optional)
+		Key: 1 to 64 bytes (optional)
 
 	Example usage:
 		local Message = buffer.fromstring("Hello World")
@@ -50,42 +50,41 @@ end
 
 local function Validate(InputData: buffer, OutputLength: number?, KeyData: buffer?)
 	if InputData == nil then
-		error("InputData cannot be nil", 2)
+		error("InputData cannot be nil", 3)
 	end
 
 	if typeof(InputData) ~= "buffer" then
-		error(`InputData must be a buffer, got {typeof(InputData)}`, 2)
+		error(`InputData must be a buffer, got {typeof(InputData)}`, 3)
 	end
 
-	if OutputLength then
+	if OutputLength ~= nil then
 		if typeof(OutputLength) ~= "number" then
-			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 2)
+			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 3)
 		end
 
 		if OutputLength ~= math.floor(OutputLength) then
-			error(`OutputLength must be an integer, got {OutputLength}`, 2)
+			error(`OutputLength must be an integer, got {OutputLength}`, 3)
 		end
 
 		if OutputLength < BLAKE2B_MIN_OUTPUT_BYTES or OutputLength > BLAKE2B_MAX_OUTPUT_BYTES then
-			error(`OutputLength must be between {BLAKE2B_MIN_OUTPUT_BYTES} and {BLAKE2B_MAX_OUTPUT_BYTES} bytes, got {OutputLength} bytes`, 2)
+			error(`OutputLength must be between {BLAKE2B_MIN_OUTPUT_BYTES} and {BLAKE2B_MAX_OUTPUT_BYTES} bytes, got {OutputLength} bytes`, 3)
 		end
 	end
 
-	if KeyData then
+	if KeyData ~= nil then
 		if typeof(KeyData) ~= "buffer" then
-			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 2)
+			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 3)
 		end
 
 		local KeyLength = buffer.len(KeyData)
 		if KeyLength == 0 then
-			error("KeyData cannot be empty", 2)
+			error("KeyData cannot be empty", 3)
 		end
 
 		if KeyLength > BLAKE2B_MAX_KEY_BYTES then
-			error(`KeyData must be at most {BLAKE2B_MAX_KEY_BYTES} bytes long, got {KeyLength} bytes`, 2)
+			error(`KeyData must be at most {BLAKE2B_MAX_KEY_BYTES} bytes long, got {KeyLength} bytes`, 3)
 		end
 	end
-
 end
 
 local Blake2b = {}

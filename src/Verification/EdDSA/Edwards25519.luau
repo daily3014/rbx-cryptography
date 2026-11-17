@@ -1115,6 +1115,17 @@ function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	local SignBit = bit32.extract(LastByte, 7)
 	buffer.writeu8(WorkingBuffer, 31, bit32.band(LastByte, 0x7F))
 
+	if buffer.readu32(WorkingBuffer, 28) == 0x7FFFFFFF
+		and buffer.readu32(WorkingBuffer, 0) >= 0xFFFFFFED
+		and bit32.band(
+			buffer.readu32(WorkingBuffer, 4), buffer.readu32(WorkingBuffer, 8),
+			buffer.readu32(WorkingBuffer, 12), buffer.readu32(WorkingBuffer, 16),
+			buffer.readu32(WorkingBuffer, 20), buffer.readu32(WorkingBuffer, 24)
+		) == 0xFFFFFFFF
+	then
+		return nil
+	end
+
 	local YCoord = FieldPrime.Decode(WorkingBuffer)
 	local YSquared = FieldPrime.Square(YCoord)
 	local Numerator = FieldPrime.Sub(YSquared, FieldPrime.Num(1))
@@ -1130,6 +1141,10 @@ function Edwards25519.Decode(EncodedBuffer: buffer): buffer?
 	local XSignBit = buffer.readf64(CanonicalX, 0) % 2
 
 	if XSignBit ~= SignBit then
+		if FieldPrime.Eqz(CanonicalX) then
+			return nil
+		end
+
 		XCoord = FieldPrime.Carry(FieldPrime.Neg(XCoord))
 	end
 
@@ -1161,7 +1176,7 @@ local BASEPOINT_BYTES = buffer.create(32) do
 end
 
 function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): buffer
-	if RadixWidth <= 0 or RadixWidth > 8 then
+	if RadixWidth <= 1 or RadixWidth > 8 then
 		error("Invalid Radix width", 2)
 	end
 
@@ -1172,7 +1187,7 @@ function Edwards25519.AffineRadixWTable(BasePoint: buffer, RadixWidth: number): 
 	local PointSize = POINT_SIZE
 	local CoordSize = COORD_SIZE
 	local NielsSize = AFFINE_NIELS_SIZE
-	local MaxWindows = math.ceil(256 / RadixWidth)
+	local MaxWindows = 256 // RadixWidth + 1
 	local MaxRowSize = 2 ^ RadixWidth / 2
 	local Count = MaxWindows * MaxRowSize
 
@@ -1270,7 +1285,7 @@ function Edwards25519.SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, R
 		error("Invalid scalar bit count", 2)
 	end
 
-	if RadixWidth <= 0 or RadixWidth > 8 then
+	if RadixWidth <= 1 or RadixWidth > 8 then
 		error("Invalid Radix width", 2)
 	end
 
@@ -1310,6 +1325,10 @@ function Edwards25519.SignedRadixW(ScalarBits: buffer, ScalarBitCount: number, R
 end
 
 function Edwards25519.WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, WindowWidth: number): (buffer, number)
+	if WindowWidth <= 1 or WindowWidth > 8 then
+		error("Invalid window width", 2)
+	end
+
 	local WindowValue = 2 ^ WindowWidth
 	local HalfWindow = WindowValue / 2
 	local OutputNAF = NAF_OUTPUT

@@ -37,8 +37,8 @@ local Extract = SHA3.Extract_Internal
 
 local KMAC = {}
 
-local LEFT_ENCODE_RESULT = buffer.create(5)
-local RIGHT_ENCODE_RESULT = buffer.create(5)
+local LEFT_ENCODE_RESULT = buffer.create(6)
+local RIGHT_ENCODE_RESULT = buffer.create(6)
 
 local function LeftEncode(Value: number): (buffer, number)
 	local Result = LEFT_ENCODE_RESULT
@@ -53,6 +53,13 @@ local function LeftEncode(Value: number): (buffer, number)
 		buffer.writeu8(Result, 0, 2)
 		buffer.writeu16(Result, 1, bit32.byteswap(bit32.lshift(Value, 16)))
 		return Result, 3
+	end
+
+	if Value > 0xFFFFFFFF then
+		buffer.writeu8(Result, 0, 5)
+		buffer.writeu8(Result, 1, Value // 0x100000000)
+		buffer.writeu32(Result, 2, bit32.byteswap(Value % 0x100000000))
+		return Result, 6
 	end
 
 	local ByteLength = if Value > 0xFFFFFF then 4 else 3
@@ -74,6 +81,13 @@ local function RightEncode(Value: number): (buffer, number)
 		buffer.writeu16(Result, 0, bit32.byteswap(bit32.lshift(Value, 16)))
 		buffer.writeu8(Result, 2, 2)
 		return Result, 3
+	end
+
+	if Value > 0xFFFFFFFF then
+		buffer.writeu8(Result, 0, Value // 0x100000000)
+		buffer.writeu32(Result, 1, bit32.byteswap(Value % 0x100000000))
+		buffer.writeu8(Result, 5, 5)
+		return Result, 6
 	end
 
 	local ByteLength = if Value > 0xFFFFFF then 4 else 3

@@ -49,12 +49,14 @@ local ENCODE_A, ENCODE_B = buffer.create(131072), buffer.create(131072) do
 	end
 end
 
+local INVALID_SEXTET = 255
+local INVALID_PAIR = 0x8000
+
 local DECODE_TET = buffer.create(256) do
+	buffer.fill(DECODE_TET, 0, INVALID_SEXTET)
 	for Index = 1, 64 do
 		buffer.writeu8(DECODE_TET, buffer.readu8(ALPHABET_BYTES, Index - 1), Index - 1)
 	end
-
-	buffer.writeu8(DECODE_TET, PADDING_CHARACTER, 254)
 end
 
 local DECODE_PAIR = buffer.create(131072) do
@@ -65,8 +67,8 @@ local DECODE_PAIR = buffer.create(131072) do
 			local Key = (Char0 + Char1 * 256) * 2
 			if Decoded0 < 64 and Decoded1 < 64 then
 				buffer.writeu16(DECODE_PAIR, Key, Decoded0 * 64 + Decoded1)
-			elseif Decoded0 == 254 or Decoded1 == 254 then
-				buffer.writeu16(DECODE_PAIR, Key, 254)
+			else
+				buffer.writeu16(DECODE_PAIR, Key, INVALID_PAIR)
 			end
 		end
 	end
@@ -170,6 +172,10 @@ local function Decode(Input: buffer): buffer
 		return buffer.create(0)
 	end
 
+	if InputLength % 4 ~= 0 then
+		error(`Base64 input length must be a multiple of 4, got {InputLength} bytes`, 2)
+	end
+
 	local Padding = 0
 	if buffer.readu8(Input, InputLength - 1) == PADDING_CHARACTER then
 		Padding = 1
@@ -190,18 +196,21 @@ local function Decode(Input: buffer): buffer
 	local PairBLow = PAIR_B_BYTE1_LOW
 	local Pair2 = PAIR_B_BYTE2
 	local Dtet = DECODE_TET
+	local Invalid = 0
 
 	while InputIndex <= UnrollStop do
 		local Word0 = buffer.readu32(Input, InputIndex)
 		local Word1 = buffer.readu32(Input, InputIndex + 4)
 
 		local PairA0 = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word0, 0xffff), 1))
-		local PairB0 = buffer.readu16(DecodePair, bit32.rshift(Word0, 15))
+		local PairB0 = buffer.readu16(DecodePair, bit32.band(bit32.rshift(Word0, 15), 0x1fffe))
 		buffer.writeu32(Output, OutputIndex, bit32.byteswap(bit32.bor(bit32.lshift(PairA0, 20), bit32.lshift(PairB0, 8))))
 
 		local PairA1 = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word1, 0xffff), 1))
-		local PairB1 = buffer.readu16(DecodePair, bit32.rshift(Word1, 15))
+		local PairB1 = buffer.readu16(DecodePair, bit32.band(bit32.rshift(Word1, 15), 0x1fffe))
 		buffer.writeu32(Output, OutputIndex + 3, bit32.byteswap(bit32.bor(bit32.lshift(PairA1, 20), bit32.lshift(PairB1, 8))))
+
+		Invalid = bit32.bor(Invalid, PairA0, PairB0, PairA1, PairB1)
 
 		InputIndex += 8
 		OutputIndex += 6
@@ -210,8 +219,10 @@ local function Decode(Input: buffer): buffer
 	while InputIndex <= BodyEnd - 4 do
 		local Word = buffer.readu32(Input, InputIndex)
 		local PairA = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word, 0xffff), 1))
-		local PairB = buffer.readu16(DecodePair, bit32.rshift(Word, 15))
+		local PairB = buffer.readu16(DecodePair, bit32.band(bit32.rshift(Word, 15), 0x1fffe))
 		buffer.writeu32(Output, OutputIndex, bit32.byteswap(bit32.bor(bit32.lshift(PairA, 20), bit32.lshift(PairB, 8))))
+
+		Invalid = bit32.bor(Invalid, PairA, PairB)
 		InputIndex += 4
 		OutputIndex += 3
 	end
@@ -222,23 +233,32 @@ local function Decode(Input: buffer): buffer
 	local Char3 = buffer.readu8(Input, InputIndex + 3)
 	local Decoded0 = buffer.readu8(Dtet, Char0)
 	local Decoded1 = buffer.readu8(Dtet, Char1)
-
-	if Char2 == PADDING_CHARACTER then
-		local PairA = Decoded0 * 64 + Decoded1
-		buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-	elseif Char3 == PADDING_CHARACTER then
-		local Decoded2 = buffer.readu8(Dtet, Char2)
-		local PairA = Decoded0 * 64 + Decoded1
-		local PairB = Decoded2 * 64
-		buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
-		buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + (PairB // 256))
+	local Decoded2, Decoded3, Spare = 0, 0, 0
+	if Padding == 0 then
+		Decoded2 = buffer.readu8(Dtet, Char2)
+		Decoded3 = buffer.readu8(Dtet, Char3)
+	elseif Padding == 1 then
+		Decoded2 = buffer.readu8(Dtet, Char2)
+		Spare = bit32.band(Decoded2, 0x03)
 	else
-		local Decoded2 = buffer.readu8(Dtet, Char2)
-		local Decoded3 = buffer.readu8(Dtet, Char3)
-		local PairA = Decoded0 * 64 + Decoded1
-		local PairB = Decoded2 * 64 + Decoded3
-		buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+		Spare = bit32.band(Decoded1, 0x0F)
+	end
+
+	if Invalid >= INVALID_PAIR or bit32.bor(Decoded0, Decoded1, Decoded2, Decoded3) >= 64 then
+		error("Base64 input contains an invalid character", 2)
+	end
+
+	if Spare ~= 0 then
+		error("Base64 input has non-zero bits before its padding", 2)
+	end
+
+	local PairA = Decoded0 * 64 + Decoded1
+	local PairB = Decoded2 * 64 + Decoded3
+	buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+	if Padding < 2 then
 		buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + buffer.readu8(PairBLow, PairB))
+	end
+	if Padding == 0 then
 		buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB))
 	end
 

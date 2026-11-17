@@ -36,7 +36,6 @@ local TAU_0, TAU_1, TAU_2, TAU_3 = 0x61707865, 0x3120646e, 0x79622d36, 0x6b20657
 
 local STATE = buffer.create(64)
 local KEYSTREAM = buffer.create(64)
-local HCHACHA_NONCE = buffer.create(16)
 local AEAD_STATE = buffer.create(64)
 local AEAD_AUTH_KEY = buffer.create(32)
 local AEAD_ZERO = buffer.create(64)
@@ -514,9 +513,12 @@ local function Crypt(Data: buffer, Output: buffer, DataLength: number, State: bu
 end
 
 local function HChaChaCore(Key: buffer, KeyLength: number, Nonce: buffer, DoubleRounds: number, Target: buffer, TargetOffset: number)
-	local SecondHalf = if KeyLength == CHACHA20_KEY_SIZE_32 then 16 else 0
+	local SecondHalf, A1, A2 = 16, SIGMA_1, SIGMA_2
+	if KeyLength ~= CHACHA20_KEY_SIZE_32 then
+		SecondHalf, A1, A2 = 0, TAU_1, TAU_2
+	end
 
-	local A0, A1, A2, A3 = SIGMA_0, SIGMA_1, SIGMA_2, SIGMA_3
+	local A0, A3 = SIGMA_0, SIGMA_3
 	local A4, A5, A6, A7 = buffer.readu32(Key, 0), buffer.readu32(Key, 4), buffer.readu32(Key, 8), buffer.readu32(Key, 12)
 	local A8, A9, A10, A11 = buffer.readu32(Key, SecondHalf), buffer.readu32(Key, SecondHalf + 4), buffer.readu32(Key, SecondHalf + 8), buffer.readu32(Key, SecondHalf + 12)
 	local A12, A13, A14, A15 = buffer.readu32(Nonce, 0), buffer.readu32(Nonce, 4), buffer.readu32(Nonce, 8), buffer.readu32(Nonce, 12)
@@ -946,7 +948,7 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 		error(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long, got {NonceLength} bytes`, 2)
 	end
 
-	if Counter then
+	if Counter ~= nil then
 		if typeof(Counter) ~= "number" then
 			error(`Counter must be a number, got {typeof(Counter)}`, 2)
 		end
@@ -964,7 +966,7 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 		end
 	end
 
-	if Rounds then
+	if Rounds ~= nil then
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end
@@ -987,11 +989,17 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 		return buffer.create(0)
 	end
 
+	local InitialCounter = Counter or 1
+	local BlockCount = (DataLength + 63) // 64
+	if InitialCounter + BlockCount > 2^32 then
+		error(`Counter would exceed 2^32 blocks, got {InitialCounter} with {BlockCount} blocks of data`, 2)
+	end
+
 	local State = STATE
 	FillState(State, Key, KeyLength, Nonce)
 
 	local Output = buffer.create(DataLength)
-	Crypt(Data, Output, DataLength, State, Counter or 1, (Rounds or 20) // 2)
+	Crypt(Data, Output, DataLength, State, InitialCounter, (Rounds or 20) // 2)
 
 	return Output
 end
@@ -1023,7 +1031,7 @@ function ChaCha.HChaCha20(Key: buffer, Nonce: buffer, Rounds: number?) : buffer
 		error(`HChaCha20 requires a 16-byte nonce, got {NonceLength} bytes`, 2)
 	end
 
-	if Rounds then
+	if Rounds ~= nil then
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end
@@ -1048,6 +1056,27 @@ function ChaCha.HChaCha20(Key: buffer, Nonce: buffer, Rounds: number?) : buffer
 end
 
 function ChaCha.XChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?) : buffer
+	if Data == nil then
+		error("Data cannot be nil", 2)
+	end
+
+	if typeof(Data) ~= "buffer" then
+		error(`Data must be a buffer, got {typeof(Data)}`, 2)
+	end
+
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+
+	local KeyLength = buffer.len(Key)
+	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then
+		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {KeyLength} bytes`, 2)
+	end
+
 	if Nonce == nil then
 		error("Nonce cannot be nil", 2)
 	end
@@ -1061,14 +1090,67 @@ function ChaCha.XChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: num
 		error(`XChaCha20 requires a 24-byte nonce, got {NonceLength} bytes`, 2)
 	end
 
-	local SubNonce = HCHACHA_NONCE
-	buffer.copy(SubNonce, 0, Nonce, 0, 16)
-	local Subkey = ChaCha.HChaCha20(Key, SubNonce, Rounds)
+	if Counter ~= nil then
+		if typeof(Counter) ~= "number" then
+			error(`Counter must be a number, got {typeof(Counter)}`, 2)
+		end
 
-	local ChaNonce = buffer.create(12)
-	buffer.copy(ChaNonce, 4, Nonce, 16, 8)
+		if Counter < 0 then
+			error(`Counter cannot be negative, got {Counter}`, 2)
+		end
 
-	return ChaCha.ChaCha20(Data, Subkey, ChaNonce, Counter, Rounds)
+		if Counter ~= math.floor(Counter) then
+			error(`Counter must be an integer, got {Counter}`, 2)
+		end
+
+		if Counter >= 2^32 then
+			error(`Counter must be less than 2^32, got {Counter}`, 2)
+		end
+	end
+
+	if Rounds ~= nil then
+		if typeof(Rounds) ~= "number" then
+			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
+		end
+
+		if Rounds <= 0 then
+			error(`Rounds must be positive, got {Rounds}`, 2)
+		end
+
+		if Rounds ~= math.floor(Rounds) then
+			error(`Rounds must be an integer, got {Rounds}`, 2)
+		end
+
+		if Rounds % 2 ~= 0 then
+			error(`Rounds must be even, got {Rounds}`, 2)
+		end
+	end
+
+	local DataLength = buffer.len(Data)
+	if DataLength == 0 then
+		return buffer.create(0)
+	end
+
+	local InitialCounter = Counter or 1
+	local BlockCount = (DataLength + 63) // 64
+	if InitialCounter + BlockCount > 2^32 then
+		error(`Counter would exceed 2^32 blocks, got {InitialCounter} with {BlockCount} blocks of data`, 2)
+	end
+
+	local State = STATE
+	local DoubleRounds = (Rounds or 20) // 2
+	buffer.writeu32(State, 0, SIGMA_0)
+	buffer.writeu32(State, 4, SIGMA_1)
+	buffer.writeu32(State, 8, SIGMA_2)
+	buffer.writeu32(State, 12, SIGMA_3)
+	HChaChaCore(Key, KeyLength, Nonce, DoubleRounds, State, 16)
+	buffer.writeu32(State, 52, 0)
+	buffer.copy(State, 56, Nonce, 16, 8)
+
+	local Output = buffer.create(DataLength)
+	Crypt(Data, Output, DataLength, State, InitialCounter, DoubleRounds)
+
+	return Output
 end
 
 function ChaCha.AeadKeySetup(Key: buffer, Nonce: buffer, BlockRounds: number, UseXChaCha20: boolean?): (buffer, buffer)

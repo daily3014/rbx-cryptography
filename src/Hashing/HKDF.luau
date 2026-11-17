@@ -18,6 +18,10 @@ local Compute = require("./HMACCore").Compute
 type HashFunction = (...any) -> (string, buffer)
 
 local function HKDF(IKM: buffer, Salt: buffer?, Info: buffer?, Length: number, HashFunction: HashFunction, BlockSize: number, HashLength: number, _BigEndian: boolean?): buffer
+	if Length < 0 or Length ~= math.floor(Length) then
+		error(`Length must be a non-negative integer, got {Length}`, 2)
+	end
+
 	local ActualSalt = if Salt and buffer.len(Salt) > 0 then Salt else buffer.create(HashLength)
 	local InfoLength = if Info then buffer.len(Info) else 0
 
@@ -27,6 +31,9 @@ local function HKDF(IKM: buffer, Salt: buffer?, Info: buffer?, Length: number, H
 	end
 
 	local PRK = Compute(IKM, ActualSalt, HashFunction, BlockSize)
+	if buffer.len(PRK) ~= HashLength then
+		error(`HashLength must match the digest size of {buffer.len(PRK)} bytes, got {HashLength}`, 2)
+	end
 
 	local OKM = buffer.create(Length)
 

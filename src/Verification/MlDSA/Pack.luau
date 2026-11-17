@@ -29,12 +29,12 @@ function BitPacking.EncodeHintBits(H: buffer, Arr: buffer, K: number, Omega: num
 
 		for J = 0, N - 1 do
 			if buffer.readu32(H, PolyOffset + J * 4) ~= 0 then
+				if Idx >= Omega then
+					error(`Hint vector has more than {Omega} set bits`, 2)
+				end
+
 				buffer.writeu8(Arr, Idx, J)
 				Idx += 1
-
-				if Idx >= Omega then
-					break
-				end
 			end
 		end
 

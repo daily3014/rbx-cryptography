@@ -26,6 +26,60 @@ local ED25519_SECRET_KEY_SIZE = 32
 local ED25519_PUBLIC_KEY_SIZE = 32
 local ED25519_SIGNATURE_SIZE = 64
 
+local SIGN_KEYS = buffer.create(65)
+
+local SMALL_ORDER = buffer.create(160) do
+	local Words = {
+		0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+		0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+		0x8F95E826, 0xB027B2C2, 0x89F4C345, 0xF098EFF2, 0x05ACDFD5, 0x3933C6D3, 0x880238B1, 0x05FC536D,
+		0x706A17C7, 0x4FD84D3D, 0x760B3CBA, 0x0F67100D, 0xFA53202A, 0xC6CC392C, 0x77FDC74E, 0x7A03AC92,
+		0xFFFFFFEC, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x7FFFFFFF,
+	}
+
+	for Index = 1, 40 do
+		buffer.writeu32(SMALL_ORDER, (Index - 1) * 4, Words[Index])
+	end
+end
+
+local function Differs(BytesA: buffer, OffsetA: number, BytesB: buffer, OffsetB: number): number
+	return bit32.bor(
+		bit32.bxor(buffer.readu32(BytesA, OffsetA), buffer.readu32(BytesB, OffsetB)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 4), buffer.readu32(BytesB, OffsetB + 4)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 8), buffer.readu32(BytesB, OffsetB + 8)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 12), buffer.readu32(BytesB, OffsetB + 12)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 16), buffer.readu32(BytesB, OffsetB + 16)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 20), buffer.readu32(BytesB, OffsetB + 20)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 24), buffer.readu32(BytesB, OffsetB + 24)),
+		bit32.bxor(buffer.readu32(BytesA, OffsetA + 28), buffer.readu32(BytesB, OffsetB + 28))
+	)
+end
+
+local function IsSmallOrder(Encoded: buffer): boolean
+	local Table = SMALL_ORDER
+	local Word0, Word1, Word2, Word3 = buffer.readu32(Encoded, 0), buffer.readu32(Encoded, 4), buffer.readu32(Encoded, 8), buffer.readu32(Encoded, 12)
+	local Word4, Word5, Word6, Word7 = buffer.readu32(Encoded, 16), buffer.readu32(Encoded, 20), buffer.readu32(Encoded, 24), bit32.band(buffer.readu32(Encoded, 28), 0x7FFFFFFF)
+
+	for Offset = 0, 128, 32 do
+		local Difference = bit32.bor(
+			bit32.bxor(Word7, buffer.readu32(Table, Offset + 28)),
+			bit32.bxor(Word0, buffer.readu32(Table, Offset)),
+			bit32.bxor(Word1, buffer.readu32(Table, Offset + 4)),
+			bit32.bxor(Word2, buffer.readu32(Table, Offset + 8)),
+			bit32.bxor(Word3, buffer.readu32(Table, Offset + 12)),
+			bit32.bxor(Word4, buffer.readu32(Table, Offset + 16)),
+			bit32.bxor(Word5, buffer.readu32(Table, Offset + 20)),
+			bit32.bxor(Word6, buffer.readu32(Table, Offset + 24))
+		)
+
+		if Difference == 0 then
+			return true
+		end
+	end
+
+	return false
+end
+
 local EDDSA = {
 	X25519 = X25519
 }
@@ -95,6 +149,18 @@ function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buff
 	buffer.copy(FirstHalf, 0, Hash, 0, 32)
 	local ScalarX = FieldQuadratic.DecodeClamped(FirstHalf)
 
+	local Keys = SIGN_KEYS
+	if Differs(SecretKey, 0, Keys, 0) ~= 0 or buffer.readu8(Keys, 64) == 0 then
+		local ScalarBits, BitCount = FieldQuadratic.Bits(ScalarX)
+		buffer.copy(Keys, 32, Edwards25519.Encode(Edwards25519.MulG(ScalarBits, BitCount)), 0, 32)
+		buffer.copy(Keys, 0, SecretKey, 0, 32)
+		buffer.writeu8(Keys, 64, 1)
+	end
+
+	if Differs(PublicKey, 0, Keys, 32) ~= 0 then
+		error("PublicKey is not the public key of SecretKey", 2)
+	end
+
 	local SecondHalf = buffer.create(32)
 	buffer.copy(SecondHalf, 0, Hash, 32, 32)
 
@@ -162,6 +228,10 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	buffer.copy(ResponseBytes, 0, Signature, 32, 32)
 
 	if not FieldQuadratic.IsValidScalar(ResponseBytes) then
+		return false
+	end
+
+	if IsSmallOrder(PublicKey) then
 		return false
 	end
 

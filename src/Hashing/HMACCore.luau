@@ -166,9 +166,13 @@ end
 
 local function Prepare(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): Prepared
 	local DigestOnly, Core = Resolve(HashFunction)
+	if Core and Core.BlockBytes ~= BlockSizeBytes then
+		error(`BlockSizeBytes must be {Core.BlockBytes} for this hash function, got {BlockSizeBytes}`, 3)
+	end
+
 	local BlockKey, KeyLength = BlockKeyOf(Key, HashFunction, DigestOnly, BlockSizeBytes)
 
-	if Core and Core.BlockBytes == BlockSizeBytes then
+	if Core then
 		local InnerState = KeyState(Core, BlockKey, KeyLength, INNER_PAD, buffer.create(Core.StateBytes))
 		local OuterState = KeyState(Core, BlockKey, KeyLength, OUTER_PAD, buffer.create(Core.StateBytes))
 		local Digest, OutputBytes = Core.Digest, Core.OutputBytes
@@ -215,9 +219,13 @@ end
 
 local function Compute(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): (buffer, string?)
 	local DigestOnly, Core = Resolve(HashFunction)
+	if Core and Core.BlockBytes ~= BlockSizeBytes then
+		error(`BlockSizeBytes must be {Core.BlockBytes} for this hash function, got {BlockSizeBytes}`, 3)
+	end
+
 	local BlockKey, KeyLength = BlockKeyOf(Key, HashFunction, DigestOnly, BlockSizeBytes)
 
-	if Core and Core.BlockBytes == BlockSizeBytes then
+	if Core then
 		local Digest, OutputBytes = Core.Digest, Core.OutputBytes
 		KeyState(Core, BlockKey, KeyLength, INNER_PAD, INNER_SCRATCH)
 		KeyState(Core, BlockKey, KeyLength, OUTER_PAD, OUTER_SCRATCH)

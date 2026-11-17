@@ -26,7 +26,7 @@ local INV_N = Field.Invert(N / 2)
 local INV_Q = 1 / Q
 
 local function ModQ(Value: number): number
-	return Value - math.floor(Value * INV_Q + 2 ^ -20) * Q
+	return Value - math.floor(Value * INV_Q + 1.5e-4) * Q
 end
 
 local Ntt = {}
@@ -200,162 +200,178 @@ function Ntt.NttAt(Poly: buffer, BaseOffset: number)
 		local C14 = buffer.readu16(Poly, Base + 448)
 		local C15 = buffer.readu16(Poly, Base + 480)
 		do
-			local Tmp = ModQ(Z01 * C08)
+			local Tmp = Z01 * C08
 			C08 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C09)
+			local Tmp = Z01 * C09
 			C09 = C01 - Tmp
 			C01 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C10)
+			local Tmp = Z01 * C10
 			C10 = C02 - Tmp
 			C02 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C11)
+			local Tmp = Z01 * C11
 			C11 = C03 - Tmp
 			C03 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C12)
+			local Tmp = Z01 * C12
 			C12 = C04 - Tmp
 			C04 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C13)
+			local Tmp = Z01 * C13
 			C13 = C05 - Tmp
 			C05 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C14)
+			local Tmp = Z01 * C14
 			C14 = C06 - Tmp
 			C06 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z01 * C15)
+			local Tmp = Z01 * C15
 			C15 = C07 - Tmp
 			C07 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z02 * C04)
+			local Tmp = Z02 * C04
 			C04 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z02 * C05)
+			local Tmp = Z02 * C05
 			C05 = C01 - Tmp
 			C01 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z02 * C06)
+			local Tmp = Z02 * C06
 			C06 = C02 - Tmp
 			C02 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z02 * C07)
+			local Tmp = Z02 * C07
 			C07 = C03 - Tmp
 			C03 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z03 * C12)
+			local Tmp = Z03 * C12
 			C12 = C08 - Tmp
 			C08 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z03 * C13)
+			local Tmp = Z03 * C13
 			C13 = C09 - Tmp
 			C09 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z03 * C14)
+			local Tmp = Z03 * C14
 			C14 = C10 - Tmp
 			C10 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z03 * C15)
+			local Tmp = Z03 * C15
 			C15 = C11 - Tmp
 			C11 += Tmp
 		end
+		C00 = ModQ(C00)
+		C01 = ModQ(C01)
+		C02 = ModQ(C02)
+		C03 = ModQ(C03)
+		C04 = ModQ(C04)
+		C05 = ModQ(C05)
+		C06 = ModQ(C06)
+		C07 = ModQ(C07)
+		C08 = ModQ(C08)
+		C09 = ModQ(C09)
+		C10 = ModQ(C10)
+		C11 = ModQ(C11)
+		C12 = ModQ(C12)
+		C13 = ModQ(C13)
+		C14 = ModQ(C14)
+		C15 = ModQ(C15)
 		do
-			local Tmp = ModQ(Z04 * C02)
+			local Tmp = Z04 * C02
 			C02 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z04 * C03)
+			local Tmp = Z04 * C03
 			C03 = C01 - Tmp
 			C01 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z05 * C06)
+			local Tmp = Z05 * C06
 			C06 = C04 - Tmp
 			C04 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z05 * C07)
+			local Tmp = Z05 * C07
 			C07 = C05 - Tmp
 			C05 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z06 * C10)
+			local Tmp = Z06 * C10
 			C10 = C08 - Tmp
 			C08 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z06 * C11)
+			local Tmp = Z06 * C11
 			C11 = C09 - Tmp
 			C09 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z07 * C14)
+			local Tmp = Z07 * C14
 			C14 = C12 - Tmp
 			C12 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z07 * C15)
+			local Tmp = Z07 * C15
 			C15 = C13 - Tmp
 			C13 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z08 * C01)
+			local Tmp = Z08 * C01
 			C01 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z09 * C03)
+			local Tmp = Z09 * C03
 			C03 = C02 - Tmp
 			C02 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z10 * C05)
+			local Tmp = Z10 * C05
 			C05 = C04 - Tmp
 			C04 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z11 * C07)
+			local Tmp = Z11 * C07
 			C07 = C06 - Tmp
 			C06 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z12 * C09)
+			local Tmp = Z12 * C09
 			C09 = C08 - Tmp
 			C08 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z13 * C11)
+			local Tmp = Z13 * C11
 			C11 = C10 - Tmp
 			C10 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z14 * C13)
+			local Tmp = Z14 * C13
 			C13 = C12 - Tmp
 			C12 += Tmp
 		end
 		do
-			local Tmp = ModQ(Z15 * C15)
+			local Tmp = Z15 * C15
 			C15 = C14 - Tmp
 			C14 += Tmp
 		end
@@ -402,122 +418,122 @@ function Ntt.NttAt(Poly: buffer, BaseOffset: number)
 		local C14 = buffer.readu16(Poly, Base + 28)
 		local C15 = buffer.readu16(Poly, Base + 30)
 		do
-			local Tmp = ModQ(Y0 * C08)
+			local Tmp = Y0 * C08
 			C08 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C09)
+			local Tmp = Y0 * C09
 			C09 = C01 - Tmp
 			C01 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C10)
+			local Tmp = Y0 * C10
 			C10 = C02 - Tmp
 			C02 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C11)
+			local Tmp = Y0 * C11
 			C11 = C03 - Tmp
 			C03 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C12)
+			local Tmp = Y0 * C12
 			C12 = C04 - Tmp
 			C04 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C13)
+			local Tmp = Y0 * C13
 			C13 = C05 - Tmp
 			C05 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C14)
+			local Tmp = Y0 * C14
 			C14 = C06 - Tmp
 			C06 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y0 * C15)
+			local Tmp = Y0 * C15
 			C15 = C07 - Tmp
 			C07 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y1 * C04)
+			local Tmp = Y1 * C04
 			C04 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y1 * C05)
+			local Tmp = Y1 * C05
 			C05 = C01 - Tmp
 			C01 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y1 * C06)
+			local Tmp = Y1 * C06
 			C06 = C02 - Tmp
 			C02 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y1 * C07)
+			local Tmp = Y1 * C07
 			C07 = C03 - Tmp
 			C03 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y2 * C12)
+			local Tmp = Y2 * C12
 			C12 = C08 - Tmp
 			C08 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y2 * C13)
+			local Tmp = Y2 * C13
 			C13 = C09 - Tmp
 			C09 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y2 * C14)
+			local Tmp = Y2 * C14
 			C14 = C10 - Tmp
 			C10 += Tmp
 		end
 		do
-			local Tmp = ModQ(Y2 * C15)
+			local Tmp = Y2 * C15
 			C15 = C11 - Tmp
 			C11 += Tmp
 		end
 		do
-			local Tmp = ModQ(X0 * C02)
+			local Tmp = X0 * C02
 			C02 = C00 - Tmp
 			C00 += Tmp
 		end
 		do
-			local Tmp = ModQ(X0 * C03)
+			local Tmp = X0 * C03
 			C03 = C01 - Tmp
 			C01 += Tmp
 		end
 		do
-			local Tmp = ModQ(X1 * C06)
+			local Tmp = X1 * C06
 			C06 = C04 - Tmp
 			C04 += Tmp
 		end
 		do
-			local Tmp = ModQ(X1 * C07)
+			local Tmp = X1 * C07
 			C07 = C05 - Tmp
 			C05 += Tmp
 		end
 		do
-			local Tmp = ModQ(X2 * C10)
+			local Tmp = X2 * C10
 			C10 = C08 - Tmp
 			C08 += Tmp
 		end
 		do
-			local Tmp = ModQ(X2 * C11)
+			local Tmp = X2 * C11
 			C11 = C09 - Tmp
 			C09 += Tmp
 		end
 		do
-			local Tmp = ModQ(X3 * C14)
+			local Tmp = X3 * C14
 			C14 = C12 - Tmp
 			C12 += Tmp
 		end
 		do
-			local Tmp = ModQ(X3 * C15)
+			local Tmp = X3 * C15
 			C15 = C13 - Tmp
 			C13 += Tmp
 		end

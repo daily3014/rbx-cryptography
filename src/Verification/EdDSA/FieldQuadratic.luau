@@ -20,6 +20,8 @@
 
 local MultiPrecision = require("./MultiPrecision")
 
+local CARRY = 88
+
 local CONSTANT_ZERO = MultiPrecision.Num(0)
 
 local OUTPUT_BUFFER = buffer.create(8192)
@@ -82,13 +84,13 @@ end
 local MONTGOMERY_T2: buffer
 
 local function Reduce(LargeNumber: buffer): buffer
-	local Difference = MultiPrecision.Sub(LargeNumber, FIELD_ORDER)
+	local Difference = MultiPrecision.Carry(MultiPrecision.Sub(LargeNumber, FIELD_ORDER))
 
-	if MultiPrecision.Approx(Difference) < 0 then
+	if buffer.readf64(Difference, CARRY) < 0 then
 		return MultiPrecision.Carry(LargeNumber)
 	end
 
-	return MultiPrecision.Carry(Difference)
+	return Difference
 end
 
 local function Demontgomery(MontgomeryScalar: buffer): buffer

@@ -52,7 +52,7 @@ local function Core(): Blake3Core
 end
 
 local function ValidateLength(Length: number?)
-	if Length then
+	if Length ~= nil then
 		if typeof(Length) ~= "number" then
 			error(`Length must be a number, got {typeof(Length)}`, 3)
 		end

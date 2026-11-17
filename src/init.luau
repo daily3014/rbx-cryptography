@@ -32,8 +32,19 @@ function Preload(...: string)
 		local Path = select(Index, ...)
 		local Current: any = Cryptography
 
+		local Depth = 0
+
 		for Part in string.gmatch(Path, "[^/]+") do
+			if type(Current) ~= "table" then
+				error(`Cannot preload "{Path}", {Part} does not exist`, 2)
+			end
+
 			Current = Current[Part]
+			Depth += 1
+		end
+
+		if Depth == 0 or Current == nil then
+			error(`Cannot preload "{Path}", path does not exist`, 2)
 		end
 
 		if Lazy.IsGroup(Current) then

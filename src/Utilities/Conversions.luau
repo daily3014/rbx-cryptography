@@ -28,8 +28,10 @@ local ENCODE_LOOKUP = buffer.create(256 * 2) do
 	end
 end
 
-local DECODE_LOOKUP = buffer.create(65536) do
+local DECODE_LOOKUP, DECODE_INVALID = buffer.create(65536), buffer.create(65536) do
+	local INVALID_NIBBLE = 255
 	local Nibbles = buffer.create(256)
+	buffer.fill(Nibbles, 0, INVALID_NIBBLE)
 	for Char = 48, 57 do
 		buffer.writeu8(Nibbles, Char, Char - 48)
 	end
@@ -43,7 +45,12 @@ local DECODE_LOOKUP = buffer.create(65536) do
 	for Second = 0, 255 do
 		local Low = buffer.readu8(Nibbles, Second)
 		for First = 0, 255 do
-			buffer.writeu8(DECODE_LOOKUP, Second * 256 + First, buffer.readu8(Nibbles, First) * 16 + Low)
+			local High = buffer.readu8(Nibbles, First)
+			if Low == INVALID_NIBBLE or High == INVALID_NIBBLE then
+				buffer.writeu8(DECODE_INVALID, Second * 256 + First, 1)
+			else
+				buffer.writeu8(DECODE_LOOKUP, Second * 256 + First, High * 16 + Low)
+			end
 		end
 	end
 end
@@ -87,13 +94,15 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 	local BufferHex = if type(Hex) == "string" then buffer.fromstring(Hex) else Hex
 	local Length = buffer.len(BufferHex)
 	if Length % 2 ~= 0 then
-		error(`Length must be even, got {Length}`)
+		error(`Length must be even, got {Length}`, 2)
 	end
 
 	local Buffer = buffer.create(bit32.rshift(Length, 1))
 	local Leftover = Length % 16
 	local Body = Length - Leftover
 	local Lookup = DECODE_LOOKUP
+	local InvalidLookup = DECODE_INVALID
+	local Invalid = 0
 
 	for Index = 0, Body - 16, 16 do
 		local Word0 = buffer.readu32(BufferHex, Index)
@@ -114,10 +123,28 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 			bit32.lshift(buffer.readu8(Lookup, bit32.band(Word3, 0xffff)), 16),
 			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word3, 16)), 24)
 		))
+
+		Invalid = bit32.bor(
+			Invalid,
+			buffer.readu8(InvalidLookup, bit32.band(Word0, 0xffff)),
+			buffer.readu8(InvalidLookup, bit32.rshift(Word0, 16)),
+			buffer.readu8(InvalidLookup, bit32.band(Word1, 0xffff)),
+			buffer.readu8(InvalidLookup, bit32.rshift(Word1, 16)),
+			buffer.readu8(InvalidLookup, bit32.band(Word2, 0xffff)),
+			buffer.readu8(InvalidLookup, bit32.rshift(Word2, 16)),
+			buffer.readu8(InvalidLookup, bit32.band(Word3, 0xffff)),
+			buffer.readu8(InvalidLookup, bit32.rshift(Word3, 16))
+		)
 	end
 
 	for Index = Body, Length - 2, 2 do
-		buffer.writeu8(Buffer, bit32.rshift(Index, 1), buffer.readu8(Lookup, buffer.readu16(BufferHex, Index)))
+		local Pair = buffer.readu16(BufferHex, Index)
+		buffer.writeu8(Buffer, bit32.rshift(Index, 1), buffer.readu8(Lookup, Pair))
+		Invalid = bit32.bor(Invalid, buffer.readu8(InvalidLookup, Pair))
+	end
+
+	if Invalid ~= 0 then
+		error("Hex contains a character outside 0-9, a-f and A-F", 2)
 	end
 
 	return Buffer

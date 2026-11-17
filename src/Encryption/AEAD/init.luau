@@ -72,19 +72,23 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
 	end
 
+	if UseXChaCha20 ~= nil and typeof(UseXChaCha20) ~= "boolean" then
+		error(`UseXChaCha20 must be a boolean, got {typeof(UseXChaCha20)}`, 2)
+	end
+
 	local NonceLength = buffer.len(Nonce)
 	local RequiredNonceLength = if UseXChaCha20 then XCHACHA20_NONCE_SIZE else CHACHA20_NONCE_SIZE
 	if NonceLength ~= RequiredNonceLength then
 		error(`Nonce must be exactly {RequiredNonceLength} bytes long, got {NonceLength} bytes`, 2)
 	end
 
-	if AdditionalAuthData then
+	if AdditionalAuthData ~= nil then
 		if typeof(AdditionalAuthData) ~= "buffer" then
 			error(`AdditionalAuthData must be a buffer, got {typeof(AdditionalAuthData)}`, 2)
 		end
 	end
 
-	if Rounds then
+	if Rounds ~= nil then
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end
@@ -138,6 +142,10 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
 	end
 
+	if UseXChaCha20 ~= nil and typeof(UseXChaCha20) ~= "boolean" then
+		error(`UseXChaCha20 must be a boolean, got {typeof(UseXChaCha20)}`, 2)
+	end
+
 	local NonceLength = buffer.len(Nonce)
 	local RequiredNonceLength = if UseXChaCha20 then XCHACHA20_NONCE_SIZE else CHACHA20_NONCE_SIZE
 	if NonceLength ~= RequiredNonceLength then
@@ -157,13 +165,13 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 		error(`Tag must be exactly {POLY1305_TAG_SIZE} bytes long, got {TagLength} bytes`, 2)
 	end
 
-	if AdditionalAuthData then
+	if AdditionalAuthData ~= nil then
 		if typeof(AdditionalAuthData) ~= "buffer" then
 			error(`AdditionalAuthData must be a buffer, got {typeof(AdditionalAuthData)}`, 2)
 		end
 	end
 
-	if Rounds then
+	if Rounds ~= nil then
 		if typeof(Rounds) ~= "number" then
 			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
 		end

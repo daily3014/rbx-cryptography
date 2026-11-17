@@ -21,6 +21,7 @@
 --!native
 
 local Pke = require("@self/PKE")
+local PolyVec = require("@self/PolyVec")
 local CSPRNG = require("../Utilities/CSPRNG")
 local Params = require("@self/Params")
 local Utils = require("@self/Utils")
@@ -35,8 +36,27 @@ local DECAP_K_PRIME = buffer.create(32)
 local DECAP_R_PRIME = buffer.create(32)
 local DECAP_J_OUTPUT = buffer.create(32)
 
+local DECAP_CHECKED: { [number]: buffer } = {}
+
 local ENCAP_G_INPUT = buffer.create(64)
 local ENCAP_R = buffer.create(32)
+
+local function SameBytes(Source: buffer, SourceOffset: number, Checked: buffer, Length: number): boolean
+	local Difference = 0
+
+	for Index = 0, Length - 16, 16 do
+		local At = SourceOffset + Index
+		Difference = bit32.bor(
+			Difference,
+			bit32.bxor(buffer.readu32(Source, At + 12), buffer.readu32(Checked, Index + 12)),
+			bit32.bxor(buffer.readu32(Source, At), buffer.readu32(Checked, Index)),
+			bit32.bxor(buffer.readu32(Source, At + 4), buffer.readu32(Checked, Index + 4)),
+			bit32.bxor(buffer.readu32(Source, At + 8), buffer.readu32(Checked, Index + 8))
+		)
+	end
+
+	return Difference == 0
+end
 
 local MlKem = {
 	CSPRNG = CSPRNG
@@ -145,6 +165,18 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 
 	buffer.copy(Z, 0, SecretKey, Offset, 32)
 
+	local CheckedLength = KpkePublicKeyLen + 32
+	local Checked: buffer? = DECAP_CHECKED[K]
+	if not (Checked and SameBytes(SecretKey, KpkeSecretKeyLen, Checked, CheckedLength)) then
+		if not CtCompare(H, SHA3.SHA3_256_Internal(KpkePublicKey)) then
+			error("Invalid secret key, the hash it stores does not match its public key")
+		end
+
+		local Passed = buffer.create(CheckedLength)
+		buffer.copy(Passed, 0, SecretKey, KpkeSecretKeyLen, CheckedLength)
+		DECAP_CHECKED[K] = Passed
+	end
+
 	local JInput = buffer.create(32 + buffer.len(Ciphertext))
 	buffer.copy(JInput, 0, Z, 0, 32)
 	buffer.copy(JInput, 32, Ciphertext, 0, buffer.len(Ciphertext))
@@ -188,6 +220,10 @@ function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 	local KpkeSecretKeyLen = Utils.GetPkeSecretKeyLen(K)
 	local KpkePublicKeyLen = Utils.GetPkePublicKeyLen(K)
 
+	if typeof(SecretKey) ~= "buffer" or buffer.len(SecretKey) ~= Utils.GetKemSecretKeyLen(K) then
+		return false
+	end
+
 	local EkOffset = KpkeSecretKeyLen
 	local HOffset = KpkeSecretKeyLen + KpkePublicKeyLen
 
@@ -195,6 +231,12 @@ function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 	local StoredH = buffer.create(32)
 	buffer.copy(Ek, 0, SecretKey, EkOffset, KpkePublicKeyLen)
 	buffer.copy(StoredH, 0, SecretKey, HOffset, 32)
+
+	local _, SecretValid = PolyVec.VecDecode(SecretKey, K, 12)
+	local _, PublicValid = PolyVec.VecDecode(Ek, K, 12)
+	if not (SecretValid and PublicValid) then
+		return false
+	end
 
 	local ComputedH = SHA3.SHA3_256_Internal(Ek)
 	return CtCompare(StoredH, ComputedH)

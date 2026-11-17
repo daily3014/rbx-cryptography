@@ -30,7 +30,7 @@ local function XOR(StringBuffer: buffer, KeyBuffer: buffer): buffer
 
 	local Key = KeyBuffer
 	local Period = KeyLength
-	if KeyLength % 4 ~= 0 or (KeyLength < 128 and StringLength >= 1024) then
+	if KeyLength < StringLength and (KeyLength % 4 ~= 0 or (KeyLength < 128 and StringLength >= 1024)) then
 		local Unit = KeyLength
 		while Unit % 4 ~= 0 do
 			Unit += KeyLength

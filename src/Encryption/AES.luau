@@ -995,6 +995,10 @@ function AES.Encrypt(Plaintext: buffer, Key: buffer, IV: buffer, AAD: buffer?): 
 		error("Plaintext must be a buffer", 2)
 	end
 
+	if AAD ~= nil and typeof(AAD) ~= "buffer" then
+		error("AAD must be a buffer", 2)
+	end
+
 	local KeyLength = buffer.len(Key)
 	if KeyLength ~= 16 and KeyLength ~= 24 and KeyLength ~= 32 then
 		error("Key must be 16, 24, or 32 bytes", 2)
@@ -1031,6 +1035,10 @@ function AES.Decrypt(Ciphertext: buffer, Key: buffer, IV: buffer, Tag: buffer, A
 
 	if not Ciphertext or typeof(Ciphertext) ~= "buffer" then
 		error("Ciphertext must be a buffer", 2)
+	end
+
+	if AAD ~= nil and typeof(AAD) ~= "buffer" then
+		error("AAD must be a buffer", 2)
 	end
 
 	if not Tag or typeof(Tag) ~= "buffer" then

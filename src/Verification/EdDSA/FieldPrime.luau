@@ -502,32 +502,37 @@ function FieldPrime.Canonicalize(ElementA: buffer, Storage: buffer?): buffer
 		buffer.readf64(ElementA, 64), buffer.readf64(ElementA, 72),
 		buffer.readf64(ElementA, 80), buffer.readf64(ElementA, 88)
 
-	local C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11
+	local C00: number, C01: number, C02: number, C03: number, C04: number, C05: number, C06: number, C07: number, C08: number, C09: number, C10: number, C11: number
 
-	C00 = A00 % 2 ^ 22
-	A01 += A00 - C00
-	C01 = A01 % 2 ^ 43
-	A02 += A01 - C01
-	C02 = A02 % 2 ^ 64
-	A03 += A02 - C02
-	C03 = A03 % 2 ^ 85
-	A04 += A03 - C03
-	C04 = A04 % 2 ^ 107
-	A05 += A04 - C04
-	C05 = A05 % 2 ^ 128
-	A06 += A05 - C05
-	C06 = A06 % 2 ^ 149
-	A07 += A06 - C06
-	C07 = A07 % 2 ^ 170
-	A08 += A07 - C07
-	C08 = A08 % 2 ^ 192
-	A09 += A08 - C08
-	C09 = A09 % 2 ^ 213
-	A10 += A09 - C09
-	C10 = A10 % 2 ^ 234
-	A11 += A10 - C10
-	C11 = A11 % 2 ^ 255
-	C00 += 19 / 2 ^ 255 * (A11 - C11)
+	for _ = 1, 2 do
+		C00 = A00 % 2 ^ 22
+		A01 += A00 - C00
+		C01 = A01 % 2 ^ 43
+		A02 += A01 - C01
+		C02 = A02 % 2 ^ 64
+		A03 += A02 - C02
+		C03 = A03 % 2 ^ 85
+		A04 += A03 - C03
+		C04 = A04 % 2 ^ 107
+		A05 += A04 - C04
+		C05 = A05 % 2 ^ 128
+		A06 += A05 - C05
+		C06 = A06 % 2 ^ 149
+		A07 += A06 - C06
+		C07 = A07 % 2 ^ 170
+		A08 += A07 - C07
+		C08 = A08 % 2 ^ 192
+		A09 += A08 - C08
+		C09 = A09 % 2 ^ 213
+		A10 += A09 - C09
+		C10 = A10 % 2 ^ 234
+		A11 += A10 - C10
+		C11 = A11 % 2 ^ 255
+		C00 += 19 / 2 ^ 255 * (A11 - C11)
+
+		A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11 =
+			C00, C01, C02, C03, C04, C05, C06, C07, C08, C09, C10, C11
+	end
 
 	local Buf = Storage or buffer.create(SIZE)
 	if C11 / 2 ^ 234 == 2 ^ 21 - 1

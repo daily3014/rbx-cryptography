@@ -4,6 +4,9 @@
 	Non-OOP implementation with reusable state buffers.
 	For ML-DSA sampling functions that use rejection sampling.
 
+	Each stream is one shot: call Reset, then Absorb exactly once with the
+	whole message, then Squeeze as many times as needed.
+
 	Example usage:
 		XOF.Reset128()
 		XOF.Absorb128(message)
@@ -38,10 +41,6 @@ local Fresh256 = false
 local PaddedBuffer128 = buffer.create(RATE_128)
 local PaddedBuffer256 = buffer.create(RATE_256)
 
-local SqueezeBuffer128_168 = buffer.create(168)
-local SqueezeBuffer256_128 = buffer.create(128)
-local SqueezeBuffer256_192 = buffer.create(192)
-
 local XOF = {}
 
 function XOF.Reset128()
@@ -59,50 +58,74 @@ function XOF.Reset256()
 end
 
 function XOF.Absorb128(Message: buffer)
+	if not Fresh128 then
+		error("Absorb128 must be called exactly once after Reset128", 2)
+	end
+
 	local MessageLength = buffer.len(Message)
 	local RateBytes = RATE_128
+	local TailLength = MessageLength % RateBytes
+	local FullBytes = MessageLength - TailLength
+
+	if FullBytes > 0 then
+		Keccak(StateA128, StateB128, Message, 0, FullBytes, RateBytes, true)
+	end
 
 	local PaddedMessage = PaddedBuffer128
 	buffer.fill(PaddedMessage, 0, 0, RateBytes)
 
-	if MessageLength > 0 then
-		buffer.copy(PaddedMessage, 0, Message, 0, MessageLength)
+	if TailLength > 0 then
+		buffer.copy(PaddedMessage, 0, Message, FullBytes, TailLength)
 	end
 
-	if RateBytes - MessageLength == 1 then
-		buffer.writeu8(PaddedMessage, MessageLength, 0x9F)
+	if RateBytes - TailLength == 1 then
+		buffer.writeu8(PaddedMessage, TailLength, 0x9F)
 	else
-		buffer.writeu8(PaddedMessage, MessageLength, 0x1F)
+		buffer.writeu8(PaddedMessage, TailLength, 0x1F)
 		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
 	end
 
-	Keccak(StateA128, StateB128, PaddedMessage, 0, RateBytes, RateBytes, Fresh128)
+	Keccak(StateA128, StateB128, PaddedMessage, 0, RateBytes, RateBytes, FullBytes == 0)
 	Fresh128 = false
+	SqueezeOffset128 = 0
 	Extract(StateA128, StateB128, Block128, 0, RateBytes)
 end
 
+
 function XOF.Absorb256(Message: buffer)
+	if not Fresh256 then
+		error("Absorb256 must be called exactly once after Reset256", 2)
+	end
+
 	local MessageLength = buffer.len(Message)
 	local RateBytes = RATE_256
+	local TailLength = MessageLength % RateBytes
+	local FullBytes = MessageLength - TailLength
+
+	if FullBytes > 0 then
+		Keccak(StateA256, StateB256, Message, 0, FullBytes, RateBytes, true)
+	end
 
 	local PaddedMessage = PaddedBuffer256
 	buffer.fill(PaddedMessage, 0, 0, RateBytes)
 
-	if MessageLength > 0 then
-		buffer.copy(PaddedMessage, 0, Message, 0, MessageLength)
+	if TailLength > 0 then
+		buffer.copy(PaddedMessage, 0, Message, FullBytes, TailLength)
 	end
 
-	if RateBytes - MessageLength == 1 then
-		buffer.writeu8(PaddedMessage, MessageLength, 0x9F)
+	if RateBytes - TailLength == 1 then
+		buffer.writeu8(PaddedMessage, TailLength, 0x9F)
 	else
-		buffer.writeu8(PaddedMessage, MessageLength, 0x1F)
+		buffer.writeu8(PaddedMessage, TailLength, 0x1F)
 		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
 	end
 
-	Keccak(StateA256, StateB256, PaddedMessage, 0, RateBytes, RateBytes, Fresh256)
+	Keccak(StateA256, StateB256, PaddedMessage, 0, RateBytes, RateBytes, FullBytes == 0)
 	Fresh256 = false
+	SqueezeOffset256 = 0
 	Extract(StateA256, StateB256, Block256, 0, RateBytes)
 end
+
 
 function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
 	local OutOffset = OutputOffset or 0
@@ -128,7 +151,7 @@ function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: n
 end
 
 function XOF.Squeeze128(OutputBytes: number): buffer
-	local Output = if OutputBytes == 168 then SqueezeBuffer128_168 else buffer.create(OutputBytes)
+	local Output = buffer.create(OutputBytes)
 	XOF.Squeeze128Into(Output, OutputBytes, 0)
 	return Output
 end
@@ -157,9 +180,7 @@ function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: n
 end
 
 function XOF.Squeeze256(OutputBytes: number): buffer
-	local Output = if OutputBytes == 128 then SqueezeBuffer256_128
-		elseif OutputBytes == 192 then SqueezeBuffer256_192
-		else buffer.create(OutputBytes)
+	local Output = buffer.create(OutputBytes)
 	XOF.Squeeze256Into(Output, OutputBytes, 0)
 	return Output
 end
