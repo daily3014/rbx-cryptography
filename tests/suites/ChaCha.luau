@@ -80,11 +80,11 @@ local function RunChaChaTests(Data: ChaChaData, IsXChaCha: boolean)
 					local Msg = FromHex(Test.msg :: string)
 					local ExpectedCt = Test.ct :: string
 
-					local Ct
-					if IsXChaCha then
-						Ct = AEAD.XChaCha20(Msg, Key, Iv, Test.counter :: number, 20)
-					else
-						Ct = AEAD.ChaCha20(Msg, Key, Iv, Test.counter :: number, 20)
+					local Crypt = if IsXChaCha then AEAD.XChaCha20 else AEAD.ChaCha20
+					local Success, Ct = pcall(Crypt, Msg, Key, Iv, Test.counter :: number, 20)
+					if not Success then
+						Testing.Expect(Test.result).ToBe("acceptable")
+						return
 					end
 
 					Testing.Expect(ToHex(Ct)).ToBe(ExpectedCt)

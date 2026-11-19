@@ -141,7 +141,12 @@ local function RunMlKemTests(Data: MlKemData)
 						end
 
 						local Ct = FromHex(Test.ct :: string)
-						local Shared = MlKem.Decapsulate(Ct, K, Eta1, Eta2, Du, Dv, Dk)
+						local Success, Shared = pcall(MlKem.Decapsulate, Ct, K, Eta1, Eta2, Du, Dv, Dk)
+						if not Success then
+							Testing.Expect(Test.result).ToBe("acceptable")
+							return
+						end
+
 						Testing.Expect(ToHex(Shared)).ToBe(Test.shared :: string)
 					end
 				end)

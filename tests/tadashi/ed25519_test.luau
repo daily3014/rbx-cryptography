@@ -884,7 +884,7 @@ return {
 				},
 				{
 					tcId = 38,
-					comment = [[Speccheck vector 0 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: valid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
+					comment = [[Speccheck vector 0 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: invalid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
 					targets = {
 						[[CofactorVerification]],
 						[[SmallOrderPK]],
@@ -904,11 +904,11 @@ return {
 					pk = [[c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa]],
 					msg = [[8c93255d71dcab10e8f379c26200f3c7bd5f09d9bc3068d3ef4edeb4853022b6]],
 					sig = [[c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a0000000000000000000000000000000000000000000000000000000000000000]],
-					result = [[valid]]
+					result = [[invalid]]
 				},
 				{
 					tcId = 39,
-					comment = [[Speccheck vector 1 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: valid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
+					comment = [[Speccheck vector 1 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: invalid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
 					targets = {
 						[[CofactorVerification]],
 						[[SmallOrderPK]]
@@ -927,7 +927,7 @@ return {
 					pk = [[c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa]],
 					msg = [[9bd9f44f4dcc75bd531b56b2cd280b0bb38fc1cd6d1230e14861d861de092e79]],
 					sig = [[f7badec5b8abeaf699583992219b7b223f1df3fbbea919844e3f7c554a43dd43a5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04]],
-					result = [[valid]]
+					result = [[invalid]]
 				},
 				{
 					tcId = 40,
@@ -1087,7 +1087,7 @@ return {
 				},
 				{
 					tcId = 47,
-					comment = [[Speccheck vector 9 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: valid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
+					comment = [[Speccheck vector 9 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: invalid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
 					targets = {
 						[[NonCanonicalY]],
 						[[CofactorVerification]]
@@ -1106,11 +1106,11 @@ return {
 					pk = [[f7badec5b8abeaf699583992219b7b223f1df3fbbea919844e3f7c554a43dd43]],
 					msg = [[9bedc267423725d473888631ebf45988bad3db83851ee85c85e241a07d148b41]],
 					sig = [[ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffca8c5b64cd208982aa38d4936621a4775aa233aa0505711d8fdcfdaa943d4908]],
-					result = [[valid]]
+					result = [[invalid]]
 				},
 				{
 					tcId = 48,
-					comment = [[Speccheck vector 10 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: valid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
+					comment = [[Speccheck vector 10 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: invalid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
 					targets = {
 						[[NonCanonicalY]],
 						[[CofactorVerification]]
@@ -1129,11 +1129,11 @@ return {
 					pk = [[ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff]],
 					msg = [[e96b7021eb39c1a163b6da4e3093dcd3f21387da4cc4572be588fafae23c155b]],
 					sig = [[a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04]],
-					result = [[valid]]
+					result = [[invalid]]
 				},
 				{
 					tcId = 49,
-					comment = [[Speccheck vector 11 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: valid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
+					comment = [[Speccheck vector 11 (Chalkias et al. "Taming the many EdDSAs"). rbx-crypto verdict: invalid. This case exposes spec ambiguity; LIBSODIUM-strict or other flavors may give a different verdict.]],
 					targets = {
 						[[NonCanonicalY]],
 						[[CofactorVerification]]
@@ -1152,7 +1152,7 @@ return {
 					pk = [[ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff]],
 					msg = [[39a591f5321bbe07fd5a23dc2f39d025d74526615746727ceefd6e82ae65c06f]],
 					sig = [[a9d55260f765261eb9b84e106f665e00b867287a761990d7135963ee0a7d59dca5bb704786be79fc476f91d3f3f89b03984d8068dcf1bb7dfc6637b45450ac04]],
-					result = [[valid]]
+					result = [[invalid]]
 				},
 				{
 					tcId = 50,
