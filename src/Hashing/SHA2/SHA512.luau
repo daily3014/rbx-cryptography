@@ -142,18 +142,11 @@ end
 
 local SCHEDULE = buffer.create(640)
 local STATE = buffer.create(64)
+local WORK = buffer.create(64)
 local TAIL = buffer.create(256)
 
 local function Compress(Blocks: buffer, Offset: number, Length: number, State: buffer)
-	local S0H, S0L = buffer.readu32(State, 0), buffer.readu32(State, 4)
-	local S1H, S1L = buffer.readu32(State, 8), buffer.readu32(State, 12)
-	local S2H, S2L = buffer.readu32(State, 16), buffer.readu32(State, 20)
-	local S3H, S3L = buffer.readu32(State, 24), buffer.readu32(State, 28)
-	local S4H, S4L = buffer.readu32(State, 32), buffer.readu32(State, 36)
-	local S5H, S5L = buffer.readu32(State, 40), buffer.readu32(State, 44)
-	local S6H, S6L = buffer.readu32(State, 48), buffer.readu32(State, 52)
-	local S7H, S7L = buffer.readu32(State, 56), buffer.readu32(State, 60)
-	local Schedule, Constants = SCHEDULE, CONSTANTS
+	local Schedule, Constants, Work = SCHEDULE, CONSTANTS, WORK
 	for Position = Offset, Offset + Length - 1, 128 do
 		for T = 0, 120, 8 do
 			buffer.writeu32(Schedule, T, bit32.byteswap(buffer.readu32(Blocks, Position + T)))
@@ -172,15 +165,23 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 			buffer.writeu32(Schedule, T, Hi)
 			buffer.writeu32(Schedule, T + 4, Lo)
 		end
-		local O0H, O0L = S0H, S0L
-		local O1H, O1L = S1H, S1L
-		local O2H, O2L = S2H, S2L
-		local O3H, O3L = S3H, S3L
-		local O4H, O4L = S4H, S4L
-		local O5H, O5L = S5H, S5L
-		local O6H, O6L = S6H, S6L
-		local O7H, O7L = S7H, S7L
+		buffer.writeu32(Work, 0, buffer.readu32(State, 0)); buffer.writeu32(Work, 4, buffer.readu32(State, 4))
+		buffer.writeu32(Work, 8, buffer.readu32(State, 8)); buffer.writeu32(Work, 12, buffer.readu32(State, 12))
+		buffer.writeu32(Work, 16, buffer.readu32(State, 16)); buffer.writeu32(Work, 20, buffer.readu32(State, 20))
+		buffer.writeu32(Work, 24, buffer.readu32(State, 24)); buffer.writeu32(Work, 28, buffer.readu32(State, 28))
+		buffer.writeu32(Work, 32, buffer.readu32(State, 32)); buffer.writeu32(Work, 36, buffer.readu32(State, 36))
+		buffer.writeu32(Work, 40, buffer.readu32(State, 40)); buffer.writeu32(Work, 44, buffer.readu32(State, 44))
+		buffer.writeu32(Work, 48, buffer.readu32(State, 48)); buffer.writeu32(Work, 52, buffer.readu32(State, 52))
+		buffer.writeu32(Work, 56, buffer.readu32(State, 56)); buffer.writeu32(Work, 60, buffer.readu32(State, 60))
 		for Base = 0, 576, 64 do
+			local S0H, S0L = buffer.readu32(Work, 0), buffer.readu32(Work, 4)
+			local S1H, S1L = buffer.readu32(Work, 8), buffer.readu32(Work, 12)
+			local S2H, S2L = buffer.readu32(Work, 16), buffer.readu32(Work, 20)
+			local S3H, S3L = buffer.readu32(Work, 24), buffer.readu32(Work, 28)
+			local S4H, S4L = buffer.readu32(Work, 32), buffer.readu32(Work, 36)
+			local S5H, S5L = buffer.readu32(Work, 40), buffer.readu32(Work, 44)
+			local S6H, S6L = buffer.readu32(Work, 48), buffer.readu32(Work, 52)
+			local S7H, S7L = buffer.readu32(Work, 56), buffer.readu32(Work, 60)
 			local BCH, BCL = bit32.bxor(S1H, S2H), bit32.bxor(S1L, S2L)
 			do
 				local EH, EL = S4H, S4L
@@ -566,40 +567,72 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				end
 				BCH, BCL = ABH, ABL
 			end
+			buffer.writeu32(Work, 0, S0H); buffer.writeu32(Work, 4, S0L)
+			buffer.writeu32(Work, 8, S1H); buffer.writeu32(Work, 12, S1L)
+			buffer.writeu32(Work, 16, S2H); buffer.writeu32(Work, 20, S2L)
+			buffer.writeu32(Work, 24, S3H); buffer.writeu32(Work, 28, S3L)
+			buffer.writeu32(Work, 32, S4H); buffer.writeu32(Work, 36, S4L)
+			buffer.writeu32(Work, 40, S5H); buffer.writeu32(Work, 44, S5L)
+			buffer.writeu32(Work, 48, S6H); buffer.writeu32(Work, 52, S6L)
+			buffer.writeu32(Work, 56, S7H); buffer.writeu32(Work, 60, S7L)
 		end
-		local Sum0 = bit32.bor(O0L + S0L, 0)
-		S0H = bit32.bor(bit32.bor(O0H + S0H, 0) + bit32.rshift(bit32.bor(bit32.band(O0L, S0L), bit32.band(bit32.bor(O0L, S0L), bit32.bnot(Sum0))), 31), 0)
-		S0L = Sum0
-		local Sum1 = bit32.bor(O1L + S1L, 0)
-		S1H = bit32.bor(bit32.bor(O1H + S1H, 0) + bit32.rshift(bit32.bor(bit32.band(O1L, S1L), bit32.band(bit32.bor(O1L, S1L), bit32.bnot(Sum1))), 31), 0)
-		S1L = Sum1
-		local Sum2 = bit32.bor(O2L + S2L, 0)
-		S2H = bit32.bor(bit32.bor(O2H + S2H, 0) + bit32.rshift(bit32.bor(bit32.band(O2L, S2L), bit32.band(bit32.bor(O2L, S2L), bit32.bnot(Sum2))), 31), 0)
-		S2L = Sum2
-		local Sum3 = bit32.bor(O3L + S3L, 0)
-		S3H = bit32.bor(bit32.bor(O3H + S3H, 0) + bit32.rshift(bit32.bor(bit32.band(O3L, S3L), bit32.band(bit32.bor(O3L, S3L), bit32.bnot(Sum3))), 31), 0)
-		S3L = Sum3
-		local Sum4 = bit32.bor(O4L + S4L, 0)
-		S4H = bit32.bor(bit32.bor(O4H + S4H, 0) + bit32.rshift(bit32.bor(bit32.band(O4L, S4L), bit32.band(bit32.bor(O4L, S4L), bit32.bnot(Sum4))), 31), 0)
-		S4L = Sum4
-		local Sum5 = bit32.bor(O5L + S5L, 0)
-		S5H = bit32.bor(bit32.bor(O5H + S5H, 0) + bit32.rshift(bit32.bor(bit32.band(O5L, S5L), bit32.band(bit32.bor(O5L, S5L), bit32.bnot(Sum5))), 31), 0)
-		S5L = Sum5
-		local Sum6 = bit32.bor(O6L + S6L, 0)
-		S6H = bit32.bor(bit32.bor(O6H + S6H, 0) + bit32.rshift(bit32.bor(bit32.band(O6L, S6L), bit32.band(bit32.bor(O6L, S6L), bit32.bnot(Sum6))), 31), 0)
-		S6L = Sum6
-		local Sum7 = bit32.bor(O7L + S7L, 0)
-		S7H = bit32.bor(bit32.bor(O7H + S7H, 0) + bit32.rshift(bit32.bor(bit32.band(O7L, S7L), bit32.band(bit32.bor(O7L, S7L), bit32.bnot(Sum7))), 31), 0)
-		S7L = Sum7
+		do
+			local OH, OL = buffer.readu32(State, 0), buffer.readu32(State, 4)
+			local NH, NL = buffer.readu32(Work, 0), buffer.readu32(Work, 4)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 0, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 4, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 8), buffer.readu32(State, 12)
+			local NH, NL = buffer.readu32(Work, 8), buffer.readu32(Work, 12)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 8, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 12, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 16), buffer.readu32(State, 20)
+			local NH, NL = buffer.readu32(Work, 16), buffer.readu32(Work, 20)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 16, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 20, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 24), buffer.readu32(State, 28)
+			local NH, NL = buffer.readu32(Work, 24), buffer.readu32(Work, 28)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 24, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 28, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 32), buffer.readu32(State, 36)
+			local NH, NL = buffer.readu32(Work, 32), buffer.readu32(Work, 36)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 32, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 36, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 40), buffer.readu32(State, 44)
+			local NH, NL = buffer.readu32(Work, 40), buffer.readu32(Work, 44)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 40, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 44, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 48), buffer.readu32(State, 52)
+			local NH, NL = buffer.readu32(Work, 48), buffer.readu32(Work, 52)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 48, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 52, Sum)
+		end
+		do
+			local OH, OL = buffer.readu32(State, 56), buffer.readu32(State, 60)
+			local NH, NL = buffer.readu32(Work, 56), buffer.readu32(Work, 60)
+			local Sum = bit32.bor(OL + NL, 0)
+			buffer.writeu32(State, 56, bit32.bor(bit32.bor(OH + NH, 0) + bit32.rshift(bit32.bor(bit32.band(OL, NL), bit32.band(bit32.bor(OL, NL), bit32.bnot(Sum))), 31), 0))
+			buffer.writeu32(State, 60, Sum)
+		end
 	end
-	buffer.writeu32(State, 0, S0H); buffer.writeu32(State, 4, S0L)
-	buffer.writeu32(State, 8, S1H); buffer.writeu32(State, 12, S1L)
-	buffer.writeu32(State, 16, S2H); buffer.writeu32(State, 20, S2L)
-	buffer.writeu32(State, 24, S3H); buffer.writeu32(State, 28, S3L)
-	buffer.writeu32(State, 32, S4H); buffer.writeu32(State, 36, S4L)
-	buffer.writeu32(State, 40, S5H); buffer.writeu32(State, 44, S5L)
-	buffer.writeu32(State, 48, S6H); buffer.writeu32(State, 52, S6L)
-	buffer.writeu32(State, 56, S7H); buffer.writeu32(State, 60, S7L)
 end
 
 local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number, PrefixBytes: number?): buffer

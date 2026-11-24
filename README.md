@@ -37,7 +37,7 @@ local IsValid = Verification.EdDSA.Verify(Message, PublicKey, Signature)
 
 ## Installation
 
-- **Wally:** `cryptography = "daily3014/cryptography@4.1.1"` under `[dependencies]`
+- **Wally:** `cryptography = "daily3014/cryptography@4.1.2"` under `[dependencies]`
 - **Pesde:** `pesde add daily3014/cryptography`
 - **Manual:** download the latest release from GitHub and place it in your Roblox Studio project
 

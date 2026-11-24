@@ -1342,7 +1342,7 @@ function Edwards25519.WindowedNAF(ScalarBits: buffer, ScalarBitCount: number, Wi
 		Multiplier *= 2
 
 		while BitIndex == ScalarBitCount and Accumulator > 0 or Multiplier > WindowValue do
-			if bit32.band(Accumulator, 1) == 0 then
+			if not bit32.btest(Accumulator, 1) then
 				Accumulator /= 2
 				Multiplier /= 2
 				buffer.writef64(OutputNAF, OutputLength * 8, 0)

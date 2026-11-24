@@ -52,7 +52,7 @@ function Field.Power(Base: number, Exponent: number): number
 	local Exp = Exponent
 
 	while Exp > 0 do
-		if bit32.band(Exp, 1) == 1 then
+		if bit32.btest(Exp, 1) then
 			Result = Field.Multiply(Result, CurrentBase)
 		end
 

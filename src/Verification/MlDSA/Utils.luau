@@ -18,19 +18,7 @@ local Q_BIT_WIDTH = 23
 local Utils = {}
 
 local function BitWidth(Value: number): number
-	if Value == 0 then
-		return 0
-	end
-
-	local Width = 0
-	local TempValue = Value
-
-	while TempValue > 0 do
-		Width += 1
-		TempValue = bit32.rshift(TempValue, 1)
-	end
-
-	return Width
+	return 32 - bit32.countlz(Value)
 end
 
 function Utils.PubKeyLen(K: number, D: number): number

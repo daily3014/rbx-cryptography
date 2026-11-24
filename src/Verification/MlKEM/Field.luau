@@ -38,14 +38,14 @@ end
 
 function Field.Power(Base: number, Exponent: number): number
 	local CurrentBase = Base % Q
-	local Result = if bit32.band(Exponent, 1) == 1 then CurrentBase else 1
+	local Result = if bit32.btest(Exponent, 1) then CurrentBase else 1
 
 	local Exp = Exponent
 	while Exp > 1 do
 		Exp = bit32.rshift(Exp, 1)
 		CurrentBase = Field.Multiply(CurrentBase, CurrentBase)
 
-		if bit32.band(Exp, 1) == 1 then
+		if bit32.btest(Exp, 1) then
 			Result = Field.Multiply(Result, CurrentBase)
 		end
 	end

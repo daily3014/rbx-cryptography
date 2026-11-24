@@ -218,7 +218,7 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	end
 
 	local LastByte = buffer.readu8(Signature, 63)
-	if bit32.band(LastByte, 0xE0) ~= 0x00 then
+	if bit32.btest(LastByte, 0xE0) then
 		return false
 	end
 

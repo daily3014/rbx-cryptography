@@ -223,7 +223,7 @@ local function GetIntRange(Min: number, Max: number): number
 	local Value = buffer.readu32(STREAM, Position)
 	Position += 4
 
-	if Range ~= 0x100000000 and bit32.band(Range, Range - 1) ~= 0 then
+	if Range ~= 0x100000000 and bit32.btest(Range, Range - 1) then
 		local Limit = MAX_UINT32 - (MAX_UINT32 % Range)
 		while Value >= Limit do
 			if Position + 4 > POOL_SIZE then
@@ -241,7 +241,7 @@ local function GetIntRange(Min: number, Max: number): number
 		return Min + Value
 	end
 
-	if bit32.band(Range, Range - 1) == 0 then
+	if not bit32.btest(Range, Range - 1) then
 		return Min + bit32.band(Value, Range - 1)
 	end
 

@@ -372,22 +372,22 @@ local function Compress(Hash: buffer, MessageBlock: buffer, MessageOffset: numbe
 end
 
 local function CompressLanes(Hash: buffer, Message: buffer, Offset: number, Counter: number, Flags: number, StorageA: buffer, StorageB: buffer)
-	local HA0 = buffer.readu32(Hash, 0)
-	local HB0 = HA0
-	local HA1 = buffer.readu32(Hash, 4)
-	local HB1 = HA1
-	local HA2 = buffer.readu32(Hash, 8)
-	local HB2 = HA2
-	local HA3 = buffer.readu32(Hash, 12)
-	local HB3 = HA3
-	local HA4 = buffer.readu32(Hash, 16)
-	local HB4 = HA4
-	local HA5 = buffer.readu32(Hash, 20)
-	local HB5 = HA5
-	local HA6 = buffer.readu32(Hash, 24)
-	local HB6 = HA6
-	local HA7 = buffer.readu32(Hash, 28)
-	local HB7 = HA7
+	buffer.writeu32(StorageA, 0, buffer.readu32(Hash, 0))
+	buffer.writeu32(StorageB, 0, buffer.readu32(Hash, 0))
+	buffer.writeu32(StorageA, 4, buffer.readu32(Hash, 4))
+	buffer.writeu32(StorageB, 4, buffer.readu32(Hash, 4))
+	buffer.writeu32(StorageA, 8, buffer.readu32(Hash, 8))
+	buffer.writeu32(StorageB, 8, buffer.readu32(Hash, 8))
+	buffer.writeu32(StorageA, 12, buffer.readu32(Hash, 12))
+	buffer.writeu32(StorageB, 12, buffer.readu32(Hash, 12))
+	buffer.writeu32(StorageA, 16, buffer.readu32(Hash, 16))
+	buffer.writeu32(StorageB, 16, buffer.readu32(Hash, 16))
+	buffer.writeu32(StorageA, 20, buffer.readu32(Hash, 20))
+	buffer.writeu32(StorageB, 20, buffer.readu32(Hash, 20))
+	buffer.writeu32(StorageA, 24, buffer.readu32(Hash, 24))
+	buffer.writeu32(StorageB, 24, buffer.readu32(Hash, 24))
+	buffer.writeu32(StorageA, 28, buffer.readu32(Hash, 28))
+	buffer.writeu32(StorageB, 28, buffer.readu32(Hash, 28))
 	local CounterLowA = Counter % 0x100000000
 	local CounterHighA = (Counter - CounterLowA) * (2 ^ -32)
 	local CounterLowB = (Counter + 1) % 0x100000000
@@ -427,10 +427,10 @@ local function CompressLanes(Hash: buffer, Message: buffer, Offset: number, Coun
 		local M13B = buffer.readu32(Message, Base + 1076)
 		local M14B = buffer.readu32(Message, Base + 1080)
 		local M15B = buffer.readu32(Message, Base + 1084)
-		local V00A, V01A, V02A, V03A, V04A, V05A, V06A, V07A = HA0, HA1, HA2, HA3, HA4, HA5, HA6, HA7
+		local V00A, V01A, V02A, V03A, V04A, V05A, V06A, V07A = buffer.readu32(StorageA, 0), buffer.readu32(StorageA, 4), buffer.readu32(StorageA, 8), buffer.readu32(StorageA, 12), buffer.readu32(StorageA, 16), buffer.readu32(StorageA, 20), buffer.readu32(StorageA, 24), buffer.readu32(StorageA, 28)
 		local V08A, V09A, V10A, V11A = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
 		local V12A, V13A, V14A, V15A = CounterLowA, CounterHighA, BLOCK_SIZE, BlockFlags
-		local V00B, V01B, V02B, V03B, V04B, V05B, V06B, V07B = HB0, HB1, HB2, HB3, HB4, HB5, HB6, HB7
+		local V00B, V01B, V02B, V03B, V04B, V05B, V06B, V07B = buffer.readu32(StorageB, 0), buffer.readu32(StorageB, 4), buffer.readu32(StorageB, 8), buffer.readu32(StorageB, 12), buffer.readu32(StorageB, 16), buffer.readu32(StorageB, 20), buffer.readu32(StorageB, 24), buffer.readu32(StorageB, 28)
 		local V08B, V09B, V10B, V11B = 0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a
 		local V12B, V13B, V14B, V15B = CounterLowB, CounterHighB, BLOCK_SIZE, BlockFlags
 		do
@@ -895,39 +895,23 @@ local function CompressLanes(Hash: buffer, Message: buffer, Offset: number, Coun
 			V03B = bit32.bor(bit32.bor(V03B + M13B, 0) + V04B, 0); V14B = bit32.lrotate(bit32.bxor(V14B, V03B), 24)
 			V09B = bit32.bor(V09B + V14B, 0); V04B = bit32.lrotate(bit32.bxor(V04B, V09B), 25)
 		end
-		HA0 = bit32.bxor(V00A, V08A)
-		HA1 = bit32.bxor(V01A, V09A)
-		HA2 = bit32.bxor(V02A, V10A)
-		HA3 = bit32.bxor(V03A, V11A)
-		HA4 = bit32.bxor(V04A, V12A)
-		HA5 = bit32.bxor(V05A, V13A)
-		HA6 = bit32.bxor(V06A, V14A)
-		HA7 = bit32.bxor(V07A, V15A)
-		HB0 = bit32.bxor(V00B, V08B)
-		HB1 = bit32.bxor(V01B, V09B)
-		HB2 = bit32.bxor(V02B, V10B)
-		HB3 = bit32.bxor(V03B, V11B)
-		HB4 = bit32.bxor(V04B, V12B)
-		HB5 = bit32.bxor(V05B, V13B)
-		HB6 = bit32.bxor(V06B, V14B)
-		HB7 = bit32.bxor(V07B, V15B)
+		buffer.writeu32(StorageA, 0, bit32.bxor(V00A, V08A))
+		buffer.writeu32(StorageA, 4, bit32.bxor(V01A, V09A))
+		buffer.writeu32(StorageA, 8, bit32.bxor(V02A, V10A))
+		buffer.writeu32(StorageA, 12, bit32.bxor(V03A, V11A))
+		buffer.writeu32(StorageA, 16, bit32.bxor(V04A, V12A))
+		buffer.writeu32(StorageA, 20, bit32.bxor(V05A, V13A))
+		buffer.writeu32(StorageA, 24, bit32.bxor(V06A, V14A))
+		buffer.writeu32(StorageA, 28, bit32.bxor(V07A, V15A))
+		buffer.writeu32(StorageB, 0, bit32.bxor(V00B, V08B))
+		buffer.writeu32(StorageB, 4, bit32.bxor(V01B, V09B))
+		buffer.writeu32(StorageB, 8, bit32.bxor(V02B, V10B))
+		buffer.writeu32(StorageB, 12, bit32.bxor(V03B, V11B))
+		buffer.writeu32(StorageB, 16, bit32.bxor(V04B, V12B))
+		buffer.writeu32(StorageB, 20, bit32.bxor(V05B, V13B))
+		buffer.writeu32(StorageB, 24, bit32.bxor(V06B, V14B))
+		buffer.writeu32(StorageB, 28, bit32.bxor(V07B, V15B))
 	end
-	buffer.writeu32(StorageA, 0, HA0)
-	buffer.writeu32(StorageA, 4, HA1)
-	buffer.writeu32(StorageA, 8, HA2)
-	buffer.writeu32(StorageA, 12, HA3)
-	buffer.writeu32(StorageA, 16, HA4)
-	buffer.writeu32(StorageA, 20, HA5)
-	buffer.writeu32(StorageA, 24, HA6)
-	buffer.writeu32(StorageA, 28, HA7)
-	buffer.writeu32(StorageB, 0, HB0)
-	buffer.writeu32(StorageB, 4, HB1)
-	buffer.writeu32(StorageB, 8, HB2)
-	buffer.writeu32(StorageB, 12, HB3)
-	buffer.writeu32(StorageB, 16, HB4)
-	buffer.writeu32(StorageB, 20, HB5)
-	buffer.writeu32(StorageB, 24, HB6)
-	buffer.writeu32(StorageB, 28, HB7)
 end
 
 local function OutputLanes(Cv: buffer, Block: buffer, Counter: number, BlockLength: number, Flags: number, Output: buffer, OutputOffset: number)

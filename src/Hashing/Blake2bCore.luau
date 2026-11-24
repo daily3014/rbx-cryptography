@@ -16,21 +16,14 @@ local CARRY = 2 ^ -32
 local STATE = buffer.create(64)
 local FINAL_BLOCK = buffer.create(BLOCK_SIZE_BYTES)
 
+local WORK = buffer.create(128)
+
 local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCount: number, StartCounter: number, Final: boolean)
-	local H0L, H0H = buffer.readu32(State, 0), buffer.readu32(State, 4)
-	local H1L, H1H = buffer.readu32(State, 8), buffer.readu32(State, 12)
-	local H2L, H2H = buffer.readu32(State, 16), buffer.readu32(State, 20)
-	local H3L, H3H = buffer.readu32(State, 24), buffer.readu32(State, 28)
-	local H4L, H4H = buffer.readu32(State, 32), buffer.readu32(State, 36)
-	local H5L, H5H = buffer.readu32(State, 40), buffer.readu32(State, 44)
-	local H6L, H6H = buffer.readu32(State, 48), buffer.readu32(State, 52)
-	local H7L, H7H = buffer.readu32(State, 56), buffer.readu32(State, 60)
+	local Work = WORK
 	local FinalMask = if Final then 0xFFFFFFFF else 0
 	for Block = 0, BlockCount - 1 do
 		local Position = Offset + Block * 128
-		local Counter = StartCounter + Block * 128
-		local CounterL = Counter % 0x100000000
-		local CounterH = (Counter - CounterL) * CARRY
+		do
 		local ML0, MH0 = buffer.readu32(Blocks, Position + 0), buffer.readu32(Blocks, Position + 4)
 		local ML1, MH1 = buffer.readu32(Blocks, Position + 8), buffer.readu32(Blocks, Position + 12)
 		local ML2, MH2 = buffer.readu32(Blocks, Position + 16), buffer.readu32(Blocks, Position + 20)
@@ -47,14 +40,17 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 		local ML13, MH13 = buffer.readu32(Blocks, Position + 104), buffer.readu32(Blocks, Position + 108)
 		local ML14, MH14 = buffer.readu32(Blocks, Position + 112), buffer.readu32(Blocks, Position + 116)
 		local ML15, MH15 = buffer.readu32(Blocks, Position + 120), buffer.readu32(Blocks, Position + 124)
-		local V00H, V00L = H0H, H0L
-		local V01H, V01L = H1H, H1L
-		local V02H, V02L = H2H, H2L
-		local V03H, V03L = H3H, H3L
-		local V04H, V04L = H4H, H4L
-		local V05H, V05L = H5H, H5L
-		local V06H, V06L = H6H, H6L
-		local V07H, V07L = H7H, H7L
+		local Counter = StartCounter + Block * 128
+		local CounterL = Counter % 0x100000000
+		local CounterH = (Counter - CounterL) * CARRY
+		local V00H, V00L = buffer.readu32(State, 4), buffer.readu32(State, 0)
+		local V01H, V01L = buffer.readu32(State, 12), buffer.readu32(State, 8)
+		local V02H, V02L = buffer.readu32(State, 20), buffer.readu32(State, 16)
+		local V03H, V03L = buffer.readu32(State, 28), buffer.readu32(State, 24)
+		local V04H, V04L = buffer.readu32(State, 36), buffer.readu32(State, 32)
+		local V05H, V05L = buffer.readu32(State, 44), buffer.readu32(State, 40)
+		local V06H, V06L = buffer.readu32(State, 52), buffer.readu32(State, 48)
+		local V07H, V07L = buffer.readu32(State, 60), buffer.readu32(State, 56)
 		local V08H, V08L = 0x6a09e667, 0xf3bcc908
 		local V09H, V09L = 0xbb67ae85, 0x84caa73b
 		local V10H, V10L = 0x3c6ef372, 0xfe94f82b
@@ -1563,7 +1559,57 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
+		buffer.writeu32(Work, 4, V00H); buffer.writeu32(Work, 0, V00L)
+		buffer.writeu32(Work, 12, V01H); buffer.writeu32(Work, 8, V01L)
+		buffer.writeu32(Work, 20, V02H); buffer.writeu32(Work, 16, V02L)
+		buffer.writeu32(Work, 28, V03H); buffer.writeu32(Work, 24, V03L)
+		buffer.writeu32(Work, 36, V04H); buffer.writeu32(Work, 32, V04L)
+		buffer.writeu32(Work, 44, V05H); buffer.writeu32(Work, 40, V05L)
+		buffer.writeu32(Work, 52, V06H); buffer.writeu32(Work, 48, V06L)
+		buffer.writeu32(Work, 60, V07H); buffer.writeu32(Work, 56, V07L)
+		buffer.writeu32(Work, 68, V08H); buffer.writeu32(Work, 64, V08L)
+		buffer.writeu32(Work, 76, V09H); buffer.writeu32(Work, 72, V09L)
+		buffer.writeu32(Work, 84, V10H); buffer.writeu32(Work, 80, V10L)
+		buffer.writeu32(Work, 92, V11H); buffer.writeu32(Work, 88, V11L)
+		buffer.writeu32(Work, 100, V12H); buffer.writeu32(Work, 96, V12L)
+		buffer.writeu32(Work, 108, V13H); buffer.writeu32(Work, 104, V13L)
+		buffer.writeu32(Work, 116, V14H); buffer.writeu32(Work, 112, V14L)
+		buffer.writeu32(Work, 124, V15H); buffer.writeu32(Work, 120, V15L)
+		end
 		if Position < 0 then break end
+		do
+		local ML0, MH0 = buffer.readu32(Blocks, Position + 0), buffer.readu32(Blocks, Position + 4)
+		local ML1, MH1 = buffer.readu32(Blocks, Position + 8), buffer.readu32(Blocks, Position + 12)
+		local ML2, MH2 = buffer.readu32(Blocks, Position + 16), buffer.readu32(Blocks, Position + 20)
+		local ML3, MH3 = buffer.readu32(Blocks, Position + 24), buffer.readu32(Blocks, Position + 28)
+		local ML4, MH4 = buffer.readu32(Blocks, Position + 32), buffer.readu32(Blocks, Position + 36)
+		local ML5, MH5 = buffer.readu32(Blocks, Position + 40), buffer.readu32(Blocks, Position + 44)
+		local ML6, MH6 = buffer.readu32(Blocks, Position + 48), buffer.readu32(Blocks, Position + 52)
+		local ML7, MH7 = buffer.readu32(Blocks, Position + 56), buffer.readu32(Blocks, Position + 60)
+		local ML8, MH8 = buffer.readu32(Blocks, Position + 64), buffer.readu32(Blocks, Position + 68)
+		local ML9, MH9 = buffer.readu32(Blocks, Position + 72), buffer.readu32(Blocks, Position + 76)
+		local ML10, MH10 = buffer.readu32(Blocks, Position + 80), buffer.readu32(Blocks, Position + 84)
+		local ML11, MH11 = buffer.readu32(Blocks, Position + 88), buffer.readu32(Blocks, Position + 92)
+		local ML12, MH12 = buffer.readu32(Blocks, Position + 96), buffer.readu32(Blocks, Position + 100)
+		local ML13, MH13 = buffer.readu32(Blocks, Position + 104), buffer.readu32(Blocks, Position + 108)
+		local ML14, MH14 = buffer.readu32(Blocks, Position + 112), buffer.readu32(Blocks, Position + 116)
+		local ML15, MH15 = buffer.readu32(Blocks, Position + 120), buffer.readu32(Blocks, Position + 124)
+		local V00H, V00L = buffer.readu32(Work, 4), buffer.readu32(Work, 0)
+		local V01H, V01L = buffer.readu32(Work, 12), buffer.readu32(Work, 8)
+		local V02H, V02L = buffer.readu32(Work, 20), buffer.readu32(Work, 16)
+		local V03H, V03L = buffer.readu32(Work, 28), buffer.readu32(Work, 24)
+		local V04H, V04L = buffer.readu32(Work, 36), buffer.readu32(Work, 32)
+		local V05H, V05L = buffer.readu32(Work, 44), buffer.readu32(Work, 40)
+		local V06H, V06L = buffer.readu32(Work, 52), buffer.readu32(Work, 48)
+		local V07H, V07L = buffer.readu32(Work, 60), buffer.readu32(Work, 56)
+		local V08H, V08L = buffer.readu32(Work, 68), buffer.readu32(Work, 64)
+		local V09H, V09L = buffer.readu32(Work, 76), buffer.readu32(Work, 72)
+		local V10H, V10L = buffer.readu32(Work, 84), buffer.readu32(Work, 80)
+		local V11H, V11L = buffer.readu32(Work, 92), buffer.readu32(Work, 88)
+		local V12H, V12L = buffer.readu32(Work, 100), buffer.readu32(Work, 96)
+		local V13H, V13L = buffer.readu32(Work, 108), buffer.readu32(Work, 104)
+		local V14H, V14L = buffer.readu32(Work, 116), buffer.readu32(Work, 112)
+		local V15H, V15L = buffer.readu32(Work, 124), buffer.readu32(Work, 120)
 		do
 			do
 			local S1 = bit32.bor(V00L + ML12, 0)
@@ -3064,31 +3110,24 @@ local function Compress(State: buffer, Blocks: buffer, Offset: number, BlockCoun
 			V04L = bit32.bor(bit32.lshift(XL63, 1), bit32.rshift(XH63, 31))
 			end
 		end
-		H0H = bit32.bxor(H0H, V00H, V08H)
-		H0L = bit32.bxor(H0L, V00L, V08L)
-		H1H = bit32.bxor(H1H, V01H, V09H)
-		H1L = bit32.bxor(H1L, V01L, V09L)
-		H2H = bit32.bxor(H2H, V02H, V10H)
-		H2L = bit32.bxor(H2L, V02L, V10L)
-		H3H = bit32.bxor(H3H, V03H, V11H)
-		H3L = bit32.bxor(H3L, V03L, V11L)
-		H4H = bit32.bxor(H4H, V04H, V12H)
-		H4L = bit32.bxor(H4L, V04L, V12L)
-		H5H = bit32.bxor(H5H, V05H, V13H)
-		H5L = bit32.bxor(H5L, V05L, V13L)
-		H6H = bit32.bxor(H6H, V06H, V14H)
-		H6L = bit32.bxor(H6L, V06L, V14L)
-		H7H = bit32.bxor(H7H, V07H, V15H)
-		H7L = bit32.bxor(H7L, V07L, V15L)
+		buffer.writeu32(State, 4, bit32.bxor(buffer.readu32(State, 4), V00H, V08H))
+		buffer.writeu32(State, 0, bit32.bxor(buffer.readu32(State, 0), V00L, V08L))
+		buffer.writeu32(State, 12, bit32.bxor(buffer.readu32(State, 12), V01H, V09H))
+		buffer.writeu32(State, 8, bit32.bxor(buffer.readu32(State, 8), V01L, V09L))
+		buffer.writeu32(State, 20, bit32.bxor(buffer.readu32(State, 20), V02H, V10H))
+		buffer.writeu32(State, 16, bit32.bxor(buffer.readu32(State, 16), V02L, V10L))
+		buffer.writeu32(State, 28, bit32.bxor(buffer.readu32(State, 28), V03H, V11H))
+		buffer.writeu32(State, 24, bit32.bxor(buffer.readu32(State, 24), V03L, V11L))
+		buffer.writeu32(State, 36, bit32.bxor(buffer.readu32(State, 36), V04H, V12H))
+		buffer.writeu32(State, 32, bit32.bxor(buffer.readu32(State, 32), V04L, V12L))
+		buffer.writeu32(State, 44, bit32.bxor(buffer.readu32(State, 44), V05H, V13H))
+		buffer.writeu32(State, 40, bit32.bxor(buffer.readu32(State, 40), V05L, V13L))
+		buffer.writeu32(State, 52, bit32.bxor(buffer.readu32(State, 52), V06H, V14H))
+		buffer.writeu32(State, 48, bit32.bxor(buffer.readu32(State, 48), V06L, V14L))
+		buffer.writeu32(State, 60, bit32.bxor(buffer.readu32(State, 60), V07H, V15H))
+		buffer.writeu32(State, 56, bit32.bxor(buffer.readu32(State, 56), V07L, V15L))
+		end
 	end
-	buffer.writeu32(State, 0, H0L); buffer.writeu32(State, 4, H0H)
-	buffer.writeu32(State, 8, H1L); buffer.writeu32(State, 12, H1H)
-	buffer.writeu32(State, 16, H2L); buffer.writeu32(State, 20, H2H)
-	buffer.writeu32(State, 24, H3L); buffer.writeu32(State, 28, H3H)
-	buffer.writeu32(State, 32, H4L); buffer.writeu32(State, 36, H4H)
-	buffer.writeu32(State, 40, H5L); buffer.writeu32(State, 44, H5H)
-	buffer.writeu32(State, 48, H6L); buffer.writeu32(State, 52, H6H)
-	buffer.writeu32(State, 56, H7L); buffer.writeu32(State, 60, H7H)
 end
 
 local function HashDigest(InputData: buffer, OutputLength: number, KeyData: buffer?): buffer
