@@ -3663,7 +3663,629 @@ local function Keccak(StateA: buffer, StateB: buffer, Input: buffer, Offset: num
 	end
 end
 
+local function ExtractLanes21(StateA: buffer, StateB: buffer, Output: buffer, OutputOffset: number)
+	do
+		local A, B = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset, Lo)
+		buffer.writeu32(Output, OutputOffset + 4, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 4), buffer.readu32(StateB, 4)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 8, Lo)
+		buffer.writeu32(Output, OutputOffset + 12, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 8), buffer.readu32(StateB, 8)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 16, Lo)
+		buffer.writeu32(Output, OutputOffset + 20, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 24, Lo)
+		buffer.writeu32(Output, OutputOffset + 28, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 32, Lo)
+		buffer.writeu32(Output, OutputOffset + 36, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 40, Lo)
+		buffer.writeu32(Output, OutputOffset + 44, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 48, Lo)
+		buffer.writeu32(Output, OutputOffset + 52, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 56, Lo)
+		buffer.writeu32(Output, OutputOffset + 60, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 32), buffer.readu32(StateB, 32)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 64, Lo)
+		buffer.writeu32(Output, OutputOffset + 68, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 72, Lo)
+		buffer.writeu32(Output, OutputOffset + 76, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 80, Lo)
+		buffer.writeu32(Output, OutputOffset + 84, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 88, Lo)
+		buffer.writeu32(Output, OutputOffset + 92, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 48), buffer.readu32(StateB, 48)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 96, Lo)
+		buffer.writeu32(Output, OutputOffset + 100, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 104, Lo)
+		buffer.writeu32(Output, OutputOffset + 108, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 112, Lo)
+		buffer.writeu32(Output, OutputOffset + 116, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 120, Lo)
+		buffer.writeu32(Output, OutputOffset + 124, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 128, Lo)
+		buffer.writeu32(Output, OutputOffset + 132, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 68), buffer.readu32(StateB, 68)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 136, Lo)
+		buffer.writeu32(Output, OutputOffset + 140, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 72), buffer.readu32(StateB, 72)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 144, Lo)
+		buffer.writeu32(Output, OutputOffset + 148, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 76), buffer.readu32(StateB, 76)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 152, Lo)
+		buffer.writeu32(Output, OutputOffset + 156, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 80), buffer.readu32(StateB, 80)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 160, Lo)
+		buffer.writeu32(Output, OutputOffset + 164, Hi)
+	end
+end
+
+local function ExtractLanes17(StateA: buffer, StateB: buffer, Output: buffer, OutputOffset: number)
+	do
+		local A, B = buffer.readu32(StateA, 0), buffer.readu32(StateB, 0)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset, Lo)
+		buffer.writeu32(Output, OutputOffset + 4, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 4), buffer.readu32(StateB, 4)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 8, Lo)
+		buffer.writeu32(Output, OutputOffset + 12, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 8), buffer.readu32(StateB, 8)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 16, Lo)
+		buffer.writeu32(Output, OutputOffset + 20, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 12), buffer.readu32(StateB, 12)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 24, Lo)
+		buffer.writeu32(Output, OutputOffset + 28, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 16), buffer.readu32(StateB, 16)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 32, Lo)
+		buffer.writeu32(Output, OutputOffset + 36, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 20), buffer.readu32(StateB, 20)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 40, Lo)
+		buffer.writeu32(Output, OutputOffset + 44, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 24), buffer.readu32(StateB, 24)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 48, Lo)
+		buffer.writeu32(Output, OutputOffset + 52, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 28), buffer.readu32(StateB, 28)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 56, Lo)
+		buffer.writeu32(Output, OutputOffset + 60, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 32), buffer.readu32(StateB, 32)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 64, Lo)
+		buffer.writeu32(Output, OutputOffset + 68, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 36), buffer.readu32(StateB, 36)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 72, Lo)
+		buffer.writeu32(Output, OutputOffset + 76, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 40), buffer.readu32(StateB, 40)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 80, Lo)
+		buffer.writeu32(Output, OutputOffset + 84, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 44), buffer.readu32(StateB, 44)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 88, Lo)
+		buffer.writeu32(Output, OutputOffset + 92, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 48), buffer.readu32(StateB, 48)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 96, Lo)
+		buffer.writeu32(Output, OutputOffset + 100, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 52), buffer.readu32(StateB, 52)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 104, Lo)
+		buffer.writeu32(Output, OutputOffset + 108, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 56), buffer.readu32(StateB, 56)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 112, Lo)
+		buffer.writeu32(Output, OutputOffset + 116, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 60), buffer.readu32(StateB, 60)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 120, Lo)
+		buffer.writeu32(Output, OutputOffset + 124, Hi)
+	end
+	do
+		local A, B = buffer.readu32(StateA, 64), buffer.readu32(StateB, 64)
+		local Lo = bit32.bor(bit32.band(A, 0xFFFF), bit32.lshift(B, 16))
+		local Hi = bit32.bor(bit32.rshift(A, 16), bit32.band(B, 0xFFFF0000))
+		local T
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+		T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+		buffer.writeu32(Output, OutputOffset + 128, Lo)
+		buffer.writeu32(Output, OutputOffset + 132, Hi)
+	end
+end
+
 local function Extract(StateA: buffer, StateB: buffer, Output: buffer, OutputOffset: number, ByteCount: number)
+	if ByteCount == 168 then
+		ExtractLanes21(StateA, StateB, Output, OutputOffset)
+		return
+	elseif ByteCount == 136 then
+		ExtractLanes17(StateA, StateB, Output, OutputOffset)
+		return
+	end
+
 	local FullLanes = ByteCount // 8
 	for Lane = 0, FullLanes - 1 do
 		local A, B = buffer.readu32(StateA, Lane * 4), buffer.readu32(StateB, Lane * 4)

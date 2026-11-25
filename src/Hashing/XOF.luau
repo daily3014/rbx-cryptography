@@ -23,165 +23,176 @@ local Keccak = SHA3.Keccak_Internal
 local Permute = SHA3.Permute_Internal
 local Extract = SHA3.Extract_Internal
 
-local RATE_128 = 168
-local RATE_256 = 136
+type Stream = {
+	StateA: buffer,
+	StateB: buffer,
+	Block: buffer,
+	Padded: buffer,
+	Rate: number,
+	Name: string,
+	CanAbsorb: boolean,
+	HasUnreadState: boolean,
+	SqueezeOffset: number,
+}
 
-local StateA128 = buffer.create(100)
-local StateB128 = buffer.create(100)
-local Block128 = buffer.create(RATE_128)
-local SqueezeOffset128 = 0
-local Fresh128 = false
+local function NewStream(Rate: number, Name: string): Stream
+	return {
+		StateA = buffer.create(100),
+		StateB = buffer.create(100),
+		Block = buffer.create(Rate),
+		Padded = buffer.create(Rate),
+		Rate = Rate,
+		Name = Name,
+		CanAbsorb = false,
+		HasUnreadState = false,
+		SqueezeOffset = Rate,
+	}
+end
 
-local StateA256 = buffer.create(100)
-local StateB256 = buffer.create(100)
-local Block256 = buffer.create(RATE_256)
-local SqueezeOffset256 = 0
-local Fresh256 = false
+local STREAM_128 = NewStream(168, "128")
+local STREAM_256 = NewStream(136, "256")
 
-local PaddedBuffer128 = buffer.create(RATE_128)
-local PaddedBuffer256 = buffer.create(RATE_256)
+local function Reset(Stream: Stream)
+	Stream.CanAbsorb = true
+	Stream.HasUnreadState = false
+	Stream.SqueezeOffset = Stream.Rate
+end
+
+local function AbsorbShort(Stream: Stream, Message: buffer, Length: number)
+	local StateA, StateB = Stream.StateA, Stream.StateB
+	local Padded = Stream.Padded
+	local Rate = Stream.Rate
+	local Lanes = bit32.rshift(Length, 3) + 1
+	local LastLane = Rate / 8 - 1
+
+	buffer.fill(StateA, 0, 0, 100)
+	buffer.fill(StateB, 0, 0, 100)
+	buffer.fill(Padded, 0, 0, Lanes * 8)
+	buffer.fill(Padded, Rate - 8, 0, 8)
+	buffer.copy(Padded, 0, Message, 0, Length)
+	buffer.writeu8(Padded, Length, 0x1F)
+	buffer.writeu8(Padded, Rate - 1, bit32.bor(buffer.readu8(Padded, Rate - 1), 0x80))
+
+	for Lane = 0, LastLane do
+		if Lane < Lanes or Lane == LastLane then
+			local Lo, Hi = buffer.readu32(Padded, Lane * 8), buffer.readu32(Padded, Lane * 8 + 4)
+			local T: number
+			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 1)), 0x22222222); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 1))
+			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 2)), 0x0C0C0C0C); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 2))
+			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 4)), 0x00F000F0); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 4))
+			T = bit32.band(bit32.bxor(Lo, bit32.rshift(Lo, 8)), 0x0000FF00); Lo = bit32.bxor(Lo, T, bit32.lshift(T, 8))
+			T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 1)), 0x22222222); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 1))
+			T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 2)), 0x0C0C0C0C); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 2))
+			T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 4)), 0x00F000F0); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 4))
+			T = bit32.band(bit32.bxor(Hi, bit32.rshift(Hi, 8)), 0x0000FF00); Hi = bit32.bxor(Hi, T, bit32.lshift(T, 8))
+			buffer.writeu32(StateA, Lane * 4, bit32.bor(bit32.band(Lo, 0xFFFF), bit32.lshift(Hi, 16)))
+			buffer.writeu32(StateB, Lane * 4, bit32.bor(bit32.rshift(Lo, 16), bit32.band(Hi, 0xFFFF0000)))
+		end
+	end
+
+	Permute(StateA, StateB)
+end
+
+local function AbsorbLong(Stream: Stream, Message: buffer, Length: number)
+	local Rate = Stream.Rate
+	local TailLength = Length % Rate
+	local FullBytes = Length - TailLength
+	Keccak(Stream.StateA, Stream.StateB, Message, 0, FullBytes, Rate, true)
+
+	local Padded = Stream.Padded
+	buffer.fill(Padded, 0, 0, Rate)
+	buffer.copy(Padded, 0, Message, FullBytes, TailLength)
+	buffer.writeu8(Padded, TailLength, 0x1F)
+	buffer.writeu8(Padded, Rate - 1, bit32.bor(buffer.readu8(Padded, Rate - 1), 0x80))
+	Keccak(Stream.StateA, Stream.StateB, Padded, 0, Rate, Rate, false)
+end
+
+local function Absorb(Stream: Stream, Message: buffer)
+	if not Stream.CanAbsorb then
+		error(`Absorb{Stream.Name} must be called exactly once after Reset{Stream.Name}`, 3)
+	end
+
+	local Length = buffer.len(Message)
+	if Length < Stream.Rate then
+		AbsorbShort(Stream, Message, Length)
+	else
+		AbsorbLong(Stream, Message, Length)
+	end
+
+	Stream.CanAbsorb = false
+	Stream.HasUnreadState = true
+	Stream.SqueezeOffset = Stream.Rate
+end
+
+local function SqueezeInto(Stream: Stream, Output: buffer, OutputBytes: number, OutputOffset: number)
+	local StateA, StateB = Stream.StateA, Stream.StateB
+	local Block = Stream.Block
+	local Rate = Stream.Rate
+	local SqueezeOffset = Stream.SqueezeOffset
+	local Written = 0
+
+	while Written < OutputBytes do
+		if SqueezeOffset >= Rate then
+			if Stream.HasUnreadState then
+				Stream.HasUnreadState = false
+			else
+				Permute(StateA, StateB)
+			end
+
+			if OutputBytes - Written >= Rate then
+				Extract(StateA, StateB, Output, OutputOffset + Written, Rate)
+				Written += Rate
+				continue
+			end
+
+			Extract(StateA, StateB, Block, 0, Rate)
+			SqueezeOffset = 0
+		end
+
+		local BytesThisRound = math.min(Rate - SqueezeOffset, OutputBytes - Written)
+		buffer.copy(Output, OutputOffset + Written, Block, SqueezeOffset, BytesThisRound)
+		Written += BytesThisRound
+		SqueezeOffset += BytesThisRound
+	end
+
+	Stream.SqueezeOffset = SqueezeOffset
+end
 
 local XOF = {}
 
 function XOF.Reset128()
-	buffer.fill(StateA128, 0, 0, 100)
-	buffer.fill(StateB128, 0, 0, 100)
-	SqueezeOffset128 = 0
-	Fresh128 = true
+	Reset(STREAM_128)
 end
 
 function XOF.Reset256()
-	buffer.fill(StateA256, 0, 0, 100)
-	buffer.fill(StateB256, 0, 0, 100)
-	SqueezeOffset256 = 0
-	Fresh256 = true
+	Reset(STREAM_256)
 end
 
 function XOF.Absorb128(Message: buffer)
-	if not Fresh128 then
-		error("Absorb128 must be called exactly once after Reset128", 2)
-	end
-
-	local MessageLength = buffer.len(Message)
-	local RateBytes = RATE_128
-	local TailLength = MessageLength % RateBytes
-	local FullBytes = MessageLength - TailLength
-
-	if FullBytes > 0 then
-		Keccak(StateA128, StateB128, Message, 0, FullBytes, RateBytes, true)
-	end
-
-	local PaddedMessage = PaddedBuffer128
-	buffer.fill(PaddedMessage, 0, 0, RateBytes)
-
-	if TailLength > 0 then
-		buffer.copy(PaddedMessage, 0, Message, FullBytes, TailLength)
-	end
-
-	if RateBytes - TailLength == 1 then
-		buffer.writeu8(PaddedMessage, TailLength, 0x9F)
-	else
-		buffer.writeu8(PaddedMessage, TailLength, 0x1F)
-		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
-	end
-
-	Keccak(StateA128, StateB128, PaddedMessage, 0, RateBytes, RateBytes, FullBytes == 0)
-	Fresh128 = false
-	SqueezeOffset128 = 0
-	Extract(StateA128, StateB128, Block128, 0, RateBytes)
+	Absorb(STREAM_128, Message)
 end
-
 
 function XOF.Absorb256(Message: buffer)
-	if not Fresh256 then
-		error("Absorb256 must be called exactly once after Reset256", 2)
-	end
-
-	local MessageLength = buffer.len(Message)
-	local RateBytes = RATE_256
-	local TailLength = MessageLength % RateBytes
-	local FullBytes = MessageLength - TailLength
-
-	if FullBytes > 0 then
-		Keccak(StateA256, StateB256, Message, 0, FullBytes, RateBytes, true)
-	end
-
-	local PaddedMessage = PaddedBuffer256
-	buffer.fill(PaddedMessage, 0, 0, RateBytes)
-
-	if TailLength > 0 then
-		buffer.copy(PaddedMessage, 0, Message, FullBytes, TailLength)
-	end
-
-	if RateBytes - TailLength == 1 then
-		buffer.writeu8(PaddedMessage, TailLength, 0x9F)
-	else
-		buffer.writeu8(PaddedMessage, TailLength, 0x1F)
-		buffer.writeu8(PaddedMessage, RateBytes - 1, 0x80)
-	end
-
-	Keccak(StateA256, StateB256, PaddedMessage, 0, RateBytes, RateBytes, FullBytes == 0)
-	Fresh256 = false
-	SqueezeOffset256 = 0
-	Extract(StateA256, StateB256, Block256, 0, RateBytes)
+	Absorb(STREAM_256, Message)
 end
 
-
 function XOF.Squeeze128Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
-	local OutOffset = OutputOffset or 0
-	local SqueezeOffset = SqueezeOffset128
-	local Block = Block128
-
-	local Written = 0
-	while Written < OutputBytes do
-		if SqueezeOffset >= RATE_128 then
-			Permute(StateA128, StateB128)
-			Extract(StateA128, StateB128, Block, 0, RATE_128)
-			SqueezeOffset = 0
-		end
-
-		local BytesThisRound = math.min(RATE_128 - SqueezeOffset, OutputBytes - Written)
-		buffer.copy(Output, OutOffset + Written, Block, SqueezeOffset, BytesThisRound)
-
-		Written += BytesThisRound
-		SqueezeOffset += BytesThisRound
-	end
-
-	SqueezeOffset128 = SqueezeOffset
+	SqueezeInto(STREAM_128, Output, OutputBytes, OutputOffset or 0)
 end
 
 function XOF.Squeeze128(OutputBytes: number): buffer
 	local Output = buffer.create(OutputBytes)
-	XOF.Squeeze128Into(Output, OutputBytes, 0)
+	SqueezeInto(STREAM_128, Output, OutputBytes, 0)
 	return Output
 end
 
 function XOF.Squeeze256Into(Output: buffer, OutputBytes: number, OutputOffset: number?)
-	local OutOffset = OutputOffset or 0
-	local SqueezeOffset = SqueezeOffset256
-	local Block = Block256
-
-	local Written = 0
-	while Written < OutputBytes do
-		if SqueezeOffset >= RATE_256 then
-			Permute(StateA256, StateB256)
-			Extract(StateA256, StateB256, Block, 0, RATE_256)
-			SqueezeOffset = 0
-		end
-
-		local BytesThisRound = math.min(RATE_256 - SqueezeOffset, OutputBytes - Written)
-		buffer.copy(Output, OutOffset + Written, Block, SqueezeOffset, BytesThisRound)
-
-		Written += BytesThisRound
-		SqueezeOffset += BytesThisRound
-	end
-
-	SqueezeOffset256 = SqueezeOffset
+	SqueezeInto(STREAM_256, Output, OutputBytes, OutputOffset or 0)
 end
 
 function XOF.Squeeze256(OutputBytes: number): buffer
 	local Output = buffer.create(OutputBytes)
-	XOF.Squeeze256Into(Output, OutputBytes, 0)
+	SqueezeInto(STREAM_256, Output, OutputBytes, 0)
 	return Output
 end
 
