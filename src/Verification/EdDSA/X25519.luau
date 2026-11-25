@@ -30,7 +30,9 @@
 --!native
 
 local FieldPrime = require("./FieldPrime")
+local FieldQuadratic = require("./FieldQuadratic")
 local Curve25519 = require("./Curve25519")
+local Edwards25519 = require("./Edwards25519")
 local CtIsAllZero = require("../../Utilities/Functions").CtIsAllZero
 
 local COORD_SIZE = 104
@@ -101,7 +103,18 @@ function X25519.PublicKey(SecretKey: buffer): buffer
 		error(`SecretKey must be exactly {X25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
 	end
 
-	return ScalarMult(SecretKey, Curve25519.G)
+	local Scalar = FieldQuadratic.DecodeClamped(SecretKey)
+	local ScalarBits, BitCount = FieldQuadratic.Bits(Scalar)
+	local Point = Edwards25519.MulG(ScalarBits, BitCount)
+
+	local Y = buffer.create(COORD_SIZE)
+	local Z = buffer.create(COORD_SIZE)
+	buffer.copy(Y, 0, Point, COORD_SIZE, COORD_SIZE)
+	buffer.copy(Z, 0, Point, 2 * COORD_SIZE, COORD_SIZE)
+
+	local Numerator = FieldPrime.Add(Z, Y)
+	local Denominator = FieldPrime.Sub(Z, Y)
+	return FieldPrime.Encode(FieldPrime.Mul(Numerator, FieldPrime.Invert(Denominator)))
 end
 
 function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer

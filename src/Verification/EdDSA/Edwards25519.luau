@@ -1370,7 +1370,7 @@ function Edwards25519.WindowedNAFTable(BasePoint: buffer, WindowWidth: number): 
 	local PointSize = POINT_SIZE
 	local CoordSize = COORD_SIZE
 	local CurveK = CURVE_K
-	local MaxOddMultiples = 2 ^ WindowWidth
+	local MaxOddMultiples = 2 ^ (WindowWidth - 1)
 
 	Edwards25519.Double(BasePoint, NAF_TABLE_DOUBLED)
 
@@ -1494,11 +1494,14 @@ function Edwards25519.MulG(ScalarBits: buffer, ScalarBitCount: number): buffer
 	return Output
 end
 
-function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
+function Edwards25519.MulTable(BasePoint: buffer): buffer
+	return Edwards25519.WindowedNAFTable(BasePoint, 5)
+end
+
+function Edwards25519.MulWithTable(MultipleTable: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	local PointSize = POINT_SIZE
 
 	local NAFForm, NAFLength = Edwards25519.WindowedNAF(ScalarBits, ScalarBitCount, 5)
-	local MultipleTable = Edwards25519.WindowedNAFTable(BasePoint, 5)
 
 	local ResultPoint = MUL_RESULT_POINT
 	buffer.copy(ResultPoint, 0, IDENTITY_O, 0, PointSize)
@@ -1522,6 +1525,10 @@ function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount:
 	local Output = buffer.create(PointSize)
 	buffer.copy(Output, 0, ResultPoint, 0, PointSize)
 	return Output
+end
+
+function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
+	return Edwards25519.MulWithTable(Edwards25519.MulTable(BasePoint), ScalarBits, ScalarBitCount)
 end
 
 return Edwards25519

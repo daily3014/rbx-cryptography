@@ -28,6 +28,13 @@ local ED25519_SIGNATURE_SIZE = 64
 
 local SIGN_KEYS = buffer.create(65)
 
+type VerifyKey = {
+	PublicKey: buffer,
+	Table: buffer,
+}
+
+local VERIFY_KEY: VerifyKey? = nil
+
 local SMALL_ORDER = buffer.create(160) do
 	local Words = {
 		0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -231,13 +238,24 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 		return false
 	end
 
-	if IsSmallOrder(PublicKey) then
-		return false
-	end
+	local Known = VERIFY_KEY
+	if not (Known and Differs(PublicKey, 0, Known.PublicKey, 0) == 0) then
+		if IsSmallOrder(PublicKey) then
+			return false
+		end
 
-	local PublicPoint = Edwards25519.Decode(PublicKey)
-	if not PublicPoint then
-		return false
+		local Decoded = Edwards25519.Decode(PublicKey)
+		if not Decoded then
+			return false
+		end
+
+		local Copy = buffer.create(32)
+		buffer.copy(Copy, 0, PublicKey, 0, 32)
+		Known = {
+			PublicKey = Copy,
+			Table = Edwards25519.MulTable(Decoded),
+		}
+		VERIFY_KEY = Known
 	end
 
 	local CommitmentPoint = Edwards25519.Decode(CommitmentBytes)
@@ -254,7 +272,7 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	local SB = Edwards25519.MulG(ResponseBits, ResponseBitCount)
 
 	local ChallengeBits, ChallengeBitCount = FieldQuadratic.Bits(ChallengeScalar)
-	local KA = Edwards25519.Mul(PublicPoint, ChallengeBits, ChallengeBitCount)
+	local KA = Edwards25519.MulWithTable((Known :: VerifyKey).Table, ChallengeBits, ChallengeBitCount)
 
 	local KANiels = Edwards25519.Niels(KA)
 	local RKA = Edwards25519.Add(CommitmentPoint, KANiels)
@@ -275,6 +293,11 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	local TIsZero = FieldPrime.Eqz(DifferenceT)
 
 	return XIsZero and TIsZero
+end
+
+function EDDSA.ClearCaches()
+	buffer.fill(SIGN_KEYS, 0, 0)
+	VERIFY_KEY = nil
 end
 
 return EDDSA
