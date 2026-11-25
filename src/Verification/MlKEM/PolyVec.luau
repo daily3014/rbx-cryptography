@@ -16,13 +16,6 @@ local POLY_SIZE = 512
 
 local PolyVec = {}
 
-function PolyVec.MatVecMultiplyAccumulate(A: buffer, B: buffer, C: buffer, K: number)
-	local DotAccumulate = Ntt.DotAccumulate
-	for Row = 0, K - 1 do
-		DotAccumulate(A, Row * K * POLY_SIZE, B, 0, K, C, Row * POLY_SIZE)
-	end
-end
-
 function PolyVec.VecNtt(Vec: buffer, K: number)
 	local NttAt = Ntt.NttAt
 	for I = 0, K - 1 do

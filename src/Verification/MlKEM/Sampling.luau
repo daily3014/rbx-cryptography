@@ -37,66 +37,98 @@ local MATRIX_CACHE_RHO = { buffer.create(32), buffer.create(32) }
 local MATRIX_CACHE_K = { 0, 0 }
 local MATRIX_CACHE_VALUE = {} :: { buffer }
 
-local CBD2_LUT = buffer.create(256 * 4) do
-	for B = 0, 255 do
-		local T0 = bit32.band(B, 0x55)
-		local T1 = bit32.band(bit32.rshift(B, 1), 0x55)
-		local T2 = T0 + T1
-
-		local A0 = bit32.band(T2, 0x3)
-		local Bm0 = bit32.band(bit32.rshift(T2, 2), 0x3)
-		local A1 = bit32.band(bit32.rshift(T2, 4), 0x3)
-		local Bm1 = bit32.band(bit32.rshift(T2, 6), 0x3)
-
-		local C0 = (A0 - Bm0) % Q
-		local C1 = (A1 - Bm1) % Q
-
-		buffer.writeu32(CBD2_LUT, B * 4, C0 + bit32.lshift(C1, 16))
-	end
-end
-
 local function SamplePolyCbd2(Prf: buffer, Poly: buffer, BaseOffset: number)
-	local Lut = CBD2_LUT
-
-	for I = 0, 127 do
-		buffer.writeu32(Poly, BaseOffset + I * 4, buffer.readu32(Lut, buffer.readu8(Prf, I) * 4))
-	end
-end
-
-local CBD3_LUT = buffer.create(4096 * 4) do
-	local Mask = 0x249
-	for V = 0, 4095 do
-		local T3 = bit32.band(V, Mask) + bit32.band(bit32.rshift(V, 1), Mask) + bit32.band(bit32.rshift(V, 2), Mask)
-
-		local A0 = bit32.band(T3, 0x7)
-		local B0 = bit32.band(bit32.rshift(T3, 3), 0x7)
-		local A1 = bit32.band(bit32.rshift(T3, 6), 0x7)
-		local B1 = bit32.band(bit32.rshift(T3, 9), 0x7)
-
-		local C0 = (A0 - B0) % Q
-		local C1 = (A1 - B1) % Q
-
-		buffer.writeu32(CBD3_LUT, V * 4, C0 + bit32.lshift(C1, 16))
+	local Modulus = Q
+	for In = 0, 124, 4 do
+		local Word = buffer.readu32(Prf, In)
+		local Counts = bit32.bor(bit32.band(Word, 0x55555555) + bit32.band(bit32.rshift(Word, 1), 0x55555555), 0)
+		local Out = BaseOffset + In * 4
+		do
+			local Low = bit32.band(Counts, 3) - bit32.band(bit32.rshift(Counts, 2), 3)
+			local High = bit32.band(bit32.rshift(Counts, 4), 3) - bit32.band(bit32.rshift(Counts, 6), 3)
+			buffer.writeu32(Poly, Out, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+		end
+		do
+			local Low = bit32.band(bit32.rshift(Counts, 8), 3) - bit32.band(bit32.rshift(Counts, 10), 3)
+			local High = bit32.band(bit32.rshift(Counts, 12), 3) - bit32.band(bit32.rshift(Counts, 14), 3)
+			buffer.writeu32(Poly, Out + 4, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+		end
+		do
+			local Low = bit32.band(bit32.rshift(Counts, 16), 3) - bit32.band(bit32.rshift(Counts, 18), 3)
+			local High = bit32.band(bit32.rshift(Counts, 20), 3) - bit32.band(bit32.rshift(Counts, 22), 3)
+			buffer.writeu32(Poly, Out + 8, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+		end
+		do
+			local Low = bit32.band(bit32.rshift(Counts, 24), 3) - bit32.band(bit32.rshift(Counts, 26), 3)
+			local High = bit32.band(bit32.rshift(Counts, 28), 3) - bit32.band(bit32.rshift(Counts, 30), 3)
+			buffer.writeu32(Poly, Out + 12, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+		end
 	end
 end
 
 local function SamplePolyCbd3(Prf: buffer, Poly: buffer, BaseOffset: number)
-	local Lut = CBD3_LUT
-
-	for I = 0, 63 do
-		local ByteOffset = I * 3
-		local PolyOffset = BaseOffset + I * 8
-
-		local B0 = buffer.readu8(Prf, ByteOffset)
-		local B1 = buffer.readu8(Prf, ByteOffset + 1)
-		local B2 = buffer.readu8(Prf, ByteOffset + 2)
-		local Word = bit32.bor(B0, bit32.lshift(B1, 8), bit32.lshift(B2, 16))
-
-		local Lo = bit32.band(Word, 0xFFF)
-		local Hi = bit32.rshift(Word, 12)
-
-		buffer.writeu32(Poly, PolyOffset, buffer.readu32(Lut, Lo * 4))
-		buffer.writeu32(Poly, PolyOffset + 4, buffer.readu32(Lut, Hi * 4))
+	local Modulus = Q
+	for In = 0, 180, 12 do
+		local W0 = buffer.readu32(Prf, In)
+		local W1 = buffer.readu32(Prf, In + 4)
+		local W2 = buffer.readu32(Prf, In + 8)
+		local Out = BaseOffset + In * 8 / 3
+		do
+			local Bits = bit32.band(W0, 0xFFFFFF)
+			local Counts = bit32.bor(bit32.bor(bit32.band(Bits, 0x249249) + bit32.band(bit32.rshift(Bits, 1), 0x249249), 0) + bit32.band(bit32.rshift(Bits, 2), 0x249249), 0)
+			do
+				local Low = bit32.band(Counts, 7) - bit32.band(bit32.rshift(Counts, 3), 7)
+				local High = bit32.band(bit32.rshift(Counts, 6), 7) - bit32.band(bit32.rshift(Counts, 9), 7)
+				buffer.writeu32(Poly, Out, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+			do
+				local Low = bit32.band(bit32.rshift(Counts, 12), 7) - bit32.band(bit32.rshift(Counts, 15), 7)
+				local High = bit32.band(bit32.rshift(Counts, 18), 7) - bit32.band(bit32.rshift(Counts, 21), 7)
+				buffer.writeu32(Poly, Out + 4, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+		end
+		do
+			local Bits = bit32.bor(bit32.rshift(W0, 24), bit32.lshift(bit32.band(W1, 0xFFFF), 8))
+			local Counts = bit32.bor(bit32.bor(bit32.band(Bits, 0x249249) + bit32.band(bit32.rshift(Bits, 1), 0x249249), 0) + bit32.band(bit32.rshift(Bits, 2), 0x249249), 0)
+			do
+				local Low = bit32.band(Counts, 7) - bit32.band(bit32.rshift(Counts, 3), 7)
+				local High = bit32.band(bit32.rshift(Counts, 6), 7) - bit32.band(bit32.rshift(Counts, 9), 7)
+				buffer.writeu32(Poly, Out + 8, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+			do
+				local Low = bit32.band(bit32.rshift(Counts, 12), 7) - bit32.band(bit32.rshift(Counts, 15), 7)
+				local High = bit32.band(bit32.rshift(Counts, 18), 7) - bit32.band(bit32.rshift(Counts, 21), 7)
+				buffer.writeu32(Poly, Out + 12, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+		end
+		do
+			local Bits = bit32.bor(bit32.rshift(W1, 16), bit32.lshift(bit32.band(W2, 0xFF), 16))
+			local Counts = bit32.bor(bit32.bor(bit32.band(Bits, 0x249249) + bit32.band(bit32.rshift(Bits, 1), 0x249249), 0) + bit32.band(bit32.rshift(Bits, 2), 0x249249), 0)
+			do
+				local Low = bit32.band(Counts, 7) - bit32.band(bit32.rshift(Counts, 3), 7)
+				local High = bit32.band(bit32.rshift(Counts, 6), 7) - bit32.band(bit32.rshift(Counts, 9), 7)
+				buffer.writeu32(Poly, Out + 16, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+			do
+				local Low = bit32.band(bit32.rshift(Counts, 12), 7) - bit32.band(bit32.rshift(Counts, 15), 7)
+				local High = bit32.band(bit32.rshift(Counts, 18), 7) - bit32.band(bit32.rshift(Counts, 21), 7)
+				buffer.writeu32(Poly, Out + 20, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+		end
+		do
+			local Bits = bit32.rshift(W2, 8)
+			local Counts = bit32.bor(bit32.bor(bit32.band(Bits, 0x249249) + bit32.band(bit32.rshift(Bits, 1), 0x249249), 0) + bit32.band(bit32.rshift(Bits, 2), 0x249249), 0)
+			do
+				local Low = bit32.band(Counts, 7) - bit32.band(bit32.rshift(Counts, 3), 7)
+				local High = bit32.band(bit32.rshift(Counts, 6), 7) - bit32.band(bit32.rshift(Counts, 9), 7)
+				buffer.writeu32(Poly, Out + 24, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+			do
+				local Low = bit32.band(bit32.rshift(Counts, 12), 7) - bit32.band(bit32.rshift(Counts, 15), 7)
+				local High = bit32.band(bit32.rshift(Counts, 18), 7) - bit32.band(bit32.rshift(Counts, 21), 7)
+				buffer.writeu32(Poly, Out + 28, bit32.bor(Low + bit32.band(Modulus, bit32.arshift(Low, 31)), bit32.lshift(High + bit32.band(Modulus, bit32.arshift(High, 31)), 16)))
+			end
+		end
 	end
 end
 
@@ -208,23 +240,33 @@ function Sampling.GenerateMatrix(K: number, Rho: buffer, RhoOffset: number, Tran
 	end
 
 	local Matrix = buffer.create(K * K * POLY_SIZE + SAMPLE_NTT_OVERRUN)
-	local XofInput = GEN_MATRIX_XOF_INPUT
-	buffer.copy(XofInput, 0, Rho, RhoOffset, 32)
-
 	local PolySize = POLY_SIZE
-	local Sample = SampleNtt
+	local Other = 3 - Slot
+	local OtherMatrix = MATRIX_CACHE_VALUE[Other]
 
-	for I = 0, K - 1 do
-		for J = 0, K - 1 do
-			if Transpose then
-				buffer.writeu8(XofInput, 32, I)
-				buffer.writeu8(XofInput, 33, J)
-			else
-				buffer.writeu8(XofInput, 32, J)
-				buffer.writeu8(XofInput, 33, I)
+	if OtherMatrix and MATRIX_CACHE_K[Other] == K and SeedMatches(MATRIX_CACHE_RHO[Other], Rho, RhoOffset) then
+		for I = 0, K - 1 do
+			for J = 0, K - 1 do
+				buffer.copy(Matrix, (I * K + J) * PolySize, OtherMatrix, (J * K + I) * PolySize, PolySize)
 			end
+		end
+	else
+		local XofInput = GEN_MATRIX_XOF_INPUT
+		local Sample = SampleNtt
+		buffer.copy(XofInput, 0, Rho, RhoOffset, 32)
 
-			Sample(XofInput, Matrix, (I * K + J) * PolySize)
+		for I = 0, K - 1 do
+			for J = 0, K - 1 do
+				if Transpose then
+					buffer.writeu8(XofInput, 32, I)
+					buffer.writeu8(XofInput, 33, J)
+				else
+					buffer.writeu8(XofInput, 32, J)
+					buffer.writeu8(XofInput, 33, I)
+				end
+
+				Sample(XofInput, Matrix, (I * K + J) * PolySize)
+			end
 		end
 	end
 

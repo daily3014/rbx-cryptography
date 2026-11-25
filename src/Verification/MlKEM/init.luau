@@ -49,7 +49,22 @@ local DECAP_CIPHERTEXT: { [number]: buffer } = {
 
 local VALIDATE_VECTOR = buffer.create(4 * 512)
 
-local HASHED_PUBLIC_KEY: { [number]: buffer } = {}
+type PublicKeyCache = {
+	Hashed: buffer,
+	T: buffer,
+	IsFilled: boolean,
+	IsValid: boolean,
+}
+
+type SecretKeyCache = {
+	Encoded: buffer,
+	S: buffer,
+	IsFilled: boolean,
+	IsValid: boolean,
+}
+
+local PUBLIC_KEYS: { [number]: PublicKeyCache } = {}
+local SECRET_KEYS: { [number]: SecretKeyCache } = {}
 
 local function SameBytes(Source: buffer, SourceOffset: number, Checked: buffer, CheckedOffset: number, Length: number): boolean
 	local Difference = 0
@@ -69,20 +84,68 @@ local function SameBytes(Source: buffer, SourceOffset: number, Checked: buffer, 
 	return Difference == 0
 end
 
-local function HashedPublicKey(K: number, Source: buffer, SourceOffset: number, PublicKeyLength: number): buffer
-	local Known = HASHED_PUBLIC_KEY[K]
-	if Known and SameBytes(Source, SourceOffset, Known, 0, PublicKeyLength) then
+local function PublicKeySlot(K: number, PublicKeyLength: number): PublicKeyCache
+	local Slot = PUBLIC_KEYS[K]
+	if not Slot then
+		Slot = {
+			Hashed = buffer.create(PublicKeyLength + 32),
+			T = buffer.create(K * 512),
+			IsFilled = false,
+			IsValid = false,
+		}
+		PUBLIC_KEYS[K] = Slot
+	end
+
+	Slot.IsFilled = false
+	return Slot
+end
+
+local function SecretKeySlot(K: number): SecretKeyCache
+	local Slot = SECRET_KEYS[K]
+	if not Slot then
+		Slot = {
+			Encoded = buffer.create(K * 384),
+			S = buffer.create(K * 512),
+			IsFilled = false,
+			IsValid = false,
+		}
+		SECRET_KEYS[K] = Slot
+	end
+
+	Slot.IsFilled = false
+	return Slot
+end
+
+local function KnownPublicKey(K: number, Source: buffer, SourceOffset: number, PublicKeyLength: number): PublicKeyCache
+	local Known = PUBLIC_KEYS[K]
+	if Known and Known.IsFilled and SameBytes(Source, SourceOffset, Known.Hashed, 0, PublicKeyLength) then
 		return Known
 	end
 
+	local Slot = PublicKeySlot(K, PublicKeyLength)
 	local PublicKey = buffer.create(PublicKeyLength)
 	buffer.copy(PublicKey, 0, Source, SourceOffset, PublicKeyLength)
-	local Hashed = buffer.create(PublicKeyLength + 32)
-	buffer.copy(Hashed, 0, PublicKey, 0, PublicKeyLength)
-	buffer.copy(Hashed, PublicKeyLength, SHA3.SHA3_256_Internal(PublicKey), 0, 32)
-	HASHED_PUBLIC_KEY[K] = Hashed
+	buffer.copy(Slot.Hashed, 0, PublicKey, 0, PublicKeyLength)
+	buffer.copy(Slot.Hashed, PublicKeyLength, SHA3.SHA3_256_Internal(PublicKey), 0, 32)
+	Slot.IsValid = Packing.Decode12(Source, SourceOffset, K * 256, Slot.T)
+	Slot.IsFilled = true
 
-	return Hashed
+	return Slot
+end
+
+local function KnownSecretKey(K: number, SecretKey: buffer): SecretKeyCache
+	local EncodedLength = K * 384
+	local Known = SECRET_KEYS[K]
+	if Known and Known.IsFilled and SameBytes(SecretKey, 0, Known.Encoded, 0, EncodedLength) then
+		return Known
+	end
+
+	local Slot = SecretKeySlot(K)
+	buffer.copy(Slot.Encoded, 0, SecretKey, 0, EncodedLength)
+	Slot.IsValid = Packing.Decode12(SecretKey, 0, K * 256, Slot.S)
+	Slot.IsFilled = true
+
+	return Slot
 end
 
 local MlKem = {
@@ -106,12 +169,23 @@ function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, b
 	local PublicKeyLength = Utils.GetKemPublicKeyLen(K)
 	local PublicKey = buffer.create(PublicKeyLength)
 	local SecretKey = buffer.create(Utils.GetKemSecretKeyLen(K))
-	Pke.KeyGen(K, Eta1, D, PublicKey, SecretKey)
+	local Public = PublicKeySlot(K, PublicKeyLength)
+	local Secret = SecretKeySlot(K)
+	Pke.KeyGen(K, Eta1, D, PublicKey, SecretKey, Public.T, Secret.S)
+
+	local Hashed = Public.Hashed
+	buffer.copy(Hashed, 0, PublicKey, 0, PublicKeyLength)
+	buffer.copy(Hashed, PublicKeyLength, SHA3.SHA3_256_Internal(PublicKey), 0, 32)
 
 	local HashOffset = PkeSecretKeyLength + PublicKeyLength
-	buffer.copy(SecretKey, PkeSecretKeyLength, PublicKey, 0, PublicKeyLength)
-	buffer.copy(SecretKey, HashOffset, SHA3.SHA3_256_Internal(PublicKey), 0, 32)
+	buffer.copy(SecretKey, PkeSecretKeyLength, Hashed, 0, PublicKeyLength + 32)
 	buffer.copy(SecretKey, HashOffset + 32, Z, 0, 32)
+	buffer.copy(Secret.Encoded, 0, SecretKey, 0, PkeSecretKeyLength)
+
+	Public.IsValid = true
+	Public.IsFilled = true
+	Secret.IsValid = true
+	Secret.IsFilled = true
 
 	return PublicKey, SecretKey
 end
@@ -130,15 +204,18 @@ function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: numbe
 		error("Message must be 32 bytes")
 	end
 
+	local Known = KnownPublicKey(K, PublicKey, 0, PublicKeyLength)
+	if not Known.IsValid then
+		error("Invalid public key encoding")
+	end
+
 	local GInput = ENCAP_G_INPUT
 	buffer.copy(GInput, 0, Message, 0, 32)
-	buffer.copy(GInput, 32, HashedPublicKey(K, PublicKey, 0, PublicKeyLength), PublicKeyLength, 32)
+	buffer.copy(GInput, 32, Known.Hashed, PublicKeyLength, 32)
 	local SharedSecretAndRandomness = SHA3.SHA3_512_Internal(GInput)
 
 	local Ciphertext = buffer.create(Utils.GetKemCipherTextLen(K, Du, Dv))
-	if not Pke.Encrypt(K, Eta1, Eta2, Du, Dv, PublicKey, 0, Message, SharedSecretAndRandomness, 32, Ciphertext) then
-		error("Invalid public key encoding")
-	end
+	Pke.Encrypt(K, Eta1, Eta2, Du, Dv, Known.T, PublicKey, K * 384, Message, SharedSecretAndRandomness, 32, Ciphertext)
 
 	local SharedSecret = buffer.create(32)
 	buffer.copy(SharedSecret, 0, SharedSecretAndRandomness, 0, 32)
@@ -164,8 +241,8 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	local HashOffset = PublicKeyOffset + PublicKeyLength
 	local ZOffset = HashOffset + 32
 
-	local Hashed = HashedPublicKey(K, SecretKey, PublicKeyOffset, PublicKeyLength)
-	if not SameBytes(SecretKey, HashOffset, Hashed, PublicKeyLength, 32) then
+	local Known = KnownPublicKey(K, SecretKey, PublicKeyOffset, PublicKeyLength)
+	if not SameBytes(SecretKey, HashOffset, Known.Hashed, PublicKeyLength, 32) then
 		error("Invalid secret key, the hash it stores does not match its public key")
 	end
 
@@ -178,15 +255,19 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	local ValidMask = 0x00000000
 
 	local MPrime = DECAP_MESSAGE
-	if Pke.Decrypt(K, Du, Dv, SecretKey, Ciphertext, MPrime) then
+	local Secret = KnownSecretKey(K, SecretKey)
+	if Secret.IsValid then
+		Pke.Decrypt(K, Du, Dv, Secret.S, Ciphertext, MPrime)
+
 		local GInput = DECAP_G_INPUT
 		buffer.copy(GInput, 0, MPrime, 0, 32)
 		buffer.copy(GInput, 32, SecretKey, HashOffset, 32)
 		local GOutput = SHA3.SHA3_512_Internal(GInput)
 		buffer.copy(KPrime, 0, GOutput, 0, 32)
 
-		local CiphertextPrime = DECAP_CIPHERTEXT[K]
-		if Pke.Encrypt(K, Eta1, Eta2, Du, Dv, SecretKey, PublicKeyOffset, MPrime, GOutput, 32, CiphertextPrime) then
+		if Known.IsValid then
+			local CiphertextPrime = DECAP_CIPHERTEXT[K]
+			Pke.Encrypt(K, Eta1, Eta2, Du, Dv, Known.T, SecretKey, PublicKeyOffset + K * 384, MPrime, GOutput, 32, CiphertextPrime)
 			ValidMask = CtCompareMask(Ciphertext, CiphertextPrime)
 		end
 	end
@@ -201,6 +282,18 @@ function MlKem.SecretsEqual(Secret1: buffer, Secret2: buffer): boolean
 	return CtCompare(Secret1, Secret2)
 end
 
+function MlKem.ClearCaches()
+	for _, Slot in SECRET_KEYS do
+		buffer.fill(Slot.Encoded, 0, 0)
+		buffer.fill(Slot.S, 0, 0)
+		Slot.IsFilled = false
+	end
+
+	for _, Slot in PUBLIC_KEYS do
+		Slot.IsFilled = false
+	end
+end
+
 function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 	local PkeSecretKeyLength = Utils.GetPkeSecretKeyLen(K)
 	local PublicKeyLength = Utils.GetPkePublicKeyLen(K)
@@ -209,15 +302,12 @@ function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
 		return false
 	end
 
-	local Coefficients = K * 256
-	local SecretValid = Packing.Decode12(SecretKey, 0, Coefficients, VALIDATE_VECTOR)
-	local PublicValid = Packing.Decode12(SecretKey, PkeSecretKeyLength, Coefficients, VALIDATE_VECTOR)
-	if not (SecretValid and PublicValid) then
+	local Known = KnownPublicKey(K, SecretKey, PkeSecretKeyLength, PublicKeyLength)
+	if not (Known.IsValid and Packing.Decode12(SecretKey, 0, K * 256, VALIDATE_VECTOR)) then
 		return false
 	end
 
-	local Hashed = HashedPublicKey(K, SecretKey, PkeSecretKeyLength, PublicKeyLength)
-	return SameBytes(SecretKey, PkeSecretKeyLength + PublicKeyLength, Hashed, PublicKeyLength, 32)
+	return SameBytes(SecretKey, PkeSecretKeyLength + PublicKeyLength, Known.Hashed, PublicKeyLength, 32)
 end
 
 MlKem.MLKEM_512 = {

@@ -67,109 +67,357 @@ end
 
 local function DotAccumulate2(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
 	local PolyZeta = POLY_MUL_ZETA_EXP
-	local Modulus = Q
-
 	for I = 0, 127 do
-		local LocalOffset = I * 4
-		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
-		local FOff = FOffset + LocalOffset
-		local GOff = GOffset + LocalOffset
-		local HOff = HOffset + LocalOffset
-
-		local F0 = buffer.readu16(F, FOff)
-		local F1 = buffer.readu16(F, FOff + 2)
-		local G0 = buffer.readu16(G, GOff)
-		local G1 = buffer.readu16(G, GOff + 2)
-		local Acc0 = buffer.readu16(H, HOff) + F0 * G0 + F1 * G1 * ZetaExp
-		local Acc1 = buffer.readu16(H, HOff + 2) + F0 * G1 + F1 * G0
-
-		F0 = buffer.readu16(F, FOff + 512)
-		F1 = buffer.readu16(F, FOff + 514)
-		G0 = buffer.readu16(G, GOff + 512)
-		G1 = buffer.readu16(G, GOff + 514)
-		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
-		Acc1 += F0 * G1 + F1 * G0
-		buffer.writeu16(H, HOff, Acc0 % Modulus)
-		buffer.writeu16(H, HOff + 2, Acc1 % Modulus)
+		local Offset = I * 4
+		local Zeta = buffer.readu16(PolyZeta, I * 2)
+		local GPair0 = buffer.readu32(G, GOffset + Offset)
+		local G00 = bit32.band(GPair0, 0xFFFF)
+		local G10 = bit32.rshift(GPair0, 16)
+		local G1Zeta0 = G10 * Zeta
+		local GPair1 = buffer.readu32(G, GOffset + Offset + 512)
+		local G01 = bit32.band(GPair1, 0xFFFF)
+		local G11 = bit32.rshift(GPair1, 16)
+		local G1Zeta1 = G11 * Zeta
+		do
+			local Out = HOffset + Offset
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, FOffset + Offset)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, FOffset + Offset + 512)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
 	end
 end
 
 local function DotAccumulate3(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
 	local PolyZeta = POLY_MUL_ZETA_EXP
-	local Modulus = Q
-
 	for I = 0, 127 do
-		local LocalOffset = I * 4
-		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
-		local FOff = FOffset + LocalOffset
-		local GOff = GOffset + LocalOffset
-		local HOff = HOffset + LocalOffset
-
-		local F0 = buffer.readu16(F, FOff)
-		local F1 = buffer.readu16(F, FOff + 2)
-		local G0 = buffer.readu16(G, GOff)
-		local G1 = buffer.readu16(G, GOff + 2)
-		local Acc0 = buffer.readu16(H, HOff) + F0 * G0 + F1 * G1 * ZetaExp
-		local Acc1 = buffer.readu16(H, HOff + 2) + F0 * G1 + F1 * G0
-
-		F0 = buffer.readu16(F, FOff + 512)
-		F1 = buffer.readu16(F, FOff + 514)
-		G0 = buffer.readu16(G, GOff + 512)
-		G1 = buffer.readu16(G, GOff + 514)
-		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
-		Acc1 += F0 * G1 + F1 * G0
-
-		F0 = buffer.readu16(F, FOff + 1024)
-		F1 = buffer.readu16(F, FOff + 1026)
-		G0 = buffer.readu16(G, GOff + 1024)
-		G1 = buffer.readu16(G, GOff + 1026)
-		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
-		Acc1 += F0 * G1 + F1 * G0
-		buffer.writeu16(H, HOff, Acc0 % Modulus)
-		buffer.writeu16(H, HOff + 2, Acc1 % Modulus)
+		local Offset = I * 4
+		local Zeta = buffer.readu16(PolyZeta, I * 2)
+		local GPair0 = buffer.readu32(G, GOffset + Offset)
+		local G00 = bit32.band(GPair0, 0xFFFF)
+		local G10 = bit32.rshift(GPair0, 16)
+		local G1Zeta0 = G10 * Zeta
+		local GPair1 = buffer.readu32(G, GOffset + Offset + 512)
+		local G01 = bit32.band(GPair1, 0xFFFF)
+		local G11 = bit32.rshift(GPair1, 16)
+		local G1Zeta1 = G11 * Zeta
+		local GPair2 = buffer.readu32(G, GOffset + Offset + 1024)
+		local G02 = bit32.band(GPair2, 0xFFFF)
+		local G12 = bit32.rshift(GPair2, 16)
+		local G1Zeta2 = G12 * Zeta
+		do
+			local Out = HOffset + Offset
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, FOffset + Offset)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, FOffset + Offset + 512)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, FOffset + Offset + 1024)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
 	end
 end
 
 local function DotAccumulate4(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
 	local PolyZeta = POLY_MUL_ZETA_EXP
-	local Modulus = Q
-
 	for I = 0, 127 do
-		local LocalOffset = I * 4
-		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
-		local FOff = FOffset + LocalOffset
-		local GOff = GOffset + LocalOffset
-		local HOff = HOffset + LocalOffset
+		local Offset = I * 4
+		local Zeta = buffer.readu16(PolyZeta, I * 2)
+		local GPair0 = buffer.readu32(G, GOffset + Offset)
+		local G00 = bit32.band(GPair0, 0xFFFF)
+		local G10 = bit32.rshift(GPair0, 16)
+		local G1Zeta0 = G10 * Zeta
+		local GPair1 = buffer.readu32(G, GOffset + Offset + 512)
+		local G01 = bit32.band(GPair1, 0xFFFF)
+		local G11 = bit32.rshift(GPair1, 16)
+		local G1Zeta1 = G11 * Zeta
+		local GPair2 = buffer.readu32(G, GOffset + Offset + 1024)
+		local G02 = bit32.band(GPair2, 0xFFFF)
+		local G12 = bit32.rshift(GPair2, 16)
+		local G1Zeta2 = G12 * Zeta
+		local GPair3 = buffer.readu32(G, GOffset + Offset + 1536)
+		local G03 = bit32.band(GPair3, 0xFFFF)
+		local G13 = bit32.rshift(GPair3, 16)
+		local G1Zeta3 = G13 * Zeta
+		do
+			local Out = HOffset + Offset
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, FOffset + Offset)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, FOffset + Offset + 512)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, FOffset + Offset + 1024)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			local FPair3 = buffer.readu32(F, FOffset + Offset + 1536)
+			local F03, F13 = bit32.band(FPair3, 0xFFFF), bit32.rshift(FPair3, 16)
+			Acc0 += F03 * G03 + F13 * G1Zeta3
+			Acc1 += F03 * G13 + F13 * G03
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+	end
+end
 
-		local F0 = buffer.readu16(F, FOff)
-		local F1 = buffer.readu16(F, FOff + 2)
-		local G0 = buffer.readu16(G, GOff)
-		local G1 = buffer.readu16(G, GOff + 2)
-		local Acc0 = buffer.readu16(H, HOff) + F0 * G0 + F1 * G1 * ZetaExp
-		local Acc1 = buffer.readu16(H, HOff + 2) + F0 * G1 + F1 * G0
+local function MatrixAccumulate2(F: buffer, G: buffer, H: buffer)
+	local PolyZeta = POLY_MUL_ZETA_EXP
+	for I = 0, 127 do
+		local Offset = I * 4
+		local Zeta = buffer.readu16(PolyZeta, I * 2)
+		local GPair0 = buffer.readu32(G, Offset)
+		local G00 = bit32.band(GPair0, 0xFFFF)
+		local G10 = bit32.rshift(GPair0, 16)
+		local G1Zeta0 = G10 * Zeta
+		local GPair1 = buffer.readu32(G, Offset + 512)
+		local G01 = bit32.band(GPair1, 0xFFFF)
+		local G11 = bit32.rshift(GPair1, 16)
+		local G1Zeta1 = G11 * Zeta
+		do
+			local Out = Offset
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 512)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+		do
+			local Out = Offset + 512
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset + 1024)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 1536)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+	end
+end
 
-		F0 = buffer.readu16(F, FOff + 512)
-		F1 = buffer.readu16(F, FOff + 514)
-		G0 = buffer.readu16(G, GOff + 512)
-		G1 = buffer.readu16(G, GOff + 514)
-		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
-		Acc1 += F0 * G1 + F1 * G0
+local function MatrixAccumulate3(F: buffer, G: buffer, H: buffer)
+	local PolyZeta = POLY_MUL_ZETA_EXP
+	for I = 0, 127 do
+		local Offset = I * 4
+		local Zeta = buffer.readu16(PolyZeta, I * 2)
+		local GPair0 = buffer.readu32(G, Offset)
+		local G00 = bit32.band(GPair0, 0xFFFF)
+		local G10 = bit32.rshift(GPair0, 16)
+		local G1Zeta0 = G10 * Zeta
+		local GPair1 = buffer.readu32(G, Offset + 512)
+		local G01 = bit32.band(GPair1, 0xFFFF)
+		local G11 = bit32.rshift(GPair1, 16)
+		local G1Zeta1 = G11 * Zeta
+		local GPair2 = buffer.readu32(G, Offset + 1024)
+		local G02 = bit32.band(GPair2, 0xFFFF)
+		local G12 = bit32.rshift(GPair2, 16)
+		local G1Zeta2 = G12 * Zeta
+		do
+			local Out = Offset
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 512)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 1024)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+		do
+			local Out = Offset + 512
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset + 1536)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 2048)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 2560)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+		do
+			local Out = Offset + 1024
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset + 3072)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 3584)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 4096)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+	end
+end
 
-		F0 = buffer.readu16(F, FOff + 1024)
-		F1 = buffer.readu16(F, FOff + 1026)
-		G0 = buffer.readu16(G, GOff + 1024)
-		G1 = buffer.readu16(G, GOff + 1026)
-		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
-		Acc1 += F0 * G1 + F1 * G0
-
-		F0 = buffer.readu16(F, FOff + 1536)
-		F1 = buffer.readu16(F, FOff + 1538)
-		G0 = buffer.readu16(G, GOff + 1536)
-		G1 = buffer.readu16(G, GOff + 1538)
-		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
-		Acc1 += F0 * G1 + F1 * G0
-		buffer.writeu16(H, HOff, Acc0 % Modulus)
-		buffer.writeu16(H, HOff + 2, Acc1 % Modulus)
+local function MatrixAccumulate4(F: buffer, G: buffer, H: buffer)
+	local PolyZeta = POLY_MUL_ZETA_EXP
+	for I = 0, 127 do
+		local Offset = I * 4
+		local Zeta = buffer.readu16(PolyZeta, I * 2)
+		local GPair0 = buffer.readu32(G, Offset)
+		local G00 = bit32.band(GPair0, 0xFFFF)
+		local G10 = bit32.rshift(GPair0, 16)
+		local G1Zeta0 = G10 * Zeta
+		local GPair1 = buffer.readu32(G, Offset + 512)
+		local G01 = bit32.band(GPair1, 0xFFFF)
+		local G11 = bit32.rshift(GPair1, 16)
+		local G1Zeta1 = G11 * Zeta
+		local GPair2 = buffer.readu32(G, Offset + 1024)
+		local G02 = bit32.band(GPair2, 0xFFFF)
+		local G12 = bit32.rshift(GPair2, 16)
+		local G1Zeta2 = G12 * Zeta
+		local GPair3 = buffer.readu32(G, Offset + 1536)
+		local G03 = bit32.band(GPair3, 0xFFFF)
+		local G13 = bit32.rshift(GPair3, 16)
+		local G1Zeta3 = G13 * Zeta
+		do
+			local Out = Offset
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 512)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 1024)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			local FPair3 = buffer.readu32(F, Offset + 1536)
+			local F03, F13 = bit32.band(FPair3, 0xFFFF), bit32.rshift(FPair3, 16)
+			Acc0 += F03 * G03 + F13 * G1Zeta3
+			Acc1 += F03 * G13 + F13 * G03
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+		do
+			local Out = Offset + 512
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset + 2048)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 2560)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 3072)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			local FPair3 = buffer.readu32(F, Offset + 3584)
+			local F03, F13 = bit32.band(FPair3, 0xFFFF), bit32.rshift(FPair3, 16)
+			Acc0 += F03 * G03 + F13 * G1Zeta3
+			Acc1 += F03 * G13 + F13 * G03
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+		do
+			local Out = Offset + 1024
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset + 4096)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 4608)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 5120)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			local FPair3 = buffer.readu32(F, Offset + 5632)
+			local F03, F13 = bit32.band(FPair3, 0xFFFF), bit32.rshift(FPair3, 16)
+			Acc0 += F03 * G03 + F13 * G1Zeta3
+			Acc1 += F03 * G13 + F13 * G03
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
+		do
+			local Out = Offset + 1536
+			local Acc0 = buffer.readu16(H, Out)
+			local Acc1 = buffer.readu16(H, Out + 2)
+			local FPair0 = buffer.readu32(F, Offset + 6144)
+			local F00, F10 = bit32.band(FPair0, 0xFFFF), bit32.rshift(FPair0, 16)
+			Acc0 += F00 * G00 + F10 * G1Zeta0
+			Acc1 += F00 * G10 + F10 * G00
+			local FPair1 = buffer.readu32(F, Offset + 6656)
+			local F01, F11 = bit32.band(FPair1, 0xFFFF), bit32.rshift(FPair1, 16)
+			Acc0 += F01 * G01 + F11 * G1Zeta1
+			Acc1 += F01 * G11 + F11 * G01
+			local FPair2 = buffer.readu32(F, Offset + 7168)
+			local F02, F12 = bit32.band(FPair2, 0xFFFF), bit32.rshift(FPair2, 16)
+			Acc0 += F02 * G02 + F12 * G1Zeta2
+			Acc1 += F02 * G12 + F12 * G02
+			local FPair3 = buffer.readu32(F, Offset + 7680)
+			local F03, F13 = bit32.band(FPair3, 0xFFFF), bit32.rshift(FPair3, 16)
+			Acc0 += F03 * G03 + F13 * G1Zeta3
+			Acc1 += F03 * G13 + F13 * G03
+			buffer.writeu16(H, Out, Acc0 - math.floor(Acc0 * INV_Q + 1.5e-4) * Q)
+			buffer.writeu16(H, Out + 2, Acc1 - math.floor(Acc1 * INV_Q + 1.5e-4) * Q)
+		end
 	end
 end
 
@@ -950,6 +1198,16 @@ function Ntt.DotAccumulate(F: buffer, FOffset: number, G: buffer, GOffset: numbe
 		DotAccumulate3(F, FOffset, G, GOffset, H, HOffset)
 	else
 		DotAccumulate4(F, FOffset, G, GOffset, H, HOffset)
+	end
+end
+
+function Ntt.MatrixAccumulate(F: buffer, G: buffer, H: buffer, K: number)
+	if K == 2 then
+		MatrixAccumulate2(F, G, H)
+	elseif K == 3 then
+		MatrixAccumulate3(F, G, H)
+	else
+		MatrixAccumulate4(F, G, H)
 	end
 end
 

@@ -32,18 +32,6 @@ local EXPAND_MASK_SQUEEZE = buffer.create(640)
 local SAMPLE_BALL_TAU = buffer.create(8)
 local SAMPLE_BALL_SQUEEZE = buffer.create(136)
 
-local ETA_2_VALUES = buffer.create(64) do
-	for Nibble = 0, 15 do
-		buffer.writeu32(ETA_2_VALUES, Nibble * 4, (2 - Nibble % 5) % Q)
-	end
-end
-
-local ETA_4_VALUES = buffer.create(64) do
-	for Nibble = 0, 15 do
-		buffer.writeu32(ETA_4_VALUES, Nibble * 4, (4 - Nibble) % Q)
-	end
-end
-
 local MATRIX_CACHE_RHO = buffer.create(32)
 local MATRIX_CACHE_DIMENSIONS = 0
 local MATRIX_CACHE_VALUE: buffer? = nil
@@ -144,8 +132,7 @@ function Sampling.ExpandS(RhoPrime: buffer, RhoPrimeOffset: number, Vec: buffer,
 	local Message = WORKSPACE_MSG_66
 	local Chunk = EXPAND_S_CHUNK
 	local Poly = EXPAND_S_POLY
-	local Values = if Eta == 2 then ETA_2_VALUES else ETA_4_VALUES
-	local Limit = if Eta == 2 then 60 else 36
+	local Modulus = Q
 	buffer.copy(Message, 0, RhoPrime, RhoPrimeOffset, 64)
 
 	for I = 0, K - 1 do
@@ -154,49 +141,130 @@ function Sampling.ExpandS(RhoPrime: buffer, RhoPrimeOffset: number, Vec: buffer,
 		XOF.Absorb256(Message)
 
 		local Out = 0
-		while Out < POLY_SIZE do
-			XOF.Squeeze256Into(Chunk, 136, 0)
-			for Offset = 0, 132, 4 do
-				local Word = buffer.readu32(Chunk, Offset)
-				do
-					local NibbleOffset = bit32.band(bit32.lshift(Word, 2), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+		if Eta == 2 then
+			while Out < POLY_SIZE do
+				XOF.Squeeze256Into(Chunk, 136, 0)
+				for Offset = 0, 132, 4 do
+					local Word = buffer.readu32(Chunk, Offset)
+					do
+						local Nibble = bit32.band(Word, 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 4), 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 8), 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 12), 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 16), 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 20), 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 24), 15)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
+					do
+						local Nibble = bit32.rshift(Word, 28)
+						local Times13 = bit32.bor(bit32.bor(bit32.lshift(Nibble, 3) + bit32.lshift(Nibble, 2), 0) + Nibble, 0)
+						local Remainder = Nibble - 5 * bit32.rshift(Times13, 6)
+						local Value = 2 - Remainder
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 15, 31) * 4
+					end
 				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 2), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
-				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 6), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
-				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 10), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
-				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 14), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
-				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 18), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
-				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 22), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
-				end
-				do
-					local NibbleOffset = bit32.band(bit32.rshift(Word, 26), 60)
-					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
-					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+			end
+		else
+			while Out < POLY_SIZE do
+				XOF.Squeeze256Into(Chunk, 136, 0)
+				for Offset = 0, 132, 4 do
+					local Word = buffer.readu32(Chunk, Offset)
+					do
+						local Nibble = bit32.band(Word, 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 4), 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 8), 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 12), 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 16), 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 20), 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.band(bit32.rshift(Word, 24), 15)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
+					do
+						local Nibble = bit32.rshift(Word, 28)
+						local Value = 4 - Nibble
+						buffer.writeu32(Poly, Out, Value + bit32.band(Modulus, bit32.arshift(Value, 31)))
+						Out += bit32.rshift(Nibble - 9, 31) * 4
+					end
 				end
 			end
 		end

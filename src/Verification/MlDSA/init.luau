@@ -227,7 +227,7 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 	PolyVec.ForwardNTT(S1Hat, L)
 
 	local T = buffer.create(K * POLY_SIZE)
-	PolyVec.MatrixMultiply(A, S1Hat, T, K, L)
+	PolyVec.MatrixMultiply(A, S1Hat, T, L)
 	PolyVec.InverseNTT(T, K)
 
 	local T1 = buffer.create(K * POLY_SIZE)
@@ -298,7 +298,7 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 		Sampling.ExpandMask(RhoPrime, Kappa, Y, Gamma1, L)
 		buffer.copy(YHat, 0, Y, 0, L * POLY_SIZE)
 		PolyVec.ForwardNTT(YHat, L)
-		PolyVec.MatrixMultiply(A, YHat, W, K, L)
+		PolyVec.MatrixMultiply(A, YHat, W, L)
 		PolyVec.InverseNTT(W, K)
 
 		PolyVec.HighBitsEncode(W, K, Gamma2, ChallengeInput, 64)
@@ -307,19 +307,16 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 		Sampling.SampleInBall(CTilda, C, Tau)
 		NTT.ForwardNTTWithOffset(C, 0)
 
-		PolyVec.MultiplyByPoly(C, S1, Z, L)
-		PolyVec.InverseNTT(Z, L)
-		local Rejected = PolyVec.AddExceeds(Y, Z, Z, L, Gamma1 - Beta)
+		PolyVec.InverseNTTProduct(C, S2, R, K)
+		local Rejected = PolyVec.SubtractLowBitsExceeds(W, R, K, Gamma2, Gamma2 - Beta)
 
 		if not Rejected then
-			PolyVec.MultiplyByPoly(C, S2, R, K)
-			PolyVec.InverseNTT(R, K)
-			Rejected = PolyVec.SubtractLowBitsExceeds(W, R, K, Gamma2, Gamma2 - Beta)
+			PolyVec.InverseNTTProduct(C, S1, Z, L)
+			Rejected = PolyVec.AddExceeds(Y, Z, Z, L, Gamma1 - Beta)
 		end
 
 		if not Rejected then
-			PolyVec.MultiplyByPoly(C, T0, Product, K)
-			PolyVec.InverseNTT(Product, K)
+			PolyVec.InverseNTTProduct(C, T0, Product, K)
 			local Exceeds, Count = PolyVec.MakeHints(R, Product, Hints, K, Gamma2)
 			HasSigned = not Exceeds and Count <= Omega
 		end
@@ -433,16 +430,13 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 	NTT.ForwardNTTWithOffset(C, 0)
 
 	local W = Work.W
-	local Product = Work.Product
 	PolyVec.ForwardNTT(Z, L)
-	PolyVec.MatrixMultiply(A, Z, W, K, L)
-	PolyVec.MultiplyByPoly(C, T1, Product, K)
-	PolyVec.SubFromVec(W, Product, K)
-	PolyVec.InverseNTT(Product, K)
+	PolyVec.MatrixMultiplySubtract(A, Z, C, T1, W, L)
+	PolyVec.InverseNTT(W, K)
 
 	local ChallengeInput = Work.ChallengeInput
 	buffer.copy(ChallengeInput, 0, Mu, 0, 64)
-	PolyVec.UseHintEncode(Hints, Product, K, Gamma2, ChallengeInput, 64)
+	PolyVec.UseHintEncode(Hints, W, K, Gamma2, ChallengeInput, 64)
 	local CTildaPrime = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 
 	return not VerificationFailed and CtCompare(CTilda, CTildaPrime)
@@ -588,6 +582,19 @@ Mldsa.ML_DSA_87 = {
 		return PubKey, SecKey
 	end
 }
+
+function Mldsa.ClearCaches()
+	local Cached = SIGN_KEY
+	if Cached then
+		buffer.fill(Cached.SecretKey, 0, 0)
+		buffer.fill(Cached.S1, 0, 0)
+		buffer.fill(Cached.S2, 0, 0)
+		buffer.fill(Cached.T0, 0, 0)
+		SIGN_KEY = nil
+	end
+
+	VERIFY_KEY = nil
+end
 
 Mldsa.PubKeyLen = Utils.PubKeyLen
 Mldsa.SecKeyLen = Utils.SecKeyLen
