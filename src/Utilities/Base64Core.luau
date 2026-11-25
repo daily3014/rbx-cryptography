@@ -354,8 +354,6 @@ local function Decode(Input: buffer): buffer
 	local Invalid = 0
 
 	while InputIndex <= UnrollStop do
-		buffer.readu32(Input, InputIndex + 60)
-		buffer.readu32(Output, OutputIndex + 45)
 		do
 			local Word = buffer.readu32(Input, InputIndex + 0)
 			local Bytes = bit32.bor(
@@ -490,8 +488,6 @@ local function Decode(Input: buffer): buffer
 	end
 
 	while InputIndex <= BodyEnd - 8 do
-		buffer.readu32(Input, InputIndex + 4)
-		buffer.readu32(Output, OutputIndex + 3)
 		do
 			local Word = buffer.readu32(Input, InputIndex + 0)
 			local Bytes = bit32.bor(
