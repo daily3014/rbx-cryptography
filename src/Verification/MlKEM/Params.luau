@@ -21,16 +21,8 @@ function Params.CheckD(D: number): boolean
 	return (D == 1) or (D == 4) or (D == 5) or (D == 10) or (D == 11)
 end
 
-function Params.CheckEta(Eta: number): boolean
-	return (Eta == 2) or (Eta == 3)
-end
-
 function Params.CheckK(K: number): boolean
 	return (K == 2) or (K == 3) or (K == 4)
-end
-
-function Params.CheckL(L: number): boolean
-	return (L == 1) or (L == 4) or (L == 5) or (L == 10) or (L == 11) or (L == 12)
 end
 
 function Params.CheckKeygenParams(K: number, Eta1: number): boolean
@@ -45,14 +37,6 @@ function Params.CheckEncryptParams(K: number, Eta1: number, Eta2: number, Du: nu
 	local Flag0 = (K == 2) and (Eta1 == 3) and (Eta2 == 2) and (Du == 10) and (Dv == 4)
 	local Flag1 = (K == 3) and (Eta1 == 2) and (Eta2 == 2) and (Du == 10) and (Dv == 4)
 	local Flag2 = (K == 4) and (Eta1 == 2) and (Eta2 == 2) and (Du == 11) and (Dv == 5)
-
-	return Flag0 or Flag1 or Flag2
-end
-
-function Params.CheckDecryptParams(K: number, Du: number, Dv: number): boolean
-	local Flag0 = (K == 2) and (Du == 10) and (Dv == 4)
-	local Flag1 = (K == 3) and (Du == 10) and (Dv == 4)
-	local Flag2 = (K == 4) and (Du == 11) and (Dv == 5)
 
 	return Flag0 or Flag1 or Flag2
 end

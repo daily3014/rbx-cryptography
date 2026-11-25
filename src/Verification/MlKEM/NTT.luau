@@ -15,7 +15,6 @@
 --!native
 
 local Field = require("./Field")
-local Utils = require("./Utils")
 
 local LOG2N = 8
 local N = 2^LOG2N
@@ -31,9 +30,19 @@ end
 
 local Ntt = {}
 
+local function BitReverse(Value: number, BitWidth: number): number
+	local Reversed = 0
+	for I = 0, BitWidth - 1 do
+		local Bit = bit32.band(bit32.rshift(Value, I), 1)
+		Reversed = bit32.bor(Reversed, bit32.lshift(Bit, BitWidth - 1 - I))
+	end
+
+	return Reversed
+end
+
 local NTT_ZETA_EXP = buffer.create((N / 2) * 2) do
 	for I = 0, N / 2 - 1 do
-		local BitRevIndex = Utils.BitReverse(I, LOG2N - 1)
+		local BitRevIndex = BitReverse(I, LOG2N - 1)
 		local ZetaExp = Field.Power(ZETA, BitRevIndex)
 		buffer.writeu16(NTT_ZETA_EXP, I * 2, ZetaExp)
 	end
@@ -49,14 +58,14 @@ end
 
 local POLY_MUL_ZETA_EXP = buffer.create((N / 2) * 2) do
 	for I = 0, N / 2 - 1 do
-		local BitRevIndex = Utils.BitReverse(I, LOG2N - 1)
+		local BitRevIndex = BitReverse(I, LOG2N - 1)
 		local Exponent = bit32.bxor(bit32.lshift(BitRevIndex, 1), 1)
 		local ZetaExp = Field.Power(ZETA, Exponent)
 		buffer.writeu16(POLY_MUL_ZETA_EXP, I * 2, ZetaExp)
 	end
 end
 
-local function PolyVecDot2At(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
+local function DotAccumulate2(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
 	local PolyZeta = POLY_MUL_ZETA_EXP
 	local Modulus = Q
 
@@ -65,13 +74,14 @@ local function PolyVecDot2At(F: buffer, FOffset: number, G: buffer, GOffset: num
 		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
 		local FOff = FOffset + LocalOffset
 		local GOff = GOffset + LocalOffset
+		local HOff = HOffset + LocalOffset
 
 		local F0 = buffer.readu16(F, FOff)
 		local F1 = buffer.readu16(F, FOff + 2)
 		local G0 = buffer.readu16(G, GOff)
 		local G1 = buffer.readu16(G, GOff + 2)
-		local Acc0 = F0 * G0 + F1 * G1 * ZetaExp
-		local Acc1 = F0 * G1 + F1 * G0
+		local Acc0 = buffer.readu16(H, HOff) + F0 * G0 + F1 * G1 * ZetaExp
+		local Acc1 = buffer.readu16(H, HOff + 2) + F0 * G1 + F1 * G0
 
 		F0 = buffer.readu16(F, FOff + 512)
 		F1 = buffer.readu16(F, FOff + 514)
@@ -79,13 +89,12 @@ local function PolyVecDot2At(F: buffer, FOffset: number, G: buffer, GOffset: num
 		G1 = buffer.readu16(G, GOff + 514)
 		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
 		Acc1 += F0 * G1 + F1 * G0
-		local HOff = HOffset + LocalOffset
 		buffer.writeu16(H, HOff, Acc0 % Modulus)
 		buffer.writeu16(H, HOff + 2, Acc1 % Modulus)
 	end
 end
 
-local function PolyVecDot3At(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
+local function DotAccumulate3(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
 	local PolyZeta = POLY_MUL_ZETA_EXP
 	local Modulus = Q
 
@@ -94,13 +103,14 @@ local function PolyVecDot3At(F: buffer, FOffset: number, G: buffer, GOffset: num
 		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
 		local FOff = FOffset + LocalOffset
 		local GOff = GOffset + LocalOffset
+		local HOff = HOffset + LocalOffset
 
 		local F0 = buffer.readu16(F, FOff)
 		local F1 = buffer.readu16(F, FOff + 2)
 		local G0 = buffer.readu16(G, GOff)
 		local G1 = buffer.readu16(G, GOff + 2)
-		local Acc0 = F0 * G0 + F1 * G1 * ZetaExp
-		local Acc1 = F0 * G1 + F1 * G0
+		local Acc0 = buffer.readu16(H, HOff) + F0 * G0 + F1 * G1 * ZetaExp
+		local Acc1 = buffer.readu16(H, HOff + 2) + F0 * G1 + F1 * G0
 
 		F0 = buffer.readu16(F, FOff + 512)
 		F1 = buffer.readu16(F, FOff + 514)
@@ -115,13 +125,12 @@ local function PolyVecDot3At(F: buffer, FOffset: number, G: buffer, GOffset: num
 		G1 = buffer.readu16(G, GOff + 1026)
 		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
 		Acc1 += F0 * G1 + F1 * G0
-		local HOff = HOffset + LocalOffset
 		buffer.writeu16(H, HOff, Acc0 % Modulus)
 		buffer.writeu16(H, HOff + 2, Acc1 % Modulus)
 	end
 end
 
-local function PolyVecDot4At(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
+local function DotAccumulate4(F: buffer, FOffset: number, G: buffer, GOffset: number, H: buffer, HOffset: number)
 	local PolyZeta = POLY_MUL_ZETA_EXP
 	local Modulus = Q
 
@@ -130,13 +139,14 @@ local function PolyVecDot4At(F: buffer, FOffset: number, G: buffer, GOffset: num
 		local ZetaExp = buffer.readu16(PolyZeta, I * 2)
 		local FOff = FOffset + LocalOffset
 		local GOff = GOffset + LocalOffset
+		local HOff = HOffset + LocalOffset
 
 		local F0 = buffer.readu16(F, FOff)
 		local F1 = buffer.readu16(F, FOff + 2)
 		local G0 = buffer.readu16(G, GOff)
 		local G1 = buffer.readu16(G, GOff + 2)
-		local Acc0 = F0 * G0 + F1 * G1 * ZetaExp
-		local Acc1 = F0 * G1 + F1 * G0
+		local Acc0 = buffer.readu16(H, HOff) + F0 * G0 + F1 * G1 * ZetaExp
+		local Acc1 = buffer.readu16(H, HOff + 2) + F0 * G1 + F1 * G0
 
 		F0 = buffer.readu16(F, FOff + 512)
 		F1 = buffer.readu16(F, FOff + 514)
@@ -158,7 +168,6 @@ local function PolyVecDot4At(F: buffer, FOffset: number, G: buffer, GOffset: num
 		G1 = buffer.readu16(G, GOff + 1538)
 		Acc0 += F0 * G0 + F1 * G1 * ZetaExp
 		Acc1 += F0 * G1 + F1 * G0
-		local HOff = HOffset + LocalOffset
 		buffer.writeu16(H, HOff, Acc0 % Modulus)
 		buffer.writeu16(H, HOff + 2, Acc1 % Modulus)
 	end
@@ -934,34 +943,13 @@ function Ntt.InttAt(Poly: buffer, BaseOffset: number)
 	end
 end
 
-
-function Ntt.PolyVecDotAt(F: buffer, FOffset: number, G: buffer, GOffset: number, K: number, H: buffer, HOffset: number)
+function Ntt.DotAccumulate(F: buffer, FOffset: number, G: buffer, GOffset: number, K: number, H: buffer, HOffset: number)
 	if K == 2 then
-		PolyVecDot2At(F, FOffset, G, GOffset, H, HOffset)
+		DotAccumulate2(F, FOffset, G, GOffset, H, HOffset)
 	elseif K == 3 then
-		PolyVecDot3At(F, FOffset, G, GOffset, H, HOffset)
+		DotAccumulate3(F, FOffset, G, GOffset, H, HOffset)
 	else
-		PolyVecDot4At(F, FOffset, G, GOffset, H, HOffset)
-	end
-end
-
-function Ntt.PolyAdd(F: buffer, G: buffer, H: buffer)
-	local Modulus = Q
-	for Index = 0, N - 1 do
-		local Offset = Index * 2
-		local AValue = buffer.readu16(F, Offset)
-		local BValue = buffer.readu16(G, Offset)
-		buffer.writeu16(H, Offset, (AValue + BValue) % Modulus)
-	end
-end
-
-function Ntt.PolySub(F: buffer, G: buffer, H: buffer)
-	local Modulus = Q
-	for Index = 0, N - 1 do
-		local Offset = Index * 2
-		local AValue = buffer.readu16(F, Offset)
-		local BValue = buffer.readu16(G, Offset)
-		buffer.writeu16(H, Offset, (AValue - BValue) % Modulus)
+		DotAccumulate4(F, FOffset, G, GOffset, H, HOffset)
 	end
 end
 

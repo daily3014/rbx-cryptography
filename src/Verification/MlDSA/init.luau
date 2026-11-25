@@ -23,6 +23,7 @@ local SHA3 = require("../Hashing/SHA3")
 local NTT = require("@self/NTT")
 
 local PolyVec = require("@self/PolyVec")
+local BitPack = require("@self/BitPack")
 local BitPacking = require("@self/Pack")
 
 local Sampling = require("@self/Sampling")
@@ -37,14 +38,41 @@ local RND_BYTE_LEN = 32
 
 local N = 256
 local Q = 8380417
+local POLY_SIZE = N * 4
 
 local Mldsa = {
 	CSPRNG = CSPRNG
 }
 
-local VERIFY_CACHE_PK: buffer? = nil
-local VERIFY_CACHE_T1: buffer? = nil
-local VERIFY_CACHE_TR: buffer? = nil
+type SignKey = {
+	SecretKey: buffer,
+	S1: buffer,
+	S2: buffer,
+	T0: buffer,
+}
+
+type VerifyKey = {
+	PublicKey: buffer,
+	T1: buffer,
+	Tr: buffer,
+}
+
+type Scratch = {
+	Y: buffer,
+	YHat: buffer,
+	W: buffer,
+	Z: buffer,
+	R: buffer,
+	Product: buffer,
+	C: buffer,
+	Hints: buffer,
+	CTilda: buffer,
+	ChallengeInput: buffer,
+}
+
+local SIGN_KEY: SignKey? = nil
+local VERIFY_KEY: VerifyKey? = nil
+local SCRATCH: { [number]: Scratch } = {}
 
 local function BuffersEqual(A: buffer, B: buffer): boolean
 	local Length = buffer.len(A)
@@ -68,132 +96,93 @@ local function BuffersEqual(A: buffer, B: buffer): boolean
 	return true
 end
 
-local SIGN_CACHE_SK: buffer? = nil
-local SIGN_CACHE_S1: buffer? = nil
-local SIGN_CACHE_S2: buffer? = nil
-local SIGN_CACHE_T0: buffer? = nil
-
-type Scratch = {
-	Y: buffer,
-	YPrime: buffer,
-	W: buffer,
-	W1: buffer,
-	W2: buffer,
-	C: buffer,
-	Z: buffer,
-	R0: buffer,
-	R1: buffer,
-	H0: buffer,
-	H1: buffer,
-	H: buffer,
-	CTilda: buffer,
-	ZEncoded: buffer,
-	W1Encoded: buffer,
-	ChallengeInput: buffer,
-}
-
-local SCRATCH: { [number]: Scratch } = {}
-
-local function ScratchFor(K: number, L: number, W1Bw: number, Gamma1Bw: number, CTildaSize: number): Scratch
+local function ScratchFor(K: number, L: number, W1Bw: number, CTildaSize: number): Scratch
 	local Existing = SCRATCH[K]
 	if Existing then
 		return Existing
 	end
 
-	local VectorL, VectorK = L * N * 4, K * N * 4
-	local W1EncodedLength = K * W1Bw * 32
+	local VectorL, VectorK = L * POLY_SIZE, K * POLY_SIZE
 	local Created: Scratch = {
 		Y = buffer.create(VectorL),
-		YPrime = buffer.create(VectorL),
+		YHat = buffer.create(VectorL),
 		W = buffer.create(VectorK),
-		W1 = buffer.create(VectorK),
-		W2 = buffer.create(VectorK),
-		C = buffer.create(N * 4),
 		Z = buffer.create(VectorL),
-		R0 = buffer.create(VectorK),
-		R1 = buffer.create(VectorK),
-		H0 = buffer.create(VectorK),
-		H1 = buffer.create(VectorK),
-		H = buffer.create(VectorK),
+		R = buffer.create(VectorK),
+		Product = buffer.create(VectorK),
+		C = buffer.create(POLY_SIZE),
+		Hints = buffer.create(VectorK),
 		CTilda = buffer.create(CTildaSize),
-		ZEncoded = buffer.create(32 * L * Gamma1Bw),
-		W1Encoded = buffer.create(W1EncodedLength),
-		ChallengeInput = buffer.create(64 + W1EncodedLength),
+		ChallengeInput = buffer.create(64 + K * W1Bw * 32),
 	}
 	SCRATCH[K] = Created
 	return Created
 end
 
+local function MessageHash(Tr: buffer, TrOffset: number, Ctx: buffer, Msg: buffer): buffer
+	local ContextLength = buffer.len(Ctx)
+	local MuInput = buffer.create(64 + 2 + ContextLength + buffer.len(Msg))
+	buffer.copy(MuInput, 0, Tr, TrOffset, 64)
+	buffer.writeu8(MuInput, 64, 0)
+	buffer.writeu8(MuInput, 65, ContextLength)
+	buffer.copy(MuInput, 66, Ctx, 0, ContextLength)
+	buffer.copy(MuInput, 66 + ContextLength, Msg, 0, buffer.len(Msg))
+
+	return SHA3.SHAKE256_Internal(MuInput, 64)
+end
+
 local function SignKeySetup(SecKey: buffer, K: number, L: number, D: number, Eta: number): (buffer, buffer, buffer)
-	local CachedSk = SIGN_CACHE_SK
-	local CachedS1 = SIGN_CACHE_S1
-	local CachedS2 = SIGN_CACHE_S2
-	local CachedT0 = SIGN_CACHE_T0
-	if CachedSk and CachedS1 and CachedS2 and CachedT0 and BuffersEqual(CachedSk, SecKey) then
-		return CachedS1, CachedS2, CachedT0
+	local Cached = SIGN_KEY
+	if Cached and BuffersEqual(Cached.SecretKey, SecKey) then
+		return Cached.S1, Cached.S2, Cached.T0
 	end
 
-	local T0Rng = bit32.lshift(1, D - 1)
 	local EtaBw = Utils.BitWidth(2 * Eta)
-	local S1Len = L * EtaBw * 32
-	local S2Len = K * EtaBw * 32
-	local SkOff3 = 128
-	local SkOff4 = SkOff3 + S1Len
-	local SkOff5 = SkOff4 + S2Len
+	local S1Offset = 128
+	local S2Offset = S1Offset + L * EtaBw * 32
+	local T0Offset = S2Offset + K * EtaBw * 32
 
-	local S1 = buffer.create(L * N * 4)
-	local S2 = buffer.create(K * N * 4)
-	local T0 = buffer.create(K * N * 4)
-	local S1Encoded = buffer.create(S1Len)
-	local S2Encoded = buffer.create(S2Len)
-	local T0Encoded = buffer.create(buffer.len(SecKey) - SkOff5)
-	buffer.copy(S1Encoded, 0, SecKey, SkOff3, S1Len)
-	buffer.copy(S2Encoded, 0, SecKey, SkOff4, S2Len)
-	buffer.copy(T0Encoded, 0, SecKey, SkOff5, buffer.len(T0Encoded))
-	PolyVec.Decode(S1Encoded, S1, L, EtaBw)
-	PolyVec.Decode(S2Encoded, S2, K, EtaBw)
-	PolyVec.Decode(T0Encoded, T0, K, D)
-	PolyVec.SubFromX(S1, L, Eta)
-	PolyVec.SubFromX(S2, K, Eta)
-	PolyVec.SubFromX(T0, K, T0Rng)
+	local S1 = buffer.create(L * POLY_SIZE)
+	local S2 = buffer.create(K * POLY_SIZE)
+	local T0 = buffer.create(K * POLY_SIZE)
+	BitPack.DecodeCentered(SecKey, S1Offset, L * N, Eta, EtaBw, S1, 0)
+	BitPack.DecodeCentered(SecKey, S2Offset, K * N, Eta, EtaBw, S2, 0)
+	BitPack.DecodeCentered(SecKey, T0Offset, K * N, bit32.lshift(1, D - 1), D, T0, 0)
 	PolyVec.ForwardNTT(S1, L)
 	PolyVec.ForwardNTT(S2, K)
 	PolyVec.ForwardNTT(T0, K)
 
-	local SkCopy = buffer.create(buffer.len(SecKey))
-	buffer.copy(SkCopy, 0, SecKey)
-	SIGN_CACHE_SK = SkCopy
-	SIGN_CACHE_S1 = S1
-	SIGN_CACHE_S2 = S2
-	SIGN_CACHE_T0 = T0
+	local SecretKey = buffer.create(buffer.len(SecKey))
+	buffer.copy(SecretKey, 0, SecKey)
+	SIGN_KEY = {
+		SecretKey = SecretKey,
+		S1 = S1,
+		S2 = S2,
+		T0 = T0,
+	}
 
 	return S1, S2, T0
 end
 
-local function VerifyKeySetup(PubKey: buffer, K: number, D: number, T1Bw: number): (buffer, buffer)
-	local CachedPk = VERIFY_CACHE_PK
-	local CachedT1 = VERIFY_CACHE_T1
-	local CachedTr = VERIFY_CACHE_TR
-	if CachedPk and CachedT1 and CachedTr and BuffersEqual(CachedPk, PubKey) then
-		return CachedT1, CachedTr
+local function VerifyKeySetup(PubKey: buffer, K: number): (buffer, buffer)
+	local Cached = VERIFY_KEY
+	if Cached and BuffersEqual(Cached.PublicKey, PubKey) then
+		return Cached.T1, Cached.Tr
 	end
 
-	local PkOff1 = 32
-	local T1Encoded = buffer.create(buffer.len(PubKey) - PkOff1)
-	buffer.copy(T1Encoded, 0, PubKey, PkOff1, buffer.len(T1Encoded))
-
-	local T1 = buffer.create(K * N * 4)
-	PolyVec.Decode(T1Encoded, T1, K, T1Bw)
-	PolyVec.LeftShift(T1, K, D)
+	local T1 = buffer.create(K * POLY_SIZE)
+	BitPack.DecodeT1(PubKey, 32, K * N, T1, 0)
 	PolyVec.ForwardNTT(T1, K)
 
 	local Tr = SHA3.SHAKE256_Internal(PubKey, 64)
 
-	local PkCopy = buffer.create(buffer.len(PubKey))
-	buffer.copy(PkCopy, 0, PubKey)
-	VERIFY_CACHE_PK = PkCopy
-	VERIFY_CACHE_T1 = T1
-	VERIFY_CACHE_TR = Tr
+	local PublicKey = buffer.create(buffer.len(PubKey))
+	buffer.copy(PublicKey, 0, PubKey)
+	VERIFY_KEY = {
+		PublicKey = PublicKey,
+		T1 = T1,
+		Tr = Tr,
+	}
 
 	return T1, Tr
 end
@@ -215,86 +204,46 @@ local function Keygen(Seed: buffer, PubKey: buffer, SecKey: buffer, K: number, L
 		error("Invalid secret key buffer length")
 	end
 
-	local T1Bw = Utils.BitWidth(Q) - D
 	local EtaBw = Utils.BitWidth(2 * Eta)
-	local S1Len = L * EtaBw * 32
-	local S2Len = K * EtaBw * 32
-	local T0Rng = bit32.lshift(1, D - 1)
-
-	local PkOff1 = 32
-	local SkOff0 = 0
-	local SkOff1 = SkOff0 + 32
-	local SkOff2 = SkOff1 + 32
-	local SkOff3 = SkOff2 + 64
-	local SkOff4 = SkOff3 + S1Len 
-	local SkOff5 = SkOff4 + S2Len
-
-	local DomainSeparator = buffer.create(2)
-	buffer.writeu8(DomainSeparator, 0, K)
-	buffer.writeu8(DomainSeparator, 1, L)
+	local S1Offset = 128
+	local S2Offset = S1Offset + L * EtaBw * 32
+	local T0Offset = S2Offset + K * EtaBw * 32
 
 	local SeedHashInput = buffer.create(34)
 	buffer.copy(SeedHashInput, 0, Seed, 0, 32)
-	buffer.copy(SeedHashInput, 32, DomainSeparator, 0, 2)
-
+	buffer.writeu8(SeedHashInput, 32, K)
+	buffer.writeu8(SeedHashInput, 33, L)
 	local SeedHash = SHA3.SHAKE256_Internal(SeedHashInput, 128)
 
-	local Rho = buffer.create(32)
-	local RhoPrime = buffer.create(64)
-	local Key = buffer.create(32)
+	local A = Sampling.ExpandA(SeedHash, 0, K, L)
 
-	buffer.copy(Rho, 0, SeedHash, 0, 32)
-	buffer.copy(RhoPrime, 0, SeedHash, 32, 64)
-	buffer.copy(Key, 0, SeedHash, 96, 32)
+	local S1 = buffer.create(L * POLY_SIZE)
+	local S2 = buffer.create(K * POLY_SIZE)
+	Sampling.ExpandS(SeedHash, 32, S1, Eta, L, 0)
+	Sampling.ExpandS(SeedHash, 32, S2, Eta, K, L)
 
-	local A = Sampling.ExpandA(Rho, K, L)
+	local S1Hat = buffer.create(L * POLY_SIZE)
+	buffer.copy(S1Hat, 0, S1, 0, L * POLY_SIZE)
+	PolyVec.ForwardNTT(S1Hat, L)
 
-	local S1 = buffer.create(L * N * 4)
-	local S2 = buffer.create(K * N * 4)
-
-	Sampling.ExpandS(RhoPrime, S1, Eta, L, 0)
-	Sampling.ExpandS(RhoPrime, S2, Eta, K, L)
-
-	local S1Prime = buffer.create(L * N * 4)
-	PolyVec.Copy(S1, S1Prime, L)
-	PolyVec.ForwardNTT(S1Prime, L)
-
-	local T = buffer.create(K * N * 4)
-	PolyVec.MatrixMultiply(A, S1Prime, T, K, L)
+	local T = buffer.create(K * POLY_SIZE)
+	PolyVec.MatrixMultiply(A, S1Hat, T, K, L)
 	PolyVec.InverseNTT(T, K)
-	PolyVec.AddTo(S2, T, K)
 
-	local T1 = buffer.create(K * N * 4)
-	local T0 = buffer.create(K * N * 4)
-	PolyVec.Power2Round(T, T1, T0, K, D)
+	local T1 = buffer.create(K * POLY_SIZE)
+	local T0 = buffer.create(K * POLY_SIZE)
+	PolyVec.Power2RoundSum(T, S2, T1, T0, K)
 
-	buffer.copy(PubKey, 0, Rho, 0, 32)
-	local T1Encoded = buffer.create(buffer.len(PubKey) - PkOff1)
-	PolyVec.Encode(T1, T1Encoded, K, T1Bw)
-	buffer.copy(PubKey, PkOff1, T1Encoded, 0, buffer.len(T1Encoded))
-
+	buffer.copy(PubKey, 0, SeedHash, 0, 32)
+	BitPack.EncodeT1(T1, 0, K * N, PubKey, 32)
 	local Tr = SHA3.SHAKE256_Internal(PubKey, 64)
 
-	buffer.copy(SecKey, SkOff0, Rho, 0, 32)
-	buffer.copy(SecKey, SkOff1, Key, 0, 32)
-	buffer.copy(SecKey, SkOff2, Tr, 0, 64)
-
-	PolyVec.SubFromX(S1, L, Eta)
-	PolyVec.SubFromX(S2, K, Eta)
-
-	local S1Encoded = buffer.create(S1Len)
-	local S2Encoded = buffer.create(S2Len)
-	PolyVec.Encode(S1, S1Encoded, L, EtaBw)
-	PolyVec.Encode(S2, S2Encoded, K, EtaBw)
-
-	buffer.copy(SecKey, SkOff3, S1Encoded, 0, S1Len)
-	buffer.copy(SecKey, SkOff4, S2Encoded, 0, S2Len)
-
-	PolyVec.SubFromX(T0, K, T0Rng)
-
-	local T0Encoded = buffer.create(buffer.len(SecKey) - SkOff5)
-	PolyVec.Encode(T0, T0Encoded, K, D)
-	buffer.copy(SecKey, SkOff5, T0Encoded, 0, buffer.len(T0Encoded))
+	buffer.copy(SecKey, 0, SeedHash, 0, 32)
+	buffer.copy(SecKey, 32, SeedHash, 96, 32)
+	buffer.copy(SecKey, 64, Tr, 0, 64)
+	BitPack.EncodeCentered(S1, 0, L * N, Eta, EtaBw, SecKey, S1Offset)
+	BitPack.EncodeCentered(S2, 0, K * N, Eta, EtaBw, SecKey, S2Offset)
+	BitPack.EncodeCentered(T0, 0, K * N, bit32.lshift(1, D - 1), D, SecKey, T0Offset)
 end
 
 local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, K: number, L: number, D: number, Eta: number, Gamma1: number, Gamma2: number, Tau: number, Beta: number, Omega: number, Lambda: number): boolean
@@ -311,49 +260,35 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 	end
 
 	local Alpha = bit32.lshift(Gamma2, 1)
-	local M = math.floor((Q - 1) / Alpha)
-	local W1Bw = Utils.BitWidth(M - 1)
+	local W1Bw = Utils.BitWidth(math.floor((Q - 1) / Alpha) - 1)
 	local CTildaSize = math.floor((2 * Lambda) / 8)
 	local Gamma1Bw = Utils.BitWidth(Gamma1)
 
-	local Rho = buffer.create(32)
-	local Key = buffer.create(32)
+	local A = Sampling.ExpandA(SecKey, 0, K, L)
 
-	buffer.copy(Rho, 0, SecKey, 0, 32)
-	buffer.copy(Key, 0, SecKey, 32, 32)
-
-	local A = Sampling.ExpandA(Rho, K, L)
-
-	local RhoPrimeInput = buffer.create(32 + 32 + 64)
-	buffer.copy(RhoPrimeInput, 0, Key, 0, 32)
+	local RhoPrimeInput = buffer.create(128)
+	buffer.copy(RhoPrimeInput, 0, SecKey, 32, 32)
 	buffer.copy(RhoPrimeInput, 32, Rnd, 0, 32)
 	buffer.copy(RhoPrimeInput, 64, Mu, 0, 64)
-
 	local RhoPrime = SHA3.SHAKE256_Internal(RhoPrimeInput, 64)
 
 	local S1, S2, T0 = SignKeySetup(SecKey, K, L, D, Eta)
 
-	local HasSigned = false
-	local Kappa = 0
-
-	local Work = ScratchFor(K, L, W1Bw, Gamma1Bw, CTildaSize)
+	local Work = ScratchFor(K, L, W1Bw, CTildaSize)
 	local Y = Work.Y
-	local YPrime = Work.YPrime
+	local YHat = Work.YHat
 	local W = Work.W
-	local W1 = Work.W1
-	local C = Work.C
 	local Z = Work.Z
-	local R0 = Work.R0
-	local R1 = Work.R1
-	local H0 = Work.H0
-	local H1 = Work.H1
-	local H = Work.H
-	local CTilda = Work.CTilda
-	local W1Encoded = Work.W1Encoded
+	local R = Work.R
+	local Product = Work.Product
+	local C = Work.C
+	local Hints = Work.Hints
 	local ChallengeInput = Work.ChallengeInput
 	buffer.copy(ChallengeInput, 0, Mu, 0, 64)
-	local W1EncodedLen = buffer.len(W1Encoded)
-	local KN4 = K * N * 4
+
+	local CTilda = Work.CTilda
+	local HasSigned = false
+	local Kappa = 0
 
 	while not HasSigned do
 		if Kappa + L > 65536 then
@@ -361,74 +296,46 @@ local function SignMuCore(Mu: buffer, Rnd: buffer, SecKey: buffer, Sig: buffer, 
 		end
 
 		Sampling.ExpandMask(RhoPrime, Kappa, Y, Gamma1, L)
-
-		PolyVec.Copy(Y, YPrime, L)
-		PolyVec.ForwardNTT(YPrime, L)
-		PolyVec.MatrixMultiply(A, YPrime, W, K, L)
+		buffer.copy(YHat, 0, Y, 0, L * POLY_SIZE)
+		PolyVec.ForwardNTT(YHat, L)
+		PolyVec.MatrixMultiply(A, YHat, W, K, L)
 		PolyVec.InverseNTT(W, K)
 
-		PolyVec.HighBits(W, W1, K, Alpha)
-		PolyVec.Encode(W1, W1Encoded, K, W1Bw)
-
-		buffer.copy(ChallengeInput, 64, W1Encoded, 0, W1EncodedLen)
-
-		local CTildaFull = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
-		buffer.copy(CTilda, 0, CTildaFull, 0, CTildaSize)
+		PolyVec.HighBitsEncode(W, K, Gamma2, ChallengeInput, 64)
+		CTilda = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 
 		Sampling.SampleInBall(CTilda, C, Tau)
 		NTT.ForwardNTTWithOffset(C, 0)
 
 		PolyVec.MultiplyByPoly(C, S1, Z, L)
 		PolyVec.InverseNTT(Z, L)
-		PolyVec.AddTo(Y, Z, L)
-
-		local Rejected = PolyVec.NormExceeds(Z, L, Gamma1 - Beta)
+		local Rejected = PolyVec.AddExceeds(Y, Z, Z, L, Gamma1 - Beta)
 
 		if not Rejected then
-			PolyVec.MultiplyByPoly(C, S2, R1, K)
-			PolyVec.InverseNTT(R1, K)
-			PolyVec.SubFromVec(W, R1, K)
-			PolyVec.LowBits(R1, R0, K, Alpha)
-			Rejected = PolyVec.NormExceeds(R0, K, Gamma2 - Beta)
+			PolyVec.MultiplyByPoly(C, S2, R, K)
+			PolyVec.InverseNTT(R, K)
+			Rejected = PolyVec.SubtractLowBitsExceeds(W, R, K, Gamma2, Gamma2 - Beta)
 		end
 
 		if not Rejected then
-			PolyVec.MultiplyByPoly(C, T0, H0, K)
-			PolyVec.InverseNTT(H0, K)
-
-			local LocalQ = Q
-			for Idx = 0, KN4 - 4, 4 do
-				local H0Val = buffer.readu32(H0, Idx)
-				local R1Val = buffer.readu32(R1, Idx)
-				local Negated = -H0Val
-				local Sum = R1Val + H0Val - LocalQ
-				buffer.writeu32(H1, Idx, H0Val)
-				buffer.writeu32(H0, Idx, Negated + bit32.band(LocalQ, bit32.arshift(Negated, 31)))
-				buffer.writeu32(R1, Idx, Sum + bit32.band(LocalQ, bit32.arshift(Sum, 31)))
-			end
-
-			PolyVec.MakeHint(H0, R1, H, K, Alpha)
-
-			HasSigned = not PolyVec.NormExceeds(H1, K, Gamma2) and PolyVec.Count1s(H, K) <= Omega
+			PolyVec.MultiplyByPoly(C, T0, Product, K)
+			PolyVec.InverseNTT(Product, K)
+			local Exceeds, Count = PolyVec.MakeHints(R, Product, Hints, K, Gamma2)
+			HasSigned = not Exceeds and Count <= Omega
 		end
 
 		Kappa += L
 	end
 
-	local SigOff0 = 0
-	local SigOff1 = SigOff0 + CTildaSize
-	local SigOff2 = SigOff1 + (32 * L * Gamma1Bw)
+	local ZOffset = CTildaSize
+	local HintOffset = ZOffset + 32 * L * Gamma1Bw
 
-	buffer.copy(Sig, SigOff0, CTilda, 0, CTildaSize)
+	buffer.copy(Sig, 0, CTilda, 0, CTildaSize)
+	BitPack.EncodeCentered(Z, 0, L * N, Gamma1, Gamma1Bw, Sig, ZOffset)
 
-	PolyVec.SubFromX(Z, L, Gamma1)
-	local ZEncoded = Work.ZEncoded
-	PolyVec.Encode(Z, ZEncoded, L, Gamma1Bw)
-	buffer.copy(Sig, SigOff1, ZEncoded, 0, buffer.len(ZEncoded))
-
-	local HEncoded = buffer.create(buffer.len(Sig) - SigOff2)
-	BitPacking.EncodeHintBits(H, HEncoded, K, Omega)
-	buffer.copy(Sig, SigOff2, HEncoded, 0, buffer.len(HEncoded))
+	local HEncoded = buffer.create(buffer.len(Sig) - HintOffset)
+	BitPacking.EncodeHintBits(Hints, HEncoded, K, Omega)
+	buffer.copy(Sig, HintOffset, HEncoded, 0, buffer.len(HEncoded))
 
 	return HasSigned
 end
@@ -446,26 +353,7 @@ local function Sign(Msg: buffer, Rnd: buffer, SecKey: buffer, Ctx: buffer, Sig: 
 		error("Invalid secret key length")
 	end
 
-	local SkOff2 = 64
-
-	local Tr = buffer.create(64)
-	buffer.copy(Tr, 0, SecKey, SkOff2, 64)
-
-	local DomainSeparator = buffer.create(2)
-	buffer.writeu8(DomainSeparator, 0, 0)
-	buffer.writeu8(DomainSeparator, 1, buffer.len(Ctx))
-
-	local MuInput = buffer.create(64 + 2 + buffer.len(Ctx) + buffer.len(Msg))
-	local Offset = 0
-	buffer.copy(MuInput, Offset, Tr, 0, 64)
-	Offset += 64
-	buffer.copy(MuInput, Offset, DomainSeparator, 0, 2)
-	Offset += 2
-	buffer.copy(MuInput, Offset, Ctx, 0, buffer.len(Ctx))
-	Offset += buffer.len(Ctx)
-	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
-
-	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
+	local Mu = MessageHash(SecKey, 64, Ctx, Msg)
 
 	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
 end
@@ -479,15 +367,9 @@ local function SignInternal(MPrime: buffer, Rnd: buffer, SecKey: buffer, Sig: bu
 		error("Invalid secret key length")
 	end
 
-	local SkOff2 = 64
-
-	local Tr = buffer.create(64)
-	buffer.copy(Tr, 0, SecKey, SkOff2, 64)
-
 	local MuInput = buffer.create(64 + buffer.len(MPrime))
-	buffer.copy(MuInput, 0, Tr, 0, 64)
+	buffer.copy(MuInput, 0, SecKey, 64, 64)
 	buffer.copy(MuInput, 64, MPrime, 0, buffer.len(MPrime))
-
 	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
 
 	return SignMuCore(Mu, Rnd, SecKey, Sig, K, L, D, Eta, Gamma1, Gamma2, Tau, Beta, Omega, Lambda)
@@ -514,104 +396,56 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 		return false
 	end
 
-	local T1Bw = Utils.BitWidth(Q) - D
+	if buffer.len(PubKey) ~= Utils.PubKeyLen(K, D) then
+		return false
+	end
+
+	if buffer.len(Sig) ~= Utils.SigLen(K, L, Gamma1, Omega, Lambda) then
+		return false
+	end
+
 	local Gamma1Bw = Utils.BitWidth(Gamma1)
 	local CTildaSize = math.floor((2 * Lambda) / 8)
+	local W1Bw = Utils.BitWidth(math.floor((Q - 1) / bit32.lshift(Gamma2, 1)) - 1)
+	local ZOffset = CTildaSize
+	local HintOffset = ZOffset + 32 * L * Gamma1Bw
 
-	local ExpectedPkLen = Utils.PubKeyLen(K, D)
-	if buffer.len(PubKey) ~= ExpectedPkLen then
-		return false
-	end
-
-	local ExpectedSigLen = Utils.SigLen(K, L, Gamma1, Omega, Lambda)
-	if buffer.len(Sig) ~= ExpectedSigLen then
-		return false
-	end
-
-	local Alpha = bit32.lshift(Gamma2, 1)
-	local M = math.floor((Q - 1) / Alpha)
-	local W1Bw = Utils.BitWidth(M - 1)
-
-	local SigOff0 = 0
-	local SigOff1 = SigOff0 + CTildaSize
-	local SigOff2 = SigOff1 + (32 * L * Gamma1Bw)
-
-	local VerificationFailed = false
-
-	local Rho = buffer.create(32)
-	buffer.copy(Rho, 0, PubKey, 0, 32)
-
-	local T1, Tr = VerifyKeySetup(PubKey, K, D, T1Bw)
-
-	local CTilda = buffer.create(CTildaSize)
-	buffer.copy(CTilda, 0, Sig, SigOff0, CTildaSize)
-
-	local Work = ScratchFor(K, L, W1Bw, Gamma1Bw, CTildaSize)
-	local ZEncoded = Work.ZEncoded
-	buffer.copy(ZEncoded, 0, Sig, SigOff1, buffer.len(ZEncoded))
+	local T1, Tr = VerifyKeySetup(PubKey, K)
+	local Work = ScratchFor(K, L, W1Bw, CTildaSize)
 
 	local Z = Work.Z
-	PolyVec.Decode(ZEncoded, Z, L, Gamma1Bw)
-	PolyVec.SubFromX(Z, L, Gamma1)
+	BitPack.DecodeCentered(Sig, ZOffset, L * N, Gamma1, Gamma1Bw, Z, 0)
+	local VerificationFailed = PolyVec.InfinityNorm(Z, L) >= Gamma1 - Beta
 
-	local ZNorm = PolyVec.InfinityNorm(Z, L)
-	VerificationFailed = VerificationFailed or (ZNorm >= (Gamma1 - Beta))
+	local HEncoded = buffer.create(buffer.len(Sig) - HintOffset)
+	buffer.copy(HEncoded, 0, Sig, HintOffset, buffer.len(HEncoded))
+	local Hints = Work.Hints
+	local HintsFailed = BitPacking.DecodeHintBits(HEncoded, Hints, K, Omega)
+	VerificationFailed = VerificationFailed or HintsFailed
 
-	local HEncoded = buffer.create(buffer.len(Sig) - SigOff2)
-	buffer.copy(HEncoded, 0, Sig, SigOff2, buffer.len(HEncoded))
+	local A = Sampling.ExpandA(PubKey, 0, K, L)
+	local Mu = MessageHash(Tr, 0, Ctx, Msg)
 
-	local H = Work.H
-	local HintDecodeFailed = BitPacking.DecodeHintBits(HEncoded, H, K, Omega)
-	VerificationFailed = VerificationFailed or HintDecodeFailed
-
-	local A = Sampling.ExpandA(Rho, K, L)
-
-	local DomainSeparator = buffer.create(2)
-	buffer.writeu8(DomainSeparator, 0, 0)
-	buffer.writeu8(DomainSeparator, 1, buffer.len(Ctx))
-
-	local MuInput = buffer.create(64 + 2 + buffer.len(Ctx) + buffer.len(Msg))
-	local Offset = 0
-	buffer.copy(MuInput, Offset, Tr, 0, 64)
-	Offset += 64
-	buffer.copy(MuInput, Offset, DomainSeparator, 0, 2)
-	Offset += 2
-	buffer.copy(MuInput, Offset, Ctx, 0, buffer.len(Ctx))
-	Offset += buffer.len(Ctx)
-	buffer.copy(MuInput, Offset, Msg, 0, buffer.len(Msg))
-
-	local Mu = SHA3.SHAKE256_Internal(MuInput, 64)
-
+	local CTilda = Work.CTilda
+	buffer.copy(CTilda, 0, Sig, 0, CTildaSize)
 	local C = Work.C
 	Sampling.SampleInBall(CTilda, C, Tau)
 	NTT.ForwardNTTWithOffset(C, 0)
 
-	local W0 = Work.W
-	local W1 = Work.W1
-	local W2 = Work.W2
-
+	local W = Work.W
+	local Product = Work.Product
 	PolyVec.ForwardNTT(Z, L)
-	PolyVec.MatrixMultiply(A, Z, W0, K, L)
-
-	PolyVec.MultiplyByPoly(C, T1, W2, K)
-	PolyVec.SubFromVec(W0, W2, K)
-	PolyVec.InverseNTT(W2, K)
-
-	PolyVec.UseHint(H, W2, W1, K, Alpha)
-
-	local W1Encoded = Work.W1Encoded
-	PolyVec.Encode(W1, W1Encoded, K, W1Bw)
+	PolyVec.MatrixMultiply(A, Z, W, K, L)
+	PolyVec.MultiplyByPoly(C, T1, Product, K)
+	PolyVec.SubFromVec(W, Product, K)
+	PolyVec.InverseNTT(Product, K)
 
 	local ChallengeInput = Work.ChallengeInput
 	buffer.copy(ChallengeInput, 0, Mu, 0, 64)
-	buffer.copy(ChallengeInput, 64, W1Encoded, 0, buffer.len(W1Encoded))
-
+	PolyVec.UseHintEncode(Hints, Product, K, Gamma2, ChallengeInput, 64)
 	local CTildaPrime = SHA3.SHAKE256_Internal(ChallengeInput, CTildaSize)
 
-	local CompareResult = CtCompare(CTilda, CTildaPrime)
-	VerificationFailed = VerificationFailed or (not CompareResult)
-
-	return not VerificationFailed
+	return not VerificationFailed and CtCompare(CTilda, CTildaPrime)
 end
 
 Mldsa.ML_DSA_44 = {

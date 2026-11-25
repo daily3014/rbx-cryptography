@@ -12,29 +12,45 @@
 --!native
 
 local XOF = require("../../Hashing/XOF")
+local BitPack = require("./BitPack")
 local Params = require("./Params")
 
 local N = 256
 local Q = 8380417
+local POLY_SIZE = N * 4
 
 local Sampling = {}
 
 local WORKSPACE_MSG_34 = buffer.create(34)
 local WORKSPACE_MSG_66 = buffer.create(66)
 
-local EXPAND_A_SQUEEZE = buffer.create(504)
-local EXPAND_S_SQUEEZE = buffer.create(272)
+local EXPAND_A_CHUNK = buffer.create(172)
+local EXPAND_A_OVERRUN = 224
+local EXPAND_S_CHUNK = buffer.create(136)
+local EXPAND_S_POLY = buffer.create(POLY_SIZE + 272 * 4)
 local EXPAND_MASK_SQUEEZE = buffer.create(640)
 local SAMPLE_BALL_TAU = buffer.create(8)
 local SAMPLE_BALL_SQUEEZE = buffer.create(136)
+
+local ETA_2_VALUES = buffer.create(64) do
+	for Nibble = 0, 15 do
+		buffer.writeu32(ETA_2_VALUES, Nibble * 4, (2 - Nibble % 5) % Q)
+	end
+end
+
+local ETA_4_VALUES = buffer.create(64) do
+	for Nibble = 0, 15 do
+		buffer.writeu32(ETA_4_VALUES, Nibble * 4, (4 - Nibble) % Q)
+	end
+end
 
 local MATRIX_CACHE_RHO = buffer.create(32)
 local MATRIX_CACHE_DIMENSIONS = 0
 local MATRIX_CACHE_VALUE: buffer? = nil
 
-local function SeedMatches(Cached: buffer, Rho: buffer): boolean
+local function SeedMatches(Cached: buffer, Rho: buffer, RhoOffset: number): boolean
 	for Offset = 0, 28, 4 do
-		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, Offset) then
+		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, RhoOffset + Offset) then
 			return false
 		end
 	end
@@ -42,246 +58,150 @@ local function SeedMatches(Cached: buffer, Rho: buffer): boolean
 	return true
 end
 
-function Sampling.ExpandA(Rho: buffer, K: number, L: number): buffer
+function Sampling.ExpandA(Rho: buffer, RhoOffset: number, K: number, L: number): buffer
 	local Dimensions = K * 16 + L
 	local Cached = MATRIX_CACHE_VALUE
-	if Cached and MATRIX_CACHE_DIMENSIONS == Dimensions and SeedMatches(MATRIX_CACHE_RHO, Rho) then
+	if Cached and MATRIX_CACHE_DIMENSIONS == Dimensions and SeedMatches(MATRIX_CACHE_RHO, Rho, RhoOffset) then
 		return Cached
 	end
 
-	local Mat = buffer.create(K * L * N * 4)
-
-	buffer.copy(WORKSPACE_MSG_34, 0, Rho, 0, 32)
-
+	local Mat = buffer.create(K * L * POLY_SIZE + EXPAND_A_OVERRUN)
 	local Message = WORKSPACE_MSG_34
-	local Num = N
+	local Chunk = EXPAND_A_CHUNK
 	local Modulus = Q
-	local XOF = XOF
-	local Squeeze = EXPAND_A_SQUEEZE
+	buffer.copy(Message, 0, Rho, RhoOffset, 32)
 
 	for I = 0, K - 1 do
 		for J = 0, L - 1 do
-			local Offset = (I * L + J) * Num * 4
+			local Out = (I * L + J) * POLY_SIZE
+			local Last = Out + POLY_SIZE
 
 			buffer.writeu8(Message, 32, J)
 			buffer.writeu8(Message, 33, I)
-
 			XOF.Reset128()
 			XOF.Absorb128(Message)
 
-			local CoeffCount = 0
-			local ChunkSize = 504
-
-			while CoeffCount < Num do
-				XOF.Squeeze128Into(Squeeze, ChunkSize, 0)
-				local TotalOutput = Squeeze
-				local ByteOffset = 0
-				local OutputLen = ChunkSize
-
-				while CoeffCount < Num and ByteOffset + 5 < OutputLen do
-					local Chunk1 = buffer.readu32(TotalOutput, ByteOffset)
-					local Chunk2 = buffer.readu32(TotalOutput, ByteOffset + 2)
-
-					local T3 = bit32.band(Chunk1, 0x7FFFFF)
-					if T3 < Modulus then
-						buffer.writeu32(Mat, Offset + CoeffCount * 4, T3)
-						CoeffCount += 1
-					end
-
-					local T4 = bit32.band(bit32.rshift(Chunk2, 8), 0x7FFFFF)
-					if T4 < Modulus and CoeffCount < Num then
-						buffer.writeu32(Mat, Offset + CoeffCount * 4, T4)
-						CoeffCount += 1
-					end
-
-					ByteOffset += 6
+			while Out < Last do
+				XOF.Squeeze128Into(Chunk, 168, 0)
+				for Offset = 0, 144, 24 do
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
 				end
-
-				while CoeffCount < Num and ByteOffset + 2 < OutputLen do
-					local T0 = bit32.band(buffer.readu8(TotalOutput, ByteOffset + 2), 0x7F)
-					local T1 = buffer.readu8(TotalOutput, ByteOffset + 1)
-					local T2 = buffer.readu8(TotalOutput, ByteOffset)
-
-					local T3 = bit32.bor(
-						bit32.lshift(T0, 16),
-						bit32.lshift(T1, 8),
-						T2
-					)
-
-					if T3 < Modulus then
-						buffer.writeu32(Mat, Offset + CoeffCount * 4, T3)
-						CoeffCount += 1
-					end
-
-					ByteOffset += 3
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 3), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 6), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 9), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 12), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 15), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 18), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
+				do
+					local Candidate = bit32.band(buffer.readu32(Chunk, Offset + 21), 0x7FFFFF)
+					buffer.writeu32(Mat, Out, Candidate)
+					Out += bit32.rshift(Candidate - Modulus, 31) * 4
+				end
 				end
 			end
 		end
 	end
 
-	buffer.copy(MATRIX_CACHE_RHO, 0, Rho, 0, 32)
+	buffer.copy(MATRIX_CACHE_RHO, 0, Rho, RhoOffset, 32)
 	MATRIX_CACHE_DIMENSIONS = Dimensions
 	MATRIX_CACHE_VALUE = Mat
 
 	return Mat
 end
 
-function Sampling.ExpandS(RhoPrime: buffer, Vec: buffer, Eta: number, K: number, StartNonce: number)
+function Sampling.ExpandS(RhoPrime: buffer, RhoPrimeOffset: number, Vec: buffer, Eta: number, K: number, StartNonce: number)
 	if not Params.CheckEta(Eta) or not Params.CheckNonce(StartNonce) then
 		error("Invalid parameters for ExpandS")
 	end
 
-	buffer.copy(WORKSPACE_MSG_66, 0, RhoPrime, 0, 64)
-
 	local Message = WORKSPACE_MSG_66
-	local Num = N
-	local Modulus = Q
-	local Squeeze = EXPAND_S_SQUEEZE
+	local Chunk = EXPAND_S_CHUNK
+	local Poly = EXPAND_S_POLY
+	local Values = if Eta == 2 then ETA_2_VALUES else ETA_4_VALUES
+	local Limit = if Eta == 2 then 60 else 36
+	buffer.copy(Message, 0, RhoPrime, RhoPrimeOffset, 64)
 
 	for I = 0, K - 1 do
-		local Offset = I * Num * 4
-		local NewNonce = StartNonce + I
-
-		buffer.writeu16(Message, 64, NewNonce)
-
+		buffer.writeu16(Message, 64, StartNonce + I)
 		XOF.Reset256()
 		XOF.Absorb256(Message)
 
-		local CoeffCount = 0
-		local ChunkSize = if Eta == 2 then 136 else 272
-
-		while CoeffCount < Num do
-			XOF.Squeeze256Into(Squeeze, ChunkSize, 0)
-			local TotalOutput = Squeeze
-			local ByteOffset = 0
-			local OutputLen = ChunkSize
-
-			if Eta == 2 then
-				while CoeffCount < Num and ByteOffset + 3 < OutputLen do
-					local Chunk = buffer.readu32(TotalOutput, ByteOffset)
-
-					local T0 = bit32.band(Chunk, 0x0F)
-					local T1 = bit32.band(bit32.rshift(Chunk, 4), 0x0F)
-					local T2 = bit32.band(bit32.rshift(Chunk, 8), 0x0F)
-					local T3 = bit32.band(bit32.rshift(Chunk, 12), 0x0F)
-					local T4 = bit32.band(bit32.rshift(Chunk, 16), 0x0F)
-					local T5 = bit32.band(bit32.rshift(Chunk, 20), 0x0F)
-					local T6 = bit32.band(bit32.rshift(Chunk, 24), 0x0F)
-					local T7 = bit32.band(bit32.rshift(Chunk, 28), 0x0F)
-
-					if T0 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T0 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T1 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T1 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T2 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T2 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T3 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T3 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T4 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T4 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T5 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T5 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T6 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T6 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if T7 < 15 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T7 % 5) % Modulus)
-						CoeffCount += 1
-					end
-
-					ByteOffset += 4
+		local Out = 0
+		while Out < POLY_SIZE do
+			XOF.Squeeze256Into(Chunk, 136, 0)
+			for Offset = 0, 132, 4 do
+				local Word = buffer.readu32(Chunk, Offset)
+				do
+					local NibbleOffset = bit32.band(bit32.lshift(Word, 2), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
 				end
-			else
-				while CoeffCount < Num and ByteOffset + 3 < OutputLen do
-					local Chunk = buffer.readu32(TotalOutput, ByteOffset)
-
-					local T0 = bit32.band(Chunk, 0x0F)
-					local T1 = bit32.band(bit32.rshift(Chunk, 4), 0x0F)
-					local T2 = bit32.band(bit32.rshift(Chunk, 8), 0x0F)
-					local T3 = bit32.band(bit32.rshift(Chunk, 12), 0x0F)
-					local T4 = bit32.band(bit32.rshift(Chunk, 16), 0x0F)
-					local T5 = bit32.band(bit32.rshift(Chunk, 20), 0x0F)
-					local T6 = bit32.band(bit32.rshift(Chunk, 24), 0x0F)
-					local T7 = bit32.band(bit32.rshift(Chunk, 28), 0x0F)
-
-					if T0 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T0) % Modulus)
-						CoeffCount += 1
-					end
-					if T1 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T1) % Modulus)
-						CoeffCount += 1
-					end
-					if T2 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T2) % Modulus)
-						CoeffCount += 1
-					end
-					if T3 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T3) % Modulus)
-						CoeffCount += 1
-					end
-					if T4 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T4) % Modulus)
-						CoeffCount += 1
-					end
-					if T5 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T5) % Modulus)
-						CoeffCount += 1
-					end
-					if T6 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T6) % Modulus)
-						CoeffCount += 1
-					end
-					if T7 < 9 and CoeffCount < Num then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T7) % Modulus)
-						CoeffCount += 1
-					end
-
-					ByteOffset += 4
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 2), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
 				end
-			end
-
-			while CoeffCount < Num and ByteOffset < OutputLen do
-				local Byte = buffer.readu8(TotalOutput, ByteOffset)
-				local T0 = bit32.band(Byte, 0x0F)
-				local T1 = bit32.band(bit32.rshift(Byte, 4), 0x0F)
-
-				if Eta == 2 then
-					if T0 < 15 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T0 % 5) % Modulus)
-						CoeffCount += 1
-					end
-					if CoeffCount < Num and T1 < 15 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (2 - T1 % 5) % Modulus)
-						CoeffCount += 1
-					end
-				else
-					if T0 < 9 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T0) % Modulus)
-						CoeffCount += 1
-					end
-					if CoeffCount < Num and T1 < 9 then
-						buffer.writeu32(Vec, Offset + CoeffCount * 4, (4 - T1) % Modulus)
-						CoeffCount += 1
-					end
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 6), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
 				end
-
-				ByteOffset += 1
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 10), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+				end
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 14), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+				end
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 18), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+				end
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 22), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+				end
+				do
+					local NibbleOffset = bit32.band(bit32.rshift(Word, 26), 60)
+					buffer.writeu32(Poly, Out, buffer.readu32(Values, NibbleOffset))
+					Out += bit32.rshift(NibbleOffset - Limit, 31) * 4
+				end
 			end
 		end
+
+		buffer.copy(Vec, I * POLY_SIZE, Poly, 0, POLY_SIZE)
 	end
 end
 
@@ -290,78 +210,18 @@ function Sampling.ExpandMask(Seed: buffer, Nonce: number, Vec: buffer, Gamma1: n
 		error("Invalid Gamma1 parameter")
 	end
 
-	local Gamma1BitWidth = if Gamma1 == 131072 then 18 else 20
-	local BufSize = math.floor((N * Gamma1BitWidth) / 8)
-
-	buffer.copy(WORKSPACE_MSG_66, 0, Seed, 0, 64)
-
+	local Bits = if Gamma1 == 131072 then 18 else 20
+	local SqueezeBytes = N * Bits / 8
 	local Message = WORKSPACE_MSG_66
-	local Num = N
-	local Modulus = Q
-	local G1 = Gamma1
 	local Squeeze = EXPAND_MASK_SQUEEZE
+	buffer.copy(Message, 0, Seed, 0, 64)
 
 	for I = 0, L - 1 do
-		local Offset = I * Num * 4
-		local NewNonce = Nonce + I
-
-		buffer.writeu16(Message, 64, NewNonce)
-
+		buffer.writeu16(Message, 64, Nonce + I)
 		XOF.Reset256()
 		XOF.Absorb256(Message)
-
-		XOF.Squeeze256Into(Squeeze, BufSize, 0)
-		local Src = Squeeze
-
-		if Gamma1BitWidth == 18 then
-			for J = 0, 63 do
-				local BOffset = J * 9
-				local POffset = Offset + J * 16
-
-				local W0 = buffer.readu32(Src, BOffset)
-				local W1 = buffer.readu32(Src, BOffset + 4)
-				local B8 = buffer.readu8(Src, BOffset + 8)
-
-				local V0 = bit32.band(W0, 0x3FFFF)
-				local V1 = bit32.band(bit32.bor(bit32.rshift(W0, 18), bit32.lshift(W1, 14)), 0x3FFFF)
-				local V2 = bit32.band(bit32.rshift(W1, 4), 0x3FFFF)
-				local V3 = bit32.bor(bit32.rshift(W1, 22), bit32.lshift(B8, 10))
-
-				local D0 = G1 - V0
-				local D1 = G1 - V1
-				local D2 = G1 - V2
-				local D3 = G1 - V3
-
-				buffer.writeu32(Vec, POffset + 0, D0 + bit32.band(Modulus, bit32.arshift(D0, 31)))
-				buffer.writeu32(Vec, POffset + 4, D1 + bit32.band(Modulus, bit32.arshift(D1, 31)))
-				buffer.writeu32(Vec, POffset + 8, D2 + bit32.band(Modulus, bit32.arshift(D2, 31)))
-				buffer.writeu32(Vec, POffset + 12, D3 + bit32.band(Modulus, bit32.arshift(D3, 31)))
-			end
-		else
-			for J = 0, 63 do
-				local BOffset = J * 10
-				local POffset = Offset + J * 16
-
-				local W0 = buffer.readu32(Src, BOffset)
-				local W1 = buffer.readu32(Src, BOffset + 4)
-				local Hi = buffer.readu16(Src, BOffset + 8)
-
-				local V0 = bit32.band(W0, 0xFFFFF)
-				local V1 = bit32.band(bit32.bor(bit32.rshift(W0, 20), bit32.lshift(W1, 12)), 0xFFFFF)
-				local V2 = bit32.band(bit32.rshift(W1, 8), 0xFFFFF)
-				local V3 = bit32.bor(bit32.rshift(W1, 28), bit32.lshift(Hi, 4))
-
-				local D0 = G1 - V0
-				local D1 = G1 - V1
-				local D2 = G1 - V2
-				local D3 = G1 - V3
-
-				buffer.writeu32(Vec, POffset + 0, D0 + bit32.band(Modulus, bit32.arshift(D0, 31)))
-				buffer.writeu32(Vec, POffset + 4, D1 + bit32.band(Modulus, bit32.arshift(D1, 31)))
-				buffer.writeu32(Vec, POffset + 8, D2 + bit32.band(Modulus, bit32.arshift(D2, 31)))
-				buffer.writeu32(Vec, POffset + 12, D3 + bit32.band(Modulus, bit32.arshift(D3, 31)))
-			end
-		end
+		XOF.Squeeze256Into(Squeeze, SqueezeBytes, 0)
+		BitPack.DecodeCentered(Squeeze, 0, N, Gamma1, Bits, Vec, I * POLY_SIZE)
 	end
 end
 

@@ -19,9 +19,6 @@
 --!optimize 2
 --!native
 
-local PolyVec = require("./PolyVec")
-local MlKemParams = require("./Params")
-local SHA3 = require("../../Hashing/SHA3")
 local XOF = require("../../Hashing/XOF")
 
 local LOG2N = 8
@@ -30,7 +27,9 @@ local POLY_SIZE = N * 2
 
 local Q = 13 * 256 + 1
 
-local SAMPLE_NTT_CHUNK = buffer.create(168)
+local SAMPLE_NTT_CHUNK = buffer.create(172)
+local SAMPLE_NTT_OVERRUN = 224
+local GEN_MATRIX_XOF_INPUT = buffer.create(34)
 local GEN_VECTOR_PRF_OUTPUT = buffer.create(192)
 local GEN_VECTOR_PRF_INPUT = buffer.create(33)
 
@@ -56,8 +55,7 @@ local CBD2_LUT = buffer.create(256 * 4) do
 	end
 end
 
-local function SamplePolyCbd2(Prf: buffer, Poly: buffer, Offset: number?)
-	local BaseOffset = Offset or 0
+local function SamplePolyCbd2(Prf: buffer, Poly: buffer, BaseOffset: number)
 	local Lut = CBD2_LUT
 
 	for I = 0, 127 do
@@ -82,8 +80,7 @@ local CBD3_LUT = buffer.create(4096 * 4) do
 	end
 end
 
-local function SamplePolyCbd3(Prf: buffer, Poly: buffer, Offset: number?)
-	local BaseOffset = Offset or 0
+local function SamplePolyCbd3(Prf: buffer, Poly: buffer, BaseOffset: number)
 	local Lut = CBD3_LUT
 
 	for I = 0, 63 do
@@ -104,77 +101,98 @@ local function SamplePolyCbd3(Prf: buffer, Poly: buffer, Offset: number?)
 end
 
 local function SampleNtt(XofInput: buffer, Poly: buffer, PolyBase: number)
-	local LN = N
 	local LQ = Q
-	local CoeffIndex = 0
 	local Chunk = SAMPLE_NTT_CHUNK
+	local Out = PolyBase
+	local Last = PolyBase + POLY_SIZE
 
 	XOF.Reset128()
 	XOF.Absorb128(XofInput)
 
-	while CoeffIndex < LN do
+	while Out < Last do
 		XOF.Squeeze128Into(Chunk, 168, 0)
-		local Offset = 0
-
-		while Offset <= 164 and CoeffIndex <= 254 do
-			local Word = buffer.readu32(Chunk, Offset)
-			local D1 = bit32.band(Word, 0xFFF)
-			local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
-
-			buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D1)
-			CoeffIndex += bit32.rshift(D1 - LQ, 31)
-			buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D2)
-			CoeffIndex += bit32.rshift(D2 - LQ, 31)
-
-			Offset += 3
-		end
-
-		while Offset + 4 <= 168 and CoeffIndex < LN do
-			local Word = buffer.readu32(Chunk, Offset)
-			local D1 = bit32.band(Word, 0xFFF)
-			local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
-
-			if D1 < LQ then
-				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D1)
-				CoeffIndex += 1
+		for Offset = 0, 144, 24 do
+			do
+				local Word = buffer.readu32(Chunk, Offset)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
 			end
-
-			if D2 < LQ and CoeffIndex < LN then
-				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D2)
-				CoeffIndex += 1
+			do
+				local Word = buffer.readu32(Chunk, Offset + 3)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
 			end
-
-			Offset += 3
-		end
-
-		while Offset + 2 < 168 and CoeffIndex < LN do
-			local B0 = buffer.readu8(Chunk, Offset)
-			local B1 = buffer.readu8(Chunk, Offset + 1)
-			local B2 = buffer.readu8(Chunk, Offset + 2)
-
-			local D1 = bit32.bor(B0, bit32.lshift(bit32.band(B1, 0x0F), 8))
-			local D2 = bit32.bor(bit32.rshift(B1, 4), bit32.lshift(B2, 4))
-
-			if D1 < LQ then
-				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D1)
-				CoeffIndex += 1
+			do
+				local Word = buffer.readu32(Chunk, Offset + 6)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
 			end
-
-			if D2 < LQ and CoeffIndex < LN then
-				buffer.writeu16(Poly, PolyBase + CoeffIndex * 2, D2)
-				CoeffIndex += 1
+			do
+				local Word = buffer.readu32(Chunk, Offset + 9)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
 			end
-
-			Offset += 3
+			do
+				local Word = buffer.readu32(Chunk, Offset + 12)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
+			end
+			do
+				local Word = buffer.readu32(Chunk, Offset + 15)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
+			end
+			do
+				local Word = buffer.readu32(Chunk, Offset + 18)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
+			end
+			do
+				local Word = buffer.readu32(Chunk, Offset + 21)
+				local D1 = bit32.band(Word, 0xFFF)
+				local D2 = bit32.band(bit32.rshift(Word, 12), 0xFFF)
+				buffer.writeu16(Poly, Out, D1)
+				Out += bit32.rshift(D1 - LQ, 31) * 2
+				buffer.writeu16(Poly, Out, D2)
+				Out += bit32.rshift(D2 - LQ, 31) * 2
+			end
 		end
 	end
 end
 
 local Sampling = {}
 
-local function SeedMatches(Cached: buffer, Rho: buffer): boolean
+local function SeedMatches(Cached: buffer, Rho: buffer, RhoOffset: number): boolean
 	for Offset = 0, 28, 4 do
-		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, Offset) then
+		if buffer.readu32(Cached, Offset) ~= buffer.readu32(Rho, RhoOffset + Offset) then
 			return false
 		end
 	end
@@ -182,16 +200,16 @@ local function SeedMatches(Cached: buffer, Rho: buffer): boolean
 	return true
 end
 
-function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): buffer
+function Sampling.GenerateMatrix(K: number, Rho: buffer, RhoOffset: number, Transpose: boolean): buffer
 	local Slot = if Transpose then 2 else 1
 	local Cached = MATRIX_CACHE_VALUE[Slot]
-	if Cached and MATRIX_CACHE_K[Slot] == K and SeedMatches(MATRIX_CACHE_RHO[Slot], Rho) then
+	if Cached and MATRIX_CACHE_K[Slot] == K and SeedMatches(MATRIX_CACHE_RHO[Slot], Rho, RhoOffset) then
 		return Cached
 	end
 
-	local Matrix = PolyVec.MatCreate(K, K)
-	local XofInput = buffer.create(34)
-	buffer.copy(XofInput, 0, Rho, 0, 32)
+	local Matrix = buffer.create(K * K * POLY_SIZE + SAMPLE_NTT_OVERRUN)
+	local XofInput = GEN_MATRIX_XOF_INPUT
+	buffer.copy(XofInput, 0, Rho, RhoOffset, 32)
 
 	local PolySize = POLY_SIZE
 	local Sample = SampleNtt
@@ -210,30 +228,17 @@ function Sampling.GenerateMatrix(K: number, Rho: buffer, Transpose: boolean): bu
 		end
 	end
 
-	buffer.copy(MATRIX_CACHE_RHO[Slot], 0, Rho, 0, 32)
+	buffer.copy(MATRIX_CACHE_RHO[Slot], 0, Rho, RhoOffset, 32)
 	MATRIX_CACHE_K[Slot] = K
 	MATRIX_CACHE_VALUE[Slot] = Matrix
 
 	return Matrix
 end
 
-function Sampling.SamplePolyCbd(Prf: buffer, Eta: number): buffer
-	local Poly = buffer.create(N * 2)
-
-	if Eta == 2 then
-		SamplePolyCbd2(Prf, Poly, 0)
-	else
-		SamplePolyCbd3(Prf, Poly, 0)
-	end
-
-	return Poly
-end
-
-function Sampling.GenerateVector(K: number, Eta: number, Sigma: buffer, Nonce: number): buffer
-	local Vec = PolyVec.VecCreate(K)
+function Sampling.GenerateVector(K: number, Eta: number, Seed: buffer, SeedOffset: number, Nonce: number, Output: buffer)
 	local PrfInput = GEN_VECTOR_PRF_INPUT
 	local PrfOutput = GEN_VECTOR_PRF_OUTPUT
-	buffer.copy(PrfInput, 0, Sigma, 0, 32)
+	buffer.copy(PrfInput, 0, Seed, SeedOffset, 32)
 
 	local PolySize = POLY_SIZE
 	local PrfLen = 64 * Eta
@@ -247,29 +252,11 @@ function Sampling.GenerateVector(K: number, Eta: number, Sigma: buffer, Nonce: n
 
 		local Offset = I * PolySize
 		if Eta == 2 then
-			SamplePolyCbd2(PrfOutput, Vec, Offset)
+			SamplePolyCbd2(PrfOutput, Output, Offset)
 		else
-			SamplePolyCbd3(PrfOutput, Vec, Offset)
+			SamplePolyCbd3(PrfOutput, Output, Offset)
 		end
 	end
-
-	return Vec
-end
-
-function Sampling.GenerateNoisePoly(Eta: number, Sigma: buffer, Nonce: number): buffer
-	if not MlKemParams.CheckEta(Eta) then
-		error("Invalid eta parameter")
-	end
-	if buffer.len(Sigma) ~= 32 then
-		error("Sigma must be 32 bytes")
-	end
-
-	local PrfInput = buffer.create(33)
-	buffer.copy(PrfInput, 0, Sigma, 0, 32)
-	buffer.writeu8(PrfInput, 32, Nonce)
-
-	local PrfOutput = SHA3.SHAKE256_Internal(PrfInput, 64 * Eta)
-	return Sampling.SamplePolyCbd(PrfOutput, Eta)
 end
 
 return Sampling
