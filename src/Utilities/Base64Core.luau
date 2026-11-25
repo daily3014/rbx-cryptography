@@ -18,7 +18,7 @@ local ALPHABET_BYTES = buffer.create(64) do
 		97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
 		113, 114, 115, 116, 117, 118, 119, 120, 121, 122,
 		48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
-		43, 47 
+		43, 47
 	}
 
 	for Index = 1, 64 do
@@ -26,51 +26,12 @@ local ALPHABET_BYTES = buffer.create(64) do
 	end
 end
 
-local ENCODE_A, ENCODE_B = buffer.create(131072), buffer.create(131072) do
-	for Byte0 = 0, 255 do
-		local Sextet0 = Byte0 // 4
-		local Sextet0Char = buffer.readu8(ALPHABET_BYTES, Sextet0)
-		local Byte0Low = Byte0 % 4
-		for Byte1 = 0, 255 do
-			local Sextet1 = Byte0Low * 16 + (Byte1 // 16)
-			local Index = (Byte0 + Byte1 * 256) * 2
-			buffer.writeu16(ENCODE_A, Index, Sextet0Char + buffer.readu8(ALPHABET_BYTES, Sextet1) * 256)
-		end
-	end
-
-	for Byte1 = 0, 255 do
-		local Nibble = (Byte1 % 16) * 4
-		for Byte2 = 0, 255 do
-			local Sextet2 = Nibble + (Byte2 // 64)
-			local Sextet3 = Byte2 % 64
-			local Index = (Byte1 + Byte2 * 256) * 2
-			buffer.writeu16(ENCODE_B, Index, buffer.readu8(ALPHABET_BYTES, Sextet2) + buffer.readu8(ALPHABET_BYTES, Sextet3) * 256)
-		end
-	end
-end
-
 local INVALID_SEXTET = 255
-local INVALID_PAIR = 0x8000
 
 local DECODE_TET = buffer.create(256) do
 	buffer.fill(DECODE_TET, 0, INVALID_SEXTET)
 	for Index = 1, 64 do
 		buffer.writeu8(DECODE_TET, buffer.readu8(ALPHABET_BYTES, Index - 1), Index - 1)
-	end
-end
-
-local DECODE_PAIR = buffer.create(131072) do
-	for Char0 = 0, 255 do
-		local Decoded0 = buffer.readu8(DECODE_TET, Char0)
-		for Char1 = 0, 255 do
-			local Decoded1 = buffer.readu8(DECODE_TET, Char1)
-			local Key = (Char0 + Char1 * 256) * 2
-			if Decoded0 < 64 and Decoded1 < 64 then
-				buffer.writeu16(DECODE_PAIR, Key, Decoded0 * 64 + Decoded1)
-			else
-				buffer.writeu16(DECODE_PAIR, Key, INVALID_PAIR)
-			end
-		end
 	end
 end
 
@@ -93,6 +54,30 @@ local PAIR_A_BYTE0, PAIR_B_BYTE2 = buffer.create(4096), buffer.create(4096) do
 	end
 end
 
+local DECODE_HIGH, DECODE_LOW = buffer.create(262144), buffer.create(262144) do
+	for Char0 = 0, 255 do
+		local Sextet0 = buffer.readu8(DECODE_TET, Char0)
+		for Char1 = 0, 255 do
+			local Sextet1 = buffer.readu8(DECODE_TET, Char1)
+			local Key = (Char0 + Char1 * 256) * 4
+			if Sextet0 < 64 and Sextet1 < 64 then
+				buffer.writeu32(DECODE_HIGH, Key, Sextet0 * 4 + Sextet1 // 16 + (Sextet1 % 16) * 16 * 256)
+				buffer.writeu32(DECODE_LOW, Key, Sextet0 // 4 * 256 + ((Sextet0 % 4) * 64 + Sextet1) * 65536)
+			else
+				buffer.writeu32(DECODE_HIGH, Key, 0x80000000)
+				buffer.writeu32(DECODE_LOW, Key, 0x80000000)
+			end
+		end
+	end
+end
+
+local ENCODE_12 = buffer.create(8192) do
+	for Pair = 0, 4095 do
+		buffer.writeu16(ENCODE_12, Pair * 2,
+			buffer.readu8(ALPHABET_BYTES, Pair // 64) + buffer.readu8(ALPHABET_BYTES, Pair % 64) * 256)
+	end
+end
+
 local function Encode(Input: buffer): buffer
 	local InputLength = buffer.len(Input)
 	if InputLength == 0 then
@@ -100,66 +85,273 @@ local function Encode(Input: buffer): buffer
 	end
 
 	local Output = buffer.create(((InputLength + 2) // 3) * 4)
+	local Table = ENCODE_12
+	local AlphabetBytes = ALPHABET_BYTES
 	local InputIndex = 0
 	local OutputIndex = 0
-	local FullTripletEnd = InputLength - (InputLength % 3)
-	local UnrollStop = InputLength - 13
 
-	local EncodeA = ENCODE_A
-	local EncodeB = ENCODE_B
-	local AlphabetBytes = ALPHABET_BYTES
-
+	local UnrollStop = InputLength - 97
 	while InputIndex <= UnrollStop do
-		local Word0 = buffer.readu32(Input, InputIndex)
-		local Word1 = buffer.readu32(Input, InputIndex + 3)
-		local Word2 = buffer.readu32(Input, InputIndex + 6)
-		local Word3 = buffer.readu32(Input, InputIndex + 9)
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 93))
+			buffer.writeu32(Output, OutputIndex + 124, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 90))
+			buffer.writeu32(Output, OutputIndex + 120, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 87))
+			buffer.writeu32(Output, OutputIndex + 116, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 84))
+			buffer.writeu32(Output, OutputIndex + 112, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 81))
+			buffer.writeu32(Output, OutputIndex + 108, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 78))
+			buffer.writeu32(Output, OutputIndex + 104, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 75))
+			buffer.writeu32(Output, OutputIndex + 100, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 72))
+			buffer.writeu32(Output, OutputIndex + 96, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 69))
+			buffer.writeu32(Output, OutputIndex + 92, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 66))
+			buffer.writeu32(Output, OutputIndex + 88, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 63))
+			buffer.writeu32(Output, OutputIndex + 84, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 60))
+			buffer.writeu32(Output, OutputIndex + 80, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 57))
+			buffer.writeu32(Output, OutputIndex + 76, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 54))
+			buffer.writeu32(Output, OutputIndex + 72, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 51))
+			buffer.writeu32(Output, OutputIndex + 68, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 48))
+			buffer.writeu32(Output, OutputIndex + 64, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 45))
+			buffer.writeu32(Output, OutputIndex + 60, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 42))
+			buffer.writeu32(Output, OutputIndex + 56, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 39))
+			buffer.writeu32(Output, OutputIndex + 52, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 36))
+			buffer.writeu32(Output, OutputIndex + 48, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 33))
+			buffer.writeu32(Output, OutputIndex + 44, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 30))
+			buffer.writeu32(Output, OutputIndex + 40, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 27))
+			buffer.writeu32(Output, OutputIndex + 36, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 24))
+			buffer.writeu32(Output, OutputIndex + 32, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 21))
+			buffer.writeu32(Output, OutputIndex + 28, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 18))
+			buffer.writeu32(Output, OutputIndex + 24, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 15))
+			buffer.writeu32(Output, OutputIndex + 20, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 12))
+			buffer.writeu32(Output, OutputIndex + 16, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 9))
+			buffer.writeu32(Output, OutputIndex + 12, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 6))
+			buffer.writeu32(Output, OutputIndex + 8, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 3))
+			buffer.writeu32(Output, OutputIndex + 4, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 0))
+			buffer.writeu32(Output, OutputIndex + 0, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
 
-		local KeyA0 = bit32.lshift(bit32.band(Word0, 0xffff), 1)
-		local KeyB0 = bit32.band(bit32.rshift(Word0, 7), 0x1fffe)
-		buffer.writeu32(Output, OutputIndex, bit32.bor(buffer.readu16(EncodeA, KeyA0), bit32.lshift(buffer.readu16(EncodeB, KeyB0), 16)))
+		InputIndex += 96
+		OutputIndex += 128
+	end
 
-		local KeyA1 = bit32.lshift(bit32.band(Word1, 0xffff), 1)
-		local KeyB1 = bit32.band(bit32.rshift(Word1, 7), 0x1fffe)
-		buffer.writeu32(Output, OutputIndex + 4, bit32.bor(buffer.readu16(EncodeA, KeyA1), bit32.lshift(buffer.readu16(EncodeB, KeyB1), 16)))
-
-		local KeyA2 = bit32.lshift(bit32.band(Word2, 0xffff), 1)
-		local KeyB2 = bit32.band(bit32.rshift(Word2, 7), 0x1fffe)
-		buffer.writeu32(Output, OutputIndex + 8, bit32.bor(buffer.readu16(EncodeA, KeyA2), bit32.lshift(buffer.readu16(EncodeB, KeyB2), 16)))
-
-		local KeyA3 = bit32.lshift(bit32.band(Word3, 0xffff), 1)
-		local KeyB3 = bit32.band(bit32.rshift(Word3, 7), 0x1fffe)
-		buffer.writeu32(Output, OutputIndex + 12, bit32.bor(buffer.readu16(EncodeA, KeyA3), bit32.lshift(buffer.readu16(EncodeB, KeyB3), 16)))
+	while InputIndex <= InputLength - 13 do
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 9))
+			buffer.writeu32(Output, OutputIndex + 12, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 6))
+			buffer.writeu32(Output, OutputIndex + 8, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 3))
+			buffer.writeu32(Output, OutputIndex + 4, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 0))
+			buffer.writeu32(Output, OutputIndex + 0, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
 
 		InputIndex += 12
 		OutputIndex += 16
 	end
 
-	while InputIndex < FullTripletEnd do
-		local KeyA = buffer.readu16(Input, InputIndex)
-		local Byte2 = buffer.readu8(Input, InputIndex + 2)
-		local KeyB = bit32.bor(bit32.rshift(KeyA, 8), bit32.lshift(Byte2, 8))
-		buffer.writeu32(Output, OutputIndex, bit32.bor(buffer.readu16(EncodeA, bit32.lshift(KeyA, 1)), bit32.lshift(buffer.readu16(EncodeB, bit32.lshift(KeyB, 1)), 16)))
+	while InputIndex <= InputLength - 4 do
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 0))
+			buffer.writeu32(Output, OutputIndex + 0, bit32.bor(
+				buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+				bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
+		end
+
 		InputIndex += 3
 		OutputIndex += 4
 	end
 
 	local Remainder = InputLength - InputIndex
-	if Remainder == 1 then
-		local Byte0 = buffer.readu8(Input, InputIndex)
-		local Sextet0 = Byte0 // 4
-		local Sextet1 = (Byte0 % 4) * 16
-		local Pair = buffer.readu8(AlphabetBytes, Sextet0) + buffer.readu8(AlphabetBytes, Sextet1) * 256
-		buffer.writeu16(Output, OutputIndex, Pair)
-		buffer.writeu8(Output, OutputIndex + 2, PADDING_CHARACTER)
-		buffer.writeu8(Output, OutputIndex + 3, PADDING_CHARACTER)
+	if Remainder == 3 then
+		local S = bit32.bor(
+			bit32.lshift(buffer.readu8(Input, InputIndex), 24),
+			bit32.lshift(buffer.readu8(Input, InputIndex + 1), 16),
+			bit32.lshift(buffer.readu8(Input, InputIndex + 2), 8))
+		buffer.writeu32(Output, OutputIndex, bit32.bor(
+			buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)),
+			bit32.lshift(buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)), 16)))
 	elseif Remainder == 2 then
 		local Byte0 = buffer.readu8(Input, InputIndex)
 		local Byte1 = buffer.readu8(Input, InputIndex + 1)
-		local KeyA = Byte0 + Byte1 * 256
-		buffer.writeu16(Output, OutputIndex, buffer.readu16(EncodeA, KeyA * 2))
-		local Sextet2 = (Byte1 % 16) * 4
-		buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(AlphabetBytes, Sextet2))
+		local S = bit32.bor(bit32.lshift(Byte0, 24), bit32.lshift(Byte1, 16))
+		buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+		buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(AlphabetBytes, (Byte1 % 16) * 4))
+		buffer.writeu8(Output, OutputIndex + 3, PADDING_CHARACTER)
+	elseif Remainder == 1 then
+		local Byte0 = buffer.readu8(Input, InputIndex)
+		buffer.writeu8(Output, OutputIndex, buffer.readu8(AlphabetBytes, Byte0 // 4))
+		buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(AlphabetBytes, (Byte0 % 4) * 16))
+		buffer.writeu8(Output, OutputIndex + 2, PADDING_CHARACTER)
 		buffer.writeu8(Output, OutputIndex + 3, PADDING_CHARACTER)
 	end
 
@@ -188,9 +380,10 @@ local function Decode(Input: buffer): buffer
 	local InputIndex = 0
 	local OutputIndex = 0
 	local BodyEnd = InputLength - 4
-	local UnrollStop = BodyEnd - 8
+	local UnrollStop = BodyEnd - 64
 
-	local DecodePair = DECODE_PAIR
+	local High = DECODE_HIGH
+	local Low = DECODE_LOW
 	local Pair0 = PAIR_A_BYTE0
 	local PairAHigh = PAIR_A_BYTE1_HIGH
 	local PairBLow = PAIR_B_BYTE1_LOW
@@ -199,30 +392,175 @@ local function Decode(Input: buffer): buffer
 	local Invalid = 0
 
 	while InputIndex <= UnrollStop do
-		local Word0 = buffer.readu32(Input, InputIndex)
-		local Word1 = buffer.readu32(Input, InputIndex + 4)
+		buffer.readu32(Input, InputIndex + 60)
+		buffer.readu32(Output, OutputIndex + 45)
+		do
+			local Word = buffer.readu32(Input, InputIndex + 0)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 0, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 4)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 3, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 8)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 6, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 12)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 9, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 16)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 12, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 20)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 15, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 24)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 18, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 28)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 21, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 32)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 24, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 36)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 27, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 40)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 30, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 44)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 33, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 48)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 36, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 52)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 39, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 56)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 42, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 60)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 45, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
 
-		local PairA0 = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word0, 0xffff), 1))
-		local PairB0 = buffer.readu16(DecodePair, bit32.band(bit32.rshift(Word0, 15), 0x1fffe))
-		buffer.writeu32(Output, OutputIndex, bit32.byteswap(bit32.bor(bit32.lshift(PairA0, 20), bit32.lshift(PairB0, 8))))
+		InputIndex += 64
+		OutputIndex += 48
+	end
 
-		local PairA1 = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word1, 0xffff), 1))
-		local PairB1 = buffer.readu16(DecodePair, bit32.band(bit32.rshift(Word1, 15), 0x1fffe))
-		buffer.writeu32(Output, OutputIndex + 3, bit32.byteswap(bit32.bor(bit32.lshift(PairA1, 20), bit32.lshift(PairB1, 8))))
-
-		Invalid = bit32.bor(Invalid, PairA0, PairB0, PairA1, PairB1)
+	while InputIndex <= BodyEnd - 8 do
+		buffer.readu32(Input, InputIndex + 4)
+		buffer.readu32(Output, OutputIndex + 3)
+		do
+			local Word = buffer.readu32(Input, InputIndex + 0)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 0, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
+		do
+			local Word = buffer.readu32(Input, InputIndex + 4)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 3, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
 
 		InputIndex += 8
 		OutputIndex += 6
 	end
 
 	while InputIndex <= BodyEnd - 4 do
-		local Word = buffer.readu32(Input, InputIndex)
-		local PairA = buffer.readu16(DecodePair, bit32.lshift(bit32.band(Word, 0xffff), 1))
-		local PairB = buffer.readu16(DecodePair, bit32.band(bit32.rshift(Word, 15), 0x1fffe))
-		buffer.writeu32(Output, OutputIndex, bit32.byteswap(bit32.bor(bit32.lshift(PairA, 20), bit32.lshift(PairB, 8))))
+		do
+			local Word = buffer.readu32(Input, InputIndex + 0)
+			local Bytes = bit32.bor(
+				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
+				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
+			buffer.writeu32(Output, OutputIndex + 0, Bytes)
+			Invalid = bit32.bor(Invalid, Bytes)
+		end
 
-		Invalid = bit32.bor(Invalid, PairA, PairB)
 		InputIndex += 4
 		OutputIndex += 3
 	end
@@ -244,7 +582,7 @@ local function Decode(Input: buffer): buffer
 		Spare = bit32.band(Decoded1, 0x0F)
 	end
 
-	if Invalid >= INVALID_PAIR or bit32.bor(Decoded0, Decoded1, Decoded2, Decoded3) >= 64 then
+	if Invalid >= 0x80000000 or bit32.bor(Decoded0, Decoded1, Decoded2, Decoded3) >= 64 then
 		error("Base64 input contains an invalid character", 2)
 	end
 
