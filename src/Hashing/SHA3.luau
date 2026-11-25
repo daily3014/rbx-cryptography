@@ -4420,4 +4420,13 @@ function SHA3.SHAKE256(Message: buffer, OutputBytes: number): (string, buffer)
 	return ToHex(Buf), Buf
 end
 
+function SHA3.ClearCaches()
+	buffer.fill(STATE_A, 0, 0)
+	buffer.fill(STATE_B, 0, 0)
+	buffer.fill(TAIL_BLOCK, 0, 0)
+	buffer.fill(SCRATCH_A, 0, 0)
+	buffer.fill(SCRATCH_B, 0, 0)
+	buffer.fill(SCRATCH_D, 0, 0)
+end
+
 return SHA3

@@ -678,8 +678,16 @@ local function SHA512(Message: buffer): (string, buffer)
 	return ToHex(Result), Result
 end
 
+local function ClearCaches()
+	buffer.fill(SCHEDULE, 0, 0)
+	buffer.fill(STATE, 0, 0)
+	buffer.fill(WORK, 0, 0)
+	buffer.fill(TAIL, 0, 0)
+end
+
 return {
 	SHA512 = SHA512,
+	ClearCaches = ClearCaches,
 	SHA512_Internal = SHA512_Internal,
 	Digest_Internal = Digest,
 	Compress_Internal = Compress,

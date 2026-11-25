@@ -369,4 +369,15 @@ function Sampling.SampleInBall(Seed: buffer, Poly: buffer, Tau: number)
 	end
 end
 
+function Sampling.ClearCaches()
+	buffer.fill(WORKSPACE_MSG_34, 0, 0)
+	buffer.fill(WORKSPACE_MSG_66, 0, 0)
+	buffer.fill(EXPAND_A_CHUNK, 0, 0)
+	buffer.fill(EXPAND_S_CHUNK, 0, 0)
+	buffer.fill(EXPAND_S_POLY, 0, 0)
+	buffer.fill(EXPAND_MASK_SQUEEZE, 0, 0)
+	buffer.fill(SAMPLE_BALL_TAU, 0, 0)
+	buffer.fill(SAMPLE_BALL_SQUEEZE, 0, 0)
+end
+
 return Sampling

@@ -196,4 +196,17 @@ function XOF.Squeeze256(OutputBytes: number): buffer
 	return Output
 end
 
+function XOF.ClearCaches()
+	buffer.fill(STREAM_128.StateA, 0, 0)
+	buffer.fill(STREAM_128.StateB, 0, 0)
+	buffer.fill(STREAM_128.Block, 0, 0)
+	buffer.fill(STREAM_128.Padded, 0, 0)
+	Reset(STREAM_128)
+	buffer.fill(STREAM_256.StateA, 0, 0)
+	buffer.fill(STREAM_256.StateB, 0, 0)
+	buffer.fill(STREAM_256.Block, 0, 0)
+	buffer.fill(STREAM_256.Padded, 0, 0)
+	Reset(STREAM_256)
+end
+
 return XOF

@@ -26,6 +26,7 @@ require("./suites/SHA256")
 require("./suites/SHA3")
 require("./suites/SHA384")
 require("./suites/SHA512")
+require("./suites/UntrustedInput")
 require("./suites/X25519")
 require("./suites/XOR")
 

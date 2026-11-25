@@ -621,4 +621,10 @@ buffer.copy(Point, 0 * COORD_SIZE, FieldPrime.Num(9), 0, COORD_SIZE)
 buffer.copy(Point, 1 * COORD_SIZE, FieldPrime.Num(1), 0, COORD_SIZE)
 Curve25519.G = Point
 
+function Curve25519.ClearCaches()
+	buffer.fill(LADDER_STATE, 0, 0)
+	buffer.fill(DIFF_X, 0, 0)
+	buffer.fill(DIFF_Z, 0, 0)
+end
+
 return Curve25519

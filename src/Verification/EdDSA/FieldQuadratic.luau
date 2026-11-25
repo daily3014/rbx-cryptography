@@ -215,6 +215,10 @@ function FieldQuadratic.DecodeClamped(ClampedBuffer: buffer): buffer
 	return FieldQuadratic.Decode(ClampedCopy)
 end
 
+function FieldQuadratic.Regular(MontgomeryScalar: buffer): buffer
+	return Demontgomery(MontgomeryScalar)
+end
+
 function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 	local DemontResult = Demontgomery(MontgomeryScalar)
 	local Output = OUTPUT_BUFFER
@@ -231,5 +235,13 @@ function FieldQuadratic.Bits(MontgomeryScalar: buffer): (buffer, number)
 end
 
 MONTGOMERY_T2 = FieldQuadratic.Mul(MONTGOMERY_T1, MONTGOMERY_T1)
+
+function FieldQuadratic.ClearCaches()
+	buffer.fill(OUTPUT_BUFFER, 0, 0)
+	buffer.fill(DECODE_WIDE_LOW, 0, 0)
+	buffer.fill(DECODE_WIDE_HIGH, 0, 0)
+	buffer.fill(DECODE_BUFFER, 0, 0)
+	buffer.fill(CLAMPED_BUFFER, 0, 0)
+end
 
 return FieldQuadratic

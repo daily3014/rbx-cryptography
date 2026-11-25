@@ -322,14 +322,18 @@ local function Encode(Input: buffer): buffer
 	return Output
 end
 
-local function Decode(Input: buffer): buffer
+local function Decode(Input: buffer): buffer?
+	if typeof(Input) ~= "buffer" then
+		return nil
+	end
+
 	local InputLength = buffer.len(Input)
 	if InputLength == 0 then
 		return buffer.create(0)
 	end
 
 	if InputLength % 4 ~= 0 then
-		error(`Base64 input length must be a multiple of 4, got {InputLength} bytes`, 2)
+		return nil
 	end
 
 	local Padding = 0
@@ -543,11 +547,11 @@ local function Decode(Input: buffer): buffer
 	end
 
 	if Invalid >= 0x80000000 or bit32.bor(Decoded0, Decoded1, Decoded2, Decoded3) >= 64 then
-		error("Base64 input contains an invalid character", 2)
+		return nil
 	end
 
 	if Spare ~= 0 then
-		error("Base64 input has non-zero bits before its padding", 2)
+		return nil
 	end
 
 	local PairA = Decoded0 * 64 + Decoded1

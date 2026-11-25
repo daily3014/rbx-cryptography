@@ -301,4 +301,11 @@ function Sampling.GenerateVector(K: number, Eta: number, Seed: buffer, SeedOffse
 	end
 end
 
+function Sampling.ClearCaches()
+	buffer.fill(SAMPLE_NTT_CHUNK, 0, 0)
+	buffer.fill(GEN_MATRIX_XOF_INPUT, 0, 0)
+	buffer.fill(GEN_VECTOR_PRF_OUTPUT, 0, 0)
+	buffer.fill(GEN_VECTOR_PRF_INPUT, 0, 0)
+end
+
 return Sampling

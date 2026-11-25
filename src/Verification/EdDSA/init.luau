@@ -17,8 +17,10 @@
 
 local FieldQuadratic = require("@self/FieldQuadratic")
 local FieldPrime = require("@self/FieldPrime")
-local SHA512 = require("../Hashing/SHA2/SHA512").SHA512_Internal
+local SHA512Module = require("../Hashing/SHA2/SHA512")
+local SHA512 = SHA512Module.SHA512_Internal
 local Edwards25519 = require("@self/Edwards25519")
+local ScalarSplit = require("@self/ScalarSplit")
 local X25519 = require("@self/X25519")
 local Concatenate = require("../Utilities/Functions").Concatenate
 
@@ -27,6 +29,8 @@ local ED25519_PUBLIC_KEY_SIZE = 32
 local ED25519_SIGNATURE_SIZE = 64
 
 local SIGN_KEYS = buffer.create(65)
+local SIGN_SCALAR = buffer.create(96)
+local SIGN_PREFIX = buffer.create(32)
 
 type VerifyKey = {
 	PublicKey: buffer,
@@ -34,6 +38,9 @@ type VerifyKey = {
 }
 
 local VERIFY_KEY: VerifyKey? = nil
+
+local SPLIT_HALVES = buffer.create(144)
+local SCALE_REGULAR = buffer.create(96)
 
 local SMALL_ORDER = buffer.create(160) do
 	local Words = {
@@ -150,14 +157,16 @@ function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buff
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	local Hash = SHA512(SecretKey)
-
-	local FirstHalf = buffer.create(32)
-	buffer.copy(FirstHalf, 0, Hash, 0, 32)
-	local ScalarX = FieldQuadratic.DecodeClamped(FirstHalf)
-
 	local Keys = SIGN_KEYS
+	local ScalarX = SIGN_SCALAR
+	local Prefix = SIGN_PREFIX
 	if Differs(SecretKey, 0, Keys, 0) ~= 0 or buffer.readu8(Keys, 64) == 0 then
+		local Hash = SHA512(SecretKey)
+		local FirstHalf = buffer.create(32)
+		buffer.copy(FirstHalf, 0, Hash, 0, 32)
+		buffer.copy(ScalarX, 0, FieldQuadratic.DecodeClamped(FirstHalf), 0, 96)
+		buffer.copy(Prefix, 0, Hash, 32, 32)
+
 		local ScalarBits, BitCount = FieldQuadratic.Bits(ScalarX)
 		buffer.copy(Keys, 32, Edwards25519.Encode(Edwards25519.MulG(ScalarBits, BitCount)), 0, 32)
 		buffer.copy(Keys, 0, SecretKey, 0, 32)
@@ -168,10 +177,7 @@ function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buff
 		error("PublicKey is not the public key of SecretKey", 2)
 	end
 
-	local SecondHalf = buffer.create(32)
-	buffer.copy(SecondHalf, 0, Hash, 32, 32)
-
-	local NonceSource = Concatenate(SecondHalf, Message)
+	local NonceSource = Concatenate(Prefix, Message)
 	local NonceHash = SHA512(NonceSource)
 	local NonceK = FieldQuadratic.DecodeWide(NonceHash)
 
@@ -190,38 +196,12 @@ function EDDSA.Sign(Message: buffer, SecretKey: buffer, PublicKey: buffer): buff
 end
 
 function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): boolean
-	if PublicKey == nil then
-		error("PublicKey cannot be nil", 2)
+	if typeof(Message) ~= "buffer" or typeof(PublicKey) ~= "buffer" or typeof(Signature) ~= "buffer" then
+		return false
 	end
 
-	if typeof(PublicKey) ~= "buffer" then
-		error(`PublicKey must be a buffer, got {typeof(PublicKey)}`, 2)
-	end
-
-	local PublicKeyLength = buffer.len(PublicKey)
-	if PublicKeyLength ~= ED25519_PUBLIC_KEY_SIZE then
-		error(`PublicKey must be exactly {ED25519_PUBLIC_KEY_SIZE} bytes long, got {PublicKeyLength} bytes`, 2)
-	end
-
-	if Message == nil then
-		error("Message cannot be nil", 2)
-	end
-
-	if typeof(Message) ~= "buffer" then
-		error(`Message must be a buffer, got {typeof(Message)}`, 2)
-	end
-
-	if Signature == nil then
-		error("Signature cannot be nil", 2)
-	end
-
-	if typeof(Signature) ~= "buffer" then
-		error(`Signature must be a buffer, got {typeof(Signature)}`, 2)
-	end
-
-	local SignatureLength = buffer.len(Signature)
-	if SignatureLength ~= ED25519_SIGNATURE_SIZE then
-		error(`Signature must be exactly {ED25519_SIGNATURE_SIZE} bytes long, got {SignatureLength} bytes`, 2)
+	if buffer.len(PublicKey) ~= ED25519_PUBLIC_KEY_SIZE or buffer.len(Signature) ~= ED25519_SIGNATURE_SIZE then
+		return false
 	end
 
 	local LastByte = buffer.readu8(Signature, 63)
@@ -267,18 +247,21 @@ function EDDSA.Verify(Message: buffer, PublicKey: buffer, Signature: buffer): bo
 	local ChallengeHash = SHA512(ChallengeInput)
 	local ChallengeScalar = FieldQuadratic.DecodeWide(ChallengeHash)
 
+	local Halves = SPLIT_HALVES
+	local Negative = ScalarSplit.Split(FieldQuadratic.Regular(ChallengeScalar), Halves)
+
+	local ScaleRegular = SCALE_REGULAR
+	buffer.copy(ScaleRegular, 0, Halves, 48, 48)
 	local ResponseScalar = FieldQuadratic.Decode(ResponseBytes)
-	local ResponseBits, ResponseBitCount = FieldQuadratic.Bits(ResponseScalar)
-	local SB = Edwards25519.MulG(ResponseBits, ResponseBitCount)
+	local Scaled = FieldQuadratic.Mul(FieldQuadratic.Montgomery(ScaleRegular), ResponseScalar)
+	local ScaledBits, ScaledBitCount = FieldQuadratic.Bits(Scaled)
+	local SB = Edwards25519.MulG(ScaledBits, ScaledBitCount)
 
-	local ChallengeBits, ChallengeBitCount = FieldQuadratic.Bits(ChallengeScalar)
-	local KA = Edwards25519.MulWithTable((Known :: VerifyKey).Table, ChallengeBits, ChallengeBitCount)
-
-	local KANiels = Edwards25519.Niels(KA)
-	local RKA = Edwards25519.Add(CommitmentPoint, KANiels)
+	local CommitmentTable = Edwards25519.WindowedNAFTable(CommitmentPoint, 4)
+	local Joint = Edwards25519.MulDoubleWithTables(CommitmentTable, 4, 120, (Known :: VerifyKey).Table, 5, 96, Halves, 128, Negative)
 
 	local SBNiels = Edwards25519.Niels(SB)
-	local Difference = Edwards25519.Sub(RKA, SBNiels)
+	local Difference = Edwards25519.Sub(Joint, SBNiels)
 
 	Difference = Edwards25519.Double(Difference)
 	Difference = Edwards25519.Double(Difference)
@@ -297,7 +280,14 @@ end
 
 function EDDSA.ClearCaches()
 	buffer.fill(SIGN_KEYS, 0, 0)
+	buffer.fill(SIGN_SCALAR, 0, 0)
+	buffer.fill(SIGN_PREFIX, 0, 0)
+	buffer.fill(SPLIT_HALVES, 0, 0)
+	buffer.fill(SCALE_REGULAR, 0, 0)
 	VERIFY_KEY = nil
+
+	X25519.ClearCaches()
+	SHA512Module.ClearCaches()
 end
 
 return EDDSA

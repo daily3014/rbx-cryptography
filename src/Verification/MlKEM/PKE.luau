@@ -102,4 +102,15 @@ function Pke.Decrypt(K: number, Du: number, Dv: number, S: buffer, Ciphertext: b
 	Packing.DecodeMessage(Ciphertext, Coefficients * Du / 8, Dv, Product, Message)
 end
 
+function Pke.ClearCaches()
+	buffer.fill(KEYGEN_G_INPUT, 0, 0)
+	buffer.fill(ENCRYPT_R, 0, 0)
+	buffer.fill(ENCRYPT_E1, 0, 0)
+	buffer.fill(ENCRYPT_U, 0, 0)
+	buffer.fill(ENCRYPT_E2, 0, 0)
+	buffer.fill(ENCRYPT_V, 0, 0)
+	buffer.fill(DECRYPT_U, 0, 0)
+	buffer.fill(DECRYPT_PRODUCT, 0, 0)
+end
+
 return Pke

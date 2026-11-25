@@ -68,6 +68,8 @@ local NAF_TABLE_DBL_Z = buffer.create(COORD_SIZE)
 local NAF_TABLE_DBL_T = buffer.create(COORD_SIZE)
 
 local NAF_OUTPUT = buffer.create(512 * 8)
+local JOINT_DIGITS_P = buffer.create(136 * 8)
+local JOINT_DIGITS_Q = buffer.create(136 * 8)
 local RADIX_OUTPUT = buffer.create(272 * 8)
 
 local BASEPONT_G: buffer? = nil
@@ -1527,8 +1529,106 @@ function Edwards25519.MulWithTable(MultipleTable: buffer, ScalarBits: buffer, Sc
 	return Output
 end
 
+local function PackedNaf(Packed: buffer, Base: number, WindowWidth: number, BitCount: number, Digits: buffer): number
+	buffer.fill(Digits, 0, 0)
+	local Mask = 2 ^ WindowWidth - 1
+	local Carry = 0
+	local Position = 0
+	local Top = 0
+
+	while Position < BitCount do
+		local Window = bit32.rshift(buffer.readu32(Packed, Base + bit32.rshift(Position, 3)), bit32.band(Position, 7))
+		if bit32.band(Window, 1) == Carry then
+			Position += 1
+		else
+			local Word = bit32.band(Window, Mask) + Carry
+			Carry = bit32.rshift(Word, WindowWidth - 1)
+			buffer.writef64(Digits, Position * 8, Word - Carry * 2 ^ WindowWidth)
+			Top = Position + 1
+			Position += WindowWidth
+		end
+	end
+
+	if Carry ~= 0 then
+		buffer.writef64(Digits, Position * 8, 1)
+		Top = Position + 1
+	end
+
+	return Top
+end
+
+function Edwards25519.MulDoubleWithTables(TableP: buffer, WidthP: number, BaseP: number, TableQ: buffer, WidthQ: number, BaseQ: number, Packed: buffer, BitCount: number, NegateQ: boolean): buffer
+	local PointSize = POINT_SIZE
+	local DigitsP = JOINT_DIGITS_P
+	local DigitsQ = JOINT_DIGITS_Q
+	local Top = math.max(PackedNaf(Packed, BaseP, WidthP, BitCount, DigitsP), PackedNaf(Packed, BaseQ, WidthQ, BitCount, DigitsQ))
+	local SignQ = if NegateQ then -1 else 1
+
+	local ResultPoint = MUL_RESULT_POINT
+	buffer.copy(ResultPoint, 0, IDENTITY_O, 0, PointSize)
+
+	local DoubleInPlace = Edwards25519.DoubleInPlace
+	local AddNiels = Edwards25519.AddNielsInPlace
+	local SubNiels = Edwards25519.SubNielsInPlace
+
+	for Position = Top - 1, 0, -1 do
+		local DigitP = buffer.readf64(DigitsP, Position * 8)
+		local DigitQ = buffer.readf64(DigitsQ, Position * 8) * SignQ
+
+		DoubleInPlace(ResultPoint, DigitP ~= 0 or DigitQ ~= 0 or Position == 0)
+
+		if DigitP > 0 then
+			AddNiels(ResultPoint, TableP, (DigitP - 1) * PointSize)
+		elseif DigitP < 0 then
+			SubNiels(ResultPoint, TableP, (-DigitP - 1) * PointSize)
+		end
+
+		if DigitQ > 0 then
+			AddNiels(ResultPoint, TableQ, (DigitQ - 1) * PointSize)
+		elseif DigitQ < 0 then
+			SubNiels(ResultPoint, TableQ, (-DigitQ - 1) * PointSize)
+		end
+	end
+
+	local Output = buffer.create(PointSize)
+	buffer.copy(Output, 0, ResultPoint, 0, PointSize)
+	return Output
+end
+
 function Edwards25519.Mul(BasePoint: buffer, ScalarBits: buffer, ScalarBitCount: number): buffer
 	return Edwards25519.MulWithTable(Edwards25519.MulTable(BasePoint), ScalarBits, ScalarBitCount)
+end
+
+function Edwards25519.ClearCaches()
+	buffer.fill(COORD_BUFFER_0, 0, 0)
+	buffer.fill(COORD_BUFFER_1, 0, 0)
+	buffer.fill(COORD_BUFFER_2, 0, 0)
+	buffer.fill(COORD_BUFFER_3, 0, 0)
+	buffer.fill(COORD_BUFFER_4, 0, 0)
+	buffer.fill(COORD_BUFFER_5, 0, 0)
+	buffer.fill(COORD_BUFFER_6, 0, 0)
+	buffer.fill(COORD_BUFFER_7, 0, 0)
+	buffer.fill(MUL_RESULT_POINT, 0, 0)
+	buffer.fill(MULG_RESULT_POINT, 0, 0)
+	buffer.fill(MULG_DUMMY_POINT, 0, 0)
+	buffer.fill(NAF_TABLE_DOUBLED, 0, 0)
+	buffer.fill(NAF_TABLE_P1X, 0, 0)
+	buffer.fill(NAF_TABLE_P1Y, 0, 0)
+	buffer.fill(NAF_TABLE_P1Z, 0, 0)
+	buffer.fill(NAF_TABLE_P1T, 0, 0)
+	buffer.fill(NAF_TABLE_N2P, 0, 0)
+	buffer.fill(NAF_TABLE_N2M, 0, 0)
+	buffer.fill(NAF_TABLE_N2Z, 0, 0)
+	buffer.fill(NAF_TABLE_N2T, 0, 0)
+	buffer.fill(NAF_TABLE_TMP, 0, 0)
+	buffer.fill(NAF_TABLE_DBL_P, 0, 0)
+	buffer.fill(NAF_TABLE_DBL_M, 0, 0)
+	buffer.fill(NAF_TABLE_DBL_Z, 0, 0)
+	buffer.fill(NAF_TABLE_DBL_T, 0, 0)
+	buffer.fill(NAF_OUTPUT, 0, 0)
+	buffer.fill(JOINT_DIGITS_P, 0, 0)
+	buffer.fill(JOINT_DIGITS_Q, 0, 0)
+	buffer.fill(RADIX_OUTPUT, 0, 0)
 end
 
 return Edwards25519

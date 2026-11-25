@@ -90,11 +90,15 @@ function Conversions.ToHex(Buffer: buffer): string
 	return buffer.tostring(Hex)
 end
 
-function Conversions.FromHex(Hex: string | buffer): buffer
+function Conversions.FromHex(Hex: string | buffer): buffer?
+	if type(Hex) ~= "string" and typeof(Hex) ~= "buffer" then
+		return nil
+	end
+
 	local BufferHex = if type(Hex) == "string" then buffer.fromstring(Hex) else Hex
 	local Length = buffer.len(BufferHex)
 	if Length % 2 ~= 0 then
-		error(`Length must be even, got {Length}`, 2)
+		return nil
 	end
 
 	local Buffer = buffer.create(bit32.rshift(Length, 1))
@@ -126,14 +130,18 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 
 		Invalid = bit32.bor(
 			Invalid,
-			buffer.readu8(InvalidLookup, bit32.band(Word0, 0xffff)),
-			buffer.readu8(InvalidLookup, bit32.rshift(Word0, 16)),
-			buffer.readu8(InvalidLookup, bit32.band(Word1, 0xffff)),
-			buffer.readu8(InvalidLookup, bit32.rshift(Word1, 16)),
-			buffer.readu8(InvalidLookup, bit32.band(Word2, 0xffff)),
-			buffer.readu8(InvalidLookup, bit32.rshift(Word2, 16)),
-			buffer.readu8(InvalidLookup, bit32.band(Word3, 0xffff)),
-			buffer.readu8(InvalidLookup, bit32.rshift(Word3, 16))
+			bit32.bor(
+				buffer.readu8(InvalidLookup, bit32.band(Word0, 0xffff)),
+				buffer.readu8(InvalidLookup, bit32.rshift(Word0, 16)),
+				buffer.readu8(InvalidLookup, bit32.band(Word1, 0xffff)),
+				buffer.readu8(InvalidLookup, bit32.rshift(Word1, 16))
+			),
+			bit32.bor(
+				buffer.readu8(InvalidLookup, bit32.band(Word2, 0xffff)),
+				buffer.readu8(InvalidLookup, bit32.rshift(Word2, 16)),
+				buffer.readu8(InvalidLookup, bit32.band(Word3, 0xffff)),
+				buffer.readu8(InvalidLookup, bit32.rshift(Word3, 16))
+			)
 		)
 	end
 
@@ -144,7 +152,7 @@ function Conversions.FromHex(Hex: string | buffer): buffer
 	end
 
 	if Invalid ~= 0 then
-		error("Hex contains a character outside 0-9, a-f and A-F", 2)
+		return nil
 	end
 
 	return Buffer

@@ -27,7 +27,9 @@ Testing.Describe("Base64 Algorithm Tests", function()
 		Testing.Test(Info.Description, function()
 			local Result
 			if Info.Algorithm == "Decode" then
-				Result = buffer.tostring(Algorithm.Decode(buffer.fromstring(TestString)))
+				local Decoded = Algorithm.Decode(buffer.fromstring(TestString))
+				assert(Decoded, "Base64.Decode gave nil for a valid vector")
+				Result = buffer.tostring(Decoded)
 			elseif Info.Algorithm == "Encode" then
 				Result = buffer.tostring(Algorithm.Encode(buffer.fromstring(TestString)))
 			end

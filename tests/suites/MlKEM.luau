@@ -118,10 +118,9 @@ local function RunMlKemTests(Data: MlKemData)
 						local Msg = FromHex(Test.msg :: string)
 
 						if Test.result == "invalid" then
-							local Ok = pcall(function()
-								return MlKem.Encapsulate(Msg, K, Eta1, Eta2, Du, Dv, Ek)
-							end)
-							Testing.Expect(Ok).ToBe(false)
+							local Ct, Shared = MlKem.Encapsulate(Msg, K, Eta1, Eta2, Du, Dv, Ek)
+							Testing.Expect(Ct).ToBeNil()
+							Testing.Expect(Shared).ToBeNil()
 						else
 							local Ct, Shared = MlKem.Encapsulate(Msg, K, Eta1, Eta2, Du, Dv, Ek)
 							Testing.Expect(Ct).ToBeDefined()
@@ -142,7 +141,7 @@ local function RunMlKemTests(Data: MlKemData)
 
 						local Ct = FromHex(Test.ct :: string)
 						local Success, Shared = pcall(MlKem.Decapsulate, Ct, K, Eta1, Eta2, Du, Dv, Dk)
-						if not Success then
+						if not Success or not Shared then
 							Testing.Expect(Test.result).ToBe("acceptable")
 							return
 						end

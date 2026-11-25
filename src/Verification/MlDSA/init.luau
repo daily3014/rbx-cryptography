@@ -20,6 +20,7 @@
 --!native
 
 local SHA3 = require("../Hashing/SHA3")
+local XOF = require("../Hashing/XOF")
 local NTT = require("@self/NTT")
 
 local PolyVec = require("@self/PolyVec")
@@ -389,6 +390,14 @@ local function Verify(Msg: buffer, PubKey: buffer, Ctx: buffer, Sig: buffer, K: 
 		error("Invalid verify parameters")
 	end
 
+	if typeof(Ctx) ~= "buffer" then
+		error(`Context must be a buffer, got {typeof(Ctx)}`, 3)
+	end
+
+	if typeof(Msg) ~= "buffer" or typeof(PubKey) ~= "buffer" or typeof(Sig) ~= "buffer" then
+		return false
+	end
+
 	if buffer.len(Ctx) > 255 then
 		return false
 	end
@@ -594,6 +603,23 @@ function Mldsa.ClearCaches()
 	end
 
 	VERIFY_KEY = nil
+
+	for _, Work in SCRATCH do
+		buffer.fill(Work.Y, 0, 0)
+		buffer.fill(Work.YHat, 0, 0)
+		buffer.fill(Work.W, 0, 0)
+		buffer.fill(Work.Z, 0, 0)
+		buffer.fill(Work.R, 0, 0)
+		buffer.fill(Work.Product, 0, 0)
+		buffer.fill(Work.C, 0, 0)
+		buffer.fill(Work.Hints, 0, 0)
+		buffer.fill(Work.CTilda, 0, 0)
+		buffer.fill(Work.ChallengeInput, 0, 0)
+	end
+
+	Sampling.ClearCaches()
+	SHA3.ClearCaches()
+	XOF.ClearCaches()
 end
 
 Mldsa.PubKeyLen = Utils.PubKeyLen

@@ -22,10 +22,12 @@
 
 local Pke = require("@self/PKE")
 local Packing = require("@self/Packing")
+local Sampling = require("@self/Sampling")
 local CSPRNG = require("../Utilities/CSPRNG")
 local Params = require("@self/Params")
 local Utils = require("@self/Utils")
 local SHA3 = require("../Hashing/SHA3")
+local XOF = require("../Hashing/XOF")
 local Functions = require("../Utilities/Functions")
 local CtCompareMask = Functions.CtCompareMask
 local CtSelectBuffer = Functions.CtSelectBuffer
@@ -190,23 +192,23 @@ function MlKem.KeyGen(K: number, Eta1: number, D: buffer, Z: buffer): (buffer, b
 	return PublicKey, SecretKey
 end
 
-function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer): (buffer, buffer)
+function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, PublicKey: buffer): (buffer?, buffer?)
 	if not Params.CheckEncapParams(K, Eta1, Eta2, Du, Dv) then
 		error("Invalid encapsulation parameters")
-	end
-
-	local PublicKeyLength = Utils.GetKemPublicKeyLen(K)
-	if buffer.len(PublicKey) ~= PublicKeyLength then
-		error("Invalid public key length")
 	end
 
 	if buffer.len(Message) ~= 32 then
 		error("Message must be 32 bytes")
 	end
 
+	local PublicKeyLength = Utils.GetKemPublicKeyLen(K)
+	if typeof(PublicKey) ~= "buffer" or buffer.len(PublicKey) ~= PublicKeyLength then
+		return nil, nil
+	end
+
 	local Known = KnownPublicKey(K, PublicKey, 0, PublicKeyLength)
 	if not Known.IsValid then
-		error("Invalid public key encoding")
+		return nil, nil
 	end
 
 	local GInput = ENCAP_G_INPUT
@@ -223,17 +225,12 @@ function MlKem.Encapsulate(Message: buffer, K: number, Eta1: number, Eta2: numbe
 	return Ciphertext, SharedSecret
 end
 
-function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, SecretKey: buffer): buffer
+function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: number, Du: number, Dv: number, SecretKey: buffer): buffer?
 	if not Params.CheckDecapParams(K, Eta1, Eta2, Du, Dv) then
 		error("Invalid decapsulation parameters")
 	end
 	if buffer.len(SecretKey) ~= Utils.GetKemSecretKeyLen(K) then
 		error("Invalid secret key length")
-	end
-	
-	local CiphertextLength = Utils.GetKemCipherTextLen(K, Du, Dv)
-	if buffer.len(Ciphertext) ~= CiphertextLength then
-		error("Invalid ciphertext length")
 	end
 
 	local PublicKeyOffset = Utils.GetPkeSecretKeyLen(K)
@@ -244,6 +241,11 @@ function MlKem.Decapsulate(Ciphertext: buffer, K: number, Eta1: number, Eta2: nu
 	local Known = KnownPublicKey(K, SecretKey, PublicKeyOffset, PublicKeyLength)
 	if not SameBytes(SecretKey, HashOffset, Known.Hashed, PublicKeyLength, 32) then
 		error("Invalid secret key, the hash it stores does not match its public key")
+	end
+
+	local CiphertextLength = Utils.GetKemCipherTextLen(K, Du, Dv)
+	if typeof(Ciphertext) ~= "buffer" or buffer.len(Ciphertext) ~= CiphertextLength then
+		return nil
 	end
 
 	local JInput = DECAP_J_INPUT[K]
@@ -292,6 +294,23 @@ function MlKem.ClearCaches()
 	for _, Slot in PUBLIC_KEYS do
 		Slot.IsFilled = false
 	end
+
+	buffer.fill(ENCAP_G_INPUT, 0, 0)
+	buffer.fill(DECAP_G_INPUT, 0, 0)
+	buffer.fill(DECAP_MESSAGE, 0, 0)
+	buffer.fill(DECAP_K_PRIME, 0, 0)
+	buffer.fill(VALIDATE_VECTOR, 0, 0)
+	for _, Input in DECAP_J_INPUT do
+		buffer.fill(Input, 0, 0)
+	end
+	for _, Ciphertext in DECAP_CIPHERTEXT do
+		buffer.fill(Ciphertext, 0, 0)
+	end
+
+	Pke.ClearCaches()
+	Sampling.ClearCaches()
+	SHA3.ClearCaches()
+	XOF.ClearCaches()
 end
 
 function MlKem.ValidateDecapsulationKey(K: number, SecretKey: buffer): boolean
@@ -315,11 +334,11 @@ MlKem.MLKEM_512 = {
 		return MlKem.KeyGen(2, 3, D, Z)
 	end,
 
-	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer, buffer)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
 		return MlKem.Encapsulate(Message, 2, 3, 2, 10, 4, PublicKey)
 	end,
 
-	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer
+	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer?
 		return MlKem.Decapsulate(Ciphertext, 2, 3, 2, 10, 4, SecretKey)
 	end,
 
@@ -340,11 +359,11 @@ MlKem.MLKEM_768 = {
 		return MlKem.KeyGen(3, 2, D, Z)
 	end,
 
-	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer, buffer)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
 		return MlKem.Encapsulate(Message, 3, 2, 2, 10, 4, PublicKey)
 	end,
 
-	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer
+	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer?
 		return MlKem.Decapsulate(Ciphertext, 3, 2, 2, 10, 4, SecretKey)
 	end,
 
@@ -365,11 +384,11 @@ MlKem.MLKEM_1024 = {
 		return MlKem.KeyGen(4, 2, D, Z)
 	end,
 
-	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer, buffer)
+	Encapsulate = function(Message: buffer, PublicKey: buffer): (buffer?, buffer?)
 		return MlKem.Encapsulate(Message, 4, 2, 2, 11, 5, PublicKey)
 	end,
 
-	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer
+	Decapsulate = function(Ciphertext: buffer, SecretKey: buffer): buffer?
 		return MlKem.Decapsulate(Ciphertext, 4, 2, 2, 11, 5, SecretKey)
 	end,
 

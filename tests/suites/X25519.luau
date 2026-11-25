@@ -57,19 +57,19 @@ Testing.Describe("X25519 Tadashi Tests", function()
 
 				Testing.Test(TestName, function()
 					if Test.shared == ZERO_SHARED then
-						Testing.Expect(function()
-							X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))
-						end).ToThrow()
+						Testing.Expect(X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))).ToBeNil()
 					elseif Test.iterations then
 						local K = FromHex(Test.sk)
 						local U = FromHex(Test.pk)
 						for _ = 1, Test.iterations do
 							local Out = X25519.Exchange(K, U)
+							assert(Out, "X25519.Exchange gave nil inside the iterated vector")
 							K, U = Out, K
 						end
 						Testing.Expect(ToHex(K)).ToBe(Test.shared)
 					else
 						local Shared = X25519.Exchange(FromHex(Test.sk), FromHex(Test.pk))
+						assert(Shared, "X25519.Exchange gave nil for a valid vector")
 						Testing.Expect(ToHex(Shared)).ToBe(Test.shared)
 					end
 				end)

@@ -37,18 +37,25 @@ local function CtCompareMask(BufferA: buffer, BufferB: buffer): number
 		return 0x00000000
 	end
 
-	local WordBytes = Length - bit32.band(Length, 3)
-	local Difference = 0
-
-	for Offset = 0, WordBytes - 4, 4 do
-		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)))
+	local D0, D1, D2, D3 = 0, 0, 0, 0
+	local Offset = 0
+	while Offset <= Length - 16 do
+		D0 = bit32.bor(D0, bit32.bxor(buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)))
+		D1 = bit32.bor(D1, bit32.bxor(buffer.readu32(BufferA, Offset + 4), buffer.readu32(BufferB, Offset + 4)))
+		D2 = bit32.bor(D2, bit32.bxor(buffer.readu32(BufferA, Offset + 8), buffer.readu32(BufferB, Offset + 8)))
+		D3 = bit32.bor(D3, bit32.bxor(buffer.readu32(BufferA, Offset + 12), buffer.readu32(BufferB, Offset + 12)))
+		Offset += 16
+	end
+	while Offset <= Length - 4 do
+		D0 = bit32.bor(D0, bit32.bxor(buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)))
+		Offset += 4
+	end
+	while Offset < Length do
+		D1 = bit32.bor(D1, bit32.bxor(buffer.readu8(BufferA, Offset), buffer.readu8(BufferB, Offset)))
+		Offset += 1
 	end
 
-	for Offset = WordBytes, Length - 1 do
-		Difference = bit32.bor(Difference, bit32.bxor(buffer.readu8(BufferA, Offset), buffer.readu8(BufferB, Offset)))
-	end
-
-	return CtIsZeroMask(Difference)
+	return CtIsZeroMask(bit32.bor(D0, D1, D2, D3))
 end
 
 local function CtCompare(BufferA: buffer, BufferB: buffer): boolean
@@ -57,18 +64,25 @@ end
 
 local function CtIsAllZero(Buffer: buffer): boolean
 	local Length = buffer.len(Buffer)
-	local WordBytes = Length - bit32.band(Length, 3)
-	local Acc = 0
-
-	for Offset = 0, WordBytes - 4, 4 do
-		Acc = bit32.bor(Acc, buffer.readu32(Buffer, Offset))
+	local A0, A1, A2, A3 = 0, 0, 0, 0
+	local Offset = 0
+	while Offset <= Length - 16 do
+		A0 = bit32.bor(A0, buffer.readu32(Buffer, Offset))
+		A1 = bit32.bor(A1, buffer.readu32(Buffer, Offset + 4))
+		A2 = bit32.bor(A2, buffer.readu32(Buffer, Offset + 8))
+		A3 = bit32.bor(A3, buffer.readu32(Buffer, Offset + 12))
+		Offset += 16
+	end
+	while Offset <= Length - 4 do
+		A0 = bit32.bor(A0, buffer.readu32(Buffer, Offset))
+		Offset += 4
+	end
+	while Offset < Length do
+		A1 = bit32.bor(A1, buffer.readu8(Buffer, Offset))
+		Offset += 1
 	end
 
-	for Offset = WordBytes, Length - 1 do
-		Acc = bit32.bor(Acc, buffer.readu8(Buffer, Offset))
-	end
-
-	return Acc == 0
+	return bit32.bor(A0, A1, A2, A3) == 0
 end
 
 local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buffer)
@@ -79,22 +93,39 @@ local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buf
 	end
 
 	local Mask = CtNonZeroMask(ConditionBit)
-	local WordBytes = Length - bit32.band(Length, 3)
-
-	for Offset = 0, WordBytes - 4, 4 do
-		local A = buffer.readu32(BufferA, Offset)
-		local B = buffer.readu32(BufferB, Offset)
+	local Offset = 0
+	while Offset <= Length - 16 do
+		local A0, B0 = buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)
+		local A1, B1 = buffer.readu32(BufferA, Offset + 4), buffer.readu32(BufferB, Offset + 4)
+		local A2, B2 = buffer.readu32(BufferA, Offset + 8), buffer.readu32(BufferB, Offset + 8)
+		local A3, B3 = buffer.readu32(BufferA, Offset + 12), buffer.readu32(BufferB, Offset + 12)
+		local E0 = bit32.band(Mask, bit32.bxor(A0, B0))
+		local E1 = bit32.band(Mask, bit32.bxor(A1, B1))
+		local E2 = bit32.band(Mask, bit32.bxor(A2, B2))
+		local E3 = bit32.band(Mask, bit32.bxor(A3, B3))
+		buffer.writeu32(BufferA, Offset, bit32.bxor(A0, E0))
+		buffer.writeu32(BufferB, Offset, bit32.bxor(B0, E0))
+		buffer.writeu32(BufferA, Offset + 4, bit32.bxor(A1, E1))
+		buffer.writeu32(BufferB, Offset + 4, bit32.bxor(B1, E1))
+		buffer.writeu32(BufferA, Offset + 8, bit32.bxor(A2, E2))
+		buffer.writeu32(BufferB, Offset + 8, bit32.bxor(B2, E2))
+		buffer.writeu32(BufferA, Offset + 12, bit32.bxor(A3, E3))
+		buffer.writeu32(BufferB, Offset + 12, bit32.bxor(B3, E3))
+		Offset += 16
+	end
+	while Offset <= Length - 4 do
+		local A, B = buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)
 		local Delta = bit32.band(Mask, bit32.bxor(A, B))
 		buffer.writeu32(BufferA, Offset, bit32.bxor(A, Delta))
 		buffer.writeu32(BufferB, Offset, bit32.bxor(B, Delta))
+		Offset += 4
 	end
-
-	for Offset = WordBytes, Length - 1 do
-		local A = buffer.readu8(BufferA, Offset)
-		local B = buffer.readu8(BufferB, Offset)
+	while Offset < Length do
+		local A, B = buffer.readu8(BufferA, Offset), buffer.readu8(BufferB, Offset)
 		local Delta = bit32.band(Mask, bit32.bxor(A, B))
 		buffer.writeu8(BufferA, Offset, bit32.bxor(A, Delta))
 		buffer.writeu8(BufferB, Offset, bit32.bxor(B, Delta))
+		Offset += 1
 	end
 end
 
@@ -106,20 +137,27 @@ local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffe
 	end
 
 	local Mask = CtNonZeroMask(ConditionBit)
-	local WordBytes = Length - bit32.band(Length, 3)
-
-	for Offset = 0, WordBytes - 4, 4 do
-		local DestValue = buffer.readu32(Destination, Offset)
-		local SrcValue = buffer.readu32(Source, Offset)
-		local Delta = bit32.band(Mask, bit32.bxor(DestValue, SrcValue))
-		buffer.writeu32(Destination, Offset, bit32.bxor(DestValue, Delta))
+	local Offset = 0
+	while Offset <= Length - 16 do
+		local D0, D1 = buffer.readu32(Destination, Offset), buffer.readu32(Destination, Offset + 4)
+		local D2, D3 = buffer.readu32(Destination, Offset + 8), buffer.readu32(Destination, Offset + 12)
+		local S0, S1 = buffer.readu32(Source, Offset), buffer.readu32(Source, Offset + 4)
+		local S2, S3 = buffer.readu32(Source, Offset + 8), buffer.readu32(Source, Offset + 12)
+		buffer.writeu32(Destination, Offset, bit32.bxor(D0, bit32.band(Mask, bit32.bxor(D0, S0))))
+		buffer.writeu32(Destination, Offset + 4, bit32.bxor(D1, bit32.band(Mask, bit32.bxor(D1, S1))))
+		buffer.writeu32(Destination, Offset + 8, bit32.bxor(D2, bit32.band(Mask, bit32.bxor(D2, S2))))
+		buffer.writeu32(Destination, Offset + 12, bit32.bxor(D3, bit32.band(Mask, bit32.bxor(D3, S3))))
+		Offset += 16
 	end
-
-	for Offset = WordBytes, Length - 1 do
-		local DestValue = buffer.readu8(Destination, Offset)
-		local SrcValue = buffer.readu8(Source, Offset)
-		local Delta = bit32.band(Mask, bit32.bxor(DestValue, SrcValue))
-		buffer.writeu8(Destination, Offset, bit32.bxor(DestValue, Delta))
+	while Offset <= Length - 4 do
+		local D, S = buffer.readu32(Destination, Offset), buffer.readu32(Source, Offset)
+		buffer.writeu32(Destination, Offset, bit32.bxor(D, bit32.band(Mask, bit32.bxor(D, S))))
+		Offset += 4
+	end
+	while Offset < Length do
+		local D, S = buffer.readu8(Destination, Offset), buffer.readu8(Source, Offset)
+		buffer.writeu8(Destination, Offset, bit32.bxor(D, bit32.band(Mask, bit32.bxor(D, S))))
+		Offset += 1
 	end
 end
 
@@ -136,19 +174,27 @@ local function CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceT
 	end
 
 	local Mask = CtNonZeroMask(ConditionBit)
-	local InvMask = bit32.bnot(Mask)
-	local WordBytes = Length - bit32.band(Length, 3)
-
-	for Offset = 0, WordBytes - 4, 4 do
-		local WordTrue = buffer.readu32(SourceTrue, Offset)
-		local WordFalse = buffer.readu32(SourceFalse, Offset)
-		buffer.writeu32(Destination, Offset, bit32.bor(bit32.band(WordTrue, Mask), bit32.band(WordFalse, InvMask)))
+	local Offset = 0
+	while Offset <= Length - 16 do
+		local T0, T1 = buffer.readu32(SourceTrue, Offset), buffer.readu32(SourceTrue, Offset + 4)
+		local T2, T3 = buffer.readu32(SourceTrue, Offset + 8), buffer.readu32(SourceTrue, Offset + 12)
+		local F0, F1 = buffer.readu32(SourceFalse, Offset), buffer.readu32(SourceFalse, Offset + 4)
+		local F2, F3 = buffer.readu32(SourceFalse, Offset + 8), buffer.readu32(SourceFalse, Offset + 12)
+		buffer.writeu32(Destination, Offset, bit32.bxor(F0, bit32.band(Mask, bit32.bxor(T0, F0))))
+		buffer.writeu32(Destination, Offset + 4, bit32.bxor(F1, bit32.band(Mask, bit32.bxor(T1, F1))))
+		buffer.writeu32(Destination, Offset + 8, bit32.bxor(F2, bit32.band(Mask, bit32.bxor(T2, F2))))
+		buffer.writeu32(Destination, Offset + 12, bit32.bxor(F3, bit32.band(Mask, bit32.bxor(T3, F3))))
+		Offset += 16
 	end
-
-	for Offset = WordBytes, Length - 1 do
-		local ByteTrue = buffer.readu8(SourceTrue, Offset)
-		local ByteFalse = buffer.readu8(SourceFalse, Offset)
-		buffer.writeu8(Destination, Offset, bit32.bor(bit32.band(ByteTrue, Mask), bit32.band(ByteFalse, InvMask)))
+	while Offset <= Length - 4 do
+		local T, F = buffer.readu32(SourceTrue, Offset), buffer.readu32(SourceFalse, Offset)
+		buffer.writeu32(Destination, Offset, bit32.bxor(F, bit32.band(Mask, bit32.bxor(T, F))))
+		Offset += 4
+	end
+	while Offset < Length do
+		local T, F = buffer.readu8(SourceTrue, Offset), buffer.readu8(SourceFalse, Offset)
+		buffer.writeu8(Destination, Offset, bit32.bxor(F, bit32.band(Mask, bit32.bxor(T, F))))
+		Offset += 1
 	end
 end
 

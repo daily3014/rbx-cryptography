@@ -117,7 +117,7 @@ function X25519.PublicKey(SecretKey: buffer): buffer
 	return FieldPrime.Encode(FieldPrime.Mul(Numerator, FieldPrime.Invert(Denominator)))
 end
 
-function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer
+function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer?
 	if SecretKey == nil then
 		error("SecretKey cannot be nil", 2)
 	end
@@ -131,25 +131,23 @@ function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer
 		error(`SecretKey must be exactly {X25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
 	end
 
-	if TheirPublicKey == nil then
-		error("TheirPublicKey cannot be nil", 2)
-	end
-
-	if typeof(TheirPublicKey) ~= "buffer" then
-		error(`TheirPublicKey must be a buffer, got {typeof(TheirPublicKey)}`, 2)
-	end
-
-	local TheirPublicKeyLength = buffer.len(TheirPublicKey)
-	if TheirPublicKeyLength ~= X25519_PUBLIC_KEY_SIZE then
-		error(`TheirPublicKey must be exactly {X25519_PUBLIC_KEY_SIZE} bytes long, got {TheirPublicKeyLength} bytes`, 2)
+	if typeof(TheirPublicKey) ~= "buffer" or buffer.len(TheirPublicKey) ~= X25519_PUBLIC_KEY_SIZE then
+		return nil
 	end
 
 	local SharedSecret = ScalarMult(SecretKey, Curve25519.Decode(TheirPublicKey))
 	if CtIsAllZero(SharedSecret) then
-		error("TheirPublicKey is a low order point, the shared secret would be all zero", 2)
+		return nil
 	end
 
 	return SharedSecret
+end
+
+function X25519.ClearCaches()
+	buffer.fill(CLAMPED_BITS, 0, 0)
+	Curve25519.ClearCaches()
+	Edwards25519.ClearCaches()
+	FieldQuadratic.ClearCaches()
 end
 
 return X25519

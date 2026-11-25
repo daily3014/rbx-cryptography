@@ -113,14 +113,6 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 end
 
 function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffer, AdditionalAuthData: buffer?, Rounds: number?, UseXChaCha20: boolean?): buffer?
-	if Ciphertext == nil then
-		error("Ciphertext cannot be nil", 2)
-	end
-
-	if typeof(Ciphertext) ~= "buffer" then
-		error(`Ciphertext must be a buffer, got {typeof(Ciphertext)}`, 2)
-	end
-
 	if Key == nil then
 		error("Key cannot be nil", 2)
 	end
@@ -134,41 +126,8 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 		error(`Key must be exactly {CHACHA20_KEY_SIZE} bytes long, got {KeyLength} bytes`, 2)
 	end
 
-	if Nonce == nil then
-		error("Nonce cannot be nil", 2)
-	end
-
-	if typeof(Nonce) ~= "buffer" then
-		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
-	end
-
 	if UseXChaCha20 ~= nil and typeof(UseXChaCha20) ~= "boolean" then
 		error(`UseXChaCha20 must be a boolean, got {typeof(UseXChaCha20)}`, 2)
-	end
-
-	local NonceLength = buffer.len(Nonce)
-	local RequiredNonceLength = if UseXChaCha20 then XCHACHA20_NONCE_SIZE else CHACHA20_NONCE_SIZE
-	if NonceLength ~= RequiredNonceLength then
-		error(`Nonce must be exactly {RequiredNonceLength} bytes long, got {NonceLength} bytes`, 2)
-	end
-
-	if Tag == nil then
-		error("Tag cannot be nil", 2)
-	end
-
-	if typeof(Tag) ~= "buffer" then
-		error(`Tag must be a buffer, got {typeof(Tag)}`, 2)
-	end
-
-	local TagLength = buffer.len(Tag)
-	if TagLength ~= POLY1305_TAG_SIZE then
-		error(`Tag must be exactly {POLY1305_TAG_SIZE} bytes long, got {TagLength} bytes`, 2)
-	end
-
-	if AdditionalAuthData ~= nil then
-		if typeof(AdditionalAuthData) ~= "buffer" then
-			error(`AdditionalAuthData must be a buffer, got {typeof(AdditionalAuthData)}`, 2)
-		end
 	end
 
 	if Rounds ~= nil then
@@ -183,6 +142,19 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 		if Rounds % 2 ~= 0 then
 			error(`Rounds must be even, got {Rounds}`, 2)
 		end
+	end
+
+	if typeof(Ciphertext) ~= "buffer" or typeof(Nonce) ~= "buffer" or typeof(Tag) ~= "buffer" then
+		return nil
+	end
+
+	if AdditionalAuthData ~= nil and typeof(AdditionalAuthData) ~= "buffer" then
+		return nil
+	end
+
+	local RequiredNonceLength = if UseXChaCha20 then XCHACHA20_NONCE_SIZE else CHACHA20_NONCE_SIZE
+	if buffer.len(Nonce) ~= RequiredNonceLength or buffer.len(Tag) ~= POLY1305_TAG_SIZE then
+		return nil
 	end
 
 	local BlockRounds = Rounds or 20
