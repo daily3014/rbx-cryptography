@@ -11,7 +11,6 @@
 
 --!strict
 --!optimize 2
---!native
 
 local Compute = require("./HMACCore").Compute
 

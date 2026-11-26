@@ -1,6 +1,7 @@
 --!strict
 
 local GROUPS: {[any]: boolean} = setmetatable({}, {__mode = "k"}) :: any
+local ATTACHED: {[any]: {[string]: () -> any}} = setmetatable({}, {__mode = "k"}) :: any
 
 local Lazy = {}
 
@@ -62,13 +63,51 @@ function Lazy.Group(Name: string, Loaders: {[string]: () -> any}): any
 	return Members
 end
 
-function Lazy.IsGroup(Value: any): boolean
-	return GROUPS[Value] == true
+function Lazy.Attach(Target: any, Loaders: {[string]: () -> any}): any
+	setmetatable(Target, {
+		__index = function(Self: any, Key: any): any
+			local Loader = Loaders[Key]
+			if Loader == nil then
+				return nil
+			end
+
+			local Value = Loader()
+			local Existing = rawget(Self, Key)
+			if Existing ~= nil then
+				return Existing
+			end
+
+			if Value == nil then
+				error(`Lazy field "{tostring(Key)}" loaded as nil`, 2)
+			end
+
+			rawset(Self, Key, Value)
+			return Value
+		end,
+	})
+
+	ATTACHED[Target] = Loaders
+
+	return Target
 end
 
-function Lazy.LoadAll(Group: any)
+function Lazy.IsGroup(Value: any): boolean
+	return GROUPS[Value] == true or ATTACHED[Value] ~= nil
+end
+
+function Lazy.LoadAll(Group: any): ()
+	local Attached = ATTACHED[Group]
+	if Attached then
+		for Key in Attached do
+			if rawget(Group, Key) == nil then
+				local _ = Group[Key]
+			end
+		end
+		return
+	end
+
 	for _, Value in Group do
-		if GROUPS[Value] then
+		if GROUPS[Value] or ATTACHED[Value] then
 			Lazy.LoadAll(Value)
 		end
 	end

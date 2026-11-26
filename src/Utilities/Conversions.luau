@@ -28,7 +28,7 @@ local ENCODE_LOOKUP = buffer.create(256 * 2) do
 	end
 end
 
-local DECODE_LOOKUP, DECODE_INVALID = buffer.create(65536), buffer.create(65536) do
+local DECODE_PAIR = buffer.create(131072) do
 	local INVALID_NIBBLE = 255
 	local Nibbles = buffer.create(256)
 	buffer.fill(Nibbles, 0, INVALID_NIBBLE)
@@ -47,9 +47,9 @@ local DECODE_LOOKUP, DECODE_INVALID = buffer.create(65536), buffer.create(65536)
 		for First = 0, 255 do
 			local High = buffer.readu8(Nibbles, First)
 			if Low == INVALID_NIBBLE or High == INVALID_NIBBLE then
-				buffer.writeu8(DECODE_INVALID, Second * 256 + First, 1)
+				buffer.writeu16(DECODE_PAIR, (Second * 256 + First) * 2, 0x100)
 			else
-				buffer.writeu8(DECODE_LOOKUP, Second * 256 + First, High * 16 + Low)
+				buffer.writeu16(DECODE_PAIR, (Second * 256 + First) * 2, High * 16 + Low)
 			end
 		end
 	end
@@ -104,54 +104,40 @@ function Conversions.FromHex(Hex: string | buffer): buffer?
 	local Buffer = buffer.create(bit32.rshift(Length, 1))
 	local Leftover = Length % 16
 	local Body = Length - Leftover
-	local Lookup = DECODE_LOOKUP
-	local InvalidLookup = DECODE_INVALID
+	local Table = DECODE_PAIR
 	local Invalid = 0
 
 	for Index = 0, Body - 16, 16 do
-		local Word0 = buffer.readu32(BufferHex, Index)
-		local Word1 = buffer.readu32(BufferHex, Index + 4)
-		local Word2 = buffer.readu32(BufferHex, Index + 8)
-		local Word3 = buffer.readu32(BufferHex, Index + 12)
 		local Cursor = bit32.rshift(Index, 1)
-
-		buffer.writeu32(Buffer, Cursor, bit32.bor(
-			buffer.readu8(Lookup, bit32.band(Word0, 0xffff)),
-			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word0, 16)), 8),
-			bit32.lshift(buffer.readu8(Lookup, bit32.band(Word1, 0xffff)), 16),
-			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word1, 16)), 24)
-		))
-		buffer.writeu32(Buffer, Cursor + 4, bit32.bor(
-			buffer.readu8(Lookup, bit32.band(Word2, 0xffff)),
-			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word2, 16)), 8),
-			bit32.lshift(buffer.readu8(Lookup, bit32.band(Word3, 0xffff)), 16),
-			bit32.lshift(buffer.readu8(Lookup, bit32.rshift(Word3, 16)), 24)
-		))
-
-		Invalid = bit32.bor(
-			Invalid,
-			bit32.bor(
-				buffer.readu8(InvalidLookup, bit32.band(Word0, 0xffff)),
-				buffer.readu8(InvalidLookup, bit32.rshift(Word0, 16)),
-				buffer.readu8(InvalidLookup, bit32.band(Word1, 0xffff)),
-				buffer.readu8(InvalidLookup, bit32.rshift(Word1, 16))
-			),
-			bit32.bor(
-				buffer.readu8(InvalidLookup, bit32.band(Word2, 0xffff)),
-				buffer.readu8(InvalidLookup, bit32.rshift(Word2, 16)),
-				buffer.readu8(InvalidLookup, bit32.band(Word3, 0xffff)),
-				buffer.readu8(InvalidLookup, bit32.rshift(Word3, 16))
-			)
-		)
+		do
+			local Word0 = buffer.readu32(BufferHex, Index)
+			local Word1 = buffer.readu32(BufferHex, Index + 4)
+			local Pair0 = buffer.readu16(Table, bit32.lshift(bit32.band(Word0, 0xffff), 1))
+			local Pair1 = buffer.readu16(Table, bit32.band(bit32.rshift(Word0, 15), 0x1fffe))
+			local Pair2 = buffer.readu16(Table, bit32.lshift(bit32.band(Word1, 0xffff), 1))
+			local Pair3 = buffer.readu16(Table, bit32.band(bit32.rshift(Word1, 15), 0x1fffe))
+			buffer.writeu32(Buffer, Cursor, bit32.bor(Pair0, bit32.lshift(Pair1, 8), bit32.lshift(Pair2, 16), bit32.lshift(Pair3, 24)))
+			Invalid = bit32.bor(Invalid, Pair0, Pair1, Pair2, Pair3)
+		end
+		do
+			local Word2 = buffer.readu32(BufferHex, Index + 8)
+			local Word3 = buffer.readu32(BufferHex, Index + 12)
+			local Pair0 = buffer.readu16(Table, bit32.lshift(bit32.band(Word2, 0xffff), 1))
+			local Pair1 = buffer.readu16(Table, bit32.band(bit32.rshift(Word2, 15), 0x1fffe))
+			local Pair2 = buffer.readu16(Table, bit32.lshift(bit32.band(Word3, 0xffff), 1))
+			local Pair3 = buffer.readu16(Table, bit32.band(bit32.rshift(Word3, 15), 0x1fffe))
+			buffer.writeu32(Buffer, Cursor + 4, bit32.bor(Pair0, bit32.lshift(Pair1, 8), bit32.lshift(Pair2, 16), bit32.lshift(Pair3, 24)))
+			Invalid = bit32.bor(Invalid, Pair0, Pair1, Pair2, Pair3)
+		end
 	end
 
 	for Index = Body, Length - 2, 2 do
-		local Pair = buffer.readu16(BufferHex, Index)
-		buffer.writeu8(Buffer, bit32.rshift(Index, 1), buffer.readu8(Lookup, Pair))
-		Invalid = bit32.bor(Invalid, buffer.readu8(InvalidLookup, Pair))
+		local Pair = buffer.readu16(Table, bit32.lshift(buffer.readu16(BufferHex, Index), 1))
+		buffer.writeu8(Buffer, bit32.rshift(Index, 1), Pair)
+		Invalid = bit32.bor(Invalid, Pair)
 	end
 
-	if Invalid ~= 0 then
+	if Invalid >= 0x100 then
 		return nil
 	end
 

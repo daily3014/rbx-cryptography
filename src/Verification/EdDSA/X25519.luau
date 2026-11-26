@@ -1,93 +1,37 @@
 --[=[
 	Cryptography library: X25519 Diffie-Hellman key exchange (RFC 7748)
 
-	Plain Montgomery ladder. The Roblox sandbox has no realistic
-	side-channel attack surface (no power analysis, no EM, no cache timing,
-	timer resolution far coarser than any per-bit leak), so the previous
-	masked split-scalar implementation has been replaced with a direct
-	ladder for ~50% better throughput.
-
 	Sizes:
 		SecretKey:    32 bytes
 		PublicKey:    32 bytes
 		SharedSecret: 32 bytes
 
 	Example usage:
-		local AlicePrivate = CSPRNG.RandomBytes(32)
-		local BobPrivate = CSPRNG.RandomBytes(32)
-
 		local AlicePublic = X25519.PublicKey(AlicePrivate)
-		local BobPublic = X25519.PublicKey(BobPrivate)
-
 		local AliceShared = X25519.Exchange(AlicePrivate, BobPublic)
-		local BobShared = X25519.Exchange(BobPrivate, AlicePublic)
-
-		Expect(ToHex(AliceShared)).ToBe(ToHex(BobShared))
 --]=]
 
 --!strict
 --!optimize 2
---!native
 
 local FieldPrime = require("./FieldPrime")
-local FieldQuadratic = require("./FieldQuadratic")
 local Curve25519 = require("./Curve25519")
 local Edwards25519 = require("./Edwards25519")
 local CtIsAllZero = require("../../Utilities/Functions").CtIsAllZero
 
 local COORD_SIZE = 104
+local POINT_SIZE = 416
 local X25519_SECRET_KEY_SIZE = 32
 local X25519_PUBLIC_KEY_SIZE = 32
-local X25519_SCALAR_BITS = 255
 
-local CLAMPED_BITS = buffer.create(256)
-local BYTE_TO_BITS = buffer.create(256 * 8) do
-	for B = 0, 255 do
-		for I = 0, 7 do
-			buffer.writeu8(BYTE_TO_BITS, B * 8 + I, bit32.band(bit32.rshift(B, I), 1))
-		end
-	end
-end
-
-local function ClampedScalarBits(SecretKey: buffer): (buffer, number)
-	local Bits = CLAMPED_BITS
-
-	local Off = bit32.band(buffer.readu8(SecretKey, 0), 0xF8) * 8
-	buffer.writeu32(Bits, 0, buffer.readu32(BYTE_TO_BITS, Off))
-	buffer.writeu32(Bits, 4, buffer.readu32(BYTE_TO_BITS, Off + 4))
-
-	for ByteIndex = 1, 30 do
-		local TableOff = buffer.readu8(SecretKey, ByteIndex) * 8
-		local Base = ByteIndex * 8
-		buffer.writeu32(Bits, Base, buffer.readu32(BYTE_TO_BITS, TableOff))
-		buffer.writeu32(Bits, Base + 4, buffer.readu32(BYTE_TO_BITS, TableOff + 4))
-	end
-
-	Off = bit32.bor(bit32.band(buffer.readu8(SecretKey, 31), 0x7F), 0x40) * 8
-	buffer.writeu32(Bits, 248, buffer.readu32(BYTE_TO_BITS, Off))
-	buffer.writeu32(Bits, 252, buffer.readu32(BYTE_TO_BITS, Off + 4))
-
-	return Bits, X25519_SCALAR_BITS
-end
+local CLAMPED_KEY: buffer = buffer.create(32)
+local WORK_POINT: buffer = buffer.create(POINT_SIZE)
+local WORK_X: buffer = buffer.create(COORD_SIZE)
+local WORK_Z: buffer = buffer.create(COORD_SIZE)
+local WORK_NUM: buffer = buffer.create(COORD_SIZE)
+local WORK_DEN: buffer = buffer.create(COORD_SIZE)
 
 local X25519 = {}
-
-local function ScalarMult(SecretKey: buffer, BasePoint: buffer): buffer
-	local Bits, BitCount = ClampedScalarBits(SecretKey)
-	local Result = Curve25519.Ladder(BasePoint, Bits, BitCount)
-
-	local ResultX = buffer.create(COORD_SIZE)
-	local ResultZ = buffer.create(COORD_SIZE)
-	buffer.copy(ResultX, 0, Result, 0 * COORD_SIZE, COORD_SIZE)
-	buffer.copy(ResultZ, 0, Result, 1 * COORD_SIZE, COORD_SIZE)
-
-	if FieldPrime.Eqz(ResultZ) then
-		return buffer.create(32)
-	end
-
-	local Inverse = FieldPrime.Invert(ResultZ)
-	return FieldPrime.Encode(FieldPrime.Mul(ResultX, Inverse))
-end
 
 function X25519.PublicKey(SecretKey: buffer): buffer
 	if SecretKey == nil then
@@ -103,18 +47,22 @@ function X25519.PublicKey(SecretKey: buffer): buffer
 		error(`SecretKey must be exactly {X25519_SECRET_KEY_SIZE} bytes long, got {SecretKeyLength} bytes`, 2)
 	end
 
-	local Scalar = FieldQuadratic.DecodeClamped(SecretKey)
-	local ScalarBits, BitCount = FieldQuadratic.Bits(Scalar)
-	local Point = Edwards25519.MulG(ScalarBits, BitCount)
+	buffer.copy(CLAMPED_KEY, 0, SecretKey, 0, 32)
+	buffer.writeu8(CLAMPED_KEY, 0, bit32.band(buffer.readu8(CLAMPED_KEY, 0), 0xF8))
+	buffer.writeu8(CLAMPED_KEY, 31, bit32.bor(bit32.band(buffer.readu8(CLAMPED_KEY, 31), 0x7F), 0x40))
 
-	local Y = buffer.create(COORD_SIZE)
-	local Z = buffer.create(COORD_SIZE)
-	buffer.copy(Y, 0, Point, COORD_SIZE, COORD_SIZE)
-	buffer.copy(Z, 0, Point, 2 * COORD_SIZE, COORD_SIZE)
+	Edwards25519.MulGBytes(CLAMPED_KEY, WORK_POINT, false)
+	buffer.copy(WORK_X, 0, WORK_POINT, COORD_SIZE, COORD_SIZE)
+	buffer.copy(WORK_Z, 0, WORK_POINT, 2 * COORD_SIZE, COORD_SIZE)
 
-	local Numerator = FieldPrime.Add(Z, Y)
-	local Denominator = FieldPrime.Sub(Z, Y)
-	return FieldPrime.Encode(FieldPrime.Mul(Numerator, FieldPrime.Invert(Denominator)))
+	FieldPrime.Add(WORK_Z, WORK_X, WORK_NUM)
+	FieldPrime.Sub(WORK_Z, WORK_X, WORK_DEN)
+	FieldPrime.Invert(WORK_DEN, WORK_DEN)
+	FieldPrime.Mul(WORK_NUM, WORK_DEN, WORK_NUM)
+
+	local Out = buffer.create(32)
+	FieldPrime.EncodeInto(WORK_NUM, Out)
+	return Out
 end
 
 function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer?
@@ -135,7 +83,18 @@ function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer?
 		return nil
 	end
 
-	local SharedSecret = ScalarMult(SecretKey, Curve25519.Decode(TheirPublicKey))
+	FieldPrime.DecodeInto(TheirPublicKey, WORK_NUM)
+	Curve25519.LadderUnitZ(WORK_NUM, SecretKey, WORK_X, WORK_Z)
+
+	if FieldPrime.Eqz(WORK_Z) then
+		return nil
+	end
+
+	FieldPrime.Invert(WORK_Z, WORK_Z)
+	FieldPrime.Mul(WORK_X, WORK_Z, WORK_X)
+
+	local SharedSecret = buffer.create(32)
+	FieldPrime.EncodeInto(WORK_X, SharedSecret)
 	if CtIsAllZero(SharedSecret) then
 		return nil
 	end
@@ -143,11 +102,16 @@ function X25519.Exchange(SecretKey: buffer, TheirPublicKey: buffer): buffer?
 	return SharedSecret
 end
 
-function X25519.ClearCaches()
-	buffer.fill(CLAMPED_BITS, 0, 0)
+function X25519.ClearCaches(): ()
+	buffer.fill(CLAMPED_KEY, 0, 0)
+	buffer.fill(WORK_POINT, 0, 0)
+	buffer.fill(WORK_X, 0, 0)
+	buffer.fill(WORK_Z, 0, 0)
+	buffer.fill(WORK_NUM, 0, 0)
+	buffer.fill(WORK_DEN, 0, 0)
 	Curve25519.ClearCaches()
 	Edwards25519.ClearCaches()
-	FieldQuadratic.ClearCaches()
+	FieldPrime.ClearCaches()
 end
 
 return X25519

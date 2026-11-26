@@ -24,7 +24,6 @@
 
 --!strict
 --!optimize 2
---!native
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
 local Conversions = require("../Utilities/Conversions")
@@ -37,6 +36,7 @@ local Blake3 = {}
 local BLAKE3_KEY_SIZE = 32
 local BLAKE3_MIN_OUTPUT_BYTES = 1
 local BLAKE3_MAX_OUTPUT_BYTES = 2^32 - 1
+local ENGINE_MIN_INPUT_BYTES = 512
 
 local LoadedCore: Blake3Core? = nil
 
@@ -51,23 +51,21 @@ local function Core(): Blake3Core
 	return Loaded
 end
 
-local function ValidateLength(Length: number?)
-	if Length ~= nil then
-		if typeof(Length) ~= "number" then
-			error(`Length must be a number, got {typeof(Length)}`, 3)
-		end
+local function ValidateLength(Length: number): ()
+	if typeof(Length) ~= "number" then
+		error(`Length must be a number, got {typeof(Length)}`, 3)
+	end
 
-		if Length ~= math.floor(Length) then
-			error(`Length must be an integer, got {Length}`, 3)
-		end
+	if Length ~= math.floor(Length) then
+		error(`Length must be an integer, got {Length}`, 3)
+	end
 
-		if Length < BLAKE3_MIN_OUTPUT_BYTES then
-			error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 3)
-		end
+	if Length < BLAKE3_MIN_OUTPUT_BYTES then
+		error(`Length must be at least {BLAKE3_MIN_OUTPUT_BYTES} byte, got {Length} bytes`, 3)
+	end
 
-		if Length > BLAKE3_MAX_OUTPUT_BYTES then
-			error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 3)
-		end
+	if Length > BLAKE3_MAX_OUTPUT_BYTES then
+		error(`Length must be at most {BLAKE3_MAX_OUTPUT_BYTES} bytes, got {Length} bytes`, 3)
 	end
 end
 
@@ -80,14 +78,16 @@ function Blake3.Digest(Message: buffer, Length: number?): (string, buffer)
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	ValidateLength(Length)
+	if Length ~= nil then
+		ValidateLength(Length)
+	end
 
-	if EncodingService and (Length == nil or Length == 32) then
+	if EncodingService and (Length == nil or Length == 32) and buffer.len(Message) >= ENGINE_MIN_INPUT_BYTES then
 		local Result = EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Blake3)
 		return ToHex(Result), Result
 	end
 
-	local Loaded = Core()
+	local Loaded = LoadedCore or Core()
 	local Result = Loaded.ProcessMessage(Loaded.INITIAL_VECTORS, 0, Message, Length or 32)
 
 	return ToHex(Result), Result
@@ -102,13 +102,15 @@ function Blake3.DigestBuffer(Message: buffer, Length: number?): buffer
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	ValidateLength(Length)
+	if Length ~= nil then
+		ValidateLength(Length)
+	end
 
-	if EncodingService and (Length == nil or Length == 32) then
+	if EncodingService and (Length == nil or Length == 32) and buffer.len(Message) >= ENGINE_MIN_INPUT_BYTES then
 		return EncodingService:ComputeBufferHash(Message, Enum.HashAlgorithm.Blake3)
 	end
 
-	local Loaded = Core()
+	local Loaded = LoadedCore or Core()
 	return Loaded.ProcessMessage(Loaded.INITIAL_VECTORS, 0, Message, Length or 32)
 end
 
@@ -129,13 +131,16 @@ function Blake3.DigestKeyed(Message: buffer, Key: buffer, Length: number?): (str
 	if Message == nil then
 		error("Message cannot be nil", 2)
 	end
+
 	if typeof(Message) ~= "buffer" then
 		error(`Message must be a buffer, got {typeof(Message)}`, 2)
 	end
 
-	ValidateLength(Length)
+	if Length ~= nil then
+		ValidateLength(Length)
+	end
 
-	local Loaded = Core()
+	local Loaded = LoadedCore or Core()
 	local Result = Loaded.ProcessMessage(Key, Loaded.HASH_FLAG, Message, Length or 32)
 
 	return ToHex(Result), Result
@@ -150,7 +155,7 @@ function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer
 		error(`Context must be a buffer, got {typeof(Context)}`, 2)
 	end
 
-	local Loaded = Core()
+	local Loaded = LoadedCore or Core()
 	local ProcessMessage = Loaded.ProcessMessage
 	local DeriveMaterialFlag = Loaded.DERIVE_MATERIAL_FLAG
 	local ContextHash = ProcessMessage(Loaded.INITIAL_VECTORS, Loaded.DERIVE_CONTEXT_FLAG, Context, 32)
@@ -164,7 +169,9 @@ function Blake3.DeriveKey(Context: buffer): (buffer, number?) -> (string, buffer
 			error(`Material must be a buffer, got {typeof(Material)}`, 2)
 		end
 
-		ValidateLength(Length)
+		if Length ~= nil then
+			ValidateLength(Length)
+		end
 
 		local Result = ProcessMessage(ContextHash, DeriveMaterialFlag, Material, Length or 32)
 

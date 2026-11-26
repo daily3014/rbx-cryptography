@@ -13,6 +13,8 @@
 --!native
 
 local PADDING_CHARACTER = 61
+local INVALID_ENTRY = 0x80000000
+local MAX_VALID_ASCII = 122
 local ALPHABET_BYTES = buffer.create(64) do
 	local Characters = {
 		65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
@@ -37,37 +39,25 @@ local DECODE_TET = buffer.create(256) do
 	end
 end
 
-local PAIR_A_BYTE1_HIGH = buffer.create(4096)
-local PAIR_B_BYTE1_LOW = buffer.create(4096)
-
-local PAIR_A_BYTE0, PAIR_B_BYTE2 = buffer.create(4096), buffer.create(4096) do
-	for PairA = 0, 4095 do
-		local Sextet0 = PairA // 64
-		local Sextet1 = PairA % 64
-		buffer.writeu8(PAIR_A_BYTE0, PairA, Sextet0 * 4 + (Sextet1 // 16))
-		buffer.writeu8(PAIR_A_BYTE1_HIGH, PairA, (Sextet1 % 16) * 16)
+local DECODE_TABLE_SIZE = (MAX_VALID_ASCII * 256 + MAX_VALID_ASCII + 1) * 4
+local DECODE_HIGH = buffer.create(DECODE_TABLE_SIZE)
+local DECODE_LOW = buffer.create(DECODE_TABLE_SIZE)
+do
+	for Key = 0, DECODE_TABLE_SIZE - 4, 4 do
+		buffer.writeu32(DECODE_HIGH, Key, INVALID_ENTRY)
+		buffer.writeu32(DECODE_LOW, Key, INVALID_ENTRY)
 	end
 
-	for PairB = 0, 4095 do
-		local Sextet2 = PairB // 64
-		local Sextet3 = PairB % 64
-		buffer.writeu8(PAIR_B_BYTE1_LOW, PairB, Sextet2 // 4)
-		buffer.writeu8(PAIR_B_BYTE2, PairB, (Sextet2 % 4) * 64 + Sextet3)
-	end
-end
-
-local DECODE_HIGH, DECODE_LOW = buffer.create(262144), buffer.create(262144) do
-	for Char0 = 0, 255 do
-		local Sextet0 = buffer.readu8(DECODE_TET, Char0)
-		for Char1 = 0, 255 do
-			local Sextet1 = buffer.readu8(DECODE_TET, Char1)
-			local Key = (Char0 + Char1 * 256) * 4
-			if Sextet0 < 64 and Sextet1 < 64 then
-				buffer.writeu32(DECODE_HIGH, Key, Sextet0 * 4 + Sextet1 // 16 + (Sextet1 % 16) * 16 * 256)
-				buffer.writeu32(DECODE_LOW, Key, Sextet0 // 4 * 256 + ((Sextet0 % 4) * 64 + Sextet1) * 65536)
-			else
-				buffer.writeu32(DECODE_HIGH, Key, 0x80000000)
-				buffer.writeu32(DECODE_LOW, Key, 0x80000000)
+	for Char1 = 0, MAX_VALID_ASCII do
+		local Sextet1 = buffer.readu8(DECODE_TET, Char1)
+		if Sextet1 < 64 then
+			for Char0 = 0, MAX_VALID_ASCII do
+				local Sextet0 = buffer.readu8(DECODE_TET, Char0)
+				if Sextet0 < 64 then
+					local Key = (Char0 + Char1 * 256) * 4
+					buffer.writeu32(DECODE_HIGH, Key, Sextet0 * 4 + Sextet1 // 16 + (Sextet1 % 16) * 16 * 256)
+					buffer.writeu32(DECODE_LOW, Key, (Sextet0 // 4) * 256 + ((Sextet0 % 4) * 64 + Sextet1) * 65536)
+				end
 			end
 		end
 	end
@@ -322,6 +312,116 @@ local function Encode(Input: buffer): buffer
 	return Output
 end
 
+local function DecodeQuartetHL(
+	Input: buffer,
+	Output: buffer,
+	High: buffer,
+	Low: buffer,
+	InOff: number,
+	OutOff: number
+): number
+	local Bytes = bit32.bor(
+		buffer.readu32(High, bit32.lshift(buffer.readu16(Input, InOff), 2)),
+		buffer.readu32(Low, bit32.lshift(buffer.readu16(Input, InOff + 2), 2))
+	)
+	buffer.writeu32(Output, OutOff, Bytes)
+	return Bytes
+end
+
+local function DecodeQuartetLH(
+	Input: buffer,
+	Output: buffer,
+	High: buffer,
+	Low: buffer,
+	InOff: number,
+	OutOff: number
+): number
+	local Bytes = bit32.bor(
+		buffer.readu32(Low, bit32.lshift(buffer.readu16(Input, InOff + 2), 2)),
+		buffer.readu32(High, bit32.lshift(buffer.readu16(Input, InOff), 2))
+	)
+	buffer.writeu32(Output, OutOff, Bytes)
+	return Bytes
+end
+
+local function DecodeBlocks(Input: buffer, Output: buffer, High: buffer, Low: buffer, StopIn: number): boolean
+	for InputIndex = 0, StopIn, 128 do
+		local OutputIndex = InputIndex * 0.75
+		local Invalid = DecodeQuartetHL(Input, Output, High, Low, InputIndex + 0, OutputIndex + 0)
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 4, OutputIndex + 3))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 8, OutputIndex + 6))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 12, OutputIndex + 9))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 16, OutputIndex + 12))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 20, OutputIndex + 15))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 24, OutputIndex + 18))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 28, OutputIndex + 21))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 32, OutputIndex + 24))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 36, OutputIndex + 27))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 40, OutputIndex + 30))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 44, OutputIndex + 33))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 48, OutputIndex + 36))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 52, OutputIndex + 39))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 56, OutputIndex + 42))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 60, OutputIndex + 45))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 64, OutputIndex + 48))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 68, OutputIndex + 51))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 72, OutputIndex + 54))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 76, OutputIndex + 57))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 80, OutputIndex + 60))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 84, OutputIndex + 63))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 88, OutputIndex + 66))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 92, OutputIndex + 69))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 96, OutputIndex + 72))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 100, OutputIndex + 75))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 104, OutputIndex + 78))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 108, OutputIndex + 81))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 112, OutputIndex + 84))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 116, OutputIndex + 87))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 120, OutputIndex + 90))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 124, OutputIndex + 93))
+
+		if bit32.btest(Invalid, INVALID_ENTRY) then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function DecodeBody(Input: buffer, Output: buffer, High: buffer, Low: buffer, BodyEnd: number): boolean
+	local InputIndex = 0
+	local OutputIndex = 0
+
+	if BodyEnd >= 128 then
+		local StopIn = ((BodyEnd - 128) // 128) * 128
+		if not DecodeBlocks(Input, Output, High, Low, StopIn) then
+			return false
+		end
+
+		InputIndex = StopIn + 128
+		OutputIndex = InputIndex * 0.75
+	end
+
+	local Invalid = 0
+
+	while InputIndex <= BodyEnd - 16 do
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 0, OutputIndex + 0))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 4, OutputIndex + 3))
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex + 8, OutputIndex + 6))
+		Invalid = bit32.bor(Invalid, DecodeQuartetLH(Input, Output, High, Low, InputIndex + 12, OutputIndex + 9))
+		InputIndex += 16
+		OutputIndex += 12
+	end
+
+	while InputIndex <= BodyEnd - 4 do
+		Invalid = bit32.bor(Invalid, DecodeQuartetHL(Input, Output, High, Low, InputIndex, OutputIndex))
+		InputIndex += 4
+		OutputIndex += 3
+	end
+
+	return not bit32.btest(Invalid, INVALID_ENTRY)
+end
+
 local function Decode(Input: buffer): buffer?
 	if typeof(Input) ~= "buffer" then
 		return nil
@@ -344,224 +444,45 @@ local function Decode(Input: buffer): buffer?
 		end
 	end
 
-	local Output = buffer.create((InputLength // 4) * 3 - Padding)
-	local InputIndex = 0
-	local OutputIndex = 0
+	local OutputLength = (InputLength // 4) * 3 - Padding
+	local Output = buffer.create(OutputLength)
 	local BodyEnd = InputLength - 4
-	local UnrollStop = BodyEnd - 64
 
-	local High = DECODE_HIGH
-	local Low = DECODE_LOW
-	local Pair0 = PAIR_A_BYTE0
-	local PairAHigh = PAIR_A_BYTE1_HIGH
-	local PairBLow = PAIR_B_BYTE1_LOW
-	local Pair2 = PAIR_B_BYTE2
-	local Dtet = DECODE_TET
-	local Invalid = 0
-
-	while InputIndex <= UnrollStop do
-		do
-			local Word = buffer.readu32(Input, InputIndex + 0)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 0, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
+	if BodyEnd > 0 then
+		local Ok, Valid = pcall(DecodeBody, Input, Output, DECODE_HIGH, DECODE_LOW, BodyEnd)
+		if not Ok or not Valid then
+			return nil
 		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 4)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 3, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 8)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 6, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 12)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 9, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 16)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 12, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 20)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 15, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 24)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 18, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 28)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 21, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 32)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 24, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 36)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 27, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 40)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 30, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 44)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 33, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 48)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 36, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 52)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 39, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 56)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 42, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 60)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 45, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-
-		InputIndex += 64
-		OutputIndex += 48
 	end
 
-	while InputIndex <= BodyEnd - 8 do
-		do
-			local Word = buffer.readu32(Input, InputIndex + 0)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 0, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-		do
-			local Word = buffer.readu32(Input, InputIndex + 4)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 3, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
+	local DecodeTet = DECODE_TET
+	local Decoded0 = buffer.readu8(DecodeTet, buffer.readu8(Input, BodyEnd))
+	local Decoded1 = buffer.readu8(DecodeTet, buffer.readu8(Input, BodyEnd + 1))
+	local Decoded2 = 0
+	local Decoded3 = 0
+	local Spare = 0
 
-		InputIndex += 8
-		OutputIndex += 6
-	end
-
-	while InputIndex <= BodyEnd - 4 do
-		do
-			local Word = buffer.readu32(Input, InputIndex + 0)
-			local Bytes = bit32.bor(
-				buffer.readu32(High, bit32.lshift(bit32.band(Word, 0xffff), 2)),
-				buffer.readu32(Low, bit32.band(bit32.rshift(Word, 14), 0x3fffc)))
-			buffer.writeu32(Output, OutputIndex + 0, Bytes)
-			Invalid = bit32.bor(Invalid, Bytes)
-		end
-
-		InputIndex += 4
-		OutputIndex += 3
-	end
-
-	local Char0 = buffer.readu8(Input, InputIndex)
-	local Char1 = buffer.readu8(Input, InputIndex + 1)
-	local Char2 = buffer.readu8(Input, InputIndex + 2)
-	local Char3 = buffer.readu8(Input, InputIndex + 3)
-	local Decoded0 = buffer.readu8(Dtet, Char0)
-	local Decoded1 = buffer.readu8(Dtet, Char1)
-	local Decoded2, Decoded3, Spare = 0, 0, 0
 	if Padding == 0 then
-		Decoded2 = buffer.readu8(Dtet, Char2)
-		Decoded3 = buffer.readu8(Dtet, Char3)
+		Decoded2 = buffer.readu8(DecodeTet, buffer.readu8(Input, BodyEnd + 2))
+		Decoded3 = buffer.readu8(DecodeTet, buffer.readu8(Input, BodyEnd + 3))
 	elseif Padding == 1 then
-		Decoded2 = buffer.readu8(Dtet, Char2)
+		Decoded2 = buffer.readu8(DecodeTet, buffer.readu8(Input, BodyEnd + 2))
 		Spare = bit32.band(Decoded2, 0x03)
 	else
-		Spare = bit32.band(Decoded1, 0x0F)
+		Spare = bit32.band(Decoded1, 0x0f)
 	end
 
-	if Invalid >= 0x80000000 or bit32.bor(Decoded0, Decoded1, Decoded2, Decoded3) >= 64 then
+	if bit32.bor(Decoded0, Decoded1, Decoded2, Decoded3) >= 64 or Spare ~= 0 then
 		return nil
 	end
 
-	if Spare ~= 0 then
-		return nil
-	end
-
-	local PairA = Decoded0 * 64 + Decoded1
-	local PairB = Decoded2 * 64 + Decoded3
-	buffer.writeu8(Output, OutputIndex, buffer.readu8(Pair0, PairA))
+	local OutputIndex = (BodyEnd // 4) * 3
+	buffer.writeu8(Output, OutputIndex, bit32.bor(bit32.lshift(Decoded0, 2), bit32.rshift(Decoded1, 4)))
 	if Padding < 2 then
-		buffer.writeu8(Output, OutputIndex + 1, buffer.readu8(PairAHigh, PairA) + buffer.readu8(PairBLow, PairB))
+		buffer.writeu8(Output, OutputIndex + 1, bit32.bor(bit32.lshift(Decoded1, 4), bit32.rshift(Decoded2, 2)))
 	end
 	if Padding == 0 then
-		buffer.writeu8(Output, OutputIndex + 2, buffer.readu8(Pair2, PairB))
+		buffer.writeu8(Output, OutputIndex + 2, bit32.bor(bit32.lshift(Decoded2, 6), Decoded3))
 	end
 
 	return Output

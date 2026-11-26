@@ -20,11 +20,13 @@
 
 --!strict
 --!optimize 2
---!native
 
 local ChaCha = require("@self/ChaCha")
 local Poly1305 = require("@self/Poly1305")
-local CtCompare = require("../Utilities/Functions").CtCompare
+local AeadKeySetup = ChaCha.AeadKeySetup
+local AeadCrypt = ChaCha.AeadCrypt
+local AeadTag = Poly1305.AeadTag
+local AeadVerify = Poly1305.AeadVerify
 
 local CHACHA20_KEY_SIZE = 32
 local CHACHA20_NONCE_SIZE = 12
@@ -105,9 +107,9 @@ function AEAD.Encrypt(Message: buffer, Key: buffer, Nonce: buffer, AdditionalAut
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or EMPTY
 
-	local State, AuthenticationKey = ChaCha.AeadKeySetup(Key, Nonce, BlockRounds, UseXChaCha20)
-	local Ciphertext = ChaCha.AeadCrypt(State, Message, BlockRounds)
-	local Tag = Poly1305.AeadTag(AuthenticationKey, AAD, Ciphertext)
+	local State, AuthenticationKey = AeadKeySetup(Key, Nonce, BlockRounds, UseXChaCha20)
+	local Ciphertext = AeadCrypt(State, Message, BlockRounds)
+	local Tag = AeadTag(AuthenticationKey, AAD, Ciphertext)
 
 	return Ciphertext, Tag
 end
@@ -160,14 +162,12 @@ function AEAD.Decrypt(Ciphertext: buffer, Key: buffer, Nonce: buffer, Tag: buffe
 	local BlockRounds = Rounds or 20
 	local AAD = AdditionalAuthData or EMPTY
 
-	local State, AuthenticationKey = ChaCha.AeadKeySetup(Key, Nonce, BlockRounds, UseXChaCha20)
-	local ExpectedTag = Poly1305.AeadTag(AuthenticationKey, AAD, Ciphertext)
-
-	if not CtCompare(Tag, ExpectedTag) then
+	local State, AuthenticationKey = AeadKeySetup(Key, Nonce, BlockRounds, UseXChaCha20)
+	if not AeadVerify(AuthenticationKey, AAD, Ciphertext, Tag) then
 		return nil
 	end
 
-	return ChaCha.AeadCrypt(State, Ciphertext, BlockRounds)
+	return AeadCrypt(State, Ciphertext, BlockRounds)
 end
 
 return AEAD

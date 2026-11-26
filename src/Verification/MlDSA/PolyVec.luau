@@ -1,6 +1,6 @@
 --[=[
 	Vector operations on degree-255 polynomials
-	
+
 	Works on vectors of polynomials including matrix multiplication,
 	NTT transforms, and encoding/decoding for ML-DSA.
 
@@ -17,13 +17,16 @@
 local NTT = require("./NTT")
 
 local Q = 8380417
+local INV_Q = 1 / Q
+local ROUND_BIAS = 2 ^ -24
 local N = 256
 local POLY_SIZE = N * 4
 local GAMMA2_88 = 95232
 
 local PolyVec = {}
 
-local HINT_WRAP_88 = buffer.create(47) do
+local HINT_WRAP_88: buffer = buffer.create(47)
+do
 	for Index = 0, 46 do
 		buffer.writeu8(HINT_WRAP_88, Index, (Index - 1) % 44)
 	end
@@ -35,9 +38,7 @@ local function Unmasked32(R: number): number
 end
 
 local function Unmasked88(R: number): number
-	local B = bit32.rshift(R + 127, 7)
-	local Times11 = bit32.bor(bit32.bor(bit32.lshift(B, 3) + bit32.lshift(B, 1), 0) + B, 0)
-	return bit32.rshift(bit32.bor(bit32.bor(bit32.lshift(Times11, 10) + Times11, 0) + 8388608, 0), 24)
+	return bit32.rshift(bit32.rshift(R + 127, 7) * 11275 + 8388608, 24)
 end
 
 local function Center32(Unmasked: number): number
@@ -66,8 +67,7 @@ local function Magnitude(Difference: number): number
 end
 
 local function CenteredMagnitude(Value: number): number
-	local Flip = bit32.arshift(4190208 - Value, 31)
-	return bit32.bxor(Value, bit32.band(Flip, bit32.bxor(Value, Q - Value)))
+	return math.min(Value, Q - Value)
 end
 
 local function LowMagnitude32(R: number): number
@@ -106,127 +106,65 @@ local function SubtractModQ(A: number, B: number): number
 	return bit32.bor(Difference + bit32.band(Q, bit32.arshift(Difference, 31)), 0)
 end
 
-function PolyVec.ForwardNTT(Vec: buffer, K: number)
-	local Num = N
+function PolyVec.ForwardNTT(Vec: buffer, K: number): ()
+	local Forward = NTT.ForwardNTTWithOffset
 	for I = 0, K - 1 do
-		local Offset = I * Num * 4
-		NTT.ForwardNTTWithOffset(Vec, Offset)
+		Forward(Vec, I * POLY_SIZE)
 	end
 end
 
-function PolyVec.InverseNTTProduct(Factor: buffer, Source: buffer, Destination: buffer, K: number)
+function PolyVec.InverseNTTProduct(Factor: buffer, Source: buffer, Destination: buffer, K: number): ()
 	local InverseProduct = NTT.InverseNTTProduct
 	for I = 0, K - 1 do
-		InverseProduct(Factor, Source, I * N * 4, Destination, I * N * 4)
+		local Offset = I * POLY_SIZE
+		InverseProduct(Factor, Source, Offset, Destination, Offset)
 	end
 end
 
-function PolyVec.InverseNTT(Vec: buffer, K: number)
+function PolyVec.InverseNTT(Vec: buffer, K: number): ()
 	local Inverse = NTT.InverseNTTWithOffset
 	for I = 0, K - 1 do
-		Inverse(Vec, I * N * 4)
+		Inverse(Vec, I * POLY_SIZE)
 	end
 end
 
-local function MatrixMultiply4x4(A: buffer, B: buffer, C: buffer)
-	local Modulus = Q
+local function MatrixMultiply4(A: buffer, B: buffer, C: buffer, K: number): ()
 	for E = 0, 1020, 4 do
 		local B0 = buffer.readu32(B, E)
 		local B1 = buffer.readu32(B, E + 1024)
 		local B2 = buffer.readu32(B, E + 2048)
 		local B3 = buffer.readu32(B, E + 3072)
-		do
-			local Acc = buffer.readu32(A, E) * B0
-				+ buffer.readu32(A, E + 1024) * B1
-				+ buffer.readu32(A, E + 2048) * B2
-				+ buffer.readu32(A, E + 3072) * B3
-			buffer.writeu32(C, E, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 4096) * B0
-				+ buffer.readu32(A, E + 5120) * B1
-				+ buffer.readu32(A, E + 6144) * B2
-				+ buffer.readu32(A, E + 7168) * B3
-			buffer.writeu32(C, E + 1024, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 8192) * B0
-				+ buffer.readu32(A, E + 9216) * B1
-				+ buffer.readu32(A, E + 10240) * B2
-				+ buffer.readu32(A, E + 11264) * B3
-			buffer.writeu32(C, E + 2048, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 12288) * B0
-				+ buffer.readu32(A, E + 13312) * B1
-				+ buffer.readu32(A, E + 14336) * B2
-				+ buffer.readu32(A, E + 15360) * B3
-			buffer.writeu32(C, E + 3072, Acc % Modulus)
+		for Row = 0, K - 1 do
+			local ABase = Row * 4096 + E
+			local Acc = buffer.readu32(A, ABase) * B0
+				+ buffer.readu32(A, ABase + 1024) * B1
+				+ buffer.readu32(A, ABase + 2048) * B2
+				+ buffer.readu32(A, ABase + 3072) * B3
+			buffer.writeu32(C, Row * 1024 + E, Acc - math.floor(Acc * INV_Q + ROUND_BIAS) * Q)
 		end
 	end
 end
 
-local function MatrixMultiply6x5(A: buffer, B: buffer, C: buffer)
-	local Modulus = Q
+local function MatrixMultiply5(A: buffer, B: buffer, C: buffer, K: number): ()
 	for E = 0, 1020, 4 do
 		local B0 = buffer.readu32(B, E)
 		local B1 = buffer.readu32(B, E + 1024)
 		local B2 = buffer.readu32(B, E + 2048)
 		local B3 = buffer.readu32(B, E + 3072)
 		local B4 = buffer.readu32(B, E + 4096)
-		do
-			local Acc = buffer.readu32(A, E) * B0
-				+ buffer.readu32(A, E + 1024) * B1
-				+ buffer.readu32(A, E + 2048) * B2
-				+ buffer.readu32(A, E + 3072) * B3
-				+ buffer.readu32(A, E + 4096) * B4
-			buffer.writeu32(C, E, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 5120) * B0
-				+ buffer.readu32(A, E + 6144) * B1
-				+ buffer.readu32(A, E + 7168) * B2
-				+ buffer.readu32(A, E + 8192) * B3
-				+ buffer.readu32(A, E + 9216) * B4
-			buffer.writeu32(C, E + 1024, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 10240) * B0
-				+ buffer.readu32(A, E + 11264) * B1
-				+ buffer.readu32(A, E + 12288) * B2
-				+ buffer.readu32(A, E + 13312) * B3
-				+ buffer.readu32(A, E + 14336) * B4
-			buffer.writeu32(C, E + 2048, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 15360) * B0
-				+ buffer.readu32(A, E + 16384) * B1
-				+ buffer.readu32(A, E + 17408) * B2
-				+ buffer.readu32(A, E + 18432) * B3
-				+ buffer.readu32(A, E + 19456) * B4
-			buffer.writeu32(C, E + 3072, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 20480) * B0
-				+ buffer.readu32(A, E + 21504) * B1
-				+ buffer.readu32(A, E + 22528) * B2
-				+ buffer.readu32(A, E + 23552) * B3
-				+ buffer.readu32(A, E + 24576) * B4
-			buffer.writeu32(C, E + 4096, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 25600) * B0
-				+ buffer.readu32(A, E + 26624) * B1
-				+ buffer.readu32(A, E + 27648) * B2
-				+ buffer.readu32(A, E + 28672) * B3
-				+ buffer.readu32(A, E + 29696) * B4
-			buffer.writeu32(C, E + 5120, Acc % Modulus)
+		for Row = 0, K - 1 do
+			local ABase = Row * 5120 + E
+			local Acc = buffer.readu32(A, ABase) * B0
+				+ buffer.readu32(A, ABase + 1024) * B1
+				+ buffer.readu32(A, ABase + 2048) * B2
+				+ buffer.readu32(A, ABase + 3072) * B3
+				+ buffer.readu32(A, ABase + 4096) * B4
+			buffer.writeu32(C, Row * 1024 + E, Acc - math.floor(Acc * INV_Q + ROUND_BIAS) * Q)
 		end
 	end
 end
 
-local function MatrixMultiply8x7(A: buffer, B: buffer, C: buffer)
-	local Modulus = Q
+local function MatrixMultiply7(A: buffer, B: buffer, C: buffer, K: number): ()
 	for E = 0, 1020, 4 do
 		local B0 = buffer.readu32(B, E)
 		local B1 = buffer.readu32(B, E + 1024)
@@ -235,134 +173,41 @@ local function MatrixMultiply8x7(A: buffer, B: buffer, C: buffer)
 		local B4 = buffer.readu32(B, E + 4096)
 		local B5 = buffer.readu32(B, E + 5120)
 		local B6 = buffer.readu32(B, E + 6144)
-		do
-			local Acc = buffer.readu32(A, E) * B0
-				+ buffer.readu32(A, E + 1024) * B1
-				+ buffer.readu32(A, E + 2048) * B2
-				+ buffer.readu32(A, E + 3072) * B3
-				+ buffer.readu32(A, E + 4096) * B4
-				+ buffer.readu32(A, E + 5120) * B5
-				+ buffer.readu32(A, E + 6144) * B6
-			buffer.writeu32(C, E, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 7168) * B0
-				+ buffer.readu32(A, E + 8192) * B1
-				+ buffer.readu32(A, E + 9216) * B2
-				+ buffer.readu32(A, E + 10240) * B3
-				+ buffer.readu32(A, E + 11264) * B4
-				+ buffer.readu32(A, E + 12288) * B5
-				+ buffer.readu32(A, E + 13312) * B6
-			buffer.writeu32(C, E + 1024, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 14336) * B0
-				+ buffer.readu32(A, E + 15360) * B1
-				+ buffer.readu32(A, E + 16384) * B2
-				+ buffer.readu32(A, E + 17408) * B3
-				+ buffer.readu32(A, E + 18432) * B4
-				+ buffer.readu32(A, E + 19456) * B5
-				+ buffer.readu32(A, E + 20480) * B6
-			buffer.writeu32(C, E + 2048, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 21504) * B0
-				+ buffer.readu32(A, E + 22528) * B1
-				+ buffer.readu32(A, E + 23552) * B2
-				+ buffer.readu32(A, E + 24576) * B3
-				+ buffer.readu32(A, E + 25600) * B4
-				+ buffer.readu32(A, E + 26624) * B5
-				+ buffer.readu32(A, E + 27648) * B6
-			buffer.writeu32(C, E + 3072, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 28672) * B0
-				+ buffer.readu32(A, E + 29696) * B1
-				+ buffer.readu32(A, E + 30720) * B2
-				+ buffer.readu32(A, E + 31744) * B3
-				+ buffer.readu32(A, E + 32768) * B4
-				+ buffer.readu32(A, E + 33792) * B5
-				+ buffer.readu32(A, E + 34816) * B6
-			buffer.writeu32(C, E + 4096, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 35840) * B0
-				+ buffer.readu32(A, E + 36864) * B1
-				+ buffer.readu32(A, E + 37888) * B2
-				+ buffer.readu32(A, E + 38912) * B3
-				+ buffer.readu32(A, E + 39936) * B4
-				+ buffer.readu32(A, E + 40960) * B5
-				+ buffer.readu32(A, E + 41984) * B6
-			buffer.writeu32(C, E + 5120, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 43008) * B0
-				+ buffer.readu32(A, E + 44032) * B1
-				+ buffer.readu32(A, E + 45056) * B2
-				+ buffer.readu32(A, E + 46080) * B3
-				+ buffer.readu32(A, E + 47104) * B4
-				+ buffer.readu32(A, E + 48128) * B5
-				+ buffer.readu32(A, E + 49152) * B6
-			buffer.writeu32(C, E + 6144, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 50176) * B0
-				+ buffer.readu32(A, E + 51200) * B1
-				+ buffer.readu32(A, E + 52224) * B2
-				+ buffer.readu32(A, E + 53248) * B3
-				+ buffer.readu32(A, E + 54272) * B4
-				+ buffer.readu32(A, E + 55296) * B5
-				+ buffer.readu32(A, E + 56320) * B6
-			buffer.writeu32(C, E + 7168, Acc % Modulus)
+		for Row = 0, K - 1 do
+			local ABase = Row * 7168 + E
+			local Acc = buffer.readu32(A, ABase) * B0
+				+ buffer.readu32(A, ABase + 1024) * B1
+				+ buffer.readu32(A, ABase + 2048) * B2
+				+ buffer.readu32(A, ABase + 3072) * B3
+				+ buffer.readu32(A, ABase + 4096) * B4
+				+ buffer.readu32(A, ABase + 5120) * B5
+				+ buffer.readu32(A, ABase + 6144) * B6
+			buffer.writeu32(C, Row * 1024 + E, Acc - math.floor(Acc * INV_Q + ROUND_BIAS) * Q)
 		end
 	end
 end
 
-local function MatrixMultiplySubtract4x4(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer)
-	local Modulus = Q
+local function MatrixMultiplySubtract4(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer, K: number): ()
 	for E = 0, 1020, 4 do
 		local B0 = buffer.readu32(B, E)
 		local B1 = buffer.readu32(B, E + 1024)
 		local B2 = buffer.readu32(B, E + 2048)
 		local B3 = buffer.readu32(B, E + 3072)
 		local Factor = buffer.readu32(Challenge, E)
-		do
-			local Acc = buffer.readu32(A, E) * B0
-				+ buffer.readu32(A, E + 1024) * B1
-				+ buffer.readu32(A, E + 2048) * B2
-				+ buffer.readu32(A, E + 3072) * B3
-				- Factor * buffer.readu32(T1, E)
-			buffer.writeu32(C, E, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 4096) * B0
-				+ buffer.readu32(A, E + 5120) * B1
-				+ buffer.readu32(A, E + 6144) * B2
-				+ buffer.readu32(A, E + 7168) * B3
-				- Factor * buffer.readu32(T1, E + 1024)
-			buffer.writeu32(C, E + 1024, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 8192) * B0
-				+ buffer.readu32(A, E + 9216) * B1
-				+ buffer.readu32(A, E + 10240) * B2
-				+ buffer.readu32(A, E + 11264) * B3
-				- Factor * buffer.readu32(T1, E + 2048)
-			buffer.writeu32(C, E + 2048, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 12288) * B0
-				+ buffer.readu32(A, E + 13312) * B1
-				+ buffer.readu32(A, E + 14336) * B2
-				+ buffer.readu32(A, E + 15360) * B3
-				- Factor * buffer.readu32(T1, E + 3072)
-			buffer.writeu32(C, E + 3072, Acc % Modulus)
+		for Row = 0, K - 1 do
+			local ABase = Row * 4096 + E
+			local Out = Row * 1024 + E
+			local Acc = buffer.readu32(A, ABase) * B0
+				+ buffer.readu32(A, ABase + 1024) * B1
+				+ buffer.readu32(A, ABase + 2048) * B2
+				+ buffer.readu32(A, ABase + 3072) * B3
+				- Factor * buffer.readu32(T1, Out)
+			buffer.writeu32(C, Out, Acc - math.floor(Acc * INV_Q + ROUND_BIAS) * Q)
 		end
 	end
 end
 
-local function MatrixMultiplySubtract6x5(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer)
-	local Modulus = Q
+local function MatrixMultiplySubtract5(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer, K: number): ()
 	for E = 0, 1020, 4 do
 		local B0 = buffer.readu32(B, E)
 		local B1 = buffer.readu32(B, E + 1024)
@@ -370,65 +215,21 @@ local function MatrixMultiplySubtract6x5(A: buffer, B: buffer, Challenge: buffer
 		local B3 = buffer.readu32(B, E + 3072)
 		local B4 = buffer.readu32(B, E + 4096)
 		local Factor = buffer.readu32(Challenge, E)
-		do
-			local Acc = buffer.readu32(A, E) * B0
-				+ buffer.readu32(A, E + 1024) * B1
-				+ buffer.readu32(A, E + 2048) * B2
-				+ buffer.readu32(A, E + 3072) * B3
-				+ buffer.readu32(A, E + 4096) * B4
-				- Factor * buffer.readu32(T1, E)
-			buffer.writeu32(C, E, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 5120) * B0
-				+ buffer.readu32(A, E + 6144) * B1
-				+ buffer.readu32(A, E + 7168) * B2
-				+ buffer.readu32(A, E + 8192) * B3
-				+ buffer.readu32(A, E + 9216) * B4
-				- Factor * buffer.readu32(T1, E + 1024)
-			buffer.writeu32(C, E + 1024, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 10240) * B0
-				+ buffer.readu32(A, E + 11264) * B1
-				+ buffer.readu32(A, E + 12288) * B2
-				+ buffer.readu32(A, E + 13312) * B3
-				+ buffer.readu32(A, E + 14336) * B4
-				- Factor * buffer.readu32(T1, E + 2048)
-			buffer.writeu32(C, E + 2048, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 15360) * B0
-				+ buffer.readu32(A, E + 16384) * B1
-				+ buffer.readu32(A, E + 17408) * B2
-				+ buffer.readu32(A, E + 18432) * B3
-				+ buffer.readu32(A, E + 19456) * B4
-				- Factor * buffer.readu32(T1, E + 3072)
-			buffer.writeu32(C, E + 3072, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 20480) * B0
-				+ buffer.readu32(A, E + 21504) * B1
-				+ buffer.readu32(A, E + 22528) * B2
-				+ buffer.readu32(A, E + 23552) * B3
-				+ buffer.readu32(A, E + 24576) * B4
-				- Factor * buffer.readu32(T1, E + 4096)
-			buffer.writeu32(C, E + 4096, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 25600) * B0
-				+ buffer.readu32(A, E + 26624) * B1
-				+ buffer.readu32(A, E + 27648) * B2
-				+ buffer.readu32(A, E + 28672) * B3
-				+ buffer.readu32(A, E + 29696) * B4
-				- Factor * buffer.readu32(T1, E + 5120)
-			buffer.writeu32(C, E + 5120, Acc % Modulus)
+		for Row = 0, K - 1 do
+			local ABase = Row * 5120 + E
+			local Out = Row * 1024 + E
+			local Acc = buffer.readu32(A, ABase) * B0
+				+ buffer.readu32(A, ABase + 1024) * B1
+				+ buffer.readu32(A, ABase + 2048) * B2
+				+ buffer.readu32(A, ABase + 3072) * B3
+				+ buffer.readu32(A, ABase + 4096) * B4
+				- Factor * buffer.readu32(T1, Out)
+			buffer.writeu32(C, Out, Acc - math.floor(Acc * INV_Q + ROUND_BIAS) * Q)
 		end
 	end
 end
 
-local function MatrixMultiplySubtract8x7(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer)
-	local Modulus = Q
+local function MatrixMultiplySubtract7(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer, K: number): ()
 	for E = 0, 1020, 4 do
 		local B0 = buffer.readu32(B, E)
 		local B1 = buffer.readu32(B, E + 1024)
@@ -438,118 +239,43 @@ local function MatrixMultiplySubtract8x7(A: buffer, B: buffer, Challenge: buffer
 		local B5 = buffer.readu32(B, E + 5120)
 		local B6 = buffer.readu32(B, E + 6144)
 		local Factor = buffer.readu32(Challenge, E)
-		do
-			local Acc = buffer.readu32(A, E) * B0
-				+ buffer.readu32(A, E + 1024) * B1
-				+ buffer.readu32(A, E + 2048) * B2
-				+ buffer.readu32(A, E + 3072) * B3
-				+ buffer.readu32(A, E + 4096) * B4
-				+ buffer.readu32(A, E + 5120) * B5
-				+ buffer.readu32(A, E + 6144) * B6
-				- Factor * buffer.readu32(T1, E)
-			buffer.writeu32(C, E, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 7168) * B0
-				+ buffer.readu32(A, E + 8192) * B1
-				+ buffer.readu32(A, E + 9216) * B2
-				+ buffer.readu32(A, E + 10240) * B3
-				+ buffer.readu32(A, E + 11264) * B4
-				+ buffer.readu32(A, E + 12288) * B5
-				+ buffer.readu32(A, E + 13312) * B6
-				- Factor * buffer.readu32(T1, E + 1024)
-			buffer.writeu32(C, E + 1024, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 14336) * B0
-				+ buffer.readu32(A, E + 15360) * B1
-				+ buffer.readu32(A, E + 16384) * B2
-				+ buffer.readu32(A, E + 17408) * B3
-				+ buffer.readu32(A, E + 18432) * B4
-				+ buffer.readu32(A, E + 19456) * B5
-				+ buffer.readu32(A, E + 20480) * B6
-				- Factor * buffer.readu32(T1, E + 2048)
-			buffer.writeu32(C, E + 2048, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 21504) * B0
-				+ buffer.readu32(A, E + 22528) * B1
-				+ buffer.readu32(A, E + 23552) * B2
-				+ buffer.readu32(A, E + 24576) * B3
-				+ buffer.readu32(A, E + 25600) * B4
-				+ buffer.readu32(A, E + 26624) * B5
-				+ buffer.readu32(A, E + 27648) * B6
-				- Factor * buffer.readu32(T1, E + 3072)
-			buffer.writeu32(C, E + 3072, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 28672) * B0
-				+ buffer.readu32(A, E + 29696) * B1
-				+ buffer.readu32(A, E + 30720) * B2
-				+ buffer.readu32(A, E + 31744) * B3
-				+ buffer.readu32(A, E + 32768) * B4
-				+ buffer.readu32(A, E + 33792) * B5
-				+ buffer.readu32(A, E + 34816) * B6
-				- Factor * buffer.readu32(T1, E + 4096)
-			buffer.writeu32(C, E + 4096, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 35840) * B0
-				+ buffer.readu32(A, E + 36864) * B1
-				+ buffer.readu32(A, E + 37888) * B2
-				+ buffer.readu32(A, E + 38912) * B3
-				+ buffer.readu32(A, E + 39936) * B4
-				+ buffer.readu32(A, E + 40960) * B5
-				+ buffer.readu32(A, E + 41984) * B6
-				- Factor * buffer.readu32(T1, E + 5120)
-			buffer.writeu32(C, E + 5120, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 43008) * B0
-				+ buffer.readu32(A, E + 44032) * B1
-				+ buffer.readu32(A, E + 45056) * B2
-				+ buffer.readu32(A, E + 46080) * B3
-				+ buffer.readu32(A, E + 47104) * B4
-				+ buffer.readu32(A, E + 48128) * B5
-				+ buffer.readu32(A, E + 49152) * B6
-				- Factor * buffer.readu32(T1, E + 6144)
-			buffer.writeu32(C, E + 6144, Acc % Modulus)
-		end
-		do
-			local Acc = buffer.readu32(A, E + 50176) * B0
-				+ buffer.readu32(A, E + 51200) * B1
-				+ buffer.readu32(A, E + 52224) * B2
-				+ buffer.readu32(A, E + 53248) * B3
-				+ buffer.readu32(A, E + 54272) * B4
-				+ buffer.readu32(A, E + 55296) * B5
-				+ buffer.readu32(A, E + 56320) * B6
-				- Factor * buffer.readu32(T1, E + 7168)
-			buffer.writeu32(C, E + 7168, Acc % Modulus)
+		for Row = 0, K - 1 do
+			local ABase = Row * 7168 + E
+			local Out = Row * 1024 + E
+			local Acc = buffer.readu32(A, ABase) * B0
+				+ buffer.readu32(A, ABase + 1024) * B1
+				+ buffer.readu32(A, ABase + 2048) * B2
+				+ buffer.readu32(A, ABase + 3072) * B3
+				+ buffer.readu32(A, ABase + 4096) * B4
+				+ buffer.readu32(A, ABase + 5120) * B5
+				+ buffer.readu32(A, ABase + 6144) * B6
+				- Factor * buffer.readu32(T1, Out)
+			buffer.writeu32(C, Out, Acc - math.floor(Acc * INV_Q + ROUND_BIAS) * Q)
 		end
 	end
 end
 
-function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, L: number)
+function PolyVec.MatrixMultiply(A: buffer, B: buffer, C: buffer, L: number): ()
 	if L == 4 then
-		MatrixMultiply4x4(A, B, C)
+		MatrixMultiply4(A, B, C, 4)
 	elseif L == 5 then
-		MatrixMultiply6x5(A, B, C)
+		MatrixMultiply5(A, B, C, 6)
 	else
-		MatrixMultiply8x7(A, B, C)
+		MatrixMultiply7(A, B, C, 8)
 	end
 end
 
-function PolyVec.MatrixMultiplySubtract(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer, L: number)
+function PolyVec.MatrixMultiplySubtract(A: buffer, B: buffer, Challenge: buffer, T1: buffer, C: buffer, L: number): ()
 	if L == 4 then
-		MatrixMultiplySubtract4x4(A, B, Challenge, T1, C)
+		MatrixMultiplySubtract4(A, B, Challenge, T1, C, 4)
 	elseif L == 5 then
-		MatrixMultiplySubtract6x5(A, B, Challenge, T1, C)
+		MatrixMultiplySubtract5(A, B, Challenge, T1, C, 6)
 	else
-		MatrixMultiplySubtract8x7(A, B, Challenge, T1, C)
+		MatrixMultiplySubtract7(A, B, Challenge, T1, C, 8)
 	end
 end
 
-function PolyVec.Power2RoundSum(T: buffer, S2: buffer, T1: buffer, T0: buffer, K: number)
+function PolyVec.Power2RoundSum(T: buffer, S2: buffer, T1: buffer, T0: buffer, K: number): ()
 	for Offset = 0, K * POLY_SIZE - 16, 16 do
 		do
 			local Sum = AddModQ(buffer.readu32(T, Offset), buffer.readu32(S2, Offset))
@@ -589,7 +315,6 @@ function PolyVec.InfinityNorm(Vec: buffer, K: number): number
 			CenteredMagnitude(buffer.readu32(Vec, Offset + 12))
 		)
 	end
-
 	return Result
 end
 
@@ -605,9 +330,11 @@ function PolyVec.AddExceeds(Y: buffer, Product: buffer, Z: buffer, L: number, Bo
 		buffer.writeu32(Z, Offset + 8, Sum2)
 		local Sum3 = AddModQ(buffer.readu32(Y, Offset + 12), buffer.readu32(Product, Offset + 12))
 		buffer.writeu32(Z, Offset + 12, Sum3)
-		Exceeds = bit32.bor(Exceeds, bit32.rshift(Limit - math.max(CenteredMagnitude(Sum0), CenteredMagnitude(Sum1), CenteredMagnitude(Sum2), CenteredMagnitude(Sum3)), 31))
+		Exceeds = bit32.bor(
+			Exceeds,
+			bit32.rshift(Limit - math.max(CenteredMagnitude(Sum0), CenteredMagnitude(Sum1), CenteredMagnitude(Sum2), CenteredMagnitude(Sum3)), 31)
+		)
 	end
-
 	return Exceeds ~= 0
 end
 
@@ -624,7 +351,10 @@ function PolyVec.SubtractLowBitsExceeds(W: buffer, Product: buffer, K: number, G
 			buffer.writeu32(Product, Offset + 8, R2)
 			local R3 = SubtractModQ(buffer.readu32(W, Offset + 12), buffer.readu32(Product, Offset + 12))
 			buffer.writeu32(Product, Offset + 12, R3)
-			Exceeds = bit32.bor(Exceeds, bit32.rshift(Limit - math.max(LowMagnitude88(R0), LowMagnitude88(R1), LowMagnitude88(R2), LowMagnitude88(R3)), 31))
+			Exceeds = bit32.bor(
+				Exceeds,
+				bit32.rshift(Limit - math.max(LowMagnitude88(R0), LowMagnitude88(R1), LowMagnitude88(R2), LowMagnitude88(R3)), 31)
+			)
 		end
 	else
 		for Offset = 0, K * POLY_SIZE - 16, 16 do
@@ -636,10 +366,12 @@ function PolyVec.SubtractLowBitsExceeds(W: buffer, Product: buffer, K: number, G
 			buffer.writeu32(Product, Offset + 8, R2)
 			local R3 = SubtractModQ(buffer.readu32(W, Offset + 12), buffer.readu32(Product, Offset + 12))
 			buffer.writeu32(Product, Offset + 12, R3)
-			Exceeds = bit32.bor(Exceeds, bit32.rshift(Limit - math.max(LowMagnitude32(R0), LowMagnitude32(R1), LowMagnitude32(R2), LowMagnitude32(R3)), 31))
+			Exceeds = bit32.bor(
+				Exceeds,
+				bit32.rshift(Limit - math.max(LowMagnitude32(R0), LowMagnitude32(R1), LowMagnitude32(R2), LowMagnitude32(R3)), 31)
+			)
 		end
 	end
-
 	return Exceeds ~= 0
 end
 
@@ -666,7 +398,10 @@ function PolyVec.MakeHints(R: buffer, Product: buffer, Hints: buffer, K: number,
 			local Hint3 = bit32.rshift(0 - bit32.bxor(HighBits88(Value3), HighBits88(AddModQ(Value3, Ct0Value3))), 31)
 			buffer.writeu32(Hints, Offset + 12, Hint3)
 			Count += bit32.bor(bit32.bor(bit32.bor(Hint0 + Hint1, 0) + Hint2, 0) + Hint3, 0)
-			Exceeds = bit32.bor(Exceeds, bit32.rshift(Limit - math.max(CenteredMagnitude(Ct0Value0), CenteredMagnitude(Ct0Value1), CenteredMagnitude(Ct0Value2), CenteredMagnitude(Ct0Value3)), 31))
+			Exceeds = bit32.bor(
+				Exceeds,
+				bit32.rshift(Limit - math.max(CenteredMagnitude(Ct0Value0), CenteredMagnitude(Ct0Value1), CenteredMagnitude(Ct0Value2), CenteredMagnitude(Ct0Value3)), 31)
+			)
 		end
 	else
 		for Offset = 0, K * POLY_SIZE - 16, 16 do
@@ -687,14 +422,16 @@ function PolyVec.MakeHints(R: buffer, Product: buffer, Hints: buffer, K: number,
 			local Hint3 = bit32.rshift(0 - bit32.bxor(HighBits32(Value3), HighBits32(AddModQ(Value3, Ct0Value3))), 31)
 			buffer.writeu32(Hints, Offset + 12, Hint3)
 			Count += bit32.bor(bit32.bor(bit32.bor(Hint0 + Hint1, 0) + Hint2, 0) + Hint3, 0)
-			Exceeds = bit32.bor(Exceeds, bit32.rshift(Limit - math.max(CenteredMagnitude(Ct0Value0), CenteredMagnitude(Ct0Value1), CenteredMagnitude(Ct0Value2), CenteredMagnitude(Ct0Value3)), 31))
+			Exceeds = bit32.bor(
+				Exceeds,
+				bit32.rshift(Limit - math.max(CenteredMagnitude(Ct0Value0), CenteredMagnitude(Ct0Value1), CenteredMagnitude(Ct0Value2), CenteredMagnitude(Ct0Value3)), 31)
+			)
 		end
 	end
-
 	return Exceeds ~= 0, Count
 end
 
-function PolyVec.HighBitsEncode(W: buffer, K: number, Gamma2: number, Output: buffer, OutputOffset: number)
+function PolyVec.HighBitsEncode(W: buffer, K: number, Gamma2: number, Output: buffer, OutputOffset: number): ()
 	if Gamma2 == GAMMA2_88 then
 		for Group = 0, K * 64 - 1 do
 			local In = Group * 16
@@ -728,7 +465,7 @@ function PolyVec.HighBitsEncode(W: buffer, K: number, Gamma2: number, Output: bu
 	end
 end
 
-function PolyVec.UseHintEncode(Hints: buffer, R: buffer, K: number, Gamma2: number, Output: buffer, OutputOffset: number)
+function PolyVec.UseHintEncode(Hints: buffer, R: buffer, K: number, Gamma2: number, Output: buffer, OutputOffset: number): ()
 	if Gamma2 == GAMMA2_88 then
 		for Group = 0, K * 64 - 1 do
 			local In = Group * 16

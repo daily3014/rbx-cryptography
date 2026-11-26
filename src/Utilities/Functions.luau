@@ -31,26 +31,34 @@ local function CtIsZeroMask(X: number): number
 	return bit32.bnot(CtNonZeroMask(X))
 end
 
-local function CtCompareMask(BufferA: buffer, BufferB: buffer): number
-	local Length = buffer.len(BufferA)
-	if Length ~= buffer.len(BufferB) then
-		return 0x00000000
+local function CtCompareMask(BufferA: buffer, BufferB: buffer, Length: number?): number
+	local Count: number
+	if Length ~= nil then
+		if buffer.len(BufferA) < Length or buffer.len(BufferB) < Length then
+			return 0x00000000
+		end
+		Count = Length
+	else
+		Count = buffer.len(BufferA)
+		if Count ~= buffer.len(BufferB) then
+			return 0x00000000
+		end
 	end
 
 	local D0, D1, D2, D3 = 0, 0, 0, 0
 	local Offset = 0
-	while Offset <= Length - 16 do
+	while Offset <= Count - 16 do
 		D0 = bit32.bor(D0, bit32.bxor(buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)))
 		D1 = bit32.bor(D1, bit32.bxor(buffer.readu32(BufferA, Offset + 4), buffer.readu32(BufferB, Offset + 4)))
 		D2 = bit32.bor(D2, bit32.bxor(buffer.readu32(BufferA, Offset + 8), buffer.readu32(BufferB, Offset + 8)))
 		D3 = bit32.bor(D3, bit32.bxor(buffer.readu32(BufferA, Offset + 12), buffer.readu32(BufferB, Offset + 12)))
 		Offset += 16
 	end
-	while Offset <= Length - 4 do
+	while Offset <= Count - 4 do
 		D0 = bit32.bor(D0, bit32.bxor(buffer.readu32(BufferA, Offset), buffer.readu32(BufferB, Offset)))
 		Offset += 4
 	end
-	while Offset < Length do
+	while Offset < Count do
 		D1 = bit32.bor(D1, bit32.bxor(buffer.readu8(BufferA, Offset), buffer.readu8(BufferB, Offset)))
 		Offset += 1
 	end
@@ -85,7 +93,7 @@ local function CtIsAllZero(Buffer: buffer): boolean
 	return bit32.bor(A0, A1, A2, A3) == 0
 end
 
-local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buffer)
+local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buffer): ()
 	local Length = buffer.len(BufferA)
 	local LengthB = buffer.len(BufferB)
 	if LengthB ~= Length then
@@ -129,7 +137,7 @@ local function CtSwapBuffers(ConditionBit: number, BufferA: buffer, BufferB: buf
 	end
 end
 
-local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffer)
+local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffer): ()
 	local Length = buffer.len(Destination)
 	local SourceLength = buffer.len(Source)
 	if SourceLength ~= Length then
@@ -161,21 +169,35 @@ local function CtCopyIf(ConditionBit: number, Destination: buffer, Source: buffe
 	end
 end
 
-local function CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceTrue: buffer, SourceFalse: buffer)
-	local Length = buffer.len(Destination)
+local function CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceTrue: buffer, SourceFalse: buffer, Length: number?): ()
+	local DestLength = buffer.len(Destination)
 	local TrueLength = buffer.len(SourceTrue)
 	local FalseLength = buffer.len(SourceFalse)
-	if TrueLength ~= Length then
-		error(`SourceTrue must be {Length} bytes, got {TrueLength} bytes`, 2)
-	end
-
-	if FalseLength ~= Length then
-		error(`SourceFalse must be {Length} bytes, got {FalseLength} bytes`, 2)
+	local Count: number
+	if Length ~= nil then
+		if DestLength < Length then
+			error(`Destination must be at least {Length} bytes, got {DestLength} bytes`, 2)
+		end
+		if TrueLength < Length then
+			error(`SourceTrue must be at least {Length} bytes, got {TrueLength} bytes`, 2)
+		end
+		if FalseLength < Length then
+			error(`SourceFalse must be at least {Length} bytes, got {FalseLength} bytes`, 2)
+		end
+		Count = Length
+	else
+		Count = DestLength
+		if TrueLength ~= Count then
+			error(`SourceTrue must be {Count} bytes, got {TrueLength} bytes`, 2)
+		end
+		if FalseLength ~= Count then
+			error(`SourceFalse must be {Count} bytes, got {FalseLength} bytes`, 2)
+		end
 	end
 
 	local Mask = CtNonZeroMask(ConditionBit)
 	local Offset = 0
-	while Offset <= Length - 16 do
+	while Offset <= Count - 16 do
 		local T0, T1 = buffer.readu32(SourceTrue, Offset), buffer.readu32(SourceTrue, Offset + 4)
 		local T2, T3 = buffer.readu32(SourceTrue, Offset + 8), buffer.readu32(SourceTrue, Offset + 12)
 		local F0, F1 = buffer.readu32(SourceFalse, Offset), buffer.readu32(SourceFalse, Offset + 4)
@@ -186,12 +208,12 @@ local function CtSelectBuffer(ConditionBit: number, Destination: buffer, SourceT
 		buffer.writeu32(Destination, Offset + 12, bit32.bxor(F3, bit32.band(Mask, bit32.bxor(T3, F3))))
 		Offset += 16
 	end
-	while Offset <= Length - 4 do
+	while Offset <= Count - 4 do
 		local T, F = buffer.readu32(SourceTrue, Offset), buffer.readu32(SourceFalse, Offset)
 		buffer.writeu32(Destination, Offset, bit32.bxor(F, bit32.band(Mask, bit32.bxor(T, F))))
 		Offset += 4
 	end
-	while Offset < Length do
+	while Offset < Count do
 		local T, F = buffer.readu8(SourceTrue, Offset), buffer.readu8(SourceFalse, Offset)
 		buffer.writeu8(Destination, Offset, bit32.bxor(F, bit32.band(Mask, bit32.bxor(T, F))))
 		Offset += 1

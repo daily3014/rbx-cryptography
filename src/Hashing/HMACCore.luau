@@ -7,9 +7,7 @@
 
 --!strict
 --!optimize 2
---!native
 
-local EncodingService = if game then game:GetService("EncodingService") else nil
 local SHA2: {[string]: unknown} = require("./SHA2") :: any
 
 export type HashFunction = (...any) -> (string, buffer)
@@ -36,13 +34,6 @@ local OUTER_SCRATCH = buffer.create(64)
 
 local function ResolveDigestOnly(HashFunction: HashFunction): DigestOnly | false
 	if HashFunction == rawget(SHA2, "SHA256") then
-		if EncodingService then
-			local Service = EncodingService
-			return function(Message: buffer): buffer
-				return Service:ComputeBufferHash(Message, Enum.HashAlgorithm.Sha256)
-			end
-		end
-
 		local SHA256Core = require("./SHA2/SHA256Core")
 		local Digest256, IV_256 = SHA256Core.Digest_Internal, SHA256Core.IV_256
 		return function(Message: buffer): buffer
@@ -75,10 +66,6 @@ end
 
 local function ResolveCore(HashFunction: HashFunction): Core | false
 	if HashFunction == rawget(SHA2, "SHA256") or HashFunction == rawget(SHA2, "SHA224") then
-		if HashFunction == rawget(SHA2, "SHA256") and EncodingService then
-			return false
-		end
-
 		local SHA256Core = require("./SHA2/SHA256Core")
 		local Is256 = HashFunction == rawget(SHA2, "SHA256")
 		return {
@@ -107,6 +94,7 @@ local function ResolveCore(HashFunction: HashFunction): Core | false
 	return false
 end
 
+@native
 local function WritePaddedKey(Target: buffer, Key: buffer, KeyLength: number, BlockSizeBytes: number, Pad: number)
 	if KeyLength > 0 then
 		buffer.copy(Target, 0, Key, 0, KeyLength)
@@ -123,6 +111,7 @@ local function WritePaddedKey(Target: buffer, Key: buffer, KeyLength: number, Bl
 	end
 end
 
+@native
 local function KeyState(Core: Core, BlockKey: buffer, KeyLength: number, Pad: number, State: buffer): buffer
 	local Block = KEY_BLOCK
 	buffer.fill(Block, 0, 0, Core.BlockBytes)
@@ -133,6 +122,7 @@ local function KeyState(Core: Core, BlockKey: buffer, KeyLength: number, Pad: nu
 	return State
 end
 
+@native
 local function Resolve(HashFunction: HashFunction): (DigestOnly | false, Core | false)
 	local DigestOnly = DIGEST_ONLY[HashFunction]
 	if DigestOnly == nil then
@@ -149,6 +139,7 @@ local function Resolve(HashFunction: HashFunction): (DigestOnly | false, Core | 
 	return DigestOnly :: DigestOnly | false, Core :: Core | false
 end
 
+@native
 local function BlockKeyOf(Key: buffer, HashFunction: HashFunction, DigestOnly: DigestOnly | false, BlockSizeBytes: number): (buffer, number)
 	local KeyLength = buffer.len(Key)
 	if KeyLength <= BlockSizeBytes then
@@ -164,6 +155,7 @@ local function BlockKeyOf(Key: buffer, HashFunction: HashFunction, DigestOnly: D
 	return Digest, buffer.len(Digest)
 end
 
+@native
 local function Prepare(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): Prepared
 	local DigestOnly, Core = Resolve(HashFunction)
 	if Core and Core.BlockBytes ~= BlockSizeBytes then
@@ -177,7 +169,7 @@ local function Prepare(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: 
 		local OuterState = KeyState(Core, BlockKey, KeyLength, OUTER_PAD, buffer.create(Core.StateBytes))
 		local Digest, OutputBytes = Core.Digest, Core.OutputBytes
 
-		return function(Message: buffer): (buffer, string?)
+		return @native function(Message: buffer): (buffer, string?)
 			local InnerDigest = Digest(Message, InnerState, OutputBytes, BlockSizeBytes)
 			return Digest(InnerDigest, OuterState, OutputBytes, BlockSizeBytes), nil
 		end
@@ -188,7 +180,7 @@ local function Prepare(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: 
 	local OuterPad = buffer.create(BlockSizeBytes)
 	WritePaddedKey(OuterPad, BlockKey, KeyLength, BlockSizeBytes, OUTER_PAD)
 
-	return function(Message: buffer): (buffer, string?)
+	return @native function(Message: buffer): (buffer, string?)
 		local MessageLength = buffer.len(Message)
 		local Inner = buffer.create(BlockSizeBytes + MessageLength)
 		buffer.copy(Inner, 0, InnerPad, 0, BlockSizeBytes)
@@ -217,6 +209,7 @@ local function Prepare(Key: buffer, HashFunction: HashFunction, BlockSizeBytes: 
 	end
 end
 
+@native
 local function Compute(Message: buffer, Key: buffer, HashFunction: HashFunction, BlockSizeBytes: number): (buffer, string?)
 	local DigestOnly, Core = Resolve(HashFunction)
 	if Core and Core.BlockBytes ~= BlockSizeBytes then

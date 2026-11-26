@@ -15,7 +15,6 @@
 
 --!strict
 --!optimize 2
---!native
 
 local Conversions = require("../Utilities/Conversions")
 local HMACCore = require("./HMACCore")

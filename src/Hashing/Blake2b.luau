@@ -21,7 +21,6 @@
 
 --!strict
 --!optimize 2
---!native
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
 local Conversions = require("../Utilities/Conversions")
