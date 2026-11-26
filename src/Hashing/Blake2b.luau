@@ -24,9 +24,10 @@
 
 local EncodingService = if game then game:GetService("EncodingService") else nil
 local Conversions = require("../Utilities/Conversions")
+local Lazy = require("../Lazy")
 local ToHex = Conversions.ToHex
 
-type Blake2bCore = typeof(require("./Blake2bCore"))
+type DigestFn = (buffer, number, buffer?) -> buffer
 
 local DEFAULT_OUTPUT_BYTES = 64
 
@@ -34,30 +35,23 @@ local BLAKE2B_MIN_OUTPUT_BYTES = 1
 local BLAKE2B_MAX_OUTPUT_BYTES = 64
 local BLAKE2B_MAX_KEY_BYTES = 64
 
-local LoadedCore: Blake2bCore? = nil
+local Core: { Digest: DigestFn } = Lazy.Attach({}, {
+	Digest = function()
+		return require("./Blake2bCore").Digest
+	end,
+})
 
-local function Core(): Blake2bCore
-	local Loaded = LoadedCore
-	if Loaded then
-		return Loaded
-	end
+local function Validate(InputData: buffer, OutputLength: number?, KeyData: buffer?): ()
+	if type(InputData) ~= "buffer" then
+		if InputData == nil then
+			error("InputData cannot be nil", 3)
+		end
 
-	Loaded = require("./Blake2bCore")
-	LoadedCore = Loaded
-	return Loaded
-end
-
-local function Validate(InputData: buffer, OutputLength: number?, KeyData: buffer?)
-	if InputData == nil then
-		error("InputData cannot be nil", 3)
-	end
-
-	if typeof(InputData) ~= "buffer" then
 		error(`InputData must be a buffer, got {typeof(InputData)}`, 3)
 	end
 
 	if OutputLength ~= nil then
-		if typeof(OutputLength) ~= "number" then
+		if type(OutputLength) ~= "number" then
 			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 3)
 		end
 
@@ -71,7 +65,7 @@ local function Validate(InputData: buffer, OutputLength: number?, KeyData: buffe
 	end
 
 	if KeyData ~= nil then
-		if typeof(KeyData) ~= "buffer" then
+		if type(KeyData) ~= "buffer" then
 			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 3)
 		end
 
@@ -95,7 +89,7 @@ function Blake2b.Digest(InputData: buffer, OutputLength: number?, KeyData: buffe
 		return ToHex(Result), Result
 	end
 
-	local Result = Core().Digest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
+	local Result = Core.Digest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
 	return ToHex(Result), Result
 end
 
@@ -105,7 +99,7 @@ function Blake2b.DigestBuffer(InputData: buffer, OutputLength: number?, KeyData:
 		return EncodingService:ComputeBufferHash(InputData, Enum.HashAlgorithm.Blake2b)
 	end
 
-	return Core().Digest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
+	return Core.Digest(InputData, OutputLength or DEFAULT_OUTPUT_BYTES, KeyData)
 end
 
 return Blake2b
