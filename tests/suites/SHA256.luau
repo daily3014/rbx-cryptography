@@ -12,7 +12,7 @@
 local Bridge = require("../Bridge")
 local Testing = require("../")
 
-local SHA256 = require("../../src/Hashing/SHA2/SHA256")
+local SHA256 = require("../../src/Hashing/SHA2/SHA256").SHA256
 local FromHex = Testing.FromHex
 
 type HashTest = {

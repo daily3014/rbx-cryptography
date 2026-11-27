@@ -90,7 +90,7 @@ local Lute = Load({ "Lute" })
 
 local Hashing, Encryption, Verification, Utilities =
 	Cryptography.Hashing, Cryptography.Encryption, Cryptography.Verification, Cryptography.Utilities
-local SHA256Core = Load({ "Cryptography", "Hashing", "SHA2", "SHA256Core" })
+local SHA256Core = Load({ "Cryptography", "Hashing", "SHA2", "SHA256" })
 
 local Data, Large = Bytes(51200, 7), Bytes(1048576, 3)
 local Message, Key, Nonce = Bytes(64, 11), Bytes(32, 13), Bytes(12, 17)

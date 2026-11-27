@@ -14,10 +14,10 @@
 --!optimize 2
 
 local Conversions = require("../../Utilities/Conversions")
-local SHA256Core = require("./SHA256Core")
+local SHA256 = require("./SHA256")
 local ToHex = Conversions.ToHex
-local Digest = SHA256Core.Digest_Internal
-local IV_224 = SHA256Core.IV_224
+local Digest = SHA256.Digest_Internal
+local IV_224 = SHA256.IV_224
 
 local function SHA224(Message: buffer): (string, buffer)
 	local Result = Digest(Message, IV_224, 28)

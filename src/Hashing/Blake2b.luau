@@ -41,49 +41,46 @@ local Core: { Digest: DigestFn } = Lazy.Attach({}, {
 	end,
 })
 
-local function Validate(InputData: buffer, OutputLength: number?, KeyData: buffer?): ()
-	if type(InputData) ~= "buffer" then
-		if InputData == nil then
-			error("InputData cannot be nil", 3)
-		end
+local Blake2b = {}
 
-		error(`InputData must be a buffer, got {typeof(InputData)}`, 3)
+function Blake2b.Digest(InputData: buffer, OutputLength: number?, KeyData: buffer?): (string, buffer)
+	if InputData == nil then
+		error("InputData cannot be nil", 2)
+	end
+
+	if type(InputData) ~= "buffer" then
+		error(`InputData must be a buffer, got {typeof(InputData)}`, 2)
 	end
 
 	if OutputLength ~= nil then
 		if type(OutputLength) ~= "number" then
-			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 3)
+			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 2)
 		end
 
 		if OutputLength ~= math.floor(OutputLength) then
-			error(`OutputLength must be an integer, got {OutputLength}`, 3)
+			error(`OutputLength must be an integer, got {OutputLength}`, 2)
 		end
 
 		if OutputLength < BLAKE2B_MIN_OUTPUT_BYTES or OutputLength > BLAKE2B_MAX_OUTPUT_BYTES then
-			error(`OutputLength must be between {BLAKE2B_MIN_OUTPUT_BYTES} and {BLAKE2B_MAX_OUTPUT_BYTES} bytes, got {OutputLength} bytes`, 3)
+			error(`OutputLength must be between {BLAKE2B_MIN_OUTPUT_BYTES} and {BLAKE2B_MAX_OUTPUT_BYTES} bytes, got {OutputLength} bytes`, 2)
 		end
 	end
 
 	if KeyData ~= nil then
 		if type(KeyData) ~= "buffer" then
-			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 3)
+			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 2)
 		end
 
 		local KeyLength = buffer.len(KeyData)
 		if KeyLength == 0 then
-			error("KeyData cannot be empty", 3)
+			error("KeyData cannot be empty", 2)
 		end
 
 		if KeyLength > BLAKE2B_MAX_KEY_BYTES then
-			error(`KeyData must be at most {BLAKE2B_MAX_KEY_BYTES} bytes long, got {KeyLength} bytes`, 3)
+			error(`KeyData must be at most {BLAKE2B_MAX_KEY_BYTES} bytes long, got {KeyLength} bytes`, 2)
 		end
 	end
-end
 
-local Blake2b = {}
-
-function Blake2b.Digest(InputData: buffer, OutputLength: number?, KeyData: buffer?): (string, buffer)
-	Validate(InputData, OutputLength, KeyData)
 	if EncodingService and OutputLength == 32 and KeyData == nil then
 		local Result = EncodingService:ComputeBufferHash(InputData, Enum.HashAlgorithm.Blake2b)
 		return ToHex(Result), Result
@@ -94,7 +91,43 @@ function Blake2b.Digest(InputData: buffer, OutputLength: number?, KeyData: buffe
 end
 
 function Blake2b.DigestBuffer(InputData: buffer, OutputLength: number?, KeyData: buffer?): buffer
-	Validate(InputData, OutputLength, KeyData)
+	if InputData == nil then
+		error("InputData cannot be nil", 2)
+	end
+
+	if type(InputData) ~= "buffer" then
+		error(`InputData must be a buffer, got {typeof(InputData)}`, 2)
+	end
+
+	if OutputLength ~= nil then
+		if type(OutputLength) ~= "number" then
+			error(`OutputLength must be a number, got {typeof(OutputLength)}`, 2)
+		end
+
+		if OutputLength ~= math.floor(OutputLength) then
+			error(`OutputLength must be an integer, got {OutputLength}`, 2)
+		end
+
+		if OutputLength < BLAKE2B_MIN_OUTPUT_BYTES or OutputLength > BLAKE2B_MAX_OUTPUT_BYTES then
+			error(`OutputLength must be between {BLAKE2B_MIN_OUTPUT_BYTES} and {BLAKE2B_MAX_OUTPUT_BYTES} bytes, got {OutputLength} bytes`, 2)
+		end
+	end
+
+	if KeyData ~= nil then
+		if type(KeyData) ~= "buffer" then
+			error(`KeyData must be a buffer, got {typeof(KeyData)}`, 2)
+		end
+
+		local KeyLength = buffer.len(KeyData)
+		if KeyLength == 0 then
+			error("KeyData cannot be empty", 2)
+		end
+
+		if KeyLength > BLAKE2B_MAX_KEY_BYTES then
+			error(`KeyData must be at most {BLAKE2B_MAX_KEY_BYTES} bytes long, got {KeyLength} bytes`, 2)
+		end
+	end
+
 	if EncodingService and OutputLength == 32 and KeyData == nil then
 		return EncodingService:ComputeBufferHash(InputData, Enum.HashAlgorithm.Blake2b)
 	end

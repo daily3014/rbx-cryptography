@@ -34,7 +34,7 @@ local OUTER_SCRATCH = buffer.create(64)
 
 local function ResolveDigestOnly(HashFunction: HashFunction): DigestOnly | false
 	if HashFunction == rawget(SHA2, "SHA256") then
-		local SHA256Core = require("./SHA2/SHA256Core")
+		local SHA256Core = require("./SHA2/SHA256")
 		local Digest256, IV_256 = SHA256Core.Digest_Internal, SHA256Core.IV_256
 		return function(Message: buffer): buffer
 			return Digest256(Message, IV_256, 32)
@@ -42,7 +42,7 @@ local function ResolveDigestOnly(HashFunction: HashFunction): DigestOnly | false
 	end
 
 	if HashFunction == rawget(SHA2, "SHA224") then
-		local SHA256Core = require("./SHA2/SHA256Core")
+		local SHA256Core = require("./SHA2/SHA256")
 		local Digest256, IV_224 = SHA256Core.Digest_Internal, SHA256Core.IV_224
 		return function(Message: buffer): buffer
 			return Digest256(Message, IV_224, 28)
@@ -66,7 +66,7 @@ end
 
 local function ResolveCore(HashFunction: HashFunction): Core | false
 	if HashFunction == rawget(SHA2, "SHA256") or HashFunction == rawget(SHA2, "SHA224") then
-		local SHA256Core = require("./SHA2/SHA256Core")
+		local SHA256Core = require("./SHA2/SHA256")
 		local Is256 = HashFunction == rawget(SHA2, "SHA256")
 		return {
 			Digest = SHA256Core.Digest_Internal,

@@ -185,69 +185,6 @@ local function ArgumentError(Name: string, Value: any, Integer: boolean, Optiona
 	return nil
 end
 
-local function RandomIntError(Min: any, Max: any): never
-	local Err = ArgumentError("Min", Min, true, false) or ArgumentError("Max", Max, true, true)
-	if Err then
-		error(Err, 3)
-	end
-
-	if math.abs(Min) > MAX_SAFE_INTEGER or (Max ~= nil and math.abs(Max) > MAX_SAFE_INTEGER) then
-		error("Min and Max must be between -2^53 and 2^53", 3)
-	end
-
-	if Max ~= nil then
-		if Max < Min then
-			error(`Max ({Max}) can't be less than Min ({Min})`, 3)
-		elseif Max == Min then
-			error(`Max ({Max}) can't be equal to Min ({Min})`, 3)
-		end
-	elseif Min < 1 then
-		error(`When passing one argument, Min must be at least 1, got {Min}`, 3)
-	end
-
-	error("Invalid RandomInt arguments", 3)
-end
-
-local function RandomNumberError(Min: any, Max: any): never
-	local Err = ArgumentError("Min", Min, false, false) or ArgumentError("Max", Max, false, true)
-	if Err then
-		error(Err, 3)
-	end
-
-	if Max ~= nil then
-		if Max < Min then
-			error(`Max ({Max}) must be bigger than Min ({Min})`, 3)
-		elseif Max == Min then
-			error(`Max ({Max}) can't be equal to Min ({Min})`, 3)
-		end
-	elseif Min <= 0 then
-		error(`When passing one argument, Min must be more than 0, got {Min}`, 3)
-	end
-
-	error("Invalid RandomNumber arguments", 3)
-end
-
-local function RandomStringError(Length: any, AsBuffer: any): never
-	local LengthError = ArgumentError("Length", Length, true, false)
-	if LengthError then
-		error(LengthError, 3)
-	end
-
-	if Length <= 0 then
-		error(`Length must be bigger than 0, got {Length}`, 3)
-	end
-
-	if not math.isfinite(Length) then
-		error(`Length must be finite, got {Length}`)
-	end
-
-	if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
-		error(`AsBuffer must be a boolean or nil, got {typeof(AsBuffer)}`, 3)
-	end
-
-	error("Invalid RandomString arguments", 3)
-end
-
 @native
 local function GetBytes(Count: number): buffer
 	local Result = buffer.create(Count)
@@ -422,14 +359,46 @@ function CSPRNG.RandomInt(Min: number, Max: number?): number
 
 	if Max ~= nil then
 		if not (type(Min) == "number" and type(Max) == "number" and Min >= -MAX_SAFE_INTEGER and Max <= MAX_SAFE_INTEGER and Max > Min and math.floor(Min) == Min and math.floor(Max) == Max) then
-			RandomIntError(Min, Max)
+			local Problem = ArgumentError("Min", Min, true, false) or ArgumentError("Max", Max, true, true)
+			if Problem then
+				error(Problem, 2)
+			end
+
+			if Min < -MAX_SAFE_INTEGER or Min > MAX_SAFE_INTEGER or Max < -MAX_SAFE_INTEGER or Max > MAX_SAFE_INTEGER then
+				error("Min and Max must be between -2^53 and 2^53", 2)
+			end
+
+			if Max < Min then
+				error(`Max ({Max}) can't be less than Min ({Min})`, 2)
+			end
+
+			if Max == Min then
+				error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+			end
+
+			error("Invalid RandomInt arguments", 2)
 		end
+
 		ActualMin = Min
 		Range = Max - Min + 1
 	else
 		if not (type(Min) == "number" and Min >= 1 and Min <= MAX_SAFE_INTEGER and math.floor(Min) == Min) then
-			RandomIntError(Min, Max)
+			local Problem = ArgumentError("Min", Min, true, false)
+			if Problem then
+				error(Problem, 2)
+			end
+
+			if Min < -MAX_SAFE_INTEGER or Min > MAX_SAFE_INTEGER then
+				error("Min and Max must be between -2^53 and 2^53", 2)
+			end
+
+			if Min < 1 then
+				error(`When passing one argument, Min must be at least 1, got {Min}`, 2)
+			end
+
+			error("Invalid RandomInt arguments", 2)
 		end
+
 		ActualMin = 1
 		Range = Min
 	end
@@ -474,14 +443,38 @@ function CSPRNG.RandomNumber(Min: number, Max: number?): number
 
 	if Max ~= nil then
 		if not (type(Min) == "number" and type(Max) == "number" and Min > -math.huge and Max < math.huge and Max > Min) then
-			RandomNumberError(Min, Max)
+			local Problem = ArgumentError("Min", Min, false, false) or ArgumentError("Max", Max, false, true)
+			if Problem then
+				error(Problem, 2)
+			end
+
+			if Max < Min then
+				error(`Max ({Max}) must be bigger than Min ({Min})`, 2)
+			end
+
+			if Max == Min then
+				error(`Max ({Max}) can't be equal to Min ({Min})`, 2)
+			end
+
+			error("Invalid RandomNumber arguments", 2)
 		end
+
 		ActualMin = Min
 		ActualMax = Max
 	else
 		if not (type(Min) == "number" and Min > 0 and Min < math.huge) then
-			RandomNumberError(Min, Max)
+			local Problem = ArgumentError("Min", Min, false, false)
+			if Problem then
+				error(Problem, 2)
+			end
+
+			if Min <= 0 then
+				error(`When passing one argument, Min must be more than 0, got {Min}`, 2)
+			end
+
+			error("Invalid RandomNumber arguments", 2)
 		end
+
 		ActualMin = 0
 		ActualMax = Min
 	end
@@ -526,7 +519,20 @@ end
 @native
 local function RandomString(Length: number, AsBuffer: boolean?): string | buffer
 	if type(Length) ~= "number" or Length <= 0 or Length > MAX_SAFE_INTEGER or math.floor(Length) ~= Length or (AsBuffer ~= nil and type(AsBuffer) ~= "boolean") then
-		RandomStringError(Length, AsBuffer)
+		local Problem = ArgumentError("Length", Length, true, false)
+		if Problem then
+			error(Problem, 2)
+		end
+
+		if Length <= 0 then
+			error(`Length must be bigger than 0, got {Length}`, 2)
+		end
+
+		if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
+			error(`AsBuffer must be a boolean or nil, got {typeof(AsBuffer)}`, 2)
+		end
+
+		error("Invalid RandomString arguments", 2)
 	end
 
 	return GetRandomString(Length, nil, AsBuffer)
@@ -546,7 +552,20 @@ function CSPRNG.MakeRandomString(CharacterSet: string | buffer): RandomStringSig
 
 	return @native function(Length: number, AsBuffer: boolean?): string | buffer
 		if type(Length) ~= "number" or Length <= 0 or Length > MAX_SAFE_INTEGER or math.floor(Length) ~= Length or (AsBuffer ~= nil and type(AsBuffer) ~= "boolean") then
-			RandomStringError(Length, AsBuffer)
+			local Problem = ArgumentError("Length", Length, true, false)
+			if Problem then
+				error(Problem, 2)
+			end
+
+			if Length <= 0 then
+				error(`Length must be bigger than 0, got {Length}`, 2)
+			end
+
+			if AsBuffer ~= nil and type(AsBuffer) ~= "boolean" then
+				error(`AsBuffer must be a boolean or nil, got {typeof(AsBuffer)}`, 2)
+			end
+
+			error("Invalid RandomString arguments", 2)
 		end
 
 		return GetRandomString(Length, Set, AsBuffer)

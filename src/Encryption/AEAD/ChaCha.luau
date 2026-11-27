@@ -40,44 +40,6 @@ local AEAD_STATE = buffer.create(64)
 local AEAD_AUTH_KEY = buffer.create(32)
 local AEAD_KEY_BLOCK = buffer.create(64)
 
-local Errors = {
-	BadBuffer = function(Name: string, Value: any): never
-		if Value == nil then
-			error(`{Name} cannot be nil`, 3)
-		end
-		error(`{Name} must be a buffer, got {typeof(Value)}`, 3)
-	end,
-	BadKeyLength = function(Length: number): never
-		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {Length} bytes`, 3)
-	end,
-	BadNonceLength = function(Message: string, Length: number): never
-		error(`{Message}, got {Length} bytes`, 3)
-	end,
-	BadCounter = function(Counter: any): never
-		if typeof(Counter) ~= "number" then
-			error(`Counter must be a number, got {typeof(Counter)}`, 3)
-		elseif Counter < 0 then
-			error(`Counter cannot be negative, got {Counter}`, 3)
-		elseif Counter ~= math.floor(Counter) then
-			error(`Counter must be an integer, got {Counter}`, 3)
-		end
-		error(`Counter must be less than 2^32, got {Counter}`, 3)
-	end,
-	BadRounds = function(Rounds: any): never
-		if typeof(Rounds) ~= "number" then
-			error(`Rounds must be a number, got {typeof(Rounds)}`, 3)
-		elseif Rounds <= 0 then
-			error(`Rounds must be positive, got {Rounds}`, 3)
-		elseif Rounds ~= math.floor(Rounds) then
-			error(`Rounds must be an integer, got {Rounds}`, 3)
-		end
-		error(`Rounds must be even, got {Rounds}`, 3)
-	end,
-	BadCounterOverflow = function(InitialCounter: number, BlockCount: number): never
-		error(`Counter would exceed 2^32 blocks, got {InitialCounter} with {BlockCount} blocks of data`, 3)
-	end,
-}
-
 local function Crypt20(State: buffer, Data: buffer, Output: buffer, FullBytes: number, Counter: number)
 	local Block = Counter
 	for Offset = 0, FullBytes - 64, 64 do
@@ -444,21 +406,86 @@ local function FillState(State: buffer, Key: buffer, KeyLength: number, Nonce: b
 end
 
 function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?): buffer
-	if typeof(Data) ~= "buffer" then Errors.BadBuffer("Data", Data) end
-	if typeof(Key) ~= "buffer" then Errors.BadBuffer("Key", Key) end
+	if Data == nil then
+		error("Data cannot be nil", 2)
+	end
+
+	if typeof(Data) ~= "buffer" then
+		error(`Data must be a buffer, got {typeof(Data)}`, 2)
+	end
+
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+
 	local KeyLength = buffer.len(Key)
-	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then Errors.BadKeyLength(KeyLength) end
-	if typeof(Nonce) ~= "buffer" then Errors.BadBuffer("Nonce", Nonce) end
+	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then
+		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {KeyLength} bytes`, 2)
+	end
+
+	if Nonce == nil then
+		error("Nonce cannot be nil", 2)
+	end
+
+	if typeof(Nonce) ~= "buffer" then
+		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
+	end
+
 	local NonceLength = buffer.len(Nonce)
-	if NonceLength ~= CHACHA20_NONCE_SIZE then Errors.BadNonceLength(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long`, NonceLength) end
-	if Counter ~= nil and (typeof(Counter) ~= "number" or Counter < 0 or Counter ~= math.floor(Counter) or Counter >= 2^32) then Errors.BadCounter(Counter) end
-	if Rounds ~= nil and (typeof(Rounds) ~= "number" or Rounds <= 0 or Rounds ~= math.floor(Rounds) or Rounds % 2 ~= 0) then Errors.BadRounds(Rounds) end
+	if NonceLength ~= CHACHA20_NONCE_SIZE then
+		error(`Nonce must be exactly {CHACHA20_NONCE_SIZE} bytes long, got {NonceLength} bytes`, 2)
+	end
+
+	if Counter ~= nil then
+		if typeof(Counter) ~= "number" then
+			error(`Counter must be a number, got {typeof(Counter)}`, 2)
+		end
+
+		if Counter < 0 then
+			error(`Counter cannot be negative, got {Counter}`, 2)
+		end
+
+		if Counter ~= math.floor(Counter) then
+			error(`Counter must be an integer, got {Counter}`, 2)
+		end
+
+		if Counter >= 2^32 then
+			error(`Counter must be less than 2^32, got {Counter}`, 2)
+		end
+	end
+
+	if Rounds ~= nil then
+		if typeof(Rounds) ~= "number" then
+			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
+		end
+
+		if Rounds <= 0 then
+			error(`Rounds must be positive, got {Rounds}`, 2)
+		end
+
+		if Rounds ~= math.floor(Rounds) then
+			error(`Rounds must be an integer, got {Rounds}`, 2)
+		end
+
+		if Rounds % 2 ~= 0 then
+			error(`Rounds must be even, got {Rounds}`, 2)
+		end
+	end
 
 	local DataLength = buffer.len(Data)
-	if DataLength == 0 then return buffer.create(0) end
+	if DataLength == 0 then
+		return buffer.create(0)
+	end
+
 	local InitialCounter = Counter or 1
 	local BlockCount = (DataLength + 63) // 64
-	if InitialCounter + BlockCount > 2^32 then Errors.BadCounterOverflow(InitialCounter, BlockCount) end
+	if InitialCounter + BlockCount > 2^32 then
+		error(`Counter would exceed 2^32 blocks, got {InitialCounter} with {BlockCount} blocks of data`, 2)
+	end
 
 	local State = STATE
 	FillState(State, Key, KeyLength, Nonce)
@@ -468,13 +495,49 @@ function ChaCha.ChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: numb
 end
 
 function ChaCha.HChaCha20(Key: buffer, Nonce: buffer, Rounds: number?): buffer
-	if typeof(Key) ~= "buffer" then Errors.BadBuffer("Key", Key) end
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+
 	local KeyLength = buffer.len(Key)
-	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then Errors.BadKeyLength(KeyLength) end
-	if typeof(Nonce) ~= "buffer" then Errors.BadBuffer("Nonce", Nonce) end
+	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then
+		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {KeyLength} bytes`, 2)
+	end
+
+	if Nonce == nil then
+		error("Nonce cannot be nil", 2)
+	end
+
+	if typeof(Nonce) ~= "buffer" then
+		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
+	end
+
 	local NonceLength = buffer.len(Nonce)
-	if NonceLength ~= 16 then Errors.BadNonceLength("HChaCha20 requires a 16-byte nonce", NonceLength) end
-	if Rounds ~= nil and (typeof(Rounds) ~= "number" or Rounds <= 0 or Rounds ~= math.floor(Rounds) or Rounds % 2 ~= 0) then Errors.BadRounds(Rounds) end
+	if NonceLength ~= 16 then
+		error(`HChaCha20 requires a 16-byte nonce, got {NonceLength} bytes`, 2)
+	end
+
+	if Rounds ~= nil then
+		if typeof(Rounds) ~= "number" then
+			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
+		end
+
+		if Rounds <= 0 then
+			error(`Rounds must be positive, got {Rounds}`, 2)
+		end
+
+		if Rounds ~= math.floor(Rounds) then
+			error(`Rounds must be an integer, got {Rounds}`, 2)
+		end
+
+		if Rounds % 2 ~= 0 then
+			error(`Rounds must be even, got {Rounds}`, 2)
+		end
+	end
 
 	local Subkey = buffer.create(32)
 	HChaChaCore(Key, KeyLength, Nonce, (Rounds or 20) // 2, Subkey, 0)
@@ -482,21 +545,86 @@ function ChaCha.HChaCha20(Key: buffer, Nonce: buffer, Rounds: number?): buffer
 end
 
 function ChaCha.XChaCha20(Data: buffer, Key: buffer, Nonce: buffer, Counter: number?, Rounds: number?): buffer
-	if typeof(Data) ~= "buffer" then Errors.BadBuffer("Data", Data) end
-	if typeof(Key) ~= "buffer" then Errors.BadBuffer("Key", Key) end
+	if Data == nil then
+		error("Data cannot be nil", 2)
+	end
+
+	if typeof(Data) ~= "buffer" then
+		error(`Data must be a buffer, got {typeof(Data)}`, 2)
+	end
+
+	if Key == nil then
+		error("Key cannot be nil", 2)
+	end
+
+	if typeof(Key) ~= "buffer" then
+		error(`Key must be a buffer, got {typeof(Key)}`, 2)
+	end
+
 	local KeyLength = buffer.len(Key)
-	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then Errors.BadKeyLength(KeyLength) end
-	if typeof(Nonce) ~= "buffer" then Errors.BadBuffer("Nonce", Nonce) end
+	if KeyLength ~= CHACHA20_KEY_SIZE_16 and KeyLength ~= CHACHA20_KEY_SIZE_32 then
+		error(`Key must be {CHACHA20_KEY_SIZE_16} or {CHACHA20_KEY_SIZE_32} bytes long, got {KeyLength} bytes`, 2)
+	end
+
+	if Nonce == nil then
+		error("Nonce cannot be nil", 2)
+	end
+
+	if typeof(Nonce) ~= "buffer" then
+		error(`Nonce must be a buffer, got {typeof(Nonce)}`, 2)
+	end
+
 	local NonceLength = buffer.len(Nonce)
-	if NonceLength ~= XCHACHA20_NONCE_SIZE then Errors.BadNonceLength("XChaCha20 requires a 24-byte nonce", NonceLength) end
-	if Counter ~= nil and (typeof(Counter) ~= "number" or Counter < 0 or Counter ~= math.floor(Counter) or Counter >= 2^32) then Errors.BadCounter(Counter) end
-	if Rounds ~= nil and (typeof(Rounds) ~= "number" or Rounds <= 0 or Rounds ~= math.floor(Rounds) or Rounds % 2 ~= 0) then Errors.BadRounds(Rounds) end
+	if NonceLength ~= XCHACHA20_NONCE_SIZE then
+		error(`XChaCha20 requires a 24-byte nonce, got {NonceLength} bytes`, 2)
+	end
+
+	if Counter ~= nil then
+		if typeof(Counter) ~= "number" then
+			error(`Counter must be a number, got {typeof(Counter)}`, 2)
+		end
+
+		if Counter < 0 then
+			error(`Counter cannot be negative, got {Counter}`, 2)
+		end
+
+		if Counter ~= math.floor(Counter) then
+			error(`Counter must be an integer, got {Counter}`, 2)
+		end
+
+		if Counter >= 2^32 then
+			error(`Counter must be less than 2^32, got {Counter}`, 2)
+		end
+	end
+
+	if Rounds ~= nil then
+		if typeof(Rounds) ~= "number" then
+			error(`Rounds must be a number, got {typeof(Rounds)}`, 2)
+		end
+
+		if Rounds <= 0 then
+			error(`Rounds must be positive, got {Rounds}`, 2)
+		end
+
+		if Rounds ~= math.floor(Rounds) then
+			error(`Rounds must be an integer, got {Rounds}`, 2)
+		end
+
+		if Rounds % 2 ~= 0 then
+			error(`Rounds must be even, got {Rounds}`, 2)
+		end
+	end
 
 	local DataLength = buffer.len(Data)
-	if DataLength == 0 then return buffer.create(0) end
+	if DataLength == 0 then
+		return buffer.create(0)
+	end
+
 	local InitialCounter = Counter or 1
 	local BlockCount = (DataLength + 63) // 64
-	if InitialCounter + BlockCount > 2^32 then Errors.BadCounterOverflow(InitialCounter, BlockCount) end
+	if InitialCounter + BlockCount > 2^32 then
+		error(`Counter would exceed 2^32 blocks, got {InitialCounter} with {BlockCount} blocks of data`, 2)
+	end
 
 	local State = STATE
 	local DoubleRounds = (Rounds or 20) // 2
