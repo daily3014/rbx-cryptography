@@ -119,7 +119,7 @@ local function GatherEntropy(UserEntropy: buffer?): ()
 		end
 
 		if LongestRun > JITTER_SAMPLES // 8 then
-			warn("CSPRNG: timing jitter appears degenerate (low-resolution clock); entropy may be weak")
+			(warn or print)("CSPRNG: timing jitter appears degenerate (low-resolution clock); entropy may be weak")
 		end
 
 		WriteToBuffer(JitterSamples)
