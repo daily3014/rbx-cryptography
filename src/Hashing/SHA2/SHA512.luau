@@ -74,7 +74,7 @@ local IV_384: buffer = buffer.fromstring("\x5D\x9D\xBB\xCB\xD8\x9E\x05\xC1\x2A\x
 local STATE: buffer = buffer.create(64)
 local TAIL: buffer = buffer.create(128)
 
-local function Compress(Blocks: buffer, Offset: number, Length: number, State: buffer)
+local function CompressBlocks(Blocks: buffer, Offset: number, Length: number, State: buffer, Carry: number): ()
 	local Buf: buffer = BUF
 	for Position = Offset, Offset + Length - 1, 128 do
 		buffer.writeu32(Buf, 64, bit32.byteswap(buffer.readu32(Blocks, Position + 0))); buffer.writeu32(Buf, 68, bit32.byteswap(buffer.readu32(Blocks, Position + 4)))
@@ -100,7 +100,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 128) + buffer.readu32(Buf, T - 56), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T - 16), buffer.readu32(Buf, T - 12)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T, Hi)
 				buffer.writeu32(Buf, T + 4, Lo)
 			end
@@ -110,7 +110,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 120) + buffer.readu32(Buf, T - 48), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T - 8), buffer.readu32(Buf, T - 4)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 8, Hi)
 				buffer.writeu32(Buf, T + 8 + 4, Lo)
 			end
@@ -120,7 +120,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 112) + buffer.readu32(Buf, T - 40), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T), buffer.readu32(Buf, T + 4)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 16, Hi)
 				buffer.writeu32(Buf, T + 16 + 4, Lo)
 			end
@@ -130,7 +130,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 104) + buffer.readu32(Buf, T - 32), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T + 8), buffer.readu32(Buf, T + 12)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 24, Hi)
 				buffer.writeu32(Buf, T + 24 + 4, Lo)
 			end
@@ -140,7 +140,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 96) + buffer.readu32(Buf, T - 24), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T + 16), buffer.readu32(Buf, T + 20)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 32, Hi)
 				buffer.writeu32(Buf, T + 32 + 4, Lo)
 			end
@@ -150,7 +150,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 88) + buffer.readu32(Buf, T - 16), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T + 24), buffer.readu32(Buf, T + 28)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 40, Hi)
 				buffer.writeu32(Buf, T + 40 + 4, Lo)
 			end
@@ -160,7 +160,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 80) + buffer.readu32(Buf, T - 8), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T + 32), buffer.readu32(Buf, T + 36)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 48, Hi)
 				buffer.writeu32(Buf, T + 48 + 4, Lo)
 			end
@@ -170,7 +170,7 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 				local Hi = bit32.bor(bit32.bor(buffer.readu32(Buf, T - 72) + buffer.readu32(Buf, T), 0) + bit32.bxor(bit32.bor(bit32.rshift(P15H, 1), bit32.lshift(P15L, 31)), bit32.bor(bit32.rshift(P15H, 8), bit32.lshift(P15L, 24)), bit32.rshift(P15H, 7)), 0)
 				local P2H, P2L = buffer.readu32(Buf, T + 40), buffer.readu32(Buf, T + 44)
 				Lo += bit32.bxor(bit32.bor(bit32.rshift(P2L, 19), bit32.lshift(P2H, 13)), bit32.bor(bit32.rshift(P2H, 29), bit32.lshift(P2L, 3)), bit32.bor(bit32.rshift(P2L, 6), bit32.lshift(P2H, 26)))
-				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * CARRY), 0)
+				Hi = bit32.bor(bit32.bor(Hi + bit32.bxor(bit32.bor(bit32.rshift(P2H, 19), bit32.lshift(P2L, 13)), bit32.bor(bit32.rshift(P2L, 29), bit32.lshift(P2H, 3)), bit32.rshift(P2H, 6)), 0) + math.floor(Lo * Carry), 0)
 				buffer.writeu32(Buf, T + 56, Hi)
 				buffer.writeu32(Buf, T + 56 + 4, Lo)
 			end
@@ -192,110 +192,85 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 			local S5H, S5L = buffer.readu32(Buf, 40), buffer.readu32(Buf, 44)
 			local S6H, S6L = buffer.readu32(Buf, 48), buffer.readu32(Buf, 52)
 			local S7H, S7L = buffer.readu32(Buf, 56), buffer.readu32(Buf, 60)
-			local BCH, BCL = bit32.bxor(S1H, S2H), bit32.bxor(S1L, S2L)
 			do
-				local T1L = S7L + buffer.readu32(Buf, Base + 644) + buffer.readu32(Buf, Base + 4) + bit32.bxor(S6L, bit32.band(S4L, bit32.bxor(S5L, S6L))) + bit32.bxor(bit32.bor(bit32.rshift(S4L, 14), bit32.lshift(S4H, 18)), bit32.bor(bit32.rshift(S4L, 18), bit32.lshift(S4H, 14)), bit32.bor(bit32.rshift(S4H, 9), bit32.lshift(S4L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S7H + buffer.readu32(Buf, Base + 640), 0) + buffer.readu32(Buf, Base), 0) + bit32.bxor(S6H, bit32.band(S4H, bit32.bxor(S5H, S6H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S4H, 14), bit32.lshift(S4L, 18)), bit32.bor(bit32.rshift(S4H, 18), bit32.lshift(S4L, 14)), bit32.bor(bit32.rshift(S4L, 9), bit32.lshift(S4H, 23))), 0)
-				local EL = S3L + T1L
-				S3H = bit32.bor(bit32.bor(S3H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S3L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S0L, S1L)
-				local AL = T1L + bit32.bxor(S1L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S0L, 28), bit32.lshift(S0H, 4)), bit32.bor(bit32.rshift(S0H, 2), bit32.lshift(S0L, 30)), bit32.bor(bit32.rshift(S0H, 7), bit32.lshift(S0L, 25)))
-				local ABH = bit32.bxor(S0H, S1H)
-				S7H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S1H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S0H, 28), bit32.lshift(S0L, 4)), bit32.bor(bit32.rshift(S0L, 2), bit32.lshift(S0H, 30)), bit32.bor(bit32.rshift(S0L, 7), bit32.lshift(S0H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S7L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S7H, S7L
+				do local AddH, AddL = buffer.readu32(Buf, Base), buffer.readu32(Buf, Base + 4); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 640), buffer.readu32(Buf, Base + 644); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S6H, bit32.band(S4H, bit32.bxor(S5H, S6H))), bit32.bxor(S6L, bit32.band(S4L, bit32.bxor(S5L, S6L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S4H, 14), bit32.lshift(S4L, 18)), bit32.bor(bit32.rshift(S4H, 18), bit32.lshift(S4L, 14)), bit32.bor(bit32.rshift(S4L, 9), bit32.lshift(S4H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S4L, 14), bit32.lshift(S4H, 18)), bit32.bor(bit32.rshift(S4L, 18), bit32.lshift(S4H, 14)), bit32.bor(bit32.rshift(S4H, 9), bit32.lshift(S4L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S3L + T1L, 0); S3H = bit32.bor(bit32.bor(S3H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S3L, T1L), bit32.band(bit32.bxor(S3L, T1L), SumL)), 31), 0); S3L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S0H, S1H), bit32.band(S2H, bit32.bor(S0H, S1H))), bit32.bor(bit32.band(S0L, S1L), bit32.band(S2L, bit32.bor(S0L, S1L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S0H, 28), bit32.lshift(S0L, 4)), bit32.bor(bit32.rshift(S0L, 2), bit32.lshift(S0H, 30)), bit32.bor(bit32.rshift(S0L, 7), bit32.lshift(S0H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S0L, 28), bit32.lshift(S0H, 4)), bit32.bor(bit32.rshift(S0H, 2), bit32.lshift(S0L, 30)), bit32.bor(bit32.rshift(S0H, 7), bit32.lshift(S0L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S7H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S7L = SumL end
 			end
 			do
-				local T1L = S6L + buffer.readu32(Buf, Base + 652) + buffer.readu32(Buf, Base + 12) + bit32.bxor(S5L, bit32.band(S3L, bit32.bxor(S4L, S5L))) + bit32.bxor(bit32.bor(bit32.rshift(S3L, 14), bit32.lshift(S3H, 18)), bit32.bor(bit32.rshift(S3L, 18), bit32.lshift(S3H, 14)), bit32.bor(bit32.rshift(S3H, 9), bit32.lshift(S3L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S6H + buffer.readu32(Buf, Base + 648), 0) + buffer.readu32(Buf, Base + 8), 0) + bit32.bxor(S5H, bit32.band(S3H, bit32.bxor(S4H, S5H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S3H, 14), bit32.lshift(S3L, 18)), bit32.bor(bit32.rshift(S3H, 18), bit32.lshift(S3L, 14)), bit32.bor(bit32.rshift(S3L, 9), bit32.lshift(S3H, 23))), 0)
-				local EL = S2L + T1L
-				S2H = bit32.bor(bit32.bor(S2H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S2L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S7L, S0L)
-				local AL = T1L + bit32.bxor(S0L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S7L, 28), bit32.lshift(S7H, 4)), bit32.bor(bit32.rshift(S7H, 2), bit32.lshift(S7L, 30)), bit32.bor(bit32.rshift(S7H, 7), bit32.lshift(S7L, 25)))
-				local ABH = bit32.bxor(S7H, S0H)
-				S6H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S0H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S7H, 28), bit32.lshift(S7L, 4)), bit32.bor(bit32.rshift(S7L, 2), bit32.lshift(S7H, 30)), bit32.bor(bit32.rshift(S7L, 7), bit32.lshift(S7H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S6L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S6H, S6L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 8), buffer.readu32(Buf, Base + 12); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 648), buffer.readu32(Buf, Base + 652); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S5H, bit32.band(S3H, bit32.bxor(S4H, S5H))), bit32.bxor(S5L, bit32.band(S3L, bit32.bxor(S4L, S5L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S3H, 14), bit32.lshift(S3L, 18)), bit32.bor(bit32.rshift(S3H, 18), bit32.lshift(S3L, 14)), bit32.bor(bit32.rshift(S3L, 9), bit32.lshift(S3H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S3L, 14), bit32.lshift(S3H, 18)), bit32.bor(bit32.rshift(S3L, 18), bit32.lshift(S3H, 14)), bit32.bor(bit32.rshift(S3H, 9), bit32.lshift(S3L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S2L + T1L, 0); S2H = bit32.bor(bit32.bor(S2H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S2L, T1L), bit32.band(bit32.bxor(S2L, T1L), SumL)), 31), 0); S2L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S7H, S0H), bit32.band(S1H, bit32.bor(S7H, S0H))), bit32.bor(bit32.band(S7L, S0L), bit32.band(S1L, bit32.bor(S7L, S0L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S7H, 28), bit32.lshift(S7L, 4)), bit32.bor(bit32.rshift(S7L, 2), bit32.lshift(S7H, 30)), bit32.bor(bit32.rshift(S7L, 7), bit32.lshift(S7H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S7L, 28), bit32.lshift(S7H, 4)), bit32.bor(bit32.rshift(S7H, 2), bit32.lshift(S7L, 30)), bit32.bor(bit32.rshift(S7H, 7), bit32.lshift(S7L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S6H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S6L = SumL end
 			end
 			do
-				local T1L = S5L + buffer.readu32(Buf, Base + 660) + buffer.readu32(Buf, Base + 20) + bit32.bxor(S4L, bit32.band(S2L, bit32.bxor(S3L, S4L))) + bit32.bxor(bit32.bor(bit32.rshift(S2L, 14), bit32.lshift(S2H, 18)), bit32.bor(bit32.rshift(S2L, 18), bit32.lshift(S2H, 14)), bit32.bor(bit32.rshift(S2H, 9), bit32.lshift(S2L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S5H + buffer.readu32(Buf, Base + 656), 0) + buffer.readu32(Buf, Base + 16), 0) + bit32.bxor(S4H, bit32.band(S2H, bit32.bxor(S3H, S4H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S2H, 14), bit32.lshift(S2L, 18)), bit32.bor(bit32.rshift(S2H, 18), bit32.lshift(S2L, 14)), bit32.bor(bit32.rshift(S2L, 9), bit32.lshift(S2H, 23))), 0)
-				local EL = S1L + T1L
-				S1H = bit32.bor(bit32.bor(S1H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S1L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S6L, S7L)
-				local AL = T1L + bit32.bxor(S7L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S6L, 28), bit32.lshift(S6H, 4)), bit32.bor(bit32.rshift(S6H, 2), bit32.lshift(S6L, 30)), bit32.bor(bit32.rshift(S6H, 7), bit32.lshift(S6L, 25)))
-				local ABH = bit32.bxor(S6H, S7H)
-				S5H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S7H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S6H, 28), bit32.lshift(S6L, 4)), bit32.bor(bit32.rshift(S6L, 2), bit32.lshift(S6H, 30)), bit32.bor(bit32.rshift(S6L, 7), bit32.lshift(S6H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S5L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S5H, S5L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 16), buffer.readu32(Buf, Base + 20); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 656), buffer.readu32(Buf, Base + 660); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S4H, bit32.band(S2H, bit32.bxor(S3H, S4H))), bit32.bxor(S4L, bit32.band(S2L, bit32.bxor(S3L, S4L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S2H, 14), bit32.lshift(S2L, 18)), bit32.bor(bit32.rshift(S2H, 18), bit32.lshift(S2L, 14)), bit32.bor(bit32.rshift(S2L, 9), bit32.lshift(S2H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S2L, 14), bit32.lshift(S2H, 18)), bit32.bor(bit32.rshift(S2L, 18), bit32.lshift(S2H, 14)), bit32.bor(bit32.rshift(S2H, 9), bit32.lshift(S2L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S1L + T1L, 0); S1H = bit32.bor(bit32.bor(S1H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S1L, T1L), bit32.band(bit32.bxor(S1L, T1L), SumL)), 31), 0); S1L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S6H, S7H), bit32.band(S0H, bit32.bor(S6H, S7H))), bit32.bor(bit32.band(S6L, S7L), bit32.band(S0L, bit32.bor(S6L, S7L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S6H, 28), bit32.lshift(S6L, 4)), bit32.bor(bit32.rshift(S6L, 2), bit32.lshift(S6H, 30)), bit32.bor(bit32.rshift(S6L, 7), bit32.lshift(S6H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S6L, 28), bit32.lshift(S6H, 4)), bit32.bor(bit32.rshift(S6H, 2), bit32.lshift(S6L, 30)), bit32.bor(bit32.rshift(S6H, 7), bit32.lshift(S6L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S5H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S5L = SumL end
 			end
 			do
-				local T1L = S4L + buffer.readu32(Buf, Base + 668) + buffer.readu32(Buf, Base + 28) + bit32.bxor(S3L, bit32.band(S1L, bit32.bxor(S2L, S3L))) + bit32.bxor(bit32.bor(bit32.rshift(S1L, 14), bit32.lshift(S1H, 18)), bit32.bor(bit32.rshift(S1L, 18), bit32.lshift(S1H, 14)), bit32.bor(bit32.rshift(S1H, 9), bit32.lshift(S1L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S4H + buffer.readu32(Buf, Base + 664), 0) + buffer.readu32(Buf, Base + 24), 0) + bit32.bxor(S3H, bit32.band(S1H, bit32.bxor(S2H, S3H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S1H, 14), bit32.lshift(S1L, 18)), bit32.bor(bit32.rshift(S1H, 18), bit32.lshift(S1L, 14)), bit32.bor(bit32.rshift(S1L, 9), bit32.lshift(S1H, 23))), 0)
-				local EL = S0L + T1L
-				S0H = bit32.bor(bit32.bor(S0H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S0L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S5L, S6L)
-				local AL = T1L + bit32.bxor(S6L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S5L, 28), bit32.lshift(S5H, 4)), bit32.bor(bit32.rshift(S5H, 2), bit32.lshift(S5L, 30)), bit32.bor(bit32.rshift(S5H, 7), bit32.lshift(S5L, 25)))
-				local ABH = bit32.bxor(S5H, S6H)
-				S4H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S6H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S5H, 28), bit32.lshift(S5L, 4)), bit32.bor(bit32.rshift(S5L, 2), bit32.lshift(S5H, 30)), bit32.bor(bit32.rshift(S5L, 7), bit32.lshift(S5H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S4L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S4H, S4L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 24), buffer.readu32(Buf, Base + 28); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 664), buffer.readu32(Buf, Base + 668); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S3H, bit32.band(S1H, bit32.bxor(S2H, S3H))), bit32.bxor(S3L, bit32.band(S1L, bit32.bxor(S2L, S3L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S1H, 14), bit32.lshift(S1L, 18)), bit32.bor(bit32.rshift(S1H, 18), bit32.lshift(S1L, 14)), bit32.bor(bit32.rshift(S1L, 9), bit32.lshift(S1H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S1L, 14), bit32.lshift(S1H, 18)), bit32.bor(bit32.rshift(S1L, 18), bit32.lshift(S1H, 14)), bit32.bor(bit32.rshift(S1H, 9), bit32.lshift(S1L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S0L + T1L, 0); S0H = bit32.bor(bit32.bor(S0H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S0L, T1L), bit32.band(bit32.bxor(S0L, T1L), SumL)), 31), 0); S0L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S5H, S6H), bit32.band(S7H, bit32.bor(S5H, S6H))), bit32.bor(bit32.band(S5L, S6L), bit32.band(S7L, bit32.bor(S5L, S6L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S5H, 28), bit32.lshift(S5L, 4)), bit32.bor(bit32.rshift(S5L, 2), bit32.lshift(S5H, 30)), bit32.bor(bit32.rshift(S5L, 7), bit32.lshift(S5H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S5L, 28), bit32.lshift(S5H, 4)), bit32.bor(bit32.rshift(S5H, 2), bit32.lshift(S5L, 30)), bit32.bor(bit32.rshift(S5H, 7), bit32.lshift(S5L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S4H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S4L = SumL end
 			end
 			do
-				local T1L = S3L + buffer.readu32(Buf, Base + 676) + buffer.readu32(Buf, Base + 36) + bit32.bxor(S2L, bit32.band(S0L, bit32.bxor(S1L, S2L))) + bit32.bxor(bit32.bor(bit32.rshift(S0L, 14), bit32.lshift(S0H, 18)), bit32.bor(bit32.rshift(S0L, 18), bit32.lshift(S0H, 14)), bit32.bor(bit32.rshift(S0H, 9), bit32.lshift(S0L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S3H + buffer.readu32(Buf, Base + 672), 0) + buffer.readu32(Buf, Base + 32), 0) + bit32.bxor(S2H, bit32.band(S0H, bit32.bxor(S1H, S2H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S0H, 14), bit32.lshift(S0L, 18)), bit32.bor(bit32.rshift(S0H, 18), bit32.lshift(S0L, 14)), bit32.bor(bit32.rshift(S0L, 9), bit32.lshift(S0H, 23))), 0)
-				local EL = S7L + T1L
-				S7H = bit32.bor(bit32.bor(S7H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S7L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S4L, S5L)
-				local AL = T1L + bit32.bxor(S5L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S4L, 28), bit32.lshift(S4H, 4)), bit32.bor(bit32.rshift(S4H, 2), bit32.lshift(S4L, 30)), bit32.bor(bit32.rshift(S4H, 7), bit32.lshift(S4L, 25)))
-				local ABH = bit32.bxor(S4H, S5H)
-				S3H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S5H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S4H, 28), bit32.lshift(S4L, 4)), bit32.bor(bit32.rshift(S4L, 2), bit32.lshift(S4H, 30)), bit32.bor(bit32.rshift(S4L, 7), bit32.lshift(S4H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S3L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S3H, S3L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 32), buffer.readu32(Buf, Base + 36); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 672), buffer.readu32(Buf, Base + 676); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S2H, bit32.band(S0H, bit32.bxor(S1H, S2H))), bit32.bxor(S2L, bit32.band(S0L, bit32.bxor(S1L, S2L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S0H, 14), bit32.lshift(S0L, 18)), bit32.bor(bit32.rshift(S0H, 18), bit32.lshift(S0L, 14)), bit32.bor(bit32.rshift(S0L, 9), bit32.lshift(S0H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S0L, 14), bit32.lshift(S0H, 18)), bit32.bor(bit32.rshift(S0L, 18), bit32.lshift(S0H, 14)), bit32.bor(bit32.rshift(S0H, 9), bit32.lshift(S0L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S7L + T1L, 0); S7H = bit32.bor(bit32.bor(S7H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S7L, T1L), bit32.band(bit32.bxor(S7L, T1L), SumL)), 31), 0); S7L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S4H, S5H), bit32.band(S6H, bit32.bor(S4H, S5H))), bit32.bor(bit32.band(S4L, S5L), bit32.band(S6L, bit32.bor(S4L, S5L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S4H, 28), bit32.lshift(S4L, 4)), bit32.bor(bit32.rshift(S4L, 2), bit32.lshift(S4H, 30)), bit32.bor(bit32.rshift(S4L, 7), bit32.lshift(S4H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S4L, 28), bit32.lshift(S4H, 4)), bit32.bor(bit32.rshift(S4H, 2), bit32.lshift(S4L, 30)), bit32.bor(bit32.rshift(S4H, 7), bit32.lshift(S4L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S3H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S3L = SumL end
 			end
 			do
-				local T1L = S2L + buffer.readu32(Buf, Base + 684) + buffer.readu32(Buf, Base + 44) + bit32.bxor(S1L, bit32.band(S7L, bit32.bxor(S0L, S1L))) + bit32.bxor(bit32.bor(bit32.rshift(S7L, 14), bit32.lshift(S7H, 18)), bit32.bor(bit32.rshift(S7L, 18), bit32.lshift(S7H, 14)), bit32.bor(bit32.rshift(S7H, 9), bit32.lshift(S7L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S2H + buffer.readu32(Buf, Base + 680), 0) + buffer.readu32(Buf, Base + 40), 0) + bit32.bxor(S1H, bit32.band(S7H, bit32.bxor(S0H, S1H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S7H, 14), bit32.lshift(S7L, 18)), bit32.bor(bit32.rshift(S7H, 18), bit32.lshift(S7L, 14)), bit32.bor(bit32.rshift(S7L, 9), bit32.lshift(S7H, 23))), 0)
-				local EL = S6L + T1L
-				S6H = bit32.bor(bit32.bor(S6H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S6L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S3L, S4L)
-				local AL = T1L + bit32.bxor(S4L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S3L, 28), bit32.lshift(S3H, 4)), bit32.bor(bit32.rshift(S3H, 2), bit32.lshift(S3L, 30)), bit32.bor(bit32.rshift(S3H, 7), bit32.lshift(S3L, 25)))
-				local ABH = bit32.bxor(S3H, S4H)
-				S2H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S4H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S3H, 28), bit32.lshift(S3L, 4)), bit32.bor(bit32.rshift(S3L, 2), bit32.lshift(S3H, 30)), bit32.bor(bit32.rshift(S3L, 7), bit32.lshift(S3H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S2L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S2H, S2L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 40), buffer.readu32(Buf, Base + 44); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 680), buffer.readu32(Buf, Base + 684); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S1H, bit32.band(S7H, bit32.bxor(S0H, S1H))), bit32.bxor(S1L, bit32.band(S7L, bit32.bxor(S0L, S1L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S7H, 14), bit32.lshift(S7L, 18)), bit32.bor(bit32.rshift(S7H, 18), bit32.lshift(S7L, 14)), bit32.bor(bit32.rshift(S7L, 9), bit32.lshift(S7H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S7L, 14), bit32.lshift(S7H, 18)), bit32.bor(bit32.rshift(S7L, 18), bit32.lshift(S7H, 14)), bit32.bor(bit32.rshift(S7H, 9), bit32.lshift(S7L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S6L + T1L, 0); S6H = bit32.bor(bit32.bor(S6H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S6L, T1L), bit32.band(bit32.bxor(S6L, T1L), SumL)), 31), 0); S6L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S3H, S4H), bit32.band(S5H, bit32.bor(S3H, S4H))), bit32.bor(bit32.band(S3L, S4L), bit32.band(S5L, bit32.bor(S3L, S4L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S3H, 28), bit32.lshift(S3L, 4)), bit32.bor(bit32.rshift(S3L, 2), bit32.lshift(S3H, 30)), bit32.bor(bit32.rshift(S3L, 7), bit32.lshift(S3H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S3L, 28), bit32.lshift(S3H, 4)), bit32.bor(bit32.rshift(S3H, 2), bit32.lshift(S3L, 30)), bit32.bor(bit32.rshift(S3H, 7), bit32.lshift(S3L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S2H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S2L = SumL end
 			end
 			do
-				local T1L = S1L + buffer.readu32(Buf, Base + 692) + buffer.readu32(Buf, Base + 52) + bit32.bxor(S0L, bit32.band(S6L, bit32.bxor(S7L, S0L))) + bit32.bxor(bit32.bor(bit32.rshift(S6L, 14), bit32.lshift(S6H, 18)), bit32.bor(bit32.rshift(S6L, 18), bit32.lshift(S6H, 14)), bit32.bor(bit32.rshift(S6H, 9), bit32.lshift(S6L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S1H + buffer.readu32(Buf, Base + 688), 0) + buffer.readu32(Buf, Base + 48), 0) + bit32.bxor(S0H, bit32.band(S6H, bit32.bxor(S7H, S0H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S6H, 14), bit32.lshift(S6L, 18)), bit32.bor(bit32.rshift(S6H, 18), bit32.lshift(S6L, 14)), bit32.bor(bit32.rshift(S6L, 9), bit32.lshift(S6H, 23))), 0)
-				local EL = S5L + T1L
-				S5H = bit32.bor(bit32.bor(S5H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S5L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S2L, S3L)
-				local AL = T1L + bit32.bxor(S3L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S2L, 28), bit32.lshift(S2H, 4)), bit32.bor(bit32.rshift(S2H, 2), bit32.lshift(S2L, 30)), bit32.bor(bit32.rshift(S2H, 7), bit32.lshift(S2L, 25)))
-				local ABH = bit32.bxor(S2H, S3H)
-				S1H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S3H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S2H, 28), bit32.lshift(S2L, 4)), bit32.bor(bit32.rshift(S2L, 2), bit32.lshift(S2H, 30)), bit32.bor(bit32.rshift(S2L, 7), bit32.lshift(S2H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S1L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S1H, S1L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 48), buffer.readu32(Buf, Base + 52); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 688), buffer.readu32(Buf, Base + 692); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S0H, bit32.band(S6H, bit32.bxor(S7H, S0H))), bit32.bxor(S0L, bit32.band(S6L, bit32.bxor(S7L, S0L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S6H, 14), bit32.lshift(S6L, 18)), bit32.bor(bit32.rshift(S6H, 18), bit32.lshift(S6L, 14)), bit32.bor(bit32.rshift(S6L, 9), bit32.lshift(S6H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S6L, 14), bit32.lshift(S6H, 18)), bit32.bor(bit32.rshift(S6L, 18), bit32.lshift(S6H, 14)), bit32.bor(bit32.rshift(S6H, 9), bit32.lshift(S6L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S5L + T1L, 0); S5H = bit32.bor(bit32.bor(S5H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S5L, T1L), bit32.band(bit32.bxor(S5L, T1L), SumL)), 31), 0); S5L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S2H, S3H), bit32.band(S4H, bit32.bor(S2H, S3H))), bit32.bor(bit32.band(S2L, S3L), bit32.band(S4L, bit32.bor(S2L, S3L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S2H, 28), bit32.lshift(S2L, 4)), bit32.bor(bit32.rshift(S2L, 2), bit32.lshift(S2H, 30)), bit32.bor(bit32.rshift(S2L, 7), bit32.lshift(S2H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S2L, 28), bit32.lshift(S2H, 4)), bit32.bor(bit32.rshift(S2H, 2), bit32.lshift(S2L, 30)), bit32.bor(bit32.rshift(S2H, 7), bit32.lshift(S2L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S1L = SumL end
 			end
 			do
-				local T1L = S0L + buffer.readu32(Buf, Base + 700) + buffer.readu32(Buf, Base + 60) + bit32.bxor(S7L, bit32.band(S5L, bit32.bxor(S6L, S7L))) + bit32.bxor(bit32.bor(bit32.rshift(S5L, 14), bit32.lshift(S5H, 18)), bit32.bor(bit32.rshift(S5L, 18), bit32.lshift(S5H, 14)), bit32.bor(bit32.rshift(S5H, 9), bit32.lshift(S5L, 23)))
-				local T1H = bit32.bor(bit32.bor(bit32.bor(bit32.bor(S0H + buffer.readu32(Buf, Base + 696), 0) + buffer.readu32(Buf, Base + 56), 0) + bit32.bxor(S7H, bit32.band(S5H, bit32.bxor(S6H, S7H))), 0) + bit32.bxor(bit32.bor(bit32.rshift(S5H, 14), bit32.lshift(S5L, 18)), bit32.bor(bit32.rshift(S5H, 18), bit32.lshift(S5L, 14)), bit32.bor(bit32.rshift(S5L, 9), bit32.lshift(S5H, 23))), 0)
-				local EL = S4L + T1L
-				S4H = bit32.bor(bit32.bor(S4H + T1H, 0) + math.floor(EL * CARRY), 0)
-				S4L = bit32.bor(EL, 0)
-				local ABL = bit32.bxor(S1L, S2L)
-				local AL = T1L + bit32.bxor(S2L, bit32.band(ABL, BCL)) + bit32.bxor(bit32.bor(bit32.rshift(S1L, 28), bit32.lshift(S1H, 4)), bit32.bor(bit32.rshift(S1H, 2), bit32.lshift(S1L, 30)), bit32.bor(bit32.rshift(S1H, 7), bit32.lshift(S1L, 25)))
-				local ABH = bit32.bxor(S1H, S2H)
-				S0H = bit32.bor(bit32.bor(bit32.bor(T1H + bit32.bxor(S2H, bit32.band(ABH, BCH)), 0) + bit32.bxor(bit32.bor(bit32.rshift(S1H, 28), bit32.lshift(S1L, 4)), bit32.bor(bit32.rshift(S1L, 2), bit32.lshift(S1H, 30)), bit32.bor(bit32.rshift(S1L, 7), bit32.lshift(S1H, 25))), 0) + math.floor(AL * CARRY), 0)
-				S0L = bit32.bor(AL, 0)
-				BCH, BCL = ABH, ABL
+				local T1H, T1L = S0H, S0L
+				do local AddH, AddL = buffer.readu32(Buf, Base + 56), buffer.readu32(Buf, Base + 60); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = buffer.readu32(Buf, Base + 696), buffer.readu32(Buf, Base + 700); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(S7H, bit32.band(S5H, bit32.bxor(S6H, S7H))), bit32.bxor(S7L, bit32.band(S5L, bit32.bxor(S6L, S7L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S5H, 14), bit32.lshift(S5L, 18)), bit32.bor(bit32.rshift(S5H, 18), bit32.lshift(S5L, 14)), bit32.bor(bit32.rshift(S5L, 9), bit32.lshift(S5H, 23))), bit32.bxor(bit32.bor(bit32.rshift(S5L, 14), bit32.lshift(S5H, 18)), bit32.bor(bit32.rshift(S5L, 18), bit32.lshift(S5H, 14)), bit32.bor(bit32.rshift(S5H, 9), bit32.lshift(S5L, 23))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local SumL = bit32.bor(S4L + T1L, 0); S4H = bit32.bor(bit32.bor(S4H + T1H, 0) + bit32.rshift(bit32.bxor(bit32.bor(S4L, T1L), bit32.band(bit32.bxor(S4L, T1L), SumL)), 31), 0); S4L = SumL end
+				do local AddH, AddL = bit32.bor(bit32.band(S1H, S2H), bit32.band(S3H, bit32.bor(S1H, S2H))), bit32.bor(bit32.band(S1L, S2L), bit32.band(S3L, bit32.bor(S1L, S2L))); local SumL = bit32.bor(T1L + AddL, 0); T1H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); T1L = SumL end
+				do local AddH, AddL = bit32.bxor(bit32.bor(bit32.rshift(S1H, 28), bit32.lshift(S1L, 4)), bit32.bor(bit32.rshift(S1L, 2), bit32.lshift(S1H, 30)), bit32.bor(bit32.rshift(S1L, 7), bit32.lshift(S1H, 25))), bit32.bxor(bit32.bor(bit32.rshift(S1L, 28), bit32.lshift(S1H, 4)), bit32.bor(bit32.rshift(S1H, 2), bit32.lshift(S1L, 30)), bit32.bor(bit32.rshift(S1H, 7), bit32.lshift(S1L, 25))); local SumL = bit32.bor(T1L + AddL, 0); S0H = bit32.bor(bit32.bor(T1H + AddH, 0) + bit32.rshift(bit32.bxor(bit32.bor(T1L, AddL), bit32.band(bit32.bxor(T1L, AddL), SumL)), 31), 0); S0L = SumL end
 			end
 			buffer.writeu32(Buf, 0, S0H); buffer.writeu32(Buf, 4, S0L)
 			buffer.writeu32(Buf, 8, S1H); buffer.writeu32(Buf, 12, S1L)
@@ -306,15 +281,19 @@ local function Compress(Blocks: buffer, Offset: number, Length: number, State: b
 			buffer.writeu32(Buf, 48, S6H); buffer.writeu32(Buf, 52, S6L)
 			buffer.writeu32(Buf, 56, S7H); buffer.writeu32(Buf, 60, S7L)
 		end
-		do local SL = buffer.readu32(State, 4) + buffer.readu32(Buf, 4); buffer.writeu32(State, 0, bit32.bor(bit32.bor(buffer.readu32(State, 0) + buffer.readu32(Buf, 0), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 4, SL) end
-		do local SL = buffer.readu32(State, 12) + buffer.readu32(Buf, 12); buffer.writeu32(State, 8, bit32.bor(bit32.bor(buffer.readu32(State, 8) + buffer.readu32(Buf, 8), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 12, SL) end
-		do local SL = buffer.readu32(State, 20) + buffer.readu32(Buf, 20); buffer.writeu32(State, 16, bit32.bor(bit32.bor(buffer.readu32(State, 16) + buffer.readu32(Buf, 16), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 20, SL) end
-		do local SL = buffer.readu32(State, 28) + buffer.readu32(Buf, 28); buffer.writeu32(State, 24, bit32.bor(bit32.bor(buffer.readu32(State, 24) + buffer.readu32(Buf, 24), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 28, SL) end
-		do local SL = buffer.readu32(State, 36) + buffer.readu32(Buf, 36); buffer.writeu32(State, 32, bit32.bor(bit32.bor(buffer.readu32(State, 32) + buffer.readu32(Buf, 32), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 36, SL) end
-		do local SL = buffer.readu32(State, 44) + buffer.readu32(Buf, 44); buffer.writeu32(State, 40, bit32.bor(bit32.bor(buffer.readu32(State, 40) + buffer.readu32(Buf, 40), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 44, SL) end
-		do local SL = buffer.readu32(State, 52) + buffer.readu32(Buf, 52); buffer.writeu32(State, 48, bit32.bor(bit32.bor(buffer.readu32(State, 48) + buffer.readu32(Buf, 48), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 52, SL) end
-		do local SL = buffer.readu32(State, 60) + buffer.readu32(Buf, 60); buffer.writeu32(State, 56, bit32.bor(bit32.bor(buffer.readu32(State, 56) + buffer.readu32(Buf, 56), 0) + math.floor(SL * CARRY), 0)); buffer.writeu32(State, 60, SL) end
+		do local SL = buffer.readu32(State, 4) + buffer.readu32(Buf, 4); buffer.writeu32(State, 0, bit32.bor(bit32.bor(buffer.readu32(State, 0) + buffer.readu32(Buf, 0), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 4, SL) end
+		do local SL = buffer.readu32(State, 12) + buffer.readu32(Buf, 12); buffer.writeu32(State, 8, bit32.bor(bit32.bor(buffer.readu32(State, 8) + buffer.readu32(Buf, 8), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 12, SL) end
+		do local SL = buffer.readu32(State, 20) + buffer.readu32(Buf, 20); buffer.writeu32(State, 16, bit32.bor(bit32.bor(buffer.readu32(State, 16) + buffer.readu32(Buf, 16), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 20, SL) end
+		do local SL = buffer.readu32(State, 28) + buffer.readu32(Buf, 28); buffer.writeu32(State, 24, bit32.bor(bit32.bor(buffer.readu32(State, 24) + buffer.readu32(Buf, 24), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 28, SL) end
+		do local SL = buffer.readu32(State, 36) + buffer.readu32(Buf, 36); buffer.writeu32(State, 32, bit32.bor(bit32.bor(buffer.readu32(State, 32) + buffer.readu32(Buf, 32), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 36, SL) end
+		do local SL = buffer.readu32(State, 44) + buffer.readu32(Buf, 44); buffer.writeu32(State, 40, bit32.bor(bit32.bor(buffer.readu32(State, 40) + buffer.readu32(Buf, 40), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 44, SL) end
+		do local SL = buffer.readu32(State, 52) + buffer.readu32(Buf, 52); buffer.writeu32(State, 48, bit32.bor(bit32.bor(buffer.readu32(State, 48) + buffer.readu32(Buf, 48), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 52, SL) end
+		do local SL = buffer.readu32(State, 60) + buffer.readu32(Buf, 60); buffer.writeu32(State, 56, bit32.bor(bit32.bor(buffer.readu32(State, 56) + buffer.readu32(Buf, 56), 0) + math.floor(SL * Carry), 0)); buffer.writeu32(State, 60, SL) end
 	end
+end
+
+local function Compress(Blocks: buffer, Offset: number, Length: number, State: buffer): ()
+	CompressBlocks(Blocks, Offset, Length, State, CARRY)
 end
 
 local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number, PrefixBytes: number?): buffer
@@ -329,7 +308,7 @@ local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number
 	local FullBytes = MessageLength - TailLength
 
 	if FullBytes > 0 then
-		Compress(Message, 0, FullBytes, State)
+		CompressBlocks(Message, 0, FullBytes, State, CARRY)
 	end
 
 	local Tail: buffer = TAIL
@@ -350,12 +329,12 @@ local function Digest(Message: buffer, InitialState: buffer, OutputBytes: number
 
 	local BitLength = (MessageLength + (PrefixBytes or 0)) * 8
 	if TailLength >= 112 then
-		Compress(Tail, 0, 128, State)
+		CompressBlocks(Tail, 0, 128, State, CARRY)
 		buffer.fill(Tail, 0, 0, 120)
 	end
 	buffer.writeu32(Tail, 120, bit32.byteswap(math.floor(BitLength * CARRY)))
 	buffer.writeu32(Tail, 124, bit32.byteswap(BitLength))
-	Compress(Tail, 0, 128, State)
+	CompressBlocks(Tail, 0, 128, State, CARRY)
 
 	local Result = buffer.create(OutputBytes)
 	for Offset = 0, OutputBytes - 4, 4 do

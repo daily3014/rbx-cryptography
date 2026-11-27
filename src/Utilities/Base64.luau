@@ -15,7 +15,7 @@
 local PADDING_CHARACTER = 61
 local INVALID_ENTRY = 0x80000000
 local MAX_VALID_ASCII = 122
-local ALPHABET_BYTES = buffer.create(64) do
+local ALPHABET_BYTES: buffer = buffer.create(64) do
 	local Characters = {
 		65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
 		81, 82, 83, 84, 85, 86, 87, 88, 89, 90,
@@ -32,7 +32,7 @@ end
 
 local INVALID_SEXTET = 255
 
-local DECODE_TET = buffer.create(256) do
+local DECODE_TET: buffer = buffer.create(256) do
 	buffer.fill(DECODE_TET, 0, INVALID_SEXTET)
 	for Index = 1, 64 do
 		buffer.writeu8(DECODE_TET, buffer.readu8(ALPHABET_BYTES, Index - 1), Index - 1)
@@ -40,8 +40,8 @@ local DECODE_TET = buffer.create(256) do
 end
 
 local DECODE_TABLE_SIZE = (MAX_VALID_ASCII * 256 + MAX_VALID_ASCII + 1) * 4
-local DECODE_HIGH = buffer.create(DECODE_TABLE_SIZE)
-local DECODE_LOW = buffer.create(DECODE_TABLE_SIZE)
+local DECODE_HIGH: buffer = buffer.create(DECODE_TABLE_SIZE)
+local DECODE_LOW: buffer = buffer.create(DECODE_TABLE_SIZE)
 do
 	for Key = 0, DECODE_TABLE_SIZE - 4, 4 do
 		buffer.writeu32(DECODE_HIGH, Key, INVALID_ENTRY)
@@ -63,12 +63,13 @@ do
 	end
 end
 
-local ENCODE_12 = buffer.create(8192) do
+local ENCODE_12: buffer = buffer.create(8192) do
 	for Pair = 0, 4095 do
 		buffer.writeu16(ENCODE_12, Pair * 2,
 			buffer.readu8(ALPHABET_BYTES, Pair // 64) + buffer.readu8(ALPHABET_BYTES, Pair % 64) * 256)
 	end
 end
+
 
 local function Encode(Input: buffer): buffer
 	local InputLength = buffer.len(Input)
@@ -85,203 +86,198 @@ local function Encode(Input: buffer): buffer
 	local UnrollStop = InputLength - 97
 	while InputIndex <= UnrollStop do
 		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 93))
-			buffer.writeu16(Output, OutputIndex + 126, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 124, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 90))
-			buffer.writeu16(Output, OutputIndex + 122, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 120, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 87))
-			buffer.writeu16(Output, OutputIndex + 118, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 116, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 84))
-			buffer.writeu16(Output, OutputIndex + 114, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 112, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 81))
-			buffer.writeu16(Output, OutputIndex + 110, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 108, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 78))
-			buffer.writeu16(Output, OutputIndex + 106, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 104, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 75))
-			buffer.writeu16(Output, OutputIndex + 102, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 100, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 72))
-			buffer.writeu16(Output, OutputIndex + 98, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 96, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 69))
-			buffer.writeu16(Output, OutputIndex + 94, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 92, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 66))
-			buffer.writeu16(Output, OutputIndex + 90, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 88, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 63))
-			buffer.writeu16(Output, OutputIndex + 86, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 84, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 60))
-			buffer.writeu16(Output, OutputIndex + 82, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 80, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 57))
-			buffer.writeu16(Output, OutputIndex + 78, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 76, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 54))
-			buffer.writeu16(Output, OutputIndex + 74, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 72, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 51))
-			buffer.writeu16(Output, OutputIndex + 70, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 68, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 48))
-			buffer.writeu16(Output, OutputIndex + 66, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 64, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 45))
-			buffer.writeu16(Output, OutputIndex + 62, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 60, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 42))
-			buffer.writeu16(Output, OutputIndex + 58, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 56, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 39))
-			buffer.writeu16(Output, OutputIndex + 54, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 52, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 36))
-			buffer.writeu16(Output, OutputIndex + 50, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 48, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 33))
-			buffer.writeu16(Output, OutputIndex + 46, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 44, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 30))
-			buffer.writeu16(Output, OutputIndex + 42, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 40, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 27))
-			buffer.writeu16(Output, OutputIndex + 38, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 36, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 24))
-			buffer.writeu16(Output, OutputIndex + 34, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 32, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 21))
-			buffer.writeu16(Output, OutputIndex + 30, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 28, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 18))
-			buffer.writeu16(Output, OutputIndex + 26, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 24, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 15))
-			buffer.writeu16(Output, OutputIndex + 22, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 20, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 12))
-			buffer.writeu16(Output, OutputIndex + 18, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 16, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 9))
-			buffer.writeu16(Output, OutputIndex + 14, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 12, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 6))
-			buffer.writeu16(Output, OutputIndex + 10, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 8, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex))
+			buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 2, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		end
 		do
 			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 3))
-			buffer.writeu16(Output, OutputIndex + 6, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 			buffer.writeu16(Output, OutputIndex + 4, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 6, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		end
 		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 0))
-			buffer.writeu16(Output, OutputIndex + 2, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 6))
+			buffer.writeu16(Output, OutputIndex + 8, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 10, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		end
-
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 9))
+			buffer.writeu16(Output, OutputIndex + 12, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 14, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 12))
+			buffer.writeu16(Output, OutputIndex + 16, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 18, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 15))
+			buffer.writeu16(Output, OutputIndex + 20, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 22, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 18))
+			buffer.writeu16(Output, OutputIndex + 24, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 26, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 21))
+			buffer.writeu16(Output, OutputIndex + 28, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 30, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 24))
+			buffer.writeu16(Output, OutputIndex + 32, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 34, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 27))
+			buffer.writeu16(Output, OutputIndex + 36, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 38, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 30))
+			buffer.writeu16(Output, OutputIndex + 40, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 42, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 33))
+			buffer.writeu16(Output, OutputIndex + 44, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 46, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 36))
+			buffer.writeu16(Output, OutputIndex + 48, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 50, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 39))
+			buffer.writeu16(Output, OutputIndex + 52, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 54, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 42))
+			buffer.writeu16(Output, OutputIndex + 56, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 58, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 45))
+			buffer.writeu16(Output, OutputIndex + 60, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 62, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 48))
+			buffer.writeu16(Output, OutputIndex + 64, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 66, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 51))
+			buffer.writeu16(Output, OutputIndex + 68, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 70, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 54))
+			buffer.writeu16(Output, OutputIndex + 72, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 74, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 57))
+			buffer.writeu16(Output, OutputIndex + 76, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 78, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 60))
+			buffer.writeu16(Output, OutputIndex + 80, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 82, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 63))
+			buffer.writeu16(Output, OutputIndex + 84, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 86, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 66))
+			buffer.writeu16(Output, OutputIndex + 88, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 90, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 69))
+			buffer.writeu16(Output, OutputIndex + 92, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 94, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 72))
+			buffer.writeu16(Output, OutputIndex + 96, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 98, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 75))
+			buffer.writeu16(Output, OutputIndex + 100, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 102, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 78))
+			buffer.writeu16(Output, OutputIndex + 104, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 106, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 81))
+			buffer.writeu16(Output, OutputIndex + 108, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 110, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 84))
+			buffer.writeu16(Output, OutputIndex + 112, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 114, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 87))
+			buffer.writeu16(Output, OutputIndex + 116, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 118, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 90))
+			buffer.writeu16(Output, OutputIndex + 120, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 122, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 93))
+			buffer.writeu16(Output, OutputIndex + 124, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 126, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
 		InputIndex += 96
 		OutputIndex += 128
 	end
 
 	while InputIndex <= InputLength - 13 do
 		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 9))
-			buffer.writeu16(Output, OutputIndex + 14, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 12, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 6))
-			buffer.writeu16(Output, OutputIndex + 10, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex + 8, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex))
+			buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 2, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		end
 		do
 			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 3))
-			buffer.writeu16(Output, OutputIndex + 6, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 			buffer.writeu16(Output, OutputIndex + 4, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 6, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		end
 		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 0))
-			buffer.writeu16(Output, OutputIndex + 2, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 6))
+			buffer.writeu16(Output, OutputIndex + 8, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 10, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		end
-
+		do
+			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 9))
+			buffer.writeu16(Output, OutputIndex + 12, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+			buffer.writeu16(Output, OutputIndex + 14, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
+		end
 		InputIndex += 12
 		OutputIndex += 16
 	end
 
 	while InputIndex <= InputLength - 4 do
-		do
-			local S = bit32.byteswap(buffer.readu32(Input, InputIndex + 0))
-			buffer.writeu16(Output, OutputIndex + 2, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
-			buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
-		end
-
+		local S = bit32.byteswap(buffer.readu32(Input, InputIndex))
+		buffer.writeu16(Output, OutputIndex, buffer.readu16(Table, bit32.band(bit32.rshift(S, 19), 0x1ffe)))
+		buffer.writeu16(Output, OutputIndex + 2, buffer.readu16(Table, bit32.band(bit32.rshift(S, 7), 0x1ffe)))
 		InputIndex += 3
 		OutputIndex += 4
 	end
